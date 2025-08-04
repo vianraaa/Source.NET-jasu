@@ -102,7 +102,7 @@ public class Host(
 	}
 
 	double Remainder;
-	double FramesPerSecond;
+	public double FramesPerSecond;
 
 	void _RunFrame(double time) {
 		double prevRemainder;
