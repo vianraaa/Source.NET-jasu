@@ -2,6 +2,8 @@
 
 using Source.Common;
 
+using static Source.Dbg;
+
 namespace Source.Engine;
 
 
@@ -22,6 +24,7 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 		IEngineAPI.Result result = IEngineAPI.Result.RunOK;
 		IMod mod = provider.GetRequiredService<IMod>();
 		if (mod.Init(startupInfo.InitialMod, startupInfo.InitialGame)) {
+			Msg("Source.NET: ready\n");
 			result = (IEngineAPI.Result)mod.Run();
 			mod.Shutdown();
 		}

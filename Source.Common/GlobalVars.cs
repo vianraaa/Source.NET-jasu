@@ -1,4 +1,7 @@
-﻿namespace Source.Common;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Source.Common;
+
 
 public class GlobalVarsBase
 {

@@ -1,11 +1,13 @@
-﻿using Source.Common;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 
 namespace Game.Client;
 
-public class HLClient : IBaseClientDLL
+public class HLClient(IInput input) : IBaseClientDLL
 {
-	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active) {
-
+	public static void PreInject(IServiceCollection services) {
+		services.AddSingleton<IInput, HLInput>();
 	}
 
 	public void IN_SetSampleTime(double frameTime) {
@@ -16,7 +18,11 @@ public class HLClient : IBaseClientDLL
 
 	}
 
+	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active) {
+		input.CreateMove(sequenceNumber, inputSampleFrametime, active);
+	}
+
 	public bool WriteUsercmdDeltaToBuffer(bf_write buf, int from, int to, bool isNewCommand) {
-		return false;
+		return input.WriteUsercmdDeltaToBuffer(buf, from, to, isNewCommand);
 	}
 }

@@ -4,6 +4,8 @@ using Source.Common;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
+using System.Reflection;
+
 namespace Source.Engine;
 
 /// <summary>
@@ -16,8 +18,24 @@ public class EngineBuilder : ServiceCollection
 		return this;
 	}
 
-	public EngineBuilder WithClient<ClDLL>() where ClDLL : class, IBaseClientDLL => Add<IBaseClientDLL, ClDLL>();
-	public EngineBuilder WithServer<SvDLL>() where SvDLL : class, IServerGameDLL => Add<IServerGameDLL, SvDLL>();
+	static void PreInject<T>(IServiceCollection services) {
+		Type t = typeof(T);
+		var preInject = t.GetMethod(nameof(PreInject), BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
+		if (preInject != null) 
+			preInject(services);
+	}
+
+	public EngineBuilder WithClientDLL<ClDLL>() where ClDLL : class, IBaseClientDLL {
+		PreInject<ClDLL>(this);
+		Add<IBaseClientDLL, ClDLL>();
+		return this;
+	}
+
+	public EngineBuilder WithGameDLL<SvDLL>() where SvDLL : class, IServerGameDLL {
+		PreInject<SvDLL>(this);
+		Add<IServerGameDLL, SvDLL>();
+		return this;
+	}
 
 	public EngineAPI Build(bool dedicated) {
 		// Internal methods. These are class instances for better restart

@@ -148,7 +148,7 @@ public class ClientDLL(IServiceProvider services, Sys Sys)
 
 	}
 
-	internal void ProcessInput() {
-		throw new NotImplementedException();
+	public void ProcessInput() {
+
 	}
 }

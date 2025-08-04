@@ -72,7 +72,7 @@ public static class Dbg
 	public static SpewOutputFunc GetSpewOutputFunc() => _SpewOutputFunc != null ? _SpewOutputFunc : DefaultSpewFunc;
 
 	public static SpewRetval DefaultSpewFunc(SpewType type, string message) {
-		System.Console.WriteLine(message);
+		System.Console.Write(message);
 		Debug.Print(message);
 #if DEBUG
 		if (type == SpewType.Assert) {
@@ -134,7 +134,6 @@ public static class Dbg
 
 			case SpewRetval.Continue: break;
 		}
-		Console.Write(string.Format(msgFormat, args));
 		return ret;
 	}
 	public static bool FindSpewGroup(string groupName, [NotNullWhen(true)] out SpewGroup? group) {

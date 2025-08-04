@@ -13,8 +13,8 @@ internal class Program
 		bool needsRestart;
 		do {
 			EngineAPI engine = new EngineBuilder()
-				.WithClient<HLClient>
-				.WithServer<ServerGameDLL>
+				.WithGameDLL<ServerGameDLL>()
+				.WithClientDLL<HLClient>()
 				.Build(false);
 
 			var res = engine.Run();

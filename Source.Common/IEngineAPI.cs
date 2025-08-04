@@ -1,4 +1,6 @@
-﻿namespace Source.Common;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Source.Common;
 public interface IEngineAPI : IServiceProvider
 {
 	public enum Result
@@ -14,3 +16,4 @@ public interface IEngineAPI : IServiceProvider
 	public void SetStartupInfo(in StartupInfo info);
 	bool MainLoop();
 }
+public delegate void PreInject(IServiceCollection services);
