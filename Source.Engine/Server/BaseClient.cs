@@ -1,5 +1,4 @@
-﻿using Source.Common.Algorithms;
-using Source.Common.Networking;
+﻿using Source.Common.Networking;
 using Source.Common.Server;
 
 using Steamworks;
