@@ -4,22 +4,36 @@ using Source.Common;
 
 namespace Source.Engine;
 
+
 public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 {
-	public void Dispose() => ((IDisposable)provider).Dispose();
+	public bool Dedicated;
 
-	public IEngineAPI.RunResult Run() {
-
-		return IEngineAPI.RunResult.OK;
+	public void Dispose() {
+		((IDisposable)provider).Dispose();
+		GC.SuppressFinalize(this);
 	}
-}
 
-public class EngineBuilder : ServiceCollection {
+	StartupInfo startupInfo;
 
-	public EngineAPI Build() {
-		this.AddSingleton<EngineAPI>();
-		ServiceProvider provider = this.BuildServiceProvider();
-		EngineAPI api = provider.GetRequiredService<EngineAPI>();
-		return api;
+	public IEngineAPI.Result RunListenServer() {
+		IEngineAPI.Result result = IEngineAPI.Result.RunOK;
+		IMod mod = provider.GetRequiredService<IMod>();
+		if (mod.Init(startupInfo.InitialMod, startupInfo.InitialGame)) {
+			result = (IEngineAPI.Result)mod.Run();
+			mod.Shutdown();
+		}
+
+		return result;
 	}
+
+	public void SetStartupInfo(in StartupInfo info) {
+		startupInfo = info;
+	}
+
+	public IEngineAPI.Result Run() {
+		return RunListenServer();
+	}
+
+	public object? GetService(Type serviceType) => provider.GetService(serviceType);
 }

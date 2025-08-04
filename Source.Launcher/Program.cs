@@ -5,15 +5,16 @@ namespace Source.Launcher;
 
 internal class Program
 {
-    static void Main(string[] args)
+    static void Main(string[] _)
     {
 		bool needsRestart;
 		do {
-			IEngineAPI engine = new EngineBuilder()
+			EngineAPI engine = new EngineBuilder()
+				.Add<IMod, BaseMod>()
+				.Build(false);
 
-				.Build();
-
-			needsRestart = engine.Run() == IEngineAPI.RunResult.Restart;
+			var res = engine.Run();
+			needsRestart = res == IEngineAPI.Result.InitRestart || res == IEngineAPI.Result.RunRestart;
 		} while (needsRestart);
     }
 }

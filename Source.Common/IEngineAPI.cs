@@ -1,13 +1,15 @@
 ﻿namespace Source.Common;
-
-public interface IEngineAPI
+public interface IEngineAPI : IServiceProvider
 {
-	public enum RunResult
+	public enum Result
 	{
-		OK = 0,
-		Error = 1,
-		Restart = 2
+		InitFailed = 0,
+		InitOK,
+		InitRestart,
+		RunOK,
+		RunRestart
 	}
 
-	public RunResult Run();
+	public Result Run();
+	public void SetStartupInfo(in StartupInfo info);
 }
