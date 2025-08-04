@@ -1,5 +1,4 @@
 ﻿namespace Source;
-
 public enum UpdateType
 {
 	EnterPVS,
@@ -9,3 +8,4 @@ public enum UpdateType
 	Finished,
 	Failed
 }
+

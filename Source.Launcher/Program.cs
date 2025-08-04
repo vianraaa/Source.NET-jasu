@@ -1,32 +1,32 @@
 ﻿using Game.Client;
 using Game.Server;
 
-using Microsoft.Extensions.DependencyInjection;
-
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Engine;
 
+using Steamworks;
+
 namespace Source.Launcher;
 
-public class Bootloader {
+public class Bootloader : IDisposable
+{
 	ICommandLine commandLine;
 	IEngineAPI? engineAPI;
 
 	string baseDir;
 	bool isEditMode;
 	bool isTextMode;
-	
+
 	public Bootloader() {
 		commandLine = new CommandLine();
 		commandLine.CreateCmdLine(Environment.CommandLine);
 		GetBaseDirectory(commandLine, out baseDir);
+		SteamAPI.Init();
 		isTextMode = commandLine.CheckParm("-textmode");
 	}
 	public void Boot() {
-		
-
 		bool needsRestart;
 		do {
 
@@ -34,7 +34,7 @@ public class Bootloader {
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.Build(false);
-			BuildStartupInfo();
+			PreInit();
 			var res = engineAPI.Run();
 			needsRestart = res == IEngineAPI.Result.InitRestart || res == IEngineAPI.Result.RunRestart;
 		} while (needsRestart);
@@ -44,7 +44,7 @@ public class Bootloader {
 		baseDirectory = cmdLine.CheckParm("-basedir", out var values) ? values.FirstOrDefault() ?? AppContext.BaseDirectory : AppContext.BaseDirectory;
 	}
 
-	private void BuildStartupInfo() {
+	private void PreInit() {
 		StartupInfo info = new();
 		info.BaseDirectory = baseDir;
 		info.InitialMod = DetermineInitialMod();
@@ -63,12 +63,15 @@ public class Bootloader {
 	private string DetermineInitialGame() {
 		return !isEditMode ? commandLine.ParmValue("-game", defaultHalfLife2GameDirectory) : throw new NotImplementedException("No editmode support");
 	}
+	public void Dispose() {
+		SteamAPI.Shutdown();
+	}
 }
 
 internal class Program
 {
 	static void Main(string[] _) {
-		Bootloader bootloader = new();
-		bootloader.Boot();
+		using (Bootloader bootloader = new())
+			bootloader.Boot();
 	}
 }

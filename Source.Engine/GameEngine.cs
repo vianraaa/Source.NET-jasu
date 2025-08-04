@@ -80,13 +80,8 @@ public class GameEngine : IEngine
 		NextState = IEngine.State.Inactive;
 	}
 
-	public void SetNextState(IEngine.State nextState) {
-		throw new NotImplementedException();
-	}
-
-	public IEngine.State GetState() {
-		throw new NotImplementedException();
-	}
+	public void SetNextState(IEngine.State nextState) => NextState = nextState;
+	public IEngine.State GetState() => State;
 
 	public void Frame() {
 		if (PreviousTime == 0) {
@@ -137,19 +132,8 @@ public class GameEngine : IEngine
 		PreviousTime = CurrentTime;
 	}
 
-	public double GetFrameTime() {
-		throw new NotImplementedException();
-	}
-
-	public double GetCurTime() {
-		throw new NotImplementedException();
-	}
-
-	public IEngine.Quit GetQuitting() {
-		return Quitting;
-	}
-
-	public void SetQuitting(IEngine.Quit quitType) {
-		Quitting = quitType;
-	}
+	public double GetFrameTime() => FrameTime;
+	public double GetCurTime() => CurrentTime;
+	public IEngine.Quit GetQuitting() => Quitting;
+	public void SetQuitting(IEngine.Quit quitType) => Quitting = quitType;
 }

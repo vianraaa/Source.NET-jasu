@@ -58,7 +58,7 @@ public static class Dbg
 	static SpewType SpewType;
 
 	static int DefaultLevel;
-	static Color DefaultOutputColor = Color.FromArgb(255, 255, 255, 255);
+	static Color DefaultOutputColor = new Color(255, 255, 255, 255);
 
 	static readonly ThreadLocal<SpewInfo?> SpewInfo = new();
 
