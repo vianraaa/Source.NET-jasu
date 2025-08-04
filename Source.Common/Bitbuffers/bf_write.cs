@@ -1,6 +1,6 @@
 ﻿#define NEW_BITBUFFER
 
-using Source.Common.Math;
+using Source.Common.Mathematics;
 
 using System;
 using System.Buffers;
@@ -396,8 +396,8 @@ public unsafe class bf_write : BitBuffer
 		int signbit = f <= -(bLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION) ? 1 : 0;
 		int intval = (int)MathF.Abs(f);
 		int fractval = bLowPrecision ?
-			Math.Abs((int)(f * COORD_DENOMINATOR_LOWPRECISION)) & COORD_DENOMINATOR_LOWPRECISION - 1 :
-			Math.Abs((int)(f * COORD_DENOMINATOR)) & COORD_DENOMINATOR - 1;
+			Mathematics.Abs((int)(f * COORD_DENOMINATOR_LOWPRECISION)) & COORD_DENOMINATOR_LOWPRECISION - 1 :
+			Mathematics.Abs((int)(f * COORD_DENOMINATOR)) & COORD_DENOMINATOR - 1;
 
 		int bInBounds = intval < 1 << (int)COORD_INTEGER_BITS_MP ? 1 : 0;
 
@@ -437,8 +437,8 @@ public unsafe class bf_write : BitBuffer
 
 	public void WriteBitCoord(float f) {
 		int signbit = f <= -COORD_RESOLUTION ? 1 : 0;
-		int intval = (int)Math.Abs(f);
-		int fractval = Math.Abs((int)(f * COORD_DENOMINATOR)) & COORD_DENOMINATOR - 1;
+		int intval = (int)Mathematics.Abs(f);
+		int fractval = Mathematics.Abs((int)(f * COORD_DENOMINATOR)) & COORD_DENOMINATOR - 1;
 
 
 		// Send the bit flags that indicate whether we have an integer part and/or a fraction part.
@@ -486,7 +486,7 @@ public unsafe class bf_write : BitBuffer
 		int signbit = f <= -NORMAL_RESOLUTION ? 1 : 0;
 
 		// NOTE: Since +/-1 are valid values for a normal, I'm going to encode that as all ones
-		uint fractval = (uint)Math.Abs((int)(f * NORMAL_DENOMINATOR));
+		uint fractval = (uint)Mathematics.Abs((int)(f * NORMAL_DENOMINATOR));
 
 		// clamp..
 		if (fractval > NORMAL_DENOMINATOR)

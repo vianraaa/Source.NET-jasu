@@ -1,4 +1,4 @@
-﻿using Source.Common.Math;
+﻿using Source.Common.Mathematics;
 
 using System.Numerics;
 

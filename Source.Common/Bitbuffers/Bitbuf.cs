@@ -180,7 +180,7 @@ public abstract unsafe class BitBuffer
 			throw new ArgumentException("Part length has to be positive.", nameof(partLength));
 
 		for (var i = 0; i < s.Length; i += partLength)
-			yield return s.Substring(i, Math.Min(partLength, s.Length - i));
+			yield return s.Substring(i, Mathematics.Min(partLength, s.Length - i));
 	}
 
 	/// <summary>

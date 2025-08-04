@@ -1,5 +1,5 @@
 ﻿using Source.Common.Bitbuffers;
-using Source.Common.Math;
+using Source.Common.Mathematics;
 
 using System;
 using System.Collections.Generic;

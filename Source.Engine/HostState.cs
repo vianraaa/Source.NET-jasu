@@ -3,7 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Engine;
-using Source.Common.Math;
+using Source.Common.Mathematics;
 
 using System.Numerics;
 

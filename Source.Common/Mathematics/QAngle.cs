@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Source.Common.Math;
+namespace Source.Common.Mathematics;
 
 public struct AddAngle
 {

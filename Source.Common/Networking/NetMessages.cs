@@ -15,7 +15,7 @@ using static Net;
 using static Constants;
 using Source.Common.Bitbuffers;
 using Source.Common.Hashing;
-using Source.Common.Math;
+using Source.Common.Mathematics;
 
 public static class NetMessageExtensions
 {
@@ -74,8 +74,8 @@ public class NET_Tick : NetMessage
 	public override bool WriteToBuffer(bf_write buffer) {
 		buffer.WriteNetMessageType(this);
 		buffer.WriteLong(Tick);
-		buffer.WriteUBitLong((uint)Math.Clamp((int)(NET_TICK_SCALEUP * HostFrameTime), 0, 65535), 16);
-		buffer.WriteUBitLong((uint)Math.Clamp((int)(NET_TICK_SCALEUP * HostFrameDeviation), 0, 65535), 16);
+		buffer.WriteUBitLong((uint)Mathematics.Clamp((int)(NET_TICK_SCALEUP * HostFrameTime), 0, 65535), 16);
+		buffer.WriteUBitLong((uint)Mathematics.Clamp((int)(NET_TICK_SCALEUP * HostFrameDeviation), 0, 65535), 16);
 		return !buffer.Overflowed;
 	}
 }

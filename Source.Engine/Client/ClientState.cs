@@ -1,5 +1,5 @@
 ﻿using Source.Common.Hashing;
-using Source.Common.Math;
+using Source.Common.Mathematics;
 using Source.Common.Networking;
 
 using static Source.Constants;

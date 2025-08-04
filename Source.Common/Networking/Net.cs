@@ -848,7 +848,7 @@ public class Net
 
 		int maxRoutable = MAX_ROUTABLE_PAYLOAD;
 		if (chan != null) {
-			maxRoutable = Math.Clamp(chan.MaxRoutablePayloadSize, MIN_USER_MAXROUTABLE_SIZE, MAX_USER_MAXROUTABLE_SIZE); // todo: sv_maxroutable?
+			maxRoutable = Mathematics.Clamp(chan.MaxRoutablePayloadSize, MIN_USER_MAXROUTABLE_SIZE, MAX_USER_MAXROUTABLE_SIZE); // todo: sv_maxroutable?
 		}
 
 		var addr = to;
@@ -917,7 +917,7 @@ public class Net
 			int bytesLeft = sendlen;
 
 			while (bytesLeft > 0) {
-				int size = Math.Min(splitSizeMinusHeader, bytesLeft);
+				int size = Mathematics.Min(splitSizeMinusHeader, bytesLeft);
 				pPacket->PacketID = (short)((packetNumber << 8) + packetCount);
 				NativeMemory.Copy(sendbuf + packetNumber * splitSizeMinusHeader, packet + sizeof(SPLITPACKET), (nuint)size);
 				int ret = 0;

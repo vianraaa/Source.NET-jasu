@@ -339,7 +339,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 	}
 
 	public void SetMaxBufferSize(bool reliable, int bytes, bool voice = false) {
-		bytes = Math.Clamp(bytes, MAX_DATAGRAM_PAYLOAD, MAX_PAYLOAD);
+		bytes = Mathematics.Clamp(bytes, MAX_DATAGRAM_PAYLOAD, MAX_PAYLOAD);
 
 		if (reliable)
 			DoBufferThings(ref StreamReliable, ref ReliableDataBuffer, out ReliableDataBuffer, bytes);
@@ -929,7 +929,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 			// how many fragments can we send ?
 
-			int numFragments = Math.Min(nSendMaxFragments, data.NumFragments - nSentFragments);
+			int numFragments = Mathematics.Min(nSendMaxFragments, data.NumFragments - nSentFragments);
 
 			// if we are in file background transmission mode, just send one fragment per packet
 			//if (i == FRAG_FILE_STREAM && FileBackgroundTranmission)
@@ -1301,10 +1301,10 @@ public class NetChannel : INetChannelInfo, INetChannel
 									   || WaitingList[FRAG_NORMAL_STREAM].Count > 0
 									   || WaitingList[FRAG_FILE_STREAM].Count > 0;
 
-	public double TimeConnected => Math.Max(0, Net.Time - ConnectTime);
+	public double TimeConnected => Mathematics.Max(0, Net.Time - ConnectTime);
 	public bool IsTimedOut => Timeout == -1 ? false : LastReceived + Timeout < Net.Time;
 	public bool IsTimingOut => Timeout == -1 ? false : LastReceived + CONNECTION_PROBLEM_TIME < Net.Time;
-	public double TimeSinceLastReceived => Math.Max(Net.Time - LastReceived, 0);
+	public double TimeSinceLastReceived => Mathematics.Max(Net.Time - LastReceived, 0);
 	public bool IsOverflowed => StreamReliable.Overflowed;
 
 	public void Reset() {

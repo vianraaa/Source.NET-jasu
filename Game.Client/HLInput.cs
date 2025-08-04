@@ -2,7 +2,7 @@
 
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
-using Source.Common.Math;
+using Source.Common.Mathematics;
 using Source.Common.Networking;
 using Source.Engine.Client;
 
