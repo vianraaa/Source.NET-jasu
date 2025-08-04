@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Source.Launcher": {
+      "commandName": "Project",
+      "commandLineArgs": "-w 1600 -h 900 -test -parm2 +fps_max 60"
+    }
+  }
+}

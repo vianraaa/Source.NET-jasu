@@ -11,7 +11,7 @@ namespace Source.Engine;
 /// <summary>
 /// Builds a capable engine instance and provides EngineAPI to interact with it.
 /// </summary>
-public class EngineBuilder : ServiceCollection
+public class EngineBuilder(ICommandLine cmdline, string basedir, bool textmode) : ServiceCollection
 {
 	public EngineBuilder Add<I, T>() where T : class, I where I : class {
 		this.AddSingleton<I, T>();
