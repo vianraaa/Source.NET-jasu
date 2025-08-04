@@ -1,6 +1,6 @@
 ﻿using Steamworks;
 
-namespace Source.Common;
+namespace Source.Common.Server;
 
 public struct USERID
 {

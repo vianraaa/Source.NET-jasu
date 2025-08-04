@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using static Source.Constants;
 using static Source.Common.Networking.Protocol;
 using Source.Common.Networking;
+using Source.Common.Client;
 
 namespace Source.Engine;
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using Source.Common;
 using Source.Common.Bitbuffers;
+using Source.Common.Client;
 using Source.Common.Math;
 using Source.Common.Networking;
 using Source.Engine.Client;

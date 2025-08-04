@@ -1,6 +1,6 @@
 ﻿using Source.Common.Networking;
 
-namespace Source.Common;
+namespace Source.Common.Server;
 
 public interface IServer : IConnectionlessPacketHandler
 {

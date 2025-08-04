@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Source.Common;
+namespace Source.Common.Commands;
 
-public interface ICommandLine {
+public interface ICommandLine
+{
 	public void CreateCmdLine(ReadOnlySpan<char> commandLine);
 	public void CreateCmdLine(IEnumerable<string> commandLine);
 	public string? GetCmdLine();

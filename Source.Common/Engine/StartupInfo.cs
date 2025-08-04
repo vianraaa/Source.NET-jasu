@@ -1,4 +1,4 @@
-﻿namespace Source.Common;
+﻿namespace Source.Common.Engine;
 
 public struct StartupInfo
 {
