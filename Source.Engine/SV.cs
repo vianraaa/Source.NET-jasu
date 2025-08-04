@@ -1,4 +1,5 @@
-﻿namespace Source.Engine;
+﻿
+namespace Source.Engine;
 
 /// <summary>
 /// Various serverside methods. In Source, these would mostly be represented by
@@ -6,5 +7,7 @@
 /// </summary>
 public class SV(IServiceProvider services)
 {
-
+	internal void ShutdownGameDLL() {
+		throw new NotImplementedException();
+	}
 }

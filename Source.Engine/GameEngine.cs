@@ -1,46 +1,53 @@
 ﻿using Source.Common;
+using Source.Engine.Server;
+
+using static Source.Dbg;
 
 namespace Source.Engine;
 
 public class GameEngine : IEngine
 {
 	readonly Sys Sys;
-	bool FilterTime(float t) {
+	readonly GameServer sv;
+	readonly IHostState HostState;
+	bool FilterTime(double t) {
 		return false;
 	}
 
-	IEngine.Quit quitting;
+	IEngine.Quit Quitting;
 
-	IEngine.State state;
-	IEngine.State nextState;
+	IEngine.State State;
+	IEngine.State NextState;
 
-	double currentTime;
-	double frameTime;
-	double previousTime;
-	double filteredTime;
-	double minFrameTime;
-	double lastRemainder;
-	bool catchupTime;
+	double CurrentTime;
+	double FrameTime;
+	double PreviousTime;
+	double FilteredTime;
+	double MinFrameTime;
+	double LastRemainder;
+	bool CatchupTime;
 
-	public GameEngine(Sys Sys) {
+	public GameEngine(Sys Sys, IHostState HostState, GameServer sv) {
 		this.Sys = Sys;
+		this.HostState = HostState;
+		this.sv = sv;
 
-		state = IEngine.State.Inactive;
-		nextState = IEngine.State.Inactive;
-		currentTime = 0;
-		frameTime = 0;
-		previousTime = 0;
-		filteredTime = 0;
-		minFrameTime = 0;
-		lastRemainder = 0;
-		catchupTime = false;
-		quitting = IEngine.Quit.NotQuitting;
+		State = IEngine.State.Inactive;
+		NextState = IEngine.State.Inactive;
+		CurrentTime = 0;
+		FrameTime = 0;
+		PreviousTime = 0;
+		FilteredTime = 0;
+		MinFrameTime = 0;
+		LastRemainder = 0;
+		CatchupTime = false;
+		Quitting = IEngine.Quit.NotQuitting;
 	}
 
 	public bool Load(bool dedicated, string rootDirectory) {
 		bool success = false;
 
-		state = nextState = IEngine.State.Active;
+		State = NextState = IEngine.State.Active;
 		if(Sys.InitGame(dedicated, rootDirectory)) {
 			success = true;
 		}
@@ -50,8 +57,8 @@ public class GameEngine : IEngine
 
 	public void Unload() {
 		Sys.ShutdownGame();
-		state = IEngine.State.Inactive;
-		nextState = IEngine.State.Inactive;
+		State = IEngine.State.Inactive;
+		NextState = IEngine.State.Inactive;
 	}
 
 	public void SetNextState(IEngine.State nextState) {
@@ -63,7 +70,52 @@ public class GameEngine : IEngine
 	}
 
 	public void Frame() {
-		throw new NotImplementedException();
+		if (PreviousTime == 0) {
+			FilterTime(0.0);
+			PreviousTime = Sys.Time - MinFrameTime;
+		}
+
+		for (; ; ) {
+			CurrentTime = Sys.Time;
+			FrameTime = CurrentTime - PreviousTime;
+			Assert(FrameTime >= 0);
+			// TODO: handle ^^^
+
+			if (FilterTime(FrameTime))
+				break;
+
+			double busyWaitMS = 2.25; // windows exclusive change later?
+
+			int sleepMS = (int)((MinFrameTime - FrameTime) * 1000 - busyWaitMS);
+			if (sleepMS > 0)
+				Thread.Sleep(sleepMS);
+			else {
+				for (int i = 2000; i >= 0; i--) ;
+			}
+		}
+		FilteredTime = 0;
+		if (!sv.IsDedicated()) { }
+
+		switch (State) {
+			case IEngine.State.Paused:
+			case IEngine.State.Inactive:
+				break;
+			case IEngine.State.Active:
+			case IEngine.State.Close:
+			case IEngine.State.Restart:
+				HostState.Frame(FrameTime);
+				break;
+		}
+
+		if (NextState != State) {
+			State = NextState;
+			switch (State) {
+				case IEngine.State.Close: SetQuitting(IEngine.Quit.ToDesktop); break;
+				case IEngine.State.Restart: SetQuitting(IEngine.Quit.Restart); break;
+			}
+		}
+
+		PreviousTime = CurrentTime;
 	}
 
 	public double GetFrameTime() {
@@ -79,6 +131,6 @@ public class GameEngine : IEngine
 	}
 
 	public void SetQuitting(IEngine.Quit quitType) {
-		throw new NotImplementedException();
+		Quitting = quitType;
 	}
 }

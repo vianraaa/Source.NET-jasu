@@ -3,7 +3,7 @@
 namespace Source.Engine.Server;
 
 /// <summary>
-/// Base server, in SERVER
+/// Base server, in SERVER. Often referred to by 'sv'
 /// </summary>
 public class GameServer : BaseServer
 {
@@ -93,5 +93,9 @@ public class GameServer : BaseServer
 
 	public override void SetPaused(bool paused) {
 		throw new NotImplementedException();
+	}
+
+	internal void Init(bool dedicated) {
+		
 	}
 }

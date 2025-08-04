@@ -16,6 +16,8 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 
 	StartupInfo startupInfo;
 
+	Lazy<IEngine> engR = new(provider.GetRequiredService<IEngine>);
+
 	public IEngineAPI.Result RunListenServer() {
 		IEngineAPI.Result result = IEngineAPI.Result.RunOK;
 		IMod mod = provider.GetRequiredService<IMod>();
@@ -36,4 +38,39 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 	}
 
 	public object? GetService(Type serviceType) => provider.GetService(serviceType);
+
+	public bool InEditMode() => false;
+	public void PumpMessages() {
+
+	}
+	public void PumpMessagesEditMode(bool idle, long idleCount) => throw new NotImplementedException();
+	public void ActivateEditModeShaders(bool active) { }
+
+	public bool MainLoop() {
+		bool idle = true;
+		long idleCount = 0;
+		while (true) {
+			IEngine eng = engR.Value;
+			switch (eng.GetQuitting()) {
+				case IEngine.Quit.NotQuitting:
+					if (!InEditMode())
+						PumpMessages();
+					else
+						PumpMessagesEditMode(idle, idleCount);
+
+					if (!InEditMode()) {
+						ActivateEditModeShaders(false);
+						eng.Frame();
+						ActivateEditModeShaders(true);
+					}
+
+					if (InEditMode()) {
+						// hammer.RunFrame()? How would this work? todo; learn how editmode works.
+					}
+					break;
+				case IEngine.Quit.ToDesktop: return false;
+				case IEngine.Quit.Restart: return true;
+			}
+		}
+	}
 }

@@ -12,4 +12,18 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services)
 {
+	internal void Init() {
+		throw new NotImplementedException();
+	}
+}
+
+/// <summary>
+/// Loads and shuts down the client DLL
+/// </summary>
+/// <param name="services"></param>
+public class ClientDLL(IServiceProvider services, Sys Sys)
+{
+	public void Init() {
+
+	}
 }

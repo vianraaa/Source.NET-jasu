@@ -32,4 +32,8 @@ public static class Constants
 	public const int MAX_PLAYERS = ABSOLUTE_PLAYER_LIMIT;
 	public const int VOICE_MAX_PLAYERS = MAX_PLAYERS;
 	public const int VOICE_MAX_PLAYERS_DW = (VOICE_MAX_PLAYERS / 32) + ((VOICE_MAX_PLAYERS & 31) != 0 ? 1 : 0);
+
+	public const double DEFAULT_TICK_INTERVAL = 0.015;
+	public const double MINIMUM_TICK_INTERVAL = 0.001;
+	public const double MAXIMUM_TICK_INTERVAL = 0.1;
 }

@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using static Source.Dbg;
 using static Source.Protocol;
 using Snappier;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Source.Common;
 

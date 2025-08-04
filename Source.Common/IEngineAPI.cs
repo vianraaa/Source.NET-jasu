@@ -12,4 +12,5 @@ public interface IEngineAPI : IServiceProvider
 
 	public Result Run();
 	public void SetStartupInfo(in StartupInfo info);
+	bool MainLoop();
 }

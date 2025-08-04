@@ -25,8 +25,11 @@ public class EngineBuilder : ServiceCollection
 		this.AddSingleton<SV>();
 		this.AddSingleton<Sys>();
 		this.AddSingleton<Host>();
+		this.AddSingleton<Net>();
+		this.AddSingleton<IHostState, HostState>();
 		this.AddSingleton<CommonHostState>();
 		this.AddSingleton<EngineParms>();
+		this.AddSingleton<ClientDLL>();
 		// Client state and server state singletons
 		this.AddSingleton<ClientState>();
 		this.AddSingleton<GameServer>();

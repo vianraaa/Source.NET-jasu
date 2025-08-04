@@ -6,7 +6,7 @@ using static Source.Constants;
 namespace Source.Engine.Client;
 
 /// <summary>
-/// Client state, in CLIENT
+/// Client state, in CLIENT. Often referred to by 'cl'
 /// </summary>
 public class ClientState(CommonHostState host_state) : BaseClientState
 {
