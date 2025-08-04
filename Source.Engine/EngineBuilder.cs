@@ -11,7 +11,7 @@ namespace Source.Engine;
 /// <summary>
 /// Builds a capable engine instance and provides EngineAPI to interact with it.
 /// </summary>
-public class EngineBuilder(ICommandLine cmdline, string basedir, bool textmode) : ServiceCollection
+public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) : ServiceCollection
 {
 	public EngineBuilder Add<I, T>() where T : class, I where I : class {
 		this.AddSingleton<I, T>();
@@ -38,6 +38,8 @@ public class EngineBuilder(ICommandLine cmdline, string basedir, bool textmode) 
 	}
 
 	public EngineAPI Build(bool dedicated) {
+		// We got the ICommandLine from EngineBuilder, insert it into the app system
+		this.AddSingleton(cmdLine);
 		// Internal methods. These are class instances for better restart
 		// support, and I feel like every time I try this, I end up getting
 		// "static creep" where I start to revert like a primate into using

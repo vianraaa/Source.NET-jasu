@@ -191,8 +191,6 @@ public class CommandLine : ICommandLine
 		return parms[index];
 	}
 
-	public bool HasParm(string name) => FindParm(name) != 0;
-
 	public int ParmCount() => parms.Count;
 
 

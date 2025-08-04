@@ -9,7 +9,6 @@ public interface ICommandLine {
 
 	public bool CheckParm(string name, out IEnumerable<string> values);
 	public bool CheckParm(string name) => CheckParm(name, out _);
-	public bool HasParm(string name);
 	public void RemoveParm(string name);
 	public void AppendParm(string name, string? values = null);
 
