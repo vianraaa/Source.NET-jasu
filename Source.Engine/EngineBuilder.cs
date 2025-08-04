@@ -35,7 +35,7 @@ public class EngineBuilder : ServiceCollection
 		this.AddSingleton<IEngine, GameEngine>();
 		// Everything else should be provided by the launcher!
 		ServiceProvider provider = this.BuildServiceProvider();
-		EngineAPI api = provider.GetRequiredService<EngineAPI>();
+		EngineAPI api = (EngineAPI)provider.GetRequiredService<IEngineAPI>();
 		api.Dedicated = dedicated;
 		return api;
 	}

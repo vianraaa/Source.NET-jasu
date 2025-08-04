@@ -1,0 +1,35 @@
+﻿namespace Source;
+
+public static class Constants
+{
+	public const int MAX_EDICTS = 1 << MAX_EDICT_BITS;
+	public const int MAX_EDICT_BITS = 13;
+
+	/// <summary>
+	/// Most Source games have this at 20; Garry's Mod has it at 24
+	/// </summary>
+	public const int DELTASIZE_BITS = 24;
+
+	public const int MAX_EVENT_BITS = 9;
+	public const int MAX_EVENT_NUMBER = 1 << MAX_EVENT_BITS;
+
+	public const int MAX_SERVER_CLASSES = 1 << MAX_SERVER_CLASS_BITS;
+	public const int MAX_SERVER_CLASS_BITS = 13;
+
+	public const int MAX_CUSTOM_FILES = 4;
+	public const int MAX_CUSTOM_FILE_SIZE = 524288;
+
+	public const int MAX_AREA_STATE_BYTES = 32;
+	public const int MAX_AREA_PORTAL_STATE_BYTES = 24;
+
+	public const int MAX_USER_MSG_DATA = 255;
+	public const int MAX_ENTITY_MSG_DATA = 255;
+	public const int MAX_DECAL_INDEX_BITS = 9;
+	public const int SP_MODEL_INDEX_BITS = 13;
+
+	public const int ABSOLUTE_PLAYER_LIMIT = 255;
+	public const int ABSOLUTE_PLAYER_LIMIT_DW = ((ABSOLUTE_PLAYER_LIMIT / 32) + 1);
+	public const int MAX_PLAYERS = ABSOLUTE_PLAYER_LIMIT;
+	public const int VOICE_MAX_PLAYERS = MAX_PLAYERS;
+	public const int VOICE_MAX_PLAYERS_DW = (VOICE_MAX_PLAYERS / 32) + ((VOICE_MAX_PLAYERS & 31) != 0 ? 1 : 0);
+}

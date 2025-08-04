@@ -1,6 +1,5 @@
 ﻿namespace Source.Common;
 
-public interface IClient
-{
+public interface INetChannel {
 
 }

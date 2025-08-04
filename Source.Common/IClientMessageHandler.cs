@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common;
-
 public interface IClientMessageHandler
 {
+
 }
