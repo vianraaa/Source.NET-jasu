@@ -314,8 +314,18 @@ public class Host(
 
 	}
 
-	private void _RunFrame_Input(double prevRemainder, bool finalTick) {
+	private bool input_firstFrame = true;
+	private void _RunFrame_Input(double accumulatedExtraSamples, bool finalTick) {
+		if (input_firstFrame) {
+			input_firstFrame = false;
+			// test script?
+		}
 
+#if !SWDS
+		ClientDLL.ProcessInput();
+		Cbuf.Execute();
+		CL.Move(accumulatedExtraSamples, finalTick);
+#endif
 	}
 
 	public void RunFrame(double frameTime) {
@@ -349,7 +359,6 @@ public class Host(
 
 		var engineAPI = services.GetRequiredService<IEngineAPI>();
 		var hostState = services.GetRequiredService<IHostState>();
-		var CL = services.GetRequiredService<CL>();
 		Sys = services.GetRequiredService<Sys>();
 
 		clientGlobalVariables = services.GetRequiredService<ClientGlobalVariables>();

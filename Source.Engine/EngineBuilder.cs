@@ -15,6 +15,10 @@ public class EngineBuilder : ServiceCollection
 		this.AddSingleton<I, T>();
 		return this;
 	}
+
+	public EngineBuilder WithClient<ClDLL>() where ClDLL : class, IBaseClientDLL => Add<IBaseClientDLL, ClDLL>();
+	public EngineBuilder WithServer<SvDLL>() where SvDLL : class, IServerGameDLL => Add<IServerGameDLL, SvDLL>();
+
 	public EngineAPI Build(bool dedicated) {
 		// Internal methods. These are class instances for better restart
 		// support, and I feel like every time I try this, I end up getting
@@ -34,6 +38,7 @@ public class EngineBuilder : ServiceCollection
 		this.AddSingleton<CommonHostState>();
 		this.AddSingleton<EngineParms>();
 		this.AddSingleton<ClientDLL>();
+		this.AddSingleton<IMod, BaseMod>();
 		// Client state and server state singletons
 		this.AddSingleton<ClientState>();
 		this.AddSingleton<GameServer>();

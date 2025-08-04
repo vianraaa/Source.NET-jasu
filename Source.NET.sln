@@ -1,13 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35514.174 d17.12
+VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Launcher", "Source.Launcher\Source.Launcher.csproj", "{97BFFCAF-9D9D-4352-980B-F930FBFABAF5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Common", "Source.Common\Source.Common.csproj", "{46C136E1-A6C0-4B70-9823-C88413338DEF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Engine", "Source.Engine\Source.Engine.csproj", "{383661AF-A866-4A97-A4EF-F0170496D679}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1 - Engine", "1 - Engine", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2 - Game", "2 - Game", "{9D95D703-BE2E-44A7-A9B3-106E4FC16631}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3 - Executables", "3 - Executables", "{ED68CF4A-63CA-458C-8391-EBE23B835B76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.Shared", "Game.Shared\Game.Shared.csproj", "{ED987559-4315-4908-9873-9B3054C44F27}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.Client", "Game.Client\Game.Client.csproj", "{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.Server", "Game.Server\Game.Server.csproj", "{F4CC2608-D7FA-4B85-915F-02174B94ABE6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,8 +39,28 @@ Global
 		{383661AF-A866-4A97-A4EF-F0170496D679}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{383661AF-A866-4A97-A4EF-F0170496D679}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{383661AF-A866-4A97-A4EF-F0170496D679}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED987559-4315-4908-9873-9B3054C44F27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED987559-4315-4908-9873-9B3054C44F27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED987559-4315-4908-9873-9B3054C44F27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED987559-4315-4908-9873-9B3054C44F27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4CC2608-D7FA-4B85-915F-02174B94ABE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4CC2608-D7FA-4B85-915F-02174B94ABE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4CC2608-D7FA-4B85-915F-02174B94ABE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4CC2608-D7FA-4B85-915F-02174B94ABE6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{97BFFCAF-9D9D-4352-980B-F930FBFABAF5} = {ED68CF4A-63CA-458C-8391-EBE23B835B76}
+		{46C136E1-A6C0-4B70-9823-C88413338DEF} = {9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}
+		{383661AF-A866-4A97-A4EF-F0170496D679} = {9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}
+		{ED987559-4315-4908-9873-9B3054C44F27} = {9D95D703-BE2E-44A7-A9B3-106E4FC16631}
+		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656} = {9D95D703-BE2E-44A7-A9B3-106E4FC16631}
+		{F4CC2608-D7FA-4B85-915F-02174B94ABE6} = {9D95D703-BE2E-44A7-A9B3-106E4FC16631}
 	EndGlobalSection
 EndGlobal

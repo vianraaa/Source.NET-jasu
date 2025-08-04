@@ -1,4 +1,7 @@
-﻿using Source.Common;
+﻿using Game.Client;
+using Game.Server;
+
+using Source.Common;
 using Source.Engine;
 
 namespace Source.Launcher;
@@ -10,7 +13,8 @@ internal class Program
 		bool needsRestart;
 		do {
 			EngineAPI engine = new EngineBuilder()
-				.Add<IMod, BaseMod>()
+				.WithClient<HLClient>
+				.WithServer<ServerGameDLL>
 				.Build(false);
 
 			var res = engine.Run();

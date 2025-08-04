@@ -2,6 +2,8 @@
 
 public static class Constants
 {
+	public const int MAX_CMD_BUFFER = 4000;
+
 	public const int MAX_EDICTS = 1 << MAX_EDICT_BITS;
 	public const int MAX_EDICT_BITS = 13;
 

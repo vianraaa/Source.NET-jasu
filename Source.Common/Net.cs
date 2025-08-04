@@ -103,7 +103,7 @@ public class Net {
 	}
 	public string DescribeSocket(NetSocketType sock) => DescribeSocket((int)sock);
 
-	public int Bits2Bytes(int b) {
+	public static int Bits2Bytes(int b) {
 		return b + 7 >> 3;
 	}
 	public double Time { get; private set; }
