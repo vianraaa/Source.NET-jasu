@@ -13,7 +13,10 @@ public class CommonHostState
 	public double IntervalPerTick;
 }
 
-public class Host(EngineParms host_parms, CommonHostState host_state, GameServer sv, ClientState cl, IServiceProvider services)
+public class Host(
+	EngineParms host_parms, CommonHostState host_state, GameServer sv, ClientState cl,
+	IServiceProvider services
+	)
 {
 	public int TimeToTicks(float dt) => (int)(0.5f + (float)dt / (float)host_state.IntervalPerTick);
 	public float TicksToTime(int dt) => (float)host_state.IntervalPerTick * (float)dt;
@@ -21,6 +24,21 @@ public class Host(EngineParms host_parms, CommonHostState host_state, GameServer
 	public string GetCurrentMod() => host_parms.Mod;
 	public string GetCurrentGame() => host_parms.Game;
 	public string GetBaseDirectory() => host_parms.BaseDir;
+
+	ClientGlobalVariables clientGlobalVariables;
+	CL CL;
+	SV SV;
+	ServerGlobalVariables serverGlobalVariables;
+	Cbuf Cbuf;
+	Cmd Cmd;
+	Con Con;
+	Cvar Cvar;
+	Net Net;
+	Sys Sys;
+	ClientDLL ClientDLL;
+	IBaseClientDLL? clientDLL;
+	IServerGameDLL? serverDLL;
+
 
 	public bool Initialized;
 	public double FrameTime;
@@ -30,9 +48,17 @@ public class Host(EngineParms host_parms, CommonHostState host_state, GameServer
 	public double IdealTime;
 	public double NextTick;
 	public double[] JitterHistory = new double[128];
-	public uint JitterHistoryPos;
+	public int JitterHistoryPos;
 	public long FrameCount;
 	public int HunkLevel;
+	public int FrameTicks;
+	public int TickCount;
+	public int CurrentFrameTick;
+
+	public int NumTicksLastFrame;
+	public double RemainderLastFrame;
+	public double PrevRemainderLastFrame;
+	public double LastFrameTime;
 
 	public bool IsSinglePlayerGame() {
 		if (sv.IsActive())
@@ -41,18 +67,271 @@ public class Host(EngineParms host_parms, CommonHostState host_state, GameServer
 			return cl.MaxClients == 1;
 	}
 
-	public void RunFrame(double frameTime) {
+	void AccumulateTime(double dt) {
+		RealTime += dt;
+		FrameTime = dt;
+		FrameTimeUnbounded = FrameTime;
+		double fullscale = 1; // TODO: host_timescale
+		FrameTime *= fullscale;
+		FrameTimeUnbounded = FrameTime;
+	}
 
+	int gHostSpawnCount;
+
+	public int GetServerCount() {
+		if (cl.SignOnState >= SignOnState.New)
+			return cl.ServerCount;
+		else if (sv.State >= ServerState.Loading)
+			return sv.GetSpawnCount();
+
+		return gHostSpawnCount;
+	}
+
+	void _SetGlobalTime() {
+		serverGlobalVariables.RealTime = RealTime;
+		serverGlobalVariables.FrameCount = FrameCount;
+		serverGlobalVariables.AbsoluteFrameTime = FrameTime;
+		serverGlobalVariables.IntervalPerTick = host_state.IntervalPerTick;
+		serverGlobalVariables.ServerCount = GetServerCount();
+#if !SWDS
+		clientGlobalVariables.RealTime = RealTime;
+		clientGlobalVariables.FrameCount = FrameCount;
+		clientGlobalVariables.AbsoluteFrameTime = FrameTime;
+		clientGlobalVariables.IntervalPerTick = host_state.IntervalPerTick;
+#endif
+	}
+
+	double Remainder;
+	double FramesPerSecond;
+
+	void _RunFrame(double time) {
+		double prevRemainder;
+		bool shouldRender;
+		int numTicks;
+
+		AccumulateTime(time);
+		_SetGlobalTime();
+
+		shouldRender = !sv.IsDedicated();
+
+		prevRemainder = Remainder;
+		if (prevRemainder < 0)
+			prevRemainder = 0;
+
+		Remainder += FrameTime;
+		numTicks = 0;
+		if (Remainder >= host_state.IntervalPerTick) {
+			numTicks = (int)Math.Floor(Remainder / host_state.IntervalPerTick);
+			if (IsSinglePlayerGame() && false) { // alternateTicks!
+
+			}
+
+			Remainder -= (numTicks * host_state.IntervalPerTick);
+		}
+
+		NextTick = host_state.IntervalPerTick - Remainder;
+
+		Cbuf.Execute();
+		if (Net.Dedicated && !Net.IsMultiplayer())
+			Net.SetMultiplayer(true);
+
+		serverGlobalVariables.InterpolationAmount = 0;
+#if !SWDS
+		clientGlobalVariables.InterpolationAmount = 0;
+		cl.InSimulation = true;
+#endif
+
+		FrameTicks = numTicks;
+		CurrentFrameTick = 0;
+
+#if !SWDS
+		// engine tools?
+#endif
+
+#if !SWDS
+		if (!EngineThreads.IsThreadedEngine())
+#endif
+		{
+#if !SWDS
+			if (clientDLL != null)
+				clientDLL.IN_SetSampleTime(FrameTime);
+			clientGlobalVariables.SimTicksThisFrame = 1;
+#endif
+			cl.TickRemainder = Remainder;
+			serverGlobalVariables.SimTicksThisFrame = 1;
+			cl.SetFrameTime(FrameTime);
+			for (int tick = 0; tick < numTicks; tick++) {
+				double now = Sys.Time;
+				double jitter = now - IdealTime;
+				JitterHistory[JitterHistoryPos] = jitter;
+				JitterHistoryPos = (JitterHistoryPos + 1) % JitterHistory.Length;
+
+				if (Math.Abs(jitter) > 1.0)
+					IdealTime = now;
+				else
+					IdealTime = 0.99 * IdealTime + 0.01 * now;
+
+				Net.RunFrame(now);
+				bool finalTick = (tick == (numTicks - 1));
+				if (Net.Dedicated && !Net.IsMultiplayer())
+					Net.SetMultiplayer(true);
+
+				serverGlobalVariables.TickCount = sv.TickCount;
+				++TickCount;
+				++CurrentFrameTick;
+#if !SWDS
+				clientGlobalVariables.TickCount = cl.GetClientTickCount();
+				CL.CheckClientState();
+#endif
+				_RunFrame_Input(prevRemainder, finalTick);
+				prevRemainder = 0;
+				_RunFrame_Server(finalTick);
+				if (!sv.IsDedicated())
+					_RunFrame_Client(finalTick);
+				IdealTime += host_state.IntervalPerTick;
+				Net.SendQueuedPackets(); // ?
+			}
+
+			if (!sv.IsDedicated()) {
+				SetClientInSimulation(false);
+				clientGlobalVariables.InterpolationAmount = (cl.TickRemainder / host_state.IntervalPerTick);
+
+				CL.RunPrediction(PredictionReason.Normal);
+				CL.ApplyAddAngle();
+				CL.ExtraMouseUpdate(clientGlobalVariables.FrameTime);
+			}
+		}
+		else {
+			int clientTicks, serverTicks;
+			clientTicks = NumTicksLastFrame;
+			cl.TickRemainder = RemainderLastFrame;
+			cl.SetFrameTime(LastFrameTime);
+			if (clientDLL != null)
+				clientDLL.IN_SetSampleTime(LastFrameTime);
+
+			LastFrameTime = FrameTime;
+			
+			serverTicks = numTicks;
+
+			clientGlobalVariables.SimTicksThisFrame = clientTicks;
+			serverGlobalVariables.SimTicksThisFrame = serverTicks;
+			serverGlobalVariables.TickCount = sv.TickCount;
+
+			for (int tick = 0; tick < clientTicks; tick++) {
+				Net.RunFrame(Sys.Time);
+				bool finalTick = (tick == (clientTicks - 1));
+				
+				if (Net.Dedicated && !Net.IsMultiplayer())
+					Net.SetMultiplayer(true);
+
+				clientGlobalVariables.TickCount = cl.GetClientTickCount();
+
+				CL.CheckClientState();
+				Net.SendQueuedPackets();
+				if (!sv.IsDedicated())
+					_RunFrame_Client(finalTick);
+			}
+
+			SetClientInSimulation(false);
+			clientGlobalVariables.InterpolationAmount = (cl.TickRemainder / host_state.IntervalPerTick);
+
+			CL.RunPrediction(PredictionReason.Normal);
+			CL.ApplyAddAngle();
+			SetClientInSimulation(true);
+
+			long saveTick = clientGlobalVariables.TickCount;
+			for (int tick = 0; tick < serverTicks; tick++) {
+				++TickCount;
+				++CurrentFrameTick;
+				clientGlobalVariables.TickCount = TickCount;
+				bool finalTick = tick == (serverTicks - 1);
+				_RunFrame_Input(prevRemainder, finalTick);
+				prevRemainder = 0;
+				Net.RunFrame(Sys.Time);
+			}
+
+			SetClientInSimulation(false);
+
+			CL.ExtraMouseUpdate(clientGlobalVariables.FrameTime);
+
+			clientGlobalVariables.TickCount = saveTick;
+			NumTicksLastFrame = numTicks;
+			RemainderLastFrame = Remainder;
+
+			Net.SetTime(Sys.Time);
+			throw new Exception("We haven't done threaded engine yet...");
+		}
+
+		if (shouldRender) {
+			_RunFrame_Render();
+			_RunFrame_Sound();
+		}
+
+		if (!sv.IsDedicated()) {
+			ClientDLL.Update();
+		}
+
+		Speeds();
+		UpdateMapList();
+		FrameCount++;
+
+		PostFrameRate(FrameTime);
+	}
+
+	const double FPS_AVG_FRAC = 0.9;
+
+	private void PostFrameRate(double frameTime) {
+		frameTime = Math.Clamp(frameTime, 0.0001, 1.0);
+		double fps = 1.0 / frameTime;
+		FramesPerSecond = fps * FPS_AVG_FRAC + (1.0 - FPS_AVG_FRAC) * fps;
+	}
+
+	private void UpdateMapList() {
+
+	}
+
+	private void Speeds() {
+
+	}
+
+	private void _RunFrame_Render() {
+
+	}
+
+	private void _RunFrame_Sound() {
+
+	}
+
+	public void SetClientInSimulation(bool v) {
+
+	}
+
+	private void _RunFrame_Client(bool finalTick) {
+
+	}
+
+	private void _RunFrame_Server(bool finalTick) {
+
+	}
+
+	private void _RunFrame_Input(double prevRemainder, bool finalTick) {
+
+	}
+
+	public void RunFrame(double frameTime) {
+		_RunFrame(frameTime);
 	}
 
 	public void PostInit() {
 		var serverGameDLL = services.GetService<IServerGameDLL>();
 		if (serverGameDLL != null)
 			serverGameDLL.PostInit();
+		serverDLL = serverGameDLL;
 
 		var clientDLL = services.GetService<IBaseClientDLL>();
 		if (clientDLL != null)
 			clientDLL.PostInit();
+		this.clientDLL = clientDLL;
 	}
 
 	public void ReadConfiguration() {
@@ -71,12 +350,15 @@ public class Host(EngineParms host_parms, CommonHostState host_state, GameServer
 		var engineAPI = services.GetRequiredService<IEngineAPI>();
 		var hostState = services.GetRequiredService<IHostState>();
 		var CL = services.GetRequiredService<CL>();
-		var ClientDLL = services.GetRequiredService<ClientDLL>();
+		Sys = services.GetRequiredService<Sys>();
 
-		//engineAPI.InitSubsystem<Con>();
-		//engineAPI.InitSubsystem<Cbuf>();
-		//engineAPI.InitSubsystem<Cmd>();
-		//engineAPI.InitSubsystem<Cvar>();
+		clientGlobalVariables = services.GetRequiredService<ClientGlobalVariables>();
+		serverGlobalVariables = services.GetRequiredService<ServerGlobalVariables>();
+
+		Con = engineAPI.InitSubsystem<Con>()!;
+		Cbuf = engineAPI.InitSubsystem<Cbuf>()!;
+		Cmd = engineAPI.InitSubsystem<Cmd>()!;
+		Cvar = engineAPI.InitSubsystem<Cvar>()!;
 #if !SWDS
 		//engineAPI.InitSubsystem<Video>();
 #endif
@@ -84,12 +366,14 @@ public class Host(EngineParms host_parms, CommonHostState host_state, GameServer
 #if !SWDS
 		//engineAPI.InitSubsystem<Key>();
 #endif
-		engineAPI.InitSubsystem<Net>(dedicated);
+		Net = engineAPI.InitSubsystem<Net>(dedicated)!;
 		sv.Init(dedicated);
+		SV = services.GetRequiredService<SV>();
+		SV.InitGameDLL();
 #if !SWDS
 		if (!dedicated) {
-			engineAPI.InitSubsystem<CL>();
-			engineAPI.InitSubsystem<ClientDLL>();
+			CL = engineAPI.InitSubsystem<CL>()!;
+			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
 			// engineAPI.InitSubsystem<Scr>();
 			// engineAPI.InitSubsystem<Render>();
 			// engineAPI.InitSubsystem<Decal>();

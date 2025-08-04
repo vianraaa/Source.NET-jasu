@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,10 +14,28 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services)
 {
-	internal void Init() {
+	internal void ApplyAddAngle() {
 		throw new NotImplementedException();
 	}
+
+	internal void CheckClientState() {
+
+	}
+
+	internal void ExtraMouseUpdate(double frameTime) {
+		throw new NotImplementedException();
+	}
+
+	internal void Init() {
+
+	}
+
+	internal void RunPrediction(PredictionReason reason) {
+		
+	}
 }
+
+
 
 /// <summary>
 /// Loads and shuts down the client DLL
@@ -24,6 +44,10 @@ public class CL(IServiceProvider services)
 public class ClientDLL(IServiceProvider services, Sys Sys)
 {
 	public void Init() {
+
+	}
+
+	public void Update() {
 
 	}
 }

@@ -26,6 +26,10 @@ public class EngineBuilder : ServiceCollection
 		this.AddSingleton<Sys>();
 		this.AddSingleton<Host>();
 		this.AddSingleton<Net>();
+		this.AddSingleton<Cbuf>();
+		this.AddSingleton<Cmd>();
+		this.AddSingleton<Con>();
+		this.AddSingleton<Cvar>();
 		this.AddSingleton<IHostState, HostState>();
 		this.AddSingleton<CommonHostState>();
 		this.AddSingleton<EngineParms>();
@@ -33,6 +37,8 @@ public class EngineBuilder : ServiceCollection
 		// Client state and server state singletons
 		this.AddSingleton<ClientState>();
 		this.AddSingleton<GameServer>();
+		this.AddSingleton<ClientGlobalVariables>();
+		this.AddSingleton<ServerGlobalVariables>();
 		// Singleton implementations of IEngineAPI and IEngine
 		this.AddSingleton<IEngineAPI, EngineAPI>();
 		this.AddSingleton<IEngine, GameEngine>();

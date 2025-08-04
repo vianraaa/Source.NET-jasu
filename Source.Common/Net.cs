@@ -689,7 +689,7 @@ public class Net {
 	public bool Dedicated { get; private set; }
 
 	public void SetDedicated() {
-
+		Dedicated = true;
 	}
 
 	public void ClearLoopbackBuffers() {
@@ -942,5 +942,9 @@ public class Net {
 
 	public static unsafe void SendLoopPacket(NetSocketType sock, int length, byte[] data, NetAddress? to) {
 		throw new NotImplementedException();
+	}
+
+	public void SendQueuedPackets() {
+
 	}
 }

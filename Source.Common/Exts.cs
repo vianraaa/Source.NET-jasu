@@ -35,9 +35,9 @@ namespace Source
 			return true;
 		}
 
-		public static bool InitSubsystem<T>(this IEngineAPI api, params object?[] parms) where T : class
+		public static T? InitSubsystem<T>(this IEngineAPI api, params object?[] parms) where T : class
 			=> InitSubsystem<T>(api, out _, parms);
-		public static bool InitSubsystem<T>(this IEngineAPI api, [NotNullWhen(false)] out string? error, params object?[] parms)
+		public static T? InitSubsystem<T>(this IEngineAPI api, out string? error, params object?[] parms)
 			where T : class {
 			// Argument types for the method call.
 			var argTypes = parms.Select(arg => arg?.GetType() ?? typeof(object)).ToImmutableArray();
@@ -53,18 +53,18 @@ namespace Source
 			// No method, no success
 			if (method == null) {
 				error = $"The subsystem '{typeof(T).Name}' does not contain method Init({string.Join(", ", argTypes.Select(x => x.Name))})";
-				return false;
+				return null;
 			}
 			// If the method returns booleans, return whatever the call provides
 			if (method.ReturnType == typeof(bool)) {
 				bool ok = (bool)(method.Invoke(instance, parms) ?? true);
 				error = ok ? null : $"The subsystem '{typeof(T).Name}' failed to initialize.";
-				return ok;
+				return ok ? instance : null;
 			}
 			// Method invoke, return true
 			method.Invoke(instance, parms);
 			error = null;
-			return true;
+			return instance;
 		}
 	}
 	public static class UnmanagedUtils

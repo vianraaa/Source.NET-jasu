@@ -7,7 +7,11 @@ namespace Source.Engine;
 /// </summary>
 public class SV(IServiceProvider services)
 {
+	internal void InitGameDLL() {
+
+	}
+
 	internal void ShutdownGameDLL() {
-		throw new NotImplementedException();
+
 	}
 }

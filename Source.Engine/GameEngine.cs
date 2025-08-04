@@ -1,6 +1,7 @@
 ﻿using Source.Common;
 using Source.Engine.Server;
 
+using static Source.Constants;
 using static Source.Dbg;
 
 namespace Source.Engine;
@@ -10,8 +11,25 @@ public class GameEngine : IEngine
 	readonly Sys Sys;
 	readonly GameServer sv;
 	readonly IHostState HostState;
-	bool FilterTime(double t) {
-		return false;
+	readonly Host Host;
+	private bool FilterTime(double dt) {
+		if (sv.IsDedicated()) {
+			MinFrameTime = Host.NextTick;
+			return dt >= Host.NextTick;
+		}
+
+		MinFrameTime = 0;
+		double fps = 60; // todo: implement convar
+		if (fps > 0) {
+			fps = Math.Clamp(fps, MIN_FPS, MAX_FPS);
+			double minFrametime = 1 / fps;
+			MinFrameTime = minFrametime;
+
+			if (dt < minFrametime)
+				return false;
+		}
+
+		return true;
 	}
 
 	IEngine.Quit Quitting;
@@ -27,10 +45,11 @@ public class GameEngine : IEngine
 	double LastRemainder;
 	bool CatchupTime;
 
-	public GameEngine(Sys Sys, IHostState HostState, GameServer sv) {
+	public GameEngine(Sys Sys, IHostState HostState, GameServer sv, Host Host) {
 		this.Sys = Sys;
 		this.HostState = HostState;
 		this.sv = sv;
+		this.Host = Host;
 
 		State = IEngine.State.Inactive;
 		NextState = IEngine.State.Inactive;
@@ -127,7 +146,7 @@ public class GameEngine : IEngine
 	}
 
 	public IEngine.Quit GetQuitting() {
-		throw new NotImplementedException();
+		return Quitting;
 	}
 
 	public void SetQuitting(IEngine.Quit quitType) {

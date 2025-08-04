@@ -4,5 +4,6 @@
 /// Interface exposed from the client DLL back to the engine
 /// </summary>
 public interface IBaseClientDLL {
-	public void PostInit();
+	void IN_SetSampleTime(double frameTime);
+	void PostInit();
 }
