@@ -1,4 +1,6 @@
-﻿namespace Source.Common;
+﻿using Source.Common.Bitbuffers;
+
+namespace Source.Common;
 
 public interface IInput {
 	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active);

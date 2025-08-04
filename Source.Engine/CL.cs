@@ -9,7 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using static Source.Constants;
-using static Source.Protocol;
+using static Source.Common.Networking.Protocol;
+using Source.Common.Networking;
 
 namespace Source.Engine;
 

@@ -1,4 +1,6 @@
-﻿namespace Source.Common;
+﻿using Source.Common.Networking;
+
+namespace Source.Common;
 
 public interface IServer : IConnectionlessPacketHandler
 {

@@ -11,4 +11,9 @@
 		<PackageReference Include="Snappier" Version="1.2.0" />
 		<PackageReference Include="Steamworks.NET" Version="20.1.0" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Client\" />
+	  <Folder Include="Server\" />
+	</ItemGroup>
 </Project>

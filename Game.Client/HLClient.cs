@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Bitbuffers;
 
 namespace Game.Client;
 

@@ -1,4 +1,6 @@
-﻿namespace Source.Common;
+﻿using Source.Common.Bitbuffers;
+
+namespace Source.Common;
 
 /// <summary>
 /// Interface exposed from the client DLL back to the engine
