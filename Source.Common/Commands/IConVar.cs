@@ -11,5 +11,5 @@ public interface IConVar {
 	public string GetName();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsFlagSet(ConVarFlags flag);
+	public bool IsFlagSet(FCvar flag);
 }

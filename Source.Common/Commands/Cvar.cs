@@ -3,6 +3,12 @@ using System.Reflection;
 
 namespace Source.Common.Commands;
 
+/// <summary>
+/// Indicates the field or property will be constructed as a convar
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+public class ConVarAttribute : Attribute;
+
 public class Cvar : ICvar
 {
 	public event FnChangeCallback? Changed;
@@ -47,7 +53,7 @@ public class Cvar : ICvar
 
 	public IEnumerable<ConCommandBase> GetCommands() {
 		ConCommandBase? command = ConCommandList;
-		while(command != null) {
+		while (command != null) {
 			yield return command;
 			command = command.Next;
 		}
@@ -78,6 +84,7 @@ public class Cvar : ICvar
 				ConVar childVar = (ConVar)variable;
 				ConVar parentVar = (ConVar)other;
 				Dbg.Warning("Linking ConVar's is currently not implemented...\n");
+				throw new Exception();
 			}
 
 			variable.Next = null;
@@ -120,9 +127,9 @@ public class Cvar : ICvar
 	public void UnregisterConCommands(Assembly sourceAssembly) {
 		ConCommandBase? newList = null;
 		ConCommandBase? command = ConCommandList;
-		while(command != null) {
+		while (command != null) {
 			ConCommandBase? next = command.Next;
-			if(command.Assembly != sourceAssembly) {
+			if (command.Assembly != sourceAssembly) {
 				command.Next = newList;
 				newList = command;
 			}

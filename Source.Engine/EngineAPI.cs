@@ -1,6 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common.Commands;
 using Source.Common.Engine;
+
+using System.Reflection;
+
+using System.Runtime.CompilerServices;
 
 using static Source.Dbg;
 
@@ -37,6 +42,7 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 	}
 
 	public IEngineAPI.Result Run() {
+		ConVar_Register();
 		return RunListenServer();
 	}
 
@@ -75,5 +81,112 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 				case IEngine.Quit.Restart: return true;
 			}
 		}
+	}
+
+	static IEnumerable<Type> safeTypeGet(Assembly assembly) {
+		IEnumerable<Type?> types;
+		try {
+			types = assembly.GetTypes();
+		}
+		catch (ReflectionTypeLoadException e) {
+			types = e.Types;
+		}
+		foreach (var t in types.Where(t => t != null))
+			yield return t!;
+	}
+	void ConVar_Register() {
+		ICvar cvar = this.GetRequiredService<ICvar>();
+		var types = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(safeTypeGet);
+
+		foreach (var type in types) {
+			cvar.SetAssemblyIdentifier(type.Assembly);
+
+			var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+			var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+			var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+
+			// If any props/fields exist, run the cctor so we can pull out static cvars/concmds
+			if (props.Any() || fields.Any())
+				RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+
+			foreach (var prop in props.Where(x => x.GetCustomAttribute<ConVarAttribute>() != null)) {
+				var getMethod = prop.GetGetMethod();
+
+				if (getMethod == null)
+					continue;
+
+				if (getMethod.IsStatic)
+					// Pull a static reference out to link
+					cvar.RegisterConCommand((ConVar)getMethod.Invoke(null, null)!);
+				else {
+					object? instance = DetermineInstance(type);
+					cvar.RegisterConCommand((ConVar)getMethod.Invoke(instance, null)!);
+				}
+			}
+
+			foreach (var field in fields.Where(x => x.GetCustomAttribute<ConVarAttribute>() != null)) {
+				if (field.IsStatic)
+					// Pull a static reference out to link
+					cvar.RegisterConCommand((ConVar)field.GetValue(null)!);
+				else {
+					object? instance = DetermineInstance(type);
+					cvar.RegisterConCommand((ConVar)field.GetValue(instance)!);
+				}
+			}
+
+			foreach (var method in methods.Where(x => x.GetCustomAttribute<ConCommandAttribute>() != null)) {
+				ConCommandAttribute attribute = method.GetCustomAttribute<ConCommandAttribute>()!; // ^^ never null!
+				object? instance = method.IsStatic ? null : DetermineInstance(type);
+
+				// Lets see if we can find a FnCommandCompletionCallback...
+				MethodInfo? completionMethod = attribute.AutoCompleteMethod == null
+					? null
+					: type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+						.Where(x =>
+							x.Name == attribute.AutoCompleteMethod
+							&& x.GetParameters().Length == 1
+							&& x.GetParameters()[0].ParameterType == typeof(string)
+							&& x.ReturnParameter.ParameterType == typeof(IEnumerable<string>)
+							)
+						.First();
+
+				FnCommandCompletionCallback? completionCallback = null;
+				if (completionMethod != null) {
+					if (completionMethod.IsStatic)
+						completionCallback = completionMethod.CreateDelegate<FnCommandCompletionCallback>();
+					else
+						completionCallback = completionMethod.CreateDelegate<FnCommandCompletionCallback>(instance);
+				}
+
+				// Construct a new ConCommand
+				ConCommand cmd;
+				if (method.GetParameters().Length == 0)
+					cmd = new ConCommand(attribute.Name, method.CreateDelegate<FnCommandCallbackVoid>(instance), attribute.HelpText, attribute.Flags, completionCallback);
+				else if (method.GetParameters().Length == 1 && method.GetParameters().First().ParameterType == typeof(TokenizedCommand))
+					cmd = new ConCommand(attribute.Name, method.CreateDelegate<FnCommandCallback>(instance), attribute.HelpText, attribute.Flags, completionCallback);
+				else
+					throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
+
+				cvar.RegisterConCommand(cmd);
+			}
+		}
+	}
+
+	private object? DetermineInstance(Type type) {
+		// We need to find an appropriate instance of the type in question.
+		// If it's not registered with the dependency injection framework, then we can't really link anything
+		// Should've made it static...
+		object? instance = GetService(type);
+
+		// As a last resort, try pulling at interface types.
+		if (instance == null) {
+			foreach (var iface in type.GetInterfaces()) {
+				instance = GetService(iface);
+				if (instance != null)
+					return instance;
+			}
+		}
+		throw new DllNotFoundException("Cannot find an instance of the type...");
 	}
 }

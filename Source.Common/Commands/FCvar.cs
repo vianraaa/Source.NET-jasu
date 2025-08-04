@@ -1,6 +1,6 @@
 ﻿namespace Source.Common.Commands;
 
-public enum ConVarFlags
+public enum FCvar
 {
 	None = 0,
 	Unregistered = 1 << 0,

@@ -1,4 +1,5 @@
-﻿using Source.Common.Engine;
+﻿using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Engine.Server;
 
 using static Source.Constants;
@@ -8,6 +9,11 @@ namespace Source.Engine;
 
 public class GameEngine : IEngine
 {
+	const string DEFAULT_FPS_MAX_S = "300";
+
+	[ConVar]
+	ConVar fps_max = new("fps_max", DEFAULT_FPS_MAX_S, FCvar.NotConnected, )
+
 	readonly Sys Sys;
 	readonly GameServer sv;
 	readonly IHostState HostState;
