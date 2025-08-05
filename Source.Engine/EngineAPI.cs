@@ -91,7 +91,7 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 		catch (ReflectionTypeLoadException e) {
 			types = e.Types;
 		}
-		foreach (var t in types.Where(t => t != null))
+		foreach (var t in types.Where(t => t != null && t.Assembly.GetName().Name != "Steamworks.NET"))
 			yield return t!;
 	}
 	void ConVar_Register() {
@@ -110,7 +110,7 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 			if (props.Any() || fields.Any())
 				RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 
-			foreach (var prop in props.Where(x => x.GetCustomAttribute<ConVarAttribute>() != null)) {
+			foreach (var prop in props.Where(x => x.PropertyType == typeof(ConVar))) {
 				var getMethod = prop.GetGetMethod();
 
 				if (getMethod == null)
@@ -119,17 +119,17 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 				if (getMethod.IsStatic)
 					// Pull a static reference out to link
 					cvar.RegisterConCommand((ConVar)getMethod.Invoke(null, null)!);
-				else {
+				else if (type != typeof(ConVar)) {
 					object? instance = DetermineInstance(type);
 					cvar.RegisterConCommand((ConVar)getMethod.Invoke(instance, null)!);
 				}
 			}
 
-			foreach (var field in fields.Where(x => x.GetCustomAttribute<ConVarAttribute>() != null)) {
+			foreach (var field in fields.Where(x => x.FieldType == typeof(ConVar))) {
 				if (field.IsStatic)
 					// Pull a static reference out to link
 					cvar.RegisterConCommand((ConVar)field.GetValue(null)!);
-				else {
+				else if (type != typeof(ConVar)) {
 					object? instance = DetermineInstance(type);
 					cvar.RegisterConCommand((ConVar)field.GetValue(instance)!);
 				}

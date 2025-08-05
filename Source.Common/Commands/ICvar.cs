@@ -23,7 +23,7 @@ public interface ICvar
 
 	public ConCommandBase? FindCommandBase(string name);
 	public ConVar? FindVar(string name);
-	public ConCommand FindCommand(string name);
+	public ConCommand? FindCommand(string name);
 
 	public IEnumerable<ConCommandBase> GetCommands();
 

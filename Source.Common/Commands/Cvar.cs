@@ -3,13 +3,7 @@ using System.Reflection;
 
 namespace Source.Common.Commands;
 
-/// <summary>
-/// Indicates the field or property will be constructed as a convar
-/// </summary>
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public class ConVarAttribute : Attribute;
-
-public class Cvar : ICvar
+public class Cvar(ICommandLine CommandLine) : ICvar
 {
 	public event FnChangeCallback? Changed;
 	List<IConsoleDisplayFunc> DisplayFuncs = [];
@@ -35,20 +29,32 @@ public class Cvar : ICvar
 			func.Print(args == null ? format : string.Format(format, args));
 	}
 
-	public ConCommand FindCommand(string name) {
-		throw new NotImplementedException();
+	public ConCommand? FindCommand(string name) {
+		ConCommandBase? var = FindCommandBase(name);
+		if (var == null || !var.IsCommand())
+			return null;
+
+		return (ConCommand)var!;
 	}
 
 	public ConCommandBase? FindCommandBase(string name) {
-		throw new NotImplementedException();
+		foreach (var cmd in GetCommands())
+			if (cmd.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				return cmd;
+
+		return null;
 	}
 
 	public ConVar? FindVar(string name) {
-		throw new NotImplementedException();
+		ConCommandBase? var = FindCommandBase(name);
+		if (var == null || var.IsCommand())
+			return null;
+
+		return (ConVar)var!;
 	}
 
 	public string? GetCommandLineValue(string variableName) {
-		throw new NotImplementedException();
+		return CommandLine.ParmValue($"+{variableName}", null);
 	}
 
 	public IEnumerable<ConCommandBase> GetCommands() {

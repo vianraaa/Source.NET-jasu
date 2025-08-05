@@ -11,8 +11,7 @@ public class GameEngine : IEngine
 {
 	const string DEFAULT_FPS_MAX_S = "300";
 
-	[ConVar]
-	ConVar fps_max = new("fps_max", DEFAULT_FPS_MAX_S, FCvar.NotConnected, )
+	ConVar fps_max = new("fps_max", DEFAULT_FPS_MAX_S, FCvar.NotConnected, "Frame rate limiter, cannot be set");
 
 	readonly Sys Sys;
 	readonly GameServer sv;

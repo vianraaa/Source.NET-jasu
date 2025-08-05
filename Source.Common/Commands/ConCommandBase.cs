@@ -18,12 +18,12 @@ public class ConCommandBase
 	}
 
 	public virtual bool IsCommand() => false;
-	public bool IsFlagSet(FCvar flag) => (Flags & flag) == flag;
-	public void AddFlags(FCvar flags) => Flags |= flags;
-	public string GetName() => Name;
-	public string? GetHelpText() => HelpString;
+	public virtual bool IsFlagSet(FCvar flag) => (Flags & flag) == flag;
+	public virtual void AddFlags(FCvar flags) => Flags |= flags;
+	public virtual string GetName() => Name;
+	public virtual string? GetHelpText() => HelpString;
 	public ConCommandBase? GetNext() => Next;
-	public bool IsRegistered() => Registered;
+	public virtual bool IsRegistered() => Registered;
 
 	protected virtual void CreateBase(string name, string? helpString = null, FCvar flags = 0) {
 		Registered = false;
