@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Nucleus.FileSystem;
+
 using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Common.Networking;
 using Source.Common.Server;
 using Source.Engine.Client;
@@ -60,6 +63,9 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
 		this.AddSingleton<CvarUtilities>();
+		// Engine components, individually...
+		this.AddSingleton<IFileSystem, BaseFileSystem>();
+		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<IHostState, HostState>();
 		this.AddSingleton<CommonHostState>();

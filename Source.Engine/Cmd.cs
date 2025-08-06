@@ -173,10 +173,52 @@ public class Cmd(IEngineAPI provider)
 		}
 	}
 	
+	static bool IsValidFileExtension(ReadOnlySpan<char> filename) {
+		if (filename == null)
+			return false;
+
+		if(
+			filename.Contains(".exe", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".vbs", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".com", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".bat", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".dll", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".ini", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".gcf", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".sys", StringComparison.OrdinalIgnoreCase) ||
+			filename.Contains(".blob", StringComparison.OrdinalIgnoreCase)
+		)
+			return false;
+
+		return true;
+	}
+
 	[ConCommand(helpText: "Execute script file.")]
 	void exec(in TokenizedCommand args) {
-		lock (Cbuf.CommandBuffer) {
+		lock (Cbuf.Buffer) {
+			Span<char> fileName = stackalloc char[260];
+			int argc = args.ArgC();
+			if(argc != 2) {
+				Dbg.ConMsg("exec <filename>: execute a script file\n");
+				return;
+			}
 
+			ReadOnlySpan<char> file = args[1];
+			ReadOnlySpan<char> pathID = "MOD";
+
+			if (!COM.IsValidPath(fileName)) {
+				Dbg.ConMsg("exec %s: invalid path.\n");
+				return;
+			}
+
+			if (!IsValidFileExtension(fileName)) {
+				Dbg.ConMsg("exec %s: invalid file type.\n");
+				return;
+			}
+
+			if (true) {
+
+			}
 		}
 	}
 
