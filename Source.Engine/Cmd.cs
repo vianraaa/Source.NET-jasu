@@ -7,6 +7,7 @@ using Source.Engine.Client;
 using Source.Engine.Server;
 
 using System;
+using System.Text;
 
 namespace Source.Engine;
 
@@ -88,7 +89,7 @@ public class Cmd(IEngineAPI provider)
 
 				// development only stuff
 
-				Dispatch(commandBase, command);
+				Dispatch(commandBase, in command);
 				return commandBase;
 			}
 		}
@@ -115,8 +116,9 @@ public class Cmd(IEngineAPI provider)
 		throw new NotImplementedException();
 	}
 
-	private void Dispatch(ConCommandBase commandBase, TokenizedCommand command) {
-		
+	private void Dispatch(ConCommandBase commandBase, in TokenizedCommand command) {
+		ConCommand conCommand = (ConCommand)commandBase;
+		conCommand.Dispatch(in command);
 	}
 
 	public bool ShouldPreventClientCommand(ConCommandBase? cmd) {
@@ -130,5 +132,49 @@ public class Cmd(IEngineAPI provider)
 		}
 
 		return false;
+	}
+
+	[ConCommand(helpText: "Parses and stuffs command line + commands to command buffer.")]
+	void stuffcmds(in TokenizedCommand args) {
+		if(args.ArgC() != 1) {
+			Dbg.ConMsg("stuffcmds: execute command line parameters\n");
+			return;
+		}
+
+		StringBuilder build = new();
+		for (int i = 1; i < CommandLine.ParmCount(); i++) {
+			ReadOnlySpan<char> parm = CommandLine.GetParm(i);
+			if (parm == null) continue;
+
+			if (parm[0] == '-') {
+				ReadOnlySpan<char> value = CommandLine.ParmValueByIndex(i);
+				if (value != null)
+					i++;
+				continue;
+			}
+			if (parm[0] == '+') {
+				ReadOnlySpan<char> value = CommandLine.ParmValueByIndex(i);
+				if(value != null) {
+					build.Append($"{parm[1..]} {value}\n");
+					i++;
+				}
+				else {
+					build.Append(parm[1..]);
+					build.Append('\n');
+				}
+			}
+			else {
+				ReadOnlySpan<char> translated = TranslateFileAssociation(CommandLine.GetParm(i));
+				if(translated != null) {
+					build.Append(translated);
+					build.Append('\n');
+				}
+			}
+		}
+	}
+
+	private ReadOnlySpan<char> TranslateFileAssociation(string v) {
+		// do later!
+		return null;
 	}
 }

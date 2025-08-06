@@ -12,6 +12,27 @@ namespace Source.Engine;
 
 public class CommandBuffer
 {
+	public const int ARGS_BUFFER_LENGTH = 2 << 13;
+
+	struct Command {
+		int Tick;
+		int FirstArgS;
+		nint BufferSize;
+	}
+
+	char[] argsBuffer = new char[ARGS_BUFFER_LENGTH];
+
+	nint lastUsedArgSize;
+	nint argBufferSize;
+	long currentTick;
+	long lastTickToProcess;
+	long waitDelayTicks;
+	nint nextCommand;
+	bool isProcessingCommands;
+	bool waitEnabled;
+
+	TokenizedCommand currentCommand;
+
 	public bool DequeueNextCommand() {
 		return true;
 	}
@@ -20,13 +41,19 @@ public class CommandBuffer
 		return new();
 	}
 
-	public void BeginProcessingCommands() {
+	public bool AddText(ReadOnlySpan<char> text, int tickDelay = 0) {
 
+	}
+
+	public void BeginProcessingCommands() {
+		isProcessingCommands = true;
 	}
 
 	public void EndProcessingCommands() {
-
+		isProcessingCommands = false;
 	}
+
+	public bool IsProcessingCommands() => isProcessingCommands;
 }
 
 public class Cbuf(IServiceProvider provider)
@@ -41,11 +68,21 @@ public class Cbuf(IServiceProvider provider)
 	public void Shutdown() { }
 
 	public void ExecuteCommand(in TokenizedCommand command, CommandSource source, int clientSlot = -1) {
-		Cmd.ExecuteCommand(command, source);
+		Cmd.ExecuteCommand(in command, source);
+	}
+
+	public void AddText(ReadOnlySpan<char> text) {
+		lock (Buffer) {
+			if (!Buffer.AddText(text))
+				Dbg.ConMsg("CBuf.AddText: buffer overflow;\n");
+		}
 	}
 
 	public void InsertText(ReadOnlySpan<char> text) {
-
+		lock (Buffer) {
+			Dbg.Assert(Buffer.IsProcessingCommands());
+			AddText(text);
+		}
 	}
 
 	public void Execute() {
