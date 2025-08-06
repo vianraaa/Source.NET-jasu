@@ -172,6 +172,13 @@ public class Cmd(IEngineAPI provider)
 			}
 		}
 	}
+	
+	[ConCommand(helpText: "Execute script file.")]
+	void exec(in TokenizedCommand args) {
+		lock (Cbuf.CommandBuffer) {
+
+		}
+	}
 
 	private ReadOnlySpan<char> TranslateFileAssociation(string v) {
 		// do later!

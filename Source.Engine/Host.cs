@@ -401,6 +401,8 @@ public class Host(
 		ReadConfiguration();
 		// engineAPI.InitSubsystem<Sound>();
 #endif
+		Cbuf.AddText("exec valve.rc");
+
 		Initialized = true;
 		hostState.Init();
 
