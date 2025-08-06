@@ -3,6 +3,7 @@
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
@@ -11,7 +12,7 @@ using System.Text;
 
 namespace Source.Engine;
 
-public class Cmd(IEngineAPI provider)
+public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 {
 	public const string CMDSTR_ADD_EXECUTION_MARKER = "[$&*,`]";
 
@@ -198,7 +199,6 @@ public class Cmd(IEngineAPI provider)
 	[ConCommand(helpText: "Execute script file.")]
 	void exec(in TokenizedCommand args) {
 		lock (Cbuf.Buffer) {
-			Span<char> fileName = stackalloc char[260];
 			int argc = args.ArgC();
 			if(argc != 2) {
 				Dbg.ConMsg("exec <filename>: execute a script file\n");
@@ -208,18 +208,35 @@ public class Cmd(IEngineAPI provider)
 			ReadOnlySpan<char> file = args[1];
 			ReadOnlySpan<char> pathID = "MOD";
 
-			if (!COM.IsValidPath(fileName)) {
+			if (!COM.IsValidPath(file)) {
 				Dbg.ConMsg("exec %s: invalid path.\n");
 				return;
 			}
 
-			if (!IsValidFileExtension(fileName)) {
+			if (!IsValidFileExtension(file)) {
 				Dbg.ConMsg("exec %s: invalid file type.\n");
 				return;
 			}
 
 			if (true) {
+				if (fileSystem.FileExists(file)) {
+					long size = fileSystem.Size(file);
+					if(size > 1 * 1024 * 1024) {
+						Dbg.ConMsg($"exec {file}: file size larger than 1 MiB!\n");
+						return;
+					}
+				}
+				else {
+					Dbg.ConMsg($"'{file}' not present; not executing.");
+					return;
+				}
+			}
 
+			using var execFile = fileSystem.Open(file, FileOpenOptions.Read, pathID);
+			Dbg.ConDMsg($"execing {file}\n");
+			// check to make sure we're not going to overflow later
+			while (true) {
+				
 			}
 		}
 	}

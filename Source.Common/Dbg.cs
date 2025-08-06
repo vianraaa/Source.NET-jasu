@@ -62,9 +62,9 @@ public static class Dbg
 
 	static readonly ThreadLocal<SpewInfo?> SpewInfo = new();
 
-	static readonly string GROUP_DEVELOPER = "developer";
-	static readonly string GROUP_CONSOLE = "console";
-	static readonly string GROUP_NETWORK = "network";
+	public static readonly string GROUP_DEVELOPER = "developer";
+	public static readonly string GROUP_CONSOLE = "console";
+	public static readonly string GROUP_NETWORK = "network";
 
 	static readonly ConcurrentDictionary<string, SpewGroup> SpewGroups = [];
 

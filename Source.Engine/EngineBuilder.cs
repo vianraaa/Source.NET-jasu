@@ -48,6 +48,9 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 	public EngineAPI Build(bool dedicated) {
 		// We got the ICommandLine from EngineBuilder, insert it into the app system
 		this.AddSingleton(cmdLine);
+		// temp
+		Dbg.SpewActivate(Dbg.GROUP_DEVELOPER, 1);
+		Dbg.SpewActivate(Dbg.GROUP_CONSOLE, 1);
 		// Internal methods. These are class instances for better restart
 		// support, and I feel like every time I try this, I end up getting
 		// "static creep" where I start to revert like a primate into using

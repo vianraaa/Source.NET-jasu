@@ -22,21 +22,14 @@ public interface IBaseFileSystem
 	/// </code></param>
 	/// <param name="pathID"></param>
 	/// <returns></returns>
-	public IFileHandle? Open(string fileName, FileOpenOptions options, string? pathID = null);
-	/// <summary>
-	/// Checks if the file exists.
-	/// </summary>
-	/// <param name="fileName">The file name.</param>
-	/// <param name="pathID">The search path ID.</param>
-	/// <returns>True if the file exists, and vice versa.</returns>
-	public bool Exists(string fileName, string? pathID = null);
+	public IFileHandle? Open(ReadOnlySpan<char> fileName, FileOpenOptions options, ReadOnlySpan<char> pathID);
 	/// <summary>
 	/// Checks if the file is writable.
 	/// </summary>
 	/// <param name="fileName">The file name.</param>
 	/// <param name="pathID">The search path ID.</param>
 	/// <returns>True if the file is writable, and vice versa.</returns>
-	public bool IsFileWritable(string fileName, string? pathID = null);
+	public bool IsFileWritable(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
 	/// <summary>
 	/// Tries to set the file as writable.
 	/// </summary>
@@ -44,9 +37,16 @@ public interface IBaseFileSystem
 	/// <param name="writable">Is it writable?</param>
 	/// <param name="pathID">The search path ID.</param>
 	/// <returns>True if the operation succeded, and false if it didn't.</returns>
-	public bool SetFileWritable(string fileName, bool writable, string? pathID = null);
-	public long Size(string fileName, string? pathID = null);
-	public DateTime Time(string fileName, string? pathID = null);
+	public bool SetFileWritable(ReadOnlySpan<char> fileName, bool writable, ReadOnlySpan<char> pathID);
+	public long Size(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
+	public DateTime Time(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
+	public bool FileExists(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
+
+
+	// I can't default these :/
+	public long Size(ReadOnlySpan<char> fileName) => Size(fileName, null);
+	public DateTime Time(ReadOnlySpan<char> fileName) => Time(fileName, null);
+	public bool FileExists(ReadOnlySpan<char> fileName) => FileExists(fileName, null);
 }
 
 public interface IFileSystem : IBaseFileSystem
@@ -58,13 +58,13 @@ public interface IFileSystem : IBaseFileSystem
 	/// <param name="path"></param>
 	/// <param name="pathID"></param>
 	/// <param name="addType"></param>
-	public void AddSearchPath(string path, string pathID, SearchPathAdd addType = SearchPathAdd.ToTail);
+	public void AddSearchPath(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType = SearchPathAdd.ToTail);
 	/// <summary>
 	/// Remove a search path.
 	/// </summary>
 	/// <param name="path"></param>
 	/// <param name="pathID"></param>
-	public bool RemoveSearchPath(string path, string pathID);
+	public bool RemoveSearchPath(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID);
 	/// <summary>
 	/// Remove all search paths.
 	/// </summary>
@@ -73,7 +73,7 @@ public interface IFileSystem : IBaseFileSystem
 	/// Remove all search paths associated with a given path ID.
 	/// </summary>
 	/// <param name="pathID"></param>
-	public void RemoveSearchPaths(string pathID);
+	public void RemoveSearchPaths(ReadOnlySpan<char> pathID);
 
 	/// <summary>
 	/// Marks a path ID by request only, which means files inside of it will only be accessed if the path ID is specifically requested.<br/>
@@ -82,9 +82,9 @@ public interface IFileSystem : IBaseFileSystem
 	/// </summary>
 	/// <param name="pathID"></param>
 	/// <param name="requestOnly"></param>
-	public void MarkPathIDByRequestOnly(string pathID, bool requestOnly);
+	public void MarkPathIDByRequestOnly(ReadOnlySpan<char> pathID, bool requestOnly);
 
-	public bool RemoveFile(string relativePath, string? pathID = null);
-	public bool RenameFile(string oldPath, string newPath, string? pathID = null);
-	public bool IsDirectory(string fileName, string? pathID = null);
+	public bool RemoveFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID);
+	public bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath, ReadOnlySpan<char> pathID);
+	public bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
 }

@@ -29,24 +29,24 @@ public class DiskFileHandle(IBaseFileSystem filesystem, FileStream data) : IFile
 public abstract class SearchPath
 {
 	public string? DiskPath { get; private set; }
-	public void SetPath(string diskPath) {
-		DiskPath = diskPath;
+	public void SetPath(ReadOnlySpan<char> diskPath) {
+		DiskPath = new(diskPath);
 	}
 
-	public abstract bool Exists(string path); // Returns if the file or directory exists
-	public abstract bool IsDirectory(string path); // Returns true if the path is a directory
-	public abstract bool IsFileWritable(string path); // Returns true if the path can be written to
-	public abstract IFileHandle? Open(string path, FileOpenOptions options); // Can return null if something went wrong
-	public abstract bool RemoveFile(string path); // Return true if the file was deleted
-	public abstract bool RenameFile(string oldPath, string newPath); // Renames a single file, returns true if it worked
-	public abstract bool SetFileWritable(string path, bool writable); // Determines if the file is writable
-	public abstract long Size(string path); // Gets the size of a file
+	public abstract bool Exists(ReadOnlySpan<char> path); // Returns if the file or directory exists
+	public abstract bool IsDirectory(ReadOnlySpan<char> path); // Returns true if the path is a directory
+	public abstract bool IsFileWritable(ReadOnlySpan<char> path); // Returns true if the path can be written to
+	public abstract IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options); // Can return null if something went wrong
+	public abstract bool RemoveFile(ReadOnlySpan<char> path); // Return true if the file was deleted
+	public abstract bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath); // Renames a single file, returns true if it worked
+	public abstract bool SetFileWritable(ReadOnlySpan<char> path, bool writable); // Determines if the file is writable
+	public abstract long Size(ReadOnlySpan<char> path); // Gets the size of a file
 	/// <summary>
 	/// Gets the last modified time of a file (UTC)
 	/// </summary>
 	/// <param name="path"></param>
 	/// <returns></returns>
-	public abstract DateTime Time(string path);
+	public abstract DateTime Time(ReadOnlySpan<char> path);
 }
 
 public class SearchPathCollection : List<SearchPath>
@@ -112,17 +112,17 @@ public class DiskSearchPath : SearchPath
 		SetPath(absPath);
 	}
 
-	private string GetAbsPath(string relPath) => Path.Combine(DiskPath!, relPath);
+	private string GetAbsPath(ReadOnlySpan<char> relPath) => Path.Combine(DiskPath!, new(relPath));
 
-	public override bool Exists(string path) => Path.Exists(GetAbsPath(path));
-	public override bool IsDirectory(string path) => Directory.Exists(GetAbsPath(path));
+	public override bool Exists(ReadOnlySpan<char> path) => Path.Exists(GetAbsPath(path));
+	public override bool IsDirectory(ReadOnlySpan<char> path) => Directory.Exists(GetAbsPath(path));
 
-	public override bool IsFileWritable(string path) {
+	public override bool IsFileWritable(ReadOnlySpan<char> path) {
 		var info = new FileInfo(GetAbsPath(path));
 		return info.Exists && !info.IsReadOnly;
 	}
 
-	public override IFileHandle? Open(string path, FileOpenOptions options) {
+	public override IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options) {
 		string absPath = GetAbsPath(path);
 		var info = new FileInfo(absPath);
 
@@ -157,7 +157,7 @@ public class DiskSearchPath : SearchPath
 		}
 	}
 
-	public override bool RemoveFile(string path) {
+	public override bool RemoveFile(ReadOnlySpan<char> path) {
 		var absPath = GetAbsPath(path);
 		var info = new FileInfo(absPath);
 		if (!info.Exists) return false;
@@ -173,7 +173,7 @@ public class DiskSearchPath : SearchPath
 		return true;
 	}
 
-	public override bool RenameFile(string oldPath, string newPath) {
+	public override bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath) {
 		var absPath = GetAbsPath(oldPath);
 		var info = new FileInfo(absPath);
 		if (!info.Exists) return false;
@@ -190,9 +190,9 @@ public class DiskSearchPath : SearchPath
 	}
 
 	// Do nothing
-	public override bool SetFileWritable(string path, bool writable) => false;
+	public override bool SetFileWritable(ReadOnlySpan<char> path, bool writable) => false;
 
-	public override long Size(string path) {
+	public override long Size(ReadOnlySpan<char> path) {
 		var absPath = GetAbsPath(path);
 		var info = new FileInfo(absPath);
 		if (!info.Exists) return -1;
@@ -200,7 +200,7 @@ public class DiskSearchPath : SearchPath
 		return info.Length;
 	}
 
-	public override DateTime Time(string path) {
+	public override DateTime Time(ReadOnlySpan<char> path) {
 		var absPath = GetAbsPath(path);
 		var info = new FileInfo(absPath);
 		if (!info.Exists) return DateTime.UnixEpoch;
@@ -220,13 +220,13 @@ public class BaseFileSystem : IFileSystem
 		AddSearchPath(AppContext.BaseDirectory, "BASE_PATH");
 	}
 
-	private void AddMapPackFile(string path, string pathID, SearchPathAdd addType) => throw new NotImplementedException();
-	private void AddVPKFile(string path, string pathID, SearchPathAdd addType) => throw new NotImplementedException();
-	private void AddPackFiles(string path, string pathID, SearchPathAdd addType) { } // TODO 
+	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
+	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
+	private void AddPackFiles(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) { } // TODO 
 	private void AddSeparatorAndFixPath(ref string path) { // this sucks fix it later
 		path = (path.TrimEnd('\\').TrimEnd('/') + "/").Replace("\\", "/");
 	}
-	private void AddSearchPathInternal(string path, string pathID, SearchPathAdd addType, bool addPackFiles) {
+	private void AddSearchPathInternal(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType, bool addPackFiles) {
 		var ext = Path.GetExtension(path);
 
 		switch (ext) {
@@ -234,10 +234,10 @@ public class BaseFileSystem : IFileSystem
 			case ".vpk": AddVPKFile(path, pathID, addType); return;
 		}
 
-		string newPath = Path.IsPathFullyQualified(path) ? path : Path.GetFullPath(path);
+		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
 		AddSeparatorAndFixPath(ref newPath);
 
-		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
+		if (!SearchPaths.OpenOrCreateCollection(new(pathID), out SearchPathCollection collection)) {
 			for (int i = 0, c = collection.Count; i < c; i++) {
 				var searchPath = collection[i];
 				if (searchPath.DiskPath == newPath) {
@@ -264,11 +264,11 @@ public class BaseFileSystem : IFileSystem
 
 	}
 
-	public void AddSearchPath(string path, string pathID, SearchPathAdd addType = SearchPathAdd.ToTail) {
+	public void AddSearchPath(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType = SearchPathAdd.ToTail) {
 		AddSearchPathInternal(path, pathID, addType, true);
 	}
 
-	public IEnumerable<SearchPath> GetCollections(string? pathID) {
+	public IEnumerable<SearchPath> GetCollections(string pathID) {
 		if (pathID == null) {
 			foreach (var path in SearchPaths.Values)
 				if (!path.RequestOnly)
@@ -276,7 +276,7 @@ public class BaseFileSystem : IFileSystem
 						yield return searchPath;
 		}
 		else {
-			if (!SearchPaths.TryGetValue(pathID, out var collection))
+			if (!SearchPaths.TryGetValue(new(pathID), out var collection))
 				yield break;
 
 			foreach (var searchPath in collection)
@@ -296,14 +296,14 @@ public class BaseFileSystem : IFileSystem
 	/// <param name="winner">The <see cref="SearchPath"/> that won (if the method returns true)</param>
 	/// <returns>True if a <see cref="SearchPath"/> won.</returns>
 	private T? FirstToThePost<T>(
-		string filename, 
-		string? pathID, 
+		ReadOnlySpan<char> filename,
+		ReadOnlySpan<char> pathID, 
 		Func<SearchPath, T> func, 
 		Func<T, bool> winCondition, 
 		T? loseDefault, 
 		[NotNullWhen(true)] out SearchPath? winner
 	) {
-		foreach (var path in GetCollections(pathID)) {
+		foreach (var path in GetCollections(new(pathID))) {
 			T? ret = func(path);
 			if (winCondition(ret)) {
 				winner = path;
@@ -317,15 +317,17 @@ public class BaseFileSystem : IFileSystem
 	private static bool boolWin(bool inp) => inp;
 	private static bool notNullWin<T>(T? v) => v != null;
 
-	public bool Exists(string fileName, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.Exists(fileName), boolWin, false, out _);
-	public bool IsDirectory(string fileName, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.IsDirectory(fileName), boolWin, false, out _);
-	public bool IsFileWritable(string fileName, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.IsFileWritable(fileName), boolWin, false, out _);
+	public bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) { 
+		var fn = new string(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.IsDirectory(fn), boolWin, false, out _);
+	}
+	public bool IsFileWritable(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) { 
+		var fn = new string(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.IsFileWritable(fn), boolWin, false, out _);
+	}
 
-	public void MarkPathIDByRequestOnly(string pathID, bool requestOnly) {
-		if (!SearchPaths.TryGetValue(pathID, out var collection))
+	public void MarkPathIDByRequestOnly(ReadOnlySpan<char> pathID, bool requestOnly) {
+		if (!SearchPaths.TryGetValue(new(pathID), out var collection))
 			return;
 
 		collection.RequestOnly = requestOnly;
@@ -335,19 +337,22 @@ public class BaseFileSystem : IFileSystem
 		throw new NotImplementedException(); // todo
 	}
 
-	public IFileHandle? Open(string fileName, FileOpenOptions options, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.Open(fileName, options), notNullWin, null, out _);
+	public IFileHandle? Open(ReadOnlySpan<char> fileName, FileOpenOptions options, ReadOnlySpan<char> pathID) {
+		string fn = new(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.Open(fn, options), notNullWin, null, out _);
+	}
 
 
 	public void RemoveAllSearchPaths() {
 		SearchPaths.Clear();
 	}
 
-	public bool RemoveFile(string relativePath, string? pathID = null)
-		=> FirstToThePost(relativePath, pathID, (path) => path.RemoveFile(relativePath), boolWin, false, out _);
-
-	public bool RemoveSearchPath(string path, string pathID) {
-		if (!SearchPaths.TryGetValue(pathID, out var collection))
+	public bool RemoveFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID) {
+		string fn = new(relativePath);
+		return FirstToThePost(relativePath, pathID, (path) => path.RemoveFile(fn), boolWin, false, out _);
+	}
+	public bool RemoveSearchPath(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
+		if (!SearchPaths.TryGetValue(new(pathID), out var collection))
 			return false;
 
 		bool ret = false;
@@ -362,19 +367,33 @@ public class BaseFileSystem : IFileSystem
 		return ret;
 	}
 
-	public void RemoveSearchPaths(string pathID) {
-		SearchPaths.Remove(pathID);
+	public void RemoveSearchPaths(ReadOnlySpan<char> pathID) {
+		SearchPaths.Remove(new(pathID));
 	}
 
-	public bool RenameFile(string oldPath, string newPath, string? pathID = null)
-		=> FirstToThePost(oldPath, pathID, (path) => path.RenameFile(oldPath, newPath), boolWin, false, out _);
+	public bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath, ReadOnlySpan<char> pathID) {
+		string fn1 = new(oldPath);
+		string fn2 = new(newPath);
+		return FirstToThePost(oldPath, pathID, (path) => path.RenameFile(fn1, fn2), boolWin, false, out _);
+	}
 
-	public bool SetFileWritable(string fileName, bool writable, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.SetFileWritable(fileName, writable), boolWin, false, out _);
+	public bool SetFileWritable(ReadOnlySpan<char> fileName, bool writable, ReadOnlySpan<char> pathID) {
+		string fn = new(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.SetFileWritable(fn, writable), boolWin, false, out _);
+	}
 
-	public long Size(string fileName, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.Size(fileName), (v) => v != -1, -1, out _);
+	public long Size(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
+		string fn = new(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.Size(fn), (v) => v != -1, -1, out _);
+	}
 
-	public DateTime Time(string fileName, string? pathID = null)
-		=> FirstToThePost(fileName, pathID, (path) => path.Time(fileName), (v) => v != DateTime.UnixEpoch, DateTime.UnixEpoch, out _);
+	public DateTime Time(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
+		string fn = new(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.Time(fn), (v) => v != DateTime.UnixEpoch, DateTime.UnixEpoch, out _);
+	}
+
+	public bool FileExists(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
+		string fn = new(fileName);
+		return FirstToThePost(fileName, pathID, (path) => path.Exists(fn), boolWin, false, out _);
+	}
 }
