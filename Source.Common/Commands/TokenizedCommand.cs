@@ -1,63 +1,72 @@
 ﻿namespace Source.Common.Commands;
 
-public unsafe ref struct TokenizedCommand {
-	ReadOnlySpan<char> commandBuffer;
+public unsafe struct TokenizedCommand {
+	char[]? buffer;
+	int sliceOffset;
+	int sliceLength;
+
 	int argCount;
 
 	const int MAX_ARGC = 64;
+	public static readonly CharacterSet DefaultBreakSet = new("{}()':");
+
 	/// <summary>
 	/// How many arguments are in the tokenized command
 	/// </summary>
 	/// <returns></returns>
-	public int ArgC() => argCount;
+	public readonly int ArgC() => argCount;
 	/// <summary>
 	/// The argument buffer past the first argument
 	/// </summary>
 	/// <returns></returns>
-	public ReadOnlySpan<char> ArgS() {
+	public readonly ReadOnlySpan<char> ArgS() {
 		if (argCount <= 1)
 			return [];
 
-		return commandBuffer[argSizes[0]..];
+		return GetCommandString()[argSizes[0]..];
 	}
-	public ReadOnlySpan<char> GetCommandString() => commandBuffer;
+	public readonly ReadOnlySpan<char> GetCommandString() => buffer == null 
+		? throw new NullReferenceException("Untokenized command.") 
+		: new ReadOnlySpan<char>(buffer)[sliceOffset..(sliceOffset + sliceLength)];
 
 	fixed int argPositions[MAX_ARGC];
 	fixed int argSizes[MAX_ARGC];
 
 	public void Reset() {
-		commandBuffer = null;
 		argCount = 0;
 		// zero out argV
 		for (int i = 0; i < MAX_ARGC; i++) {
 			argPositions[i] = -1;
 			argSizes[i] = -1;
 		}
+
+		this.buffer = null;
+		this.sliceOffset = 0;
+		this.sliceLength = 0;
 	}
 
-	public ReadOnlySpan<char> this[int index] {
+	public readonly ReadOnlySpan<char> this[int index] {
 		get => Arg(index);
 	}
 
 
-	public bool Tokenize(ReadOnlySpan<char> command) {
+	public bool Tokenize(char[] buffer, int sliceOffset, int sliceLength) {
 		Reset();
-		
-		if (command == null)
-			return false;
-		
-		commandBuffer = command;
 
+		this.buffer = buffer;
+		this.sliceOffset = sliceOffset;
+		this.sliceLength = sliceLength;
+		
 		return true;
 	}
 
-	public ReadOnlySpan<char> Arg(int index) {
+	public readonly ReadOnlySpan<char> Arg(int index) {
 		int baseAddr = argPositions[index];
 		int endAddr = baseAddr + argSizes[index];
-		return commandBuffer[baseAddr..endAddr];
+		return GetCommandString()[baseAddr..endAddr];
 	}
 
-	public ReadOnlySpan<char> FindArg(ReadOnlySpan<char> name) {
+	public readonly ReadOnlySpan<char> FindArg(ReadOnlySpan<char> name) {
 		for (int i = 1; i < argCount; i++) {
 			if (Arg(i).Equals(name, StringComparison.OrdinalIgnoreCase))
 				return (i + 1) < argCount ? Arg(i + 1) : "";

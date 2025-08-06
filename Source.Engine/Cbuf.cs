@@ -4,6 +4,7 @@ using Source.Common.Commands;
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,12 +38,82 @@ public class CommandBuffer
 		return true;
 	}
 
-	public TokenizedCommand GetCommand() {
-		return new();
+	public ref TokenizedCommand GetCommand() => ref currentCommand;
+
+	public unsafe bool AddText(ReadOnlySpan<char> text, long tickDelay = 0) {
+		int len = text.Length;
+		long tick = currentTick + tickDelay;
+
+		ReadOnlySpan<char> currentCommand = text;
+		int offsetToNextCommand = 0;
+		for (; len > 0; len -= offsetToNextCommand + 1, currentCommand = currentCommand[(offsetToNextCommand + 1)..]) {
+			int commandLength;
+			GetNextCommandLength(currentCommand, len, out commandLength, out offsetToNextCommand);
+			if (commandLength <= 0)
+				continue;
+
+			ReadOnlySpan<char> argS;
+			Span<char> argV0 = stackalloc char[commandLength];
+
+			StringReader reader = new StringReader(new(currentCommand[..commandLength]));
+
+			ParseArgV0(reader, argV0, out argS);
+			if (argV0[0] == '\0')
+				continue;
+
+			// wait command later
+
+			if (!InsertCommand(currentCommand, commandLength, tick))
+				return false;
+		}
+
+		return true;
 	}
 
-	public bool AddText(ReadOnlySpan<char> text, int tickDelay = 0) {
+	private bool InsertCommand(ReadOnlySpan<char> currentCommand, int commandLength, long tick) {
+		throw new NotImplementedException();
+	}
 
+	private bool ParseArgV0(StringReader buf, Span<char> argV0, out ReadOnlySpan<char> argS) {
+		argV0[0] = '\0';
+		argS = null;
+
+		int size = buf.ParseToken(TokenizedCommand.DefaultBreakSet, argV0);
+		if (size <= 0 || argV0.Length == size)
+			return false;
+
+		int argsLen = buf.TellMaxPut();
+		argS = (argsLen > 0) ? buf.PeekToEnd() : null;
+		return true;
+	}
+
+	private void GetNextCommandLength(ReadOnlySpan<char> text, int maxLen, out int commandLength, out int nextCommandOffset) {
+		commandLength = 0;
+		bool isQuoted = false;
+		bool isCommented = false;
+		for(nextCommandOffset = 0; nextCommandOffset < maxLen; ++nextCommandOffset, commandLength += isCommented ? 0 : 1) {
+			char c = text[nextCommandOffset];
+			if (!isCommented) {
+				if(c == '"') {
+					isQuoted = !isQuoted;
+					continue;
+				}
+
+				if(!isQuoted && c == '/') {
+					isCommented = (nextCommandOffset < maxLen - 1) && text[nextCommandOffset + 1] == '/';
+					if (isCommented) {
+						++nextCommandOffset;
+						continue;
+					}
+				}
+
+				if (!isQuoted && c == ';')
+					break;
+			}
+
+			if (c == '\n')
+				break;
+		}
 	}
 
 	public void BeginProcessingCommands() {
@@ -89,7 +160,7 @@ public class Cbuf(IServiceProvider provider)
 		lock (Buffer) {
 			Buffer.BeginProcessingCommands();
 			while (Buffer.DequeueNextCommand()) {
-				ExecuteCommand(Buffer.GetCommand(), CommandSource.Command);
+				ExecuteCommand(in Buffer.GetCommand(), CommandSource.Command);
 			}
 			Buffer.EndProcessingCommands();
 		}
