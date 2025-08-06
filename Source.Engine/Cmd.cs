@@ -46,7 +46,7 @@ public class Cmd(IEngineAPI provider)
 		if (command.ArgC() == 0)
 			return null;
 
-		if (command[0].Equals(CMDSTR_ADD_EXECUTION_MARKER)) {
+		if (command[0].Equals(CMDSTR_ADD_EXECUTION_MARKER, StringComparison.OrdinalIgnoreCase)) {
 			if (command.ArgC() == 3)
 				HandleExecutionMarker(command[1], command[2]);
 			else
@@ -74,10 +74,12 @@ public class Cmd(IEngineAPI provider)
 
 				// Todo: hook to allow game .dll to figure out who typed the message on a listen server
 
-				if (!Host.IsSinglePlayerGame() && !Host.CanCheat()) {
-					// TODO; allow server to run it...
-					Dbg.Msg($"Can't use cheat command {commandBase.GetName()} in multiplayer, unless the server has sv_cheats set to 1.\n");
-					return null;
+				if (commandBase.IsFlagSet(FCvar.Cheat)) {
+					if (!Host.IsSinglePlayerGame() && !Host.CanCheat()) {
+						// TODO; allow server to run it...
+						Dbg.Msg($"Can't use cheat command {commandBase.GetName()} in multiplayer, unless the server has sv_cheats set to 1.\n");
+						return null;
+					}
 				}
 
 				if (commandBase.IsFlagSet(FCvar.SingleplayerOnly)) {

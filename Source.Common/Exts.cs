@@ -94,7 +94,7 @@ public static class UnmanagedUtils
 	public static void EatWhiteSpace(this StringReader buffer) {
 		if (buffer.IsValid()) {
 			while (buffer.IsValid()) {
-				if (char.IsWhiteSpace(buffer.PeekChar()))
+				if (!char.IsWhiteSpace(buffer.PeekChar()))
 					break;
 				buffer.Read();
 			}
