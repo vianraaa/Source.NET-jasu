@@ -320,6 +320,9 @@ public class Host(
 	}
 
 	private bool input_firstFrame = true;
+
+	public bool LowViolence { get; set; } = false;
+
 	private void _RunFrame_Input(double accumulatedExtraSamples, bool finalTick) {
 		if (input_firstFrame) {
 			input_firstFrame = false;
@@ -415,5 +418,9 @@ public class Host(
 
 	public bool CanCheat() {
 		return SV.sv_cheats.GetBool();
+	}
+
+	internal void CheckGore() {
+		// todo
 	}
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 
 using System.Reflection;
 
@@ -12,7 +14,7 @@ using static Source.Dbg;
 namespace Source.Engine;
 
 
-public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
+public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSystem) : IEngineAPI, IDisposable
 {
 	public bool Dedicated;
 
@@ -39,6 +41,7 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 
 	public void SetStartupInfo(in StartupInfo info) {
 		startupInfo = info;
+		COM.InitFilesystem(info.InitialMod);
 	}
 
 	public IEngineAPI.Result Run() {

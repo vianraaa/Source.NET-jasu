@@ -1,15 +1,38 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Engine;
+using Source.Common.Filesystem;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Source.Common;
+namespace Source.Engine;
 
-public static class COM
+public class COM(IServiceProvider providers)
 {
 	readonly static CharacterSet BreakSet = new("{}()");
 	readonly static CharacterSet BreakSetIncludingColons = new("{}()':");
+
+	public void InitFilesystem(ReadOnlySpan<char> fullModPath) {
+		CFSSearchPathsInit initInfo = new();
+		Host Host = providers.GetRequiredService<Host>();
+		FileSystem FileSystem = providers.GetRequiredService<FileSystem>();
+
+		initInfo.FileSystem = engineAPI.GetRequiredService<IFileSystem>();
+		initInfo.DirectoryName = new(fullModPath);
+		if(initInfo.DirectoryName == null) 
+			initInfo.DirectoryName = Host.GetCurrentGame();
+
+		Host.CheckGore();
+
+		initInfo.LowViolence = Host.LowViolence;
+		initInfo.MountHDContent = false; // Study this further
+
+		FileSystem.LoadSearchPaths(in initInfo);
+	}
 
 	public static bool IsValidPath(ReadOnlySpan<char> filename) {
 		if (filename == null)

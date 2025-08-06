@@ -65,6 +65,8 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<Cmd>();
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
+		this.AddSingleton<COM>();
+		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
 		// Engine components, individually...
 		this.AddSingleton<IFileSystem, BaseFileSystem>();
