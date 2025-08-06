@@ -19,11 +19,11 @@ public interface ICvar
 
 	public void SetAssemblyIdentifier(Assembly assembly);
 
-	public string? GetCommandLineValue(string variableName);
+	public string? GetCommandLineValue(ReadOnlySpan<char> variableName);
 
-	public ConCommandBase? FindCommandBase(string name);
-	public ConVar? FindVar(string name);
-	public ConCommand? FindCommand(string name);
+	public ConCommandBase? FindCommandBase(ReadOnlySpan<char> name);
+	public ConVar? FindVar(ReadOnlySpan<char> name);
+	public ConCommand? FindCommand(ReadOnlySpan<char> name);
 
 	public IEnumerable<ConCommandBase> GetCommands();
 

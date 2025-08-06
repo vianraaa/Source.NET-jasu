@@ -162,9 +162,9 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 				// Construct a new ConCommand
 				ConCommand cmd;
 				if (method.GetParameters().Length == 0)
-					cmd = new ConCommand(attribute.Name, method.CreateDelegate<FnCommandCallbackVoid>(instance), attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.GetParameters().Length == 1 && method.GetParameters().First().ParameterType == typeof(TokenizedCommand))
-					cmd = new ConCommand(attribute.Name, method.CreateDelegate<FnCommandCallback>(instance), attribute.HelpText, attribute.Flags, completionCallback);
+					cmd = new ConCommand(attribute.Name ?? method.Name, method.CreateDelegate<FnCommandCallbackVoid>(instance), attribute.HelpText, attribute.Flags, completionCallback);
+				else if (method.GetParameters().Length == 1 && method.GetParameters().First().ParameterType == typeof(TokenizedCommand).MakeByRefType())
+					cmd = new ConCommand(attribute.Name ?? method.Name, method.CreateDelegate<FnCommandCallback>(instance), attribute.HelpText, attribute.Flags, completionCallback);
 				else
 					throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
 
@@ -187,6 +187,9 @@ public class EngineAPI(IServiceProvider provider) : IEngineAPI, IDisposable
 					return instance;
 			}
 		}
+		else
+			return instance;
+
 		throw new DllNotFoundException("Cannot find an instance of the type...");
 	}
 }

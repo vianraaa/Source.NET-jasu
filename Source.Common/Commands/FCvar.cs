@@ -1,5 +1,12 @@
 ﻿namespace Source.Common.Commands;
 
+public enum CmdExecutionMarker {
+	EnableServerCanExecute = 'a',
+	DisableServerCanExecute = 'b',
+	EnableClientCmdCanExecute = 'c',
+	DisableClientCmdCanExecute = 'd'
+}
+
 public enum FCvar
 {
 	None = 0,

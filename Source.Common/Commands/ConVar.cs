@@ -5,9 +5,9 @@ namespace Source.Common.Commands;
 public class ConVar : ConCommandBase, IConVar
 {
 	internal ConVar? parent;
-	
+
 	string defaultValue = "";
-	
+
 	string? value;
 	double doubleValue;
 	int intValue;
@@ -19,14 +19,14 @@ public class ConVar : ConCommandBase, IConVar
 
 	public event FnChangeCallback? Changed;
 
-	public void Create(string name, string defaultValue, FCvar flags, string? helpString = null, 
+	public void Create(string name, string defaultValue, FCvar flags, string? helpString = null,
 		bool useMin = false, double min = 0, bool useMax = false, double max = 0,
 		FnChangeCallback? callback = null) {
 		parent = this;
 		SetDefault(defaultValue);
 		value = defaultValue;
 
-		hasMin = useMin; 
+		hasMin = useMin;
 		hasMax = useMax;
 		minVal = min;
 		maxVal = max;
@@ -97,7 +97,7 @@ public class ConVar : ConCommandBase, IConVar
 		return false;
 	}
 
-	void InternalSetValue(string? value) {
+	void InternalSetValue(ReadOnlySpan<char> value) {
 		double dNewValue = double.TryParse(value, out double d) ? d : 0;
 		if (ClampValue(ref dNewValue)) {
 			value = $"{dNewValue:.4}";
@@ -111,10 +111,10 @@ public class ConVar : ConCommandBase, IConVar
 			ChangeStringValue(value, oldValue);
 	}
 
-	private void ChangeStringValue(string? tempValue, double dbOldValue) {
+	private void ChangeStringValue(ReadOnlySpan<char> tempValue, double dbOldValue) {
 		string? oldValue = value;
 
-		value = tempValue;
+		value = new(tempValue);
 		if (oldValue?.Equals(value) ?? (oldValue != value)) {
 			Changed?.Invoke(this, new() {
 				Old = oldValue,
@@ -125,16 +125,135 @@ public class ConVar : ConCommandBase, IConVar
 		}
 	}
 
-	public void SetValue(string value) {
-
+	public void SetValue(ReadOnlySpan<char> value) {
+		parent!.InternalSetValue(value);
 	}
 	public void SetValue(int value) {
-
+		parent!.InternalSetIntValue(value);
 	}
 	public void SetValue(float value) {
-
+		parent!.InternalSetDoubleValue(value);
 	}
 	public void SetValue(double value) {
+		parent!.InternalSetDoubleValue(value);
+	}
 
+	private void InternalSetIntValue(int value) {
+		if (value == intValue)
+			return;
+
+		Debug.Assert(parent == this);
+		double dbValue = value;
+		if (ClampValue(ref dbValue))
+			value = Convert.ToInt32(dbValue);
+
+		double oldValue = doubleValue;
+		doubleValue = dbValue;
+		intValue = value;
+
+		if ((Flags & FCvar.NeverAsString) != FCvar.NeverAsString) {
+			Span<char> tempVal = stackalloc char[64];
+			intValue.TryFormat(tempVal, out int charsWritten);
+			ChangeStringValue(tempVal[..charsWritten], oldValue);
+		}
+	}
+
+	private void InternalSetDoubleValue(double value) {
+		if (value == intValue)
+			return;
+
+		Debug.Assert(parent == this);
+
+		ClampValue(ref value);
+		double oldValue = doubleValue;
+		doubleValue = value;
+		intValue = Convert.ToInt32(doubleValue);
+
+		if ((Flags & FCvar.NeverAsString) != FCvar.NeverAsString) {
+			Span<char> tempVal = stackalloc char[64];
+			intValue.TryFormat(tempVal, out int charsWritten);
+			ChangeStringValue(tempVal[..charsWritten], oldValue);
+		}
+	}
+
+	public bool GetBool() => GetInt() != 0;
+
+	public static void PrintDescription(ConCommandBase pvar) {
+		bool hasMin, hasMax;
+		double min, max;
+		string? str;
+
+		Color clr = new(255, 100, 100, 255);
+
+		if (!pvar.IsCommand()) {
+			ConVar var = (ConVar)pvar;
+			// Server bounded convar? need to implement later
+
+			hasMin = var.GetMin(out min);
+			hasMax = var.GetMin(out max);
+
+			string value;
+			if (false) {
+
+			}
+			else {
+				value = var.GetString();
+			}
+
+			if(value != null) {
+				Dbg.ConColorMsg(clr, $"\"{var.GetName()}\" = \"{value}\"");
+				if(!value.Equals(var.GetDefault(), StringComparison.OrdinalIgnoreCase)) 
+					Dbg.ConMsg($" ( def. \"{var.GetDefault()}\" )");
+			}
+
+			if (hasMin) Dbg.ConMsg($" min. {min:.4}");
+			if (hasMax) Dbg.ConMsg($" min. {max:.4}");
+
+
+			Dbg.ConMsg("\n");
+
+			// bounded stuff...
+		}
+		else {
+			ConCommand var = (ConCommand)pvar;
+			Dbg.ConColorMsg(clr, $"\"{var.GetName()}\"\n");
+		}
+
+		PrintFlags(pvar);
+
+		str = pvar.GetHelpText();
+		if (!string.IsNullOrEmpty(str))
+			Dbg.ConMsg($" - {str}\n");
+	}
+
+	private string GetDefault() {
+		return parent!.defaultValue;
+	}
+
+	private static void PrintFlags(ConCommandBase var) {
+		bool any = false;
+
+		if (var.IsFlagSet(FCvar.GameDLL)) { Dbg.ConMsg(" game"); any = true; }
+		if (var.IsFlagSet(FCvar.ClientDLL)) { Dbg.ConMsg(" client"); any = true; }
+		if (var.IsFlagSet(FCvar.Archive)) { Dbg.ConMsg(" archive"); any = true; }
+		if (var.IsFlagSet(FCvar.Notify)) { Dbg.ConMsg(" notify"); any = true; }
+		if (var.IsFlagSet(FCvar.SingleplayerOnly)) { Dbg.ConMsg(" singleplayer"); any = true; }
+		if (var.IsFlagSet(FCvar.NotConnected)) { Dbg.ConMsg(" notconnected"); any = true; }
+		if (var.IsFlagSet(FCvar.Cheat)) { Dbg.ConMsg(" cheat"); any = true; }
+		if (var.IsFlagSet(FCvar.Replicated)) { Dbg.ConMsg(" replicated"); any = true; }
+		if (var.IsFlagSet(FCvar.ServerCanExecute)) { Dbg.ConMsg(" server_can_execute"); any = true; }
+		if (var.IsFlagSet(FCvar.ClientCmdCanExecute)) { Dbg.ConMsg(" clientcmd_can_execute"); any = true; }
+
+		if (any)
+			Dbg.ConMsg("\n");
+	}
+
+	private bool GetMin(out double min) {
+		min = this.minVal;
+		return this.hasMin;
+	}
+	private bool GetMax(out double max) {
+		max = this.maxVal;
+		return this.hasMax;
 	}
 }

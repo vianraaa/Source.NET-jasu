@@ -12,6 +12,7 @@ using static Source.Constants;
 using static Source.Common.Networking.Protocol;
 using Source.Common.Networking;
 using Source.Common.Client;
+using Source.Common.Commands;
 
 namespace Source.Engine;
 
@@ -130,6 +131,33 @@ public class CL(IServiceProvider services, ClientState cl, Net Net,
 		}
 		else {
 			cl.NextCmdTime = Net.Time + (1f / 5f);
+		}
+	}
+
+	public void Connect(string address, string sourceTag) {
+		if(!address.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
+			Host.Disconnect(false);
+			Net.SetMultiplayer(true);
+			// begin loading plague?
+		}
+		else {
+			cl.Disconnect("Connecting to local host", false);
+		}
+
+		cl.Connect(address, sourceTag);
+	}
+
+	[ConCommand]
+	public void connect(in TokenizedCommand cmd) {
+		var splits = cmd.ArgS().Split(' ');
+		if(splits.Length == 1) {
+			Connect(splits[0], "");
+		}
+		else if(splits.Length == 2) {
+			Connect(splits[0], splits[1]);
+		}
+		else {
+			Dbg.ConMsg("Usage:  connect <server>\n");
 		}
 	}
 }

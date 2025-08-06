@@ -29,7 +29,7 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 			func.Print(args == null ? format : string.Format(format, args));
 	}
 
-	public ConCommand? FindCommand(string name) {
+	public ConCommand? FindCommand(ReadOnlySpan<char> name) {
 		ConCommandBase? var = FindCommandBase(name);
 		if (var == null || !var.IsCommand())
 			return null;
@@ -37,15 +37,15 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 		return (ConCommand)var!;
 	}
 
-	public ConCommandBase? FindCommandBase(string name) {
+	public ConCommandBase? FindCommandBase(ReadOnlySpan<char> name) {
 		foreach (var cmd in GetCommands())
-			if (cmd.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+			if (cmd.Name.AsSpan().Equals(name, StringComparison.OrdinalIgnoreCase))
 				return cmd;
 
 		return null;
 	}
 
-	public ConVar? FindVar(string name) {
+	public ConVar? FindVar(ReadOnlySpan<char> name) {
 		ConCommandBase? var = FindCommandBase(name);
 		if (var == null || var.IsCommand())
 			return null;
@@ -53,7 +53,7 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 		return (ConVar)var!;
 	}
 
-	public string? GetCommandLineValue(string variableName) {
+	public string? GetCommandLineValue(ReadOnlySpan<char> variableName) {
 		return CommandLine.ParmValue($"+{variableName}", null);
 	}
 

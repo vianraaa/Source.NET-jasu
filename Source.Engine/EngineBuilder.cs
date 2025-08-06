@@ -59,6 +59,7 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<Cmd>();
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
+		this.AddSingleton<CvarUtilities>();
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<IHostState, HostState>();
 		this.AddSingleton<CommonHostState>();

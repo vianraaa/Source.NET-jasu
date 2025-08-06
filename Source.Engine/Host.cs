@@ -406,4 +406,12 @@ public class Host(
 
 		PostInit();
 	}
+
+	internal void Disconnect(bool v) {
+
+	}
+
+	public bool CanCheat() {
+		return SV.sv_cheats.GetBool();
+	}
 }

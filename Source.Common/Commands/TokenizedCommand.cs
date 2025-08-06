@@ -1,11 +1,26 @@
 ﻿namespace Source.Common.Commands;
 
 public unsafe ref struct TokenizedCommand {
-	public ReadOnlySpan<char> commandBuffer;
-	public int argCount;
+	ReadOnlySpan<char> commandBuffer;
+	int argCount;
 
 	const int MAX_ARGC = 64;
-	public int Count => argCount;
+	/// <summary>
+	/// How many arguments are in the tokenized command
+	/// </summary>
+	/// <returns></returns>
+	public int ArgC() => argCount;
+	/// <summary>
+	/// The argument buffer past the first argument
+	/// </summary>
+	/// <returns></returns>
+	public ReadOnlySpan<char> ArgS() {
+		if (argCount <= 1)
+			return [];
+
+		return commandBuffer[argSizes[0]..];
+	}
+	public ReadOnlySpan<char> GetCommandString() => commandBuffer;
 
 	fixed int argPositions[MAX_ARGC];
 	fixed int argSizes[MAX_ARGC];
@@ -19,6 +34,11 @@ public unsafe ref struct TokenizedCommand {
 			argSizes[i] = -1;
 		}
 	}
+
+	public ReadOnlySpan<char> this[int index] {
+		get => Arg(index);
+	}
+
 
 	public bool Tokenize(ReadOnlySpan<char> command) {
 		Reset();

@@ -1,7 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance.Enumerables;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Engine;
 
+using System;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -73,6 +77,16 @@ namespace Source
 			while (list.Count < ensureTo) {
 				list.Add(new T());
 			}
+		}
+
+		public static string[] Split(this ReadOnlySpan<char> input, char separator) {
+			Span<Range> ranges = stackalloc Range[64];
+			var splits = input.Split(ranges, ' ');
+			string[] array = new string[splits];
+			for (int i = 0; i < splits; i++) {
+				array[i] = new(input[ranges[i]]);
+			}
+			return array;
 		}
 	}
 }

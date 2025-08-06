@@ -1,4 +1,6 @@
 ﻿
+using Source.Common.Commands;
+
 namespace Source.Engine;
 
 /// <summary>
@@ -7,6 +9,12 @@ namespace Source.Engine;
 /// </summary>
 public class SV(IServiceProvider services)
 {
+	public ConVar sv_cheats = new(nameof(sv_cheats), "0", FCvar.Notify | FCvar.Replicated, "Allow cheats on server", callback: SV_CheatsChanged);
+
+	private static void SV_CheatsChanged(IConVar var, in ConVarChangeContext ctx) {
+
+	}
+
 	internal void InitGameDLL() {
 
 	}

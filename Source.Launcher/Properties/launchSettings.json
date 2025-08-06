@@ -2,7 +2,7 @@
   "profiles": {
     "Source.Launcher": {
       "commandName": "Project",
-      "commandLineArgs": "-w 1600 -h 900 -test -parm2 +fps_max 60"
+      "commandLineArgs": "-w 1600 -h 900 -test -parm2 +fps_max 60 +connect 10.5.0.2:27016"
     }
   }
 }
