@@ -214,8 +214,10 @@ public class CommandBuffer
 					break;
 			}
 
-			if (c == '\n')
+			if (c == '\n') {
+				nextCommandOffset++;
 				break;
+			}
 		}
 	}
 

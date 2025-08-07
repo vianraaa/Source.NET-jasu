@@ -160,6 +160,10 @@ public class CL(IServiceProvider services, ClientState cl, Net Net,
 			Dbg.ConMsg("Usage:  connect <server>\n");
 		}
 	}
+
+	internal void ProcessVoiceData() {
+
+	}
 }
 
 

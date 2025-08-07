@@ -9,6 +9,7 @@ using Source.Common.Server;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
+
 using static Source.Constants;
 
 namespace Source.Engine;
@@ -312,7 +313,13 @@ public class Host(
 	}
 
 	private void _RunFrame_Client(bool finalTick) {
+		CL.ReadPackets(finalTick);
+		CL.ProcessVoiceData();
 
+		cl.CheckUpdatingSteamResources();
+		cl.CheckFileCRCsWithServer();
+
+		cl.RunFrame();
 	}
 
 	private void _RunFrame_Server(bool finalTick) {

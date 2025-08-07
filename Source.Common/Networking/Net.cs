@@ -742,10 +742,10 @@ public class Net
 			}
 
 			netSock.Port = port;
-			Msg($"Net.OpenSocketInternal: {name} successfully opened, local ep {socket.LocalEndPoint}");
+			Msg($"Net.OpenSocketInternal: {name} successfully opened, local ep {socket.LocalEndPoint}\n");
 		}
 		else {
-			Warning($"Warning: Net.OpenSockets: {name} port {netSock.Port} already open.");
+			Warning($"Warning: Net.OpenSockets: {name} port {netSock.Port} already open.\n");
 			return false;
 		}
 

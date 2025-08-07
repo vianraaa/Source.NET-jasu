@@ -1,6 +1,9 @@
-﻿using Source.Common.Hashing;
+﻿using Source.Common.Filesystem;
+using Source.Common.Hashing;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
+
+using Steamworks;
 
 using static Source.Constants;
 
@@ -9,7 +12,7 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Client state, in CLIENT. Often referred to by 'cl'
 /// </summary>
-public class ClientState(CommonHostState host_state) : BaseClientState
+public class ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state) : BaseClientState(Host, fileSystem, Net)
 {
 	public bool ProcessConnectionlessPacket(in NetPacket packet) {
 		return false;
@@ -49,15 +52,37 @@ public class ClientState(CommonHostState host_state) : BaseClientState
 	public override void ConnectionCrashed(string reason) {
 		throw new NotImplementedException();
 	}
-	public override void ConnectionClosing(string reason) {
-		throw new NotImplementedException();
+	public void StartUpdatingSteamResources() {
+		// for now; just make signon state new
+		FinishSignonState_New();
 	}
-	public void SendClientInfo() { }
-	public void StartUpdatingSteamResources() { }
 	public void CheckUpdatingSteamResources() { }
 	public void CheckFileCRCsWithServer() { }
-	public void FinishSignonState_New() { }
-	public void RunFrame() { }
+	public void SendClientInfo() {
+		CLC_ClientInfo info = new CLC_ClientInfo();
+		info.SendTableCRC = CLC.ClientInfoCRC;
+		info.ServerCount = ServerCount;
+		info.IsHLTV = false;
+		info.FriendsID = SteamUser.GetSteamID().m_SteamID;
+		info.FriendsName = "";
+
+		// check stuff later
+
+		NetChannel.SendNetMsg(info);
+	}
+
+	public void FinishSignonState_New() {
+		if (SignOnState != SignOnState.New)
+			return;
+
+		SendClientInfo();
+		var msg1 = new CLC_GMod_ClientToServer();
+		NetChannel.SendNetMsg(msg1);
+		var msg = new NET_SignonState(SignOnState, ServerCount);
+		NetChannel.SendNetMsg(msg);
+	}
+
+	public override void RunFrame() => base.RunFrame();
 
 	public double LastServerTickTime;
 	public bool InSimulation;

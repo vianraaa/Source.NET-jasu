@@ -1460,7 +1460,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 	}
 
-	internal void SetRemoteFramerate(float hostFrameTime, float hostFrameDeviation) {
+	public void SetRemoteFramerate(float hostFrameTime, float hostFrameDeviation) {
 		RemoteFrameTime = hostFrameTime;
 		RemoteFrameTimeStdDeviation = hostFrameDeviation;
 	}
