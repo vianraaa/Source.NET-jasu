@@ -18,6 +18,7 @@ public class COM(IServiceProvider providers)
 
 	public void InitFilesystem(ReadOnlySpan<char> fullModPath) {
 		CFSSearchPathsInit initInfo = new();
+		IEngineAPI engineAPI = providers.GetRequiredService<IEngineAPI>();
 		Host Host = providers.GetRequiredService<Host>();
 		FileSystem FileSystem = providers.GetRequiredService<FileSystem>();
 

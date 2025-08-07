@@ -35,7 +35,7 @@ public class FileSystem {
 		if (initInfo.FileSystem == null || initInfo.DirectoryName == null)
 			return SetupFileSystemError(false, FSReturnCode.InvalidParameters, "FileSystem.LoadSearchPaths: Invalid parameters specified.");
 
-		KeyValues mainFile, fileSystemInfo, searchPaths;
+		KeyValues? mainFile, fileSystemInfo, searchPaths;
 		FSReturnCode retVal = LoadGameInfoFile(initInfo.DirectoryName, out mainFile, out fileSystemInfo, out searchPaths);
 		if (retVal != FSReturnCode.OK)
 			return retVal;
@@ -50,14 +50,53 @@ public class FileSystem {
 		// todo: extraSearchPath.
 		bool lowViolence = initInfo.LowViolence;
 		bool firstGamePath = true;
-		for(KeyValues cur = searchPaths.GetFirstSubKey())
+		foreach(KeyValues cur in searchPaths!) {
+
+		}
+
+		initInfo.FileSystem.MarkPathIDByRequestOnly("executable_path", true);
+		initInfo.FileSystem.MarkPathIDByRequestOnly("gamebin", true);
+		initInfo.FileSystem.MarkPathIDByRequestOnly("download", true);
+		initInfo.FileSystem.MarkPathIDByRequestOnly("mod", true);
+		initInfo.FileSystem.MarkPathIDByRequestOnly("game_write", true);
+		initInfo.FileSystem.MarkPathIDByRequestOnly("mod_write", true);
+
+		return FSReturnCode.OK;
 	}
 
 	private bool GetBaseDir(out string baseDir) {
 		throw new NotImplementedException();
 	}
 
-	public FSReturnCode LoadGameInfoFile(string directoryName, out KeyValues mainFile, out KeyValues fileSystemInfo, out KeyValues searchPaths) {
+	public const string GAMEINFO_FILENAME = "gameinfo.txt";
 
+	public FSReturnCode LoadGameInfoFile(string directoryName, out KeyValues? mainFile, out KeyValues? fileSystemInfo, out KeyValues? searchPaths) {
+		mainFile = null;
+		fileSystemInfo = null;
+		searchPaths = null;
+
+		string gameInfoFilename = Path.Combine(directoryName, GAMEINFO_FILENAME);
+		mainFile = ReadKeyValuesFile(gameInfoFilename);
+		if (mainFile == null)
+			return SetupFileSystemError(true, FSReturnCode.MissingGameInfoFile, $"{gameInfoFilename} is missing.");
+
+		fileSystemInfo = mainFile.FindKey("FileSystem");
+		if (mainFile == null)
+			return SetupFileSystemError(true, FSReturnCode.InvalidGameInfoFile, $"{gameInfoFilename} is not a valid format (missing FileSystem).");
+
+		searchPaths = mainFile.FindKey("SearchPaths");
+		if (mainFile == null)
+			return SetupFileSystemError(true, FSReturnCode.InvalidGameInfoFile, $"{gameInfoFilename} is not a valid format (missing SearchPaths).");
+
+		return FSReturnCode.OK;
+	}
+
+	private KeyValues? ReadKeyValuesFile(string filename) {
+		KeyValues kv = new("");
+		if (!kv.LoadFromFile(filename)) {
+			return null;
+		}
+
+		return kv;
 	}
 }
