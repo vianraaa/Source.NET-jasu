@@ -4,6 +4,8 @@
 using Source.Common.Filesystem;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.IO;
 
 namespace Nucleus.FileSystem;
 
@@ -57,47 +59,39 @@ public class SearchPathCollection : List<SearchPath>
 	public bool RequestOnly { get; set; } = false;
 }
 
-public class SearchPathIDCollection : Dictionary<string, SearchPathCollection>
+public class SearchPathIDCollection : Dictionary<int, SearchPathCollection>
 {
-	List<string> pathOrder = [];
+	List<int> pathOrder = [];
 	/// <summary>
 	/// 
 	/// </summary>
 	/// <param name="pathID"></param>
 	/// <param name="collection"></param>
 	/// <returns>True if the collection was created, false if it already existed.</returns>
-	public bool OpenOrCreateCollection(string pathID, out SearchPathCollection collection) {
-		pathID = pathID.ToLower();
-		if (TryGetValue(pathID, out var c)) {
+	public bool OpenOrCreateCollection(in ReadOnlySpan<char> pathID, out SearchPathCollection collection) {
+		BaseFileSystem.Hash(in pathID, out int hashID);
+
+		if (TryGetValue(hashID, out var c)) {
 			collection = c;
 			return false;
 		}
 
 		collection = new();
-		this[pathID] = collection;
-		pathOrder.Add(pathID);
+		this[hashID] = collection;
+		pathOrder.Add(hashID);
 		return true;
 	}
 
-	public new bool Remove(string pathID) {
-		pathID = pathID.ToLower();
-		base.Remove(pathID);
-		return pathOrder.Remove(pathID);
+	public new bool Remove(in ReadOnlySpan<char> pathID) {
+		BaseFileSystem.Hash(in pathID, out int hashID);
+
+		base.Remove(hashID);
+		return pathOrder.Remove(hashID);
 	}
 
 	public new void Clear() {
 		base.Clear();
 		pathOrder.Clear();
-	}
-
-	/// <summary>
-	/// Enumerates entries in the order of pathOrder.
-	/// </summary>
-	public new IEnumerator<KeyValuePair<string, SearchPathCollection>> GetEnumerator() {
-		foreach (var key in pathOrder) {
-			if (TryGetValue(key, out var value))
-				yield return new KeyValuePair<string, SearchPathCollection>(key, value);
-		}
 	}
 }
 
@@ -239,7 +233,7 @@ public class BaseFileSystem : IFileSystem
 		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
 		AddSeparatorAndFixPath(ref newPath);
 
-		if (!SearchPaths.OpenOrCreateCollection(new(pathID), out SearchPathCollection collection)) {
+		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
 			for (int i = 0, c = collection.Count; i < c; i++) {
 				var searchPath = collection[i];
 				if (searchPath.DiskPath == newPath) {
@@ -270,15 +264,24 @@ public class BaseFileSystem : IFileSystem
 		AddSearchPathInternal(path, pathID, addType, true);
 	}
 
-	public IEnumerable<SearchPath> GetCollections(string pathID) {
-		if (string.IsNullOrEmpty(pathID)) {
+	public static bool Hash(in ReadOnlySpan<char> str, out int hash) {
+		if(str == null || str.Length <= 0) {
+			hash = 0;
+			return false;
+		}
+
+		hash = CultureInfo.CurrentCulture.CompareInfo.GetHashCode(str, CompareOptions.OrdinalIgnoreCase);
+		return true;
+	}
+	public IEnumerable<SearchPath> GetCollections(int? hashID) {
+		if (!hashID.HasValue) {
 			foreach (var path in SearchPaths.Values)
 				if (!path.RequestOnly)
 					foreach (var searchPath in path)
 						yield return searchPath;
 		}
 		else {
-			if (!SearchPaths.TryGetValue(new(pathID.ToLower()), out var collection))
+			if (!SearchPaths.TryGetValue(hashID.Value, out var collection))
 				yield break;
 
 			foreach (var searchPath in collection)
@@ -299,13 +302,14 @@ public class BaseFileSystem : IFileSystem
 	/// <returns>True if a <see cref="SearchPath"/> won.</returns>
 	private T? FirstToThePost<T>(
 		ReadOnlySpan<char> filename,
-		ReadOnlySpan<char> pathID, 
-		Func<SearchPath, T> func, 
-		Func<T, bool> winCondition, 
-		T? loseDefault, 
+		ReadOnlySpan<char> pathID,
+		Func<SearchPath, T> func,
+		Func<T, bool> winCondition,
+		T? loseDefault,
 		[NotNullWhen(true)] out SearchPath? winner
 	) {
-		foreach (var path in GetCollections(new(pathID))) {
+		int? hashID = Hash(pathID, out int h) ? h : null;
+		foreach (var path in GetCollections(hashID)) {
 			T? ret = func(path);
 			if (winCondition(ret)) {
 				winner = path;
@@ -319,17 +323,19 @@ public class BaseFileSystem : IFileSystem
 	private static bool boolWin(bool inp) => inp;
 	private static bool notNullWin<T>(T? v) => v != null;
 
-	public bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) { 
+	public bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
 		var fn = new string(fileName);
 		return FirstToThePost(fileName, pathID, (path) => path.IsDirectory(fn), boolWin, false, out _);
 	}
-	public bool IsFileWritable(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) { 
+	public bool IsFileWritable(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
 		var fn = new string(fileName);
 		return FirstToThePost(fileName, pathID, (path) => path.IsFileWritable(fn), boolWin, false, out _);
 	}
 
 	public void MarkPathIDByRequestOnly(ReadOnlySpan<char> pathID, bool requestOnly) {
-		if (!SearchPaths.TryGetValue(new(pathID), out var collection))
+		if (!Hash(in pathID, out int hash)) return;
+
+		if (!SearchPaths.TryGetValue(hash, out var collection))
 			return;
 
 		collection.RequestOnly = requestOnly;
@@ -354,7 +360,9 @@ public class BaseFileSystem : IFileSystem
 		return FirstToThePost(relativePath, pathID, (path) => path.RemoveFile(fn), boolWin, false, out _);
 	}
 	public bool RemoveSearchPath(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
-		if (!SearchPaths.TryGetValue(new(pathID), out var collection))
+		if (!Hash(in pathID, out int hash)) return false;
+
+		if (!SearchPaths.TryGetValue(hash, out var collection))
 			return false;
 
 		bool ret = false;
@@ -370,7 +378,8 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public void RemoveSearchPaths(ReadOnlySpan<char> pathID) {
-		SearchPaths.Remove(new(pathID));
+		if (!Hash(in pathID, out int hash)) return;
+		SearchPaths.Remove(hash);
 	}
 
 	public bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath, ReadOnlySpan<char> pathID) {
