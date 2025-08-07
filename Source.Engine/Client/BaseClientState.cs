@@ -40,7 +40,6 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public int ServerCount = -1;
 	public ulong GameServerSteamID;
 	public int CurrentSequence;
-	public ClockDriftMgr ClockDriftMgr;
 	public int DeltaTick;
 	public bool Paused;
 	public double PausedExpireTime;
@@ -230,7 +229,20 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public bool IsActive() => SignOnState == SignOnState.Full;
 	public bool IsConnected() => SignOnState >= SignOnState.Connected;
 	public virtual void Clear() { }
-	public virtual void FullConnect(NetAddress adr) { } // a connection was established
+	public virtual void FullConnect(NetAddress to) {
+		NetChannel = Net.CreateNetChannel(NetSocketType.Client, to, "CLIENT", this) ?? throw new Exception("Failed to create networking channel");
+		Debug.Assert(NetChannel != null);
+
+		NetChannel.StartStreaming(ChallengeNumber);
+
+		ConnectTime = Net.Time;
+
+		DeltaTick = -1;
+
+		NextCmdTime = Net.Time;
+
+		SetSignonState(SignOnState.Connected, -1);
+	}
 	public virtual void Connect(string adr, string sourceTag) {
 		RetryChallenge = (Random.Shared.Next(0, 0x0FFF) << 16) | (Random.Shared.Next(0, 0xFFFF));
 		Net.ipname.SetValue(adr.Split(':')[0]);
@@ -293,7 +305,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		msg.WriteByte(C2S.Connect);
 		msg.WriteLong(Protocol.VERSION);
 		msg.WriteLong(authProtocol);
-		msg.WriteLong((int)ChallengeNumber);
+		msg.WriteLong(challengeNr);
 		msg.WriteLong(RetryChallenge);
 		msg.WriteUBitLong(2729496039, 32);
 		msg.WriteString(GetClientName());
@@ -311,7 +323,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 				break;
 		}
-		Socket.UDP!.SendTo(msg.BaseArray!, addr);
+		Socket.UDP!.SendTo(msg.BaseArray!.AsSpan()[..msg.BytesWritten], addr);
 
 
 		this.ConnectTime = Net.Time;
@@ -373,7 +385,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		msg.WriteLong(RetryChallenge);
 		msg.WriteString("0000000000");
 
-		Socket.UDP!.SendTo(msg.BaseArray!, addr);
+		Socket.UDP!.SendTo(msg.BaseArray!.AsSpan()[..msg.BytesWritten], addr);
 
 		ConnectTime = Net.Time;
 	}

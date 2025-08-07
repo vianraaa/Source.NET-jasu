@@ -18,8 +18,13 @@ public class ClientState : BaseClientState
 	readonly IFileSystem fileSystem;
 	readonly Net Net;
 	readonly CommonHostState host_state;
+	readonly ClockDriftMgr ClockDriftMgr;
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state) : base(Host, fileSystem, Net) {
-		Socket = Net.GetSocket(NetSocketType.Client);
+		this.Host = Host;
+		this.fileSystem = fileSystem;
+		this.Net = Net;
+		this.host_state = host_state;
+		this.ClockDriftMgr = new(this, Host, host_state);
 	}
 	public bool ProcessConnectionlessPacket(in NetPacket packet) {
 		return false;
@@ -32,8 +37,56 @@ public class ClientState : BaseClientState
 		base.FullConnect(adr);
 	}
 
+	public override int GetClientTickCount() => ClockDriftMgr.ClientTick;
+	public override void SetClientTickCount(int tick) => ClockDriftMgr.ClientTick = tick;
+	public override int GetServerTickCount() => ClockDriftMgr.ServerTick;
+	public override void SetServerTickCount(int tick) => ClockDriftMgr.ServerTick = tick;
+
 	public override bool SetSignonState(SignOnState state, int count) {
-		return base.SetSignonState(state, count);
+		if (!base.SetSignonState(state, count))
+			return false;
+
+		ServerCount = count;
+
+		switch (SignOnState) {
+			case SignOnState.Connected:
+				if (NetChannel == null) throw new Exception();
+				NetChannel.Clear();
+				NetChannel.Timeout = NetChannel.SIGNON_TIME_OUT;
+				NetChannel.SetMaxBufferSize(true, Protocol.MAX_PAYLOAD);
+
+				var msg = new NET_SetConVar();
+
+				NetChannel.SendNetMsg(msg);
+				break;
+			case SignOnState.New:
+				StartUpdatingSteamResources();
+				return true; // Don't tell the server yet we're at this point
+			case SignOnState.PreSpawn:
+				break;
+
+			case SignOnState.Full:
+				Dbg.Msg("Fully connected!\n");
+				break;
+		}
+
+		if (state >= SignOnState.Connected && NetChannel != null) {
+			var msg = new NET_SignonState(state, ServerCount);
+			NetChannel.SendNetMsg(msg);
+
+			// TODO: where to *actually* send this? Next tick?
+			if (SignOnState == SignOnState.PreSpawn) {
+				CLC_ListenEvents msg2 = new CLC_ListenEvents();
+				NetChannel.SendNetMsg(msg2);
+
+				NET_SetConVar cvr = new NET_SetConVar();
+				cvr.AddCVar("cl_playermodel", "combineelite");
+				cvr.AddCVar("cl_playercolor", "1.000000 1.000000 1.000000");
+				NetChannel.SendNetMsg(cvr);
+			}
+		}
+
+		return true;
 	}
 
 	public override void PacketStart(int incomingSequence, int outgoingAcknowledged) {
@@ -145,7 +198,8 @@ public class ClientState : BaseClientState
 
 	}
 
-	public override void ConnectionStart(NetChannel channel) {
-		throw new NotImplementedException();
+	public override void Connect(string adr, string sourceTag) {
+		Socket = Net.GetSocket(NetSocketType.Client);
+		base.Connect(adr, sourceTag);
 	}
 }

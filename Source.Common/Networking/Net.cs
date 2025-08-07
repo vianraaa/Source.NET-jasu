@@ -665,31 +665,92 @@ public class Net
 		}
 	}
 
-	public Socket? OpenSocket(string host, int port, ProtocolType protocol) {
-		Socket newSocket;
+	public Socket? OpenSocket(string? netInterface, ref int port, ProtocolType protocol) {
+		AddressFamily addressFamily = AddressFamily.InterNetwork;
+		SocketType socketType = (protocol == ProtocolType.Tcp) ? SocketType.Stream : SocketType.Dgram;
 
-		if (protocol == ProtocolType.Tcp)
-			newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-		else
-			newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-		if (protocol == ProtocolType.Udp) {
-			newSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DEFAULT_UDP_BUFFERSIZE);
-			newSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, DEFAULT_UDP_BUFFERSIZE);
-			newSocket.EnableBroadcast = true;
-
-			for (int port_offset = 0; port_offset < 32; port_offset += 1) {
-				if (StringToAdr(host, port + port_offset, out IPEndPoint? ep))
-					try {
-						newSocket.Bind(ep);
-						break;
-					}
-					catch (Exception ex) {
-						continue;
-					}
-			}
+		Socket? socket;
+		try {
+			socket = new Socket(addressFamily, socketType, protocol);
 		}
-		return newSocket;
+		catch (SocketException ex) {
+			Warning($"WARNING: OpenSocket: socket failed: {ex.Message}\n");
+			return null;
+		}
+
+		try {
+			socket.Blocking = false;
+
+			if (protocol == ProtocolType.Tcp) {
+				socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+				socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, new LingerOption(false, 0));
+				socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
+				socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, Protocol.MAX_MESSAGE);
+				socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, Protocol.MAX_MESSAGE);
+
+				// TCP sockets do not bind here
+				return socket;
+			}
+
+			// UDP only
+			int currentRecvBuf = (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer);
+			//Msg($"UDP socket SO_RCVBUF size {currentRecvBuf} bytes, changing to {Protocol.MAX_MESSAGE}\n");
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, Protocol.MAX_MESSAGE);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, Protocol.MAX_MESSAGE);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
+			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+			// Determine IP address to bind to
+			IPAddress ipAddress = IPAddress.Any;
+			if (!string.IsNullOrEmpty(netInterface) && netInterface != "localhost") {
+				if (!IPAddress.TryParse(netInterface, out ipAddress)) {
+					Warning($"WARNING: OpenSocket: failed to parse address: {netInterface}\n");
+					socket.Close();
+					return null;
+				}
+			}
+
+			IPEndPoint endPoint = new IPEndPoint(ipAddress, 0);
+			const int PORT_TRY_MAX = 32;
+			for (int portOffset = 0; portOffset < PORT_TRY_MAX; portOffset++) {
+				int tryPort = port == PORT_ANY ? 0 : port + portOffset;
+				endPoint.Port = tryPort;
+
+				try {
+					socket.Bind(endPoint);
+
+					if (port != PORT_ANY && portOffset != 0) {
+						port = tryPort;
+						//Warning($"Socket bound to non-default port {port} because original port was already in use.\n");
+					}
+
+					return socket;
+				}
+				catch (SocketException bindEx) {
+					if (port == PORT_ANY) {
+						Warning($"WARNING: OpenSocket: bind failed: {bindEx.Message} (code {bindEx.SocketErrorCode})\n");
+						socket.Close();
+						return null;
+					}
+
+					// Try next port
+				}
+			}
+
+			Warning("WARNING: OpenSocket: unable to bind socket after multiple attempts\n");
+			socket.Close();
+			return null;
+		}
+		catch (SocketException ex) {
+			Warning($"Socket error: {ex.Message}\n");
+			socket?.Close();
+			return null;
+		}
+		catch (Exception ex) {
+			Warning($"Unhandled exception: {ex}\n");
+			socket?.Close();
+			return null;
+		}
 	}
 
 	public bool Multiplayer { get; private set; }
@@ -748,10 +809,10 @@ public class Net
 		Socket? socket;
 
 		if (netSock.Port <= 0) {
-			socket = OpenSocket(ipname.GetString(), port, protocol);
+			socket = OpenSocket(ipname.GetString(), ref port, protocol);
 			if (socket == null && tryAny) {
 				port = PORT_ANY;
-				socket = OpenSocket(ipname.GetString(), port, protocol);
+				socket = OpenSocket(ipname.GetString(), ref port, protocol);
 			}
 
 			if (socket == null) {
