@@ -12,10 +12,8 @@ public unsafe struct TokenizedCommand
 
 	int argCount;
 	int strlen;
-	int argV0Size;
 	char[]? argSBuffer;
-	char[]? argVBuffer;
-	char[][]? ppArgv;
+	Range[] ppArgs;
 
 	/// <summary>
 	/// How many arguments are in the tokenized command
@@ -26,25 +24,29 @@ public unsafe struct TokenizedCommand
 	/// The argument buffer past the first argument
 	/// </summary>
 	/// <returns></returns>
-	public readonly ReadOnlySpan<char> ArgS() => argV0Size > 0 ? argSBuffer!.AsSpan()[argV0Size..(strlen - 1)] : [];
+	public readonly ReadOnlySpan<char> ArgS() => argCount > 1 ? argSBuffer!.AsSpan()[ppArgs[1].Start..] : [];
 	public readonly ReadOnlySpan<char> Arg(int index) {
 		if (index < 0 || index >= argCount)
 			return [];
 
-		return ppArgv![index];
+		return new ReadOnlySpan<char>(argSBuffer!)[ppArgs![index]];
 	}
 
 	public readonly ReadOnlySpan<char> GetCommandString() => argSBuffer;
 
 	[MemberNotNull(nameof(argSBuffer))]
-	[MemberNotNull(nameof(argVBuffer))]
-	[MemberNotNull(nameof(ppArgv))]
+	[MemberNotNull(nameof(ppArgs))]
 	public void Reset() {
 		argCount = 0;
 		strlen = 0;
 		argSBuffer ??= new char[COMMAND_MAX_LENGTH];
-		argVBuffer ??= new char[COMMAND_MAX_LENGTH];
-		ppArgv ??= new char[COMMAND_MAX_ARGC][];
+		ppArgs ??= new Range[COMMAND_MAX_ARGC];
+		for (int i = 0; i < COMMAND_MAX_LENGTH; i++) {
+			argSBuffer[i] = '\0';
+		}
+		for (int i = 0; i < ppArgs.Length; i++) {
+			ppArgs[i] = new Range(0, 0);
+		}
 	}
 
 	public readonly ReadOnlySpan<char> this[int index] {
@@ -57,16 +59,20 @@ public unsafe struct TokenizedCommand
 
 		breakSet ??= DefaultBreakSet;
 
-		fixed (char* pArgSBuffer = argSBuffer)
-		fixed (char* pArgVBuffer = argVBuffer) {
+		fixed (char* pArgSBuffer = argSBuffer){
 			command.CopyTo(new Span<char>(pArgSBuffer, command.Length));
 			strlen = command.Length;
 
+			char* readPos = pArgSBuffer;
+			nint readOffset = 0;
+
 			StringReader bufParse = new StringReader(new(argSBuffer, 0, command.Length));
 			int argvbuffersize = 0;
-			while (bufParse.IsValid() && (argCount < COMMAND_MAX_ARGC)) {
-				Span<char> argvBuf = new Span<char>(pArgVBuffer, COMMAND_MAX_LENGTH)[argvbuffersize..];
+			Span<char> argvBuf = stackalloc char[COMMAND_MAX_LENGTH];
+
+			while (bufParse.IsValid() && (argCount < COMMAND_MAX_ARGC) && (readOffset < COMMAND_MAX_LENGTH)) {
 				int maxLen = COMMAND_MAX_LENGTH - argvbuffersize;
+				bufParse.EatWhiteSpace();
 				int start = bufParse.TellGet();
 				int size = bufParse.ParseToken(breakSet, argvBuf[..maxLen]);
 				if (size < 0)
@@ -77,25 +83,11 @@ public unsafe struct TokenizedCommand
 					return false;
 				}
 
-				argvBuf = argvBuf[..size];
+				while (argvBuf[size - 1] == '\0')
+					size--;
 
-				if (argCount == 1) {
-					argV0Size = bufParse.TellGet();
-					bool foundEndQuote = pArgSBuffer[argV0Size - 1] == '\"';
-					if (foundEndQuote)
-						--argV0Size;
+				ppArgs[argCount++] = new(start, start + size);
 
-					argV0Size -= size;
-					Dbg.Assert(argV0Size != 0);
-
-					bool foundStartQuote = (argV0Size > start) && (pArgSBuffer[argV0Size - 1] == '\"');
-					Dbg.Assert(foundStartQuote == foundEndQuote);
-					if (foundStartQuote)
-						--argV0Size;
-				}
-
-				// WOW - this sucks! WOW!!!
-				ppArgv[argCount++] = new string(argvBuf[..size].ToArray()).Trim('\0').ToCharArray();
 				if (argCount >= COMMAND_MAX_ARGC)
 					Dbg.Warning("CCommand::Tokenize: Encountered command which overflows the argument buffer.. Clamped!\n");
 

@@ -116,7 +116,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 	}
 
 	private void ForwardToServer(TokenizedCommand command) {
-		throw new NotImplementedException();
+
 	}
 
 	private void Dispatch(ConCommandBase commandBase, in TokenizedCommand command) {

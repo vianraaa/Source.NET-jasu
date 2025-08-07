@@ -295,7 +295,7 @@ public class Host(
 
 	private void _RunFrame_TextMode() {
 		while (Console.KeyAvailable) {
-			var key = Console.ReadKey();
+			var key = Console.ReadKey(true);
 			switch (key.Key) {
 				case ConsoleKey.UpArrow:
 					ReceiveUpArrow();
@@ -403,7 +403,7 @@ public class Host(
 
 		consoleText[cursorPosition] = ch;
 
-		Console.Write(new string(new ReadOnlySpan<char>(consoleText))[cursorPosition..(consoleTextLen - cursorPosition + 1)]);
+		Console.Write(new string(new ReadOnlySpan<char>(consoleText))[cursorPosition..(cursorPosition + (consoleTextLen - cursorPosition + 1))]);
 		consoleTextLen++;
 		cursorPosition++;
 		count = consoleTextLen;

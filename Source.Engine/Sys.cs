@@ -46,14 +46,14 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine) {
 		group = string.IsNullOrEmpty(group) ? engineGroup : group;
 
 		if (!suppress) {
-			if (TextMode) {
+			/*if (TextMode) {
 				if(spewType == SpewType.Message || spewType == SpewType.Log) {
 					Console.Write($"[{group}] {msg}");
 				}
 				else {
 					Console.Write($"[{group}] {msg}");
 				}
-			}
+			}*/
 
 			if((spewType != SpewType.Log) || sv.GetMaxClients() == 1) {
 				Color color = new();

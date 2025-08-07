@@ -192,8 +192,6 @@ public static class UnmanagedUtils
 	public static char GetChar(this StringReader buffer) => (char)buffer.Read();
 	public static bool IsValid(this StringReader buffer) => buffer.Peek() >= 0;
 	public static int ParseToken(this StringReader buffer, in CharacterSet breaks, Span<char> tokenBuf, bool parseComments = true) {
-		tokenBuf[0] = '\0';
-
 		while (true) {
 			if (!buffer.IsValid())
 				return -1;
@@ -213,37 +211,34 @@ public static class UnmanagedUtils
 			while (buffer.IsValid()) {
 				c = buffer.GetChar();
 				if(c == '\"' || c == 0) {
-					tokenBuf[len] = '\0';
 					return len;
 				}
 				tokenBuf[len] = c;
 				if(++len == tokenBuf.Length) {
-					tokenBuf[len - 1] = '\0';
 					return tokenBuf.Length;
 				}
 			}
 
-			tokenBuf[len] = '\0';
 			return len;
 		}
 
 		if (breaks.Contains(c)) {
 			tokenBuf[0] = c;
-			tokenBuf[1] = '\0';
 			return 1;
 		}
 
 		int wordLen = 0;
 		while (true) {
+			if (!buffer.IsValid())
+				break;
+
 			tokenBuf[wordLen] = c;
 			if(++wordLen == tokenBuf.Length) {
-				tokenBuf[wordLen - 1] = '\0';
 				return tokenBuf.Length;
 			}
 
 			c = buffer.GetChar();
-			if (!buffer.IsValid())
-				break;
+
 
 			if(breaks.Contains(c) || c == '\"' || (c > '\0' && c <= ' ')) {
 				buffer.Seek(-1, SeekOrigin.Current);
@@ -251,7 +246,6 @@ public static class UnmanagedUtils
 			}
 		}
 
-		tokenBuf[wordLen] = '\0';
 		return wordLen;
 	}
 }

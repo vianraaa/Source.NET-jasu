@@ -204,6 +204,7 @@ public class ConVar : ConCommandBase, IConVar
 				Dbg.ConColorMsg(clr, $"\"{var.GetName()}\" = \"{value}\"");
 				if(!value.Equals(var.GetDefault(), StringComparison.OrdinalIgnoreCase)) 
 					Dbg.ConMsg($" ( def. \"{var.GetDefault()}\" )");
+
 			}
 
 			if (hasMin) Dbg.ConMsg($" min. {min:.4}");

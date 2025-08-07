@@ -182,7 +182,7 @@ public class CommandBuffer
 		argS = null;
 
 		int size = buf.ParseToken(TokenizedCommand.DefaultBreakSet, argV0);
-		if (size <= 0 || argV0.Length == size)
+		if (size <= 0)
 			return false;
 
 		int argsLen = buf.TellMaxPut();
