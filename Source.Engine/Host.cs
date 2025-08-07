@@ -217,7 +217,7 @@ public class Host(
 				clientDLL.IN_SetSampleTime(LastFrameTime);
 
 			LastFrameTime = FrameTime;
-			
+
 			serverTicks = numTicks;
 
 			clientGlobalVariables.SimTicksThisFrame = clientTicks;
@@ -227,7 +227,7 @@ public class Host(
 			for (int tick = 0; tick < clientTicks; tick++) {
 				Net.RunFrame(Sys.Time);
 				bool finalTick = (tick == (clientTicks - 1));
-				
+
 				if (Net.Dedicated && !Net.IsMultiplayer())
 					Net.SetMultiplayer(true);
 
@@ -282,7 +282,135 @@ public class Host(
 		UpdateMapList();
 		FrameCount++;
 
+		// It may be a bad idea to put this here... whatever for now - but later figure out how it's *actually* done
+		if (Sys.TextMode)
+			_RunFrame_TextMode();
+
 		PostFrameRate(FrameTime);
+	}
+
+	public char[] consoleText = new char[2048];
+	public int consoleTextLen;
+	public int cursorPosition;
+
+	private void _RunFrame_TextMode() {
+		while (Console.KeyAvailable) {
+			var key = Console.ReadKey();
+			switch (key.Key) {
+				case ConsoleKey.UpArrow:
+					ReceiveUpArrow();
+					break;
+				case ConsoleKey.DownArrow:
+					ReceiveDownArrow();
+					break;
+				case ConsoleKey.LeftArrow:
+					ReceiveLeftArrow();
+					break;
+				case ConsoleKey.RightArrow:
+					ReceiveRightArrow();
+					break;
+				case ConsoleKey.Enter:
+					ReadOnlySpan<char> line = ReceiveNewLine();
+					if (line.Length > 0) {
+						Cbuf.InsertText(line);
+					}
+					break;
+				case ConsoleKey.Backspace:
+					ReceiveBackspace();
+					break;
+				case ConsoleKey.Tab:
+					ReceiveTab();
+					break;
+				default:
+					char ch = key.KeyChar;
+					if (ch >= ' ' && ch <= '~')
+						ReceiveStandardChar(ch);
+					break;
+			}
+		}
+	}
+
+	private void ReceiveUpArrow() {
+
+	}
+
+	private void ReceiveDownArrow() {
+
+	}
+
+	private void ReceiveLeftArrow() {
+		if (cursorPosition <= 0)
+			return;
+		Console.Write('\b');
+		cursorPosition--;
+	}
+
+	private void ReceiveRightArrow() {
+		if (cursorPosition >= consoleTextLen)
+			return;
+		Console.Write(consoleText[cursorPosition]);
+		cursorPosition++;
+	}
+
+	private void ReceiveTab() {
+
+	}
+
+	private void ReceiveBackspace() {
+		int count;
+		if (cursorPosition <= 0)
+			return;
+		consoleTextLen--;
+		cursorPosition--;
+
+		Console.Write('\b');
+		for (count = cursorPosition; count < consoleTextLen; count++) {
+			consoleText[count] = consoleText[count + 1];
+			Console.Write(consoleText[count]);
+		}
+
+		Console.Write(' ');
+		count = consoleTextLen;
+		while (count >= cursorPosition) {
+			Console.Write('\b');
+			count--;
+		}
+	}
+
+	private ReadOnlySpan<char> ReceiveNewLine() {
+		Console.WriteLine();
+		int len = 0;
+		if (consoleTextLen > 0) {
+			len = consoleTextLen;
+			consoleTextLen = 0;
+			cursorPosition = 0;
+			return consoleText.AsSpan()[..len];
+		}
+		else
+			return null;
+	}
+
+	private void ReceiveStandardChar(char ch) {
+		int count;
+		if (consoleTextLen >= (consoleText.Length - 2))
+			return;
+
+		count = consoleTextLen;
+		while (count > cursorPosition) {
+			consoleText[count] = consoleText[count - 1];
+			count--;
+		}
+
+		consoleText[cursorPosition] = ch;
+
+		Console.Write(new string(new ReadOnlySpan<char>(consoleText))[cursorPosition..(consoleTextLen - cursorPosition + 1)]);
+		consoleTextLen++;
+		cursorPosition++;
+		count = consoleTextLen;
+		while (count > cursorPosition) {
+			Console.Write('\b');
+			count--;
+		}
 	}
 
 	const double FPS_AVG_FRAC = 0.9;
