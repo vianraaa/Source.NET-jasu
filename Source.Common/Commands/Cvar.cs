@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 
 namespace Source.Common.Commands;
@@ -148,5 +150,79 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 		}
 
 		ConCommandList = newList;
+	}
+
+	[ConCommand(helpText: "Show the list of convars/concommands.")]
+	void cvarlist() {
+		Dbg.ConMsg("cvar list\n--------------\n");
+		int count = 0;
+		ConCommandBase? command = ConCommandList;
+		List<ConCommandBase> cmds = [];
+		while (command != null) {
+			cmds.Add(command);
+			command = command.Next;
+		}
+
+		cmds.Sort((x, y) => x.Name.CompareTo(y.Name));
+		foreach (var cmd in cmds) {
+			if (cmd.IsCommand())
+				PrintCommand((ConCommand)cmd);
+			else
+				PrintCvar((ConVar)cmd);
+		}
+
+		Dbg.ConMsg($"--------------\n{count} total convars/concommands\n");
+	}
+	struct ConVarFlagsDesc
+	{
+		public FCvar bit;
+		public string desc;
+		public string shortdesc;
+		public ConVarFlagsDesc(FCvar bit, string desc, string shortdesc) {
+			this.bit = bit;
+			this.desc = desc;
+			this.shortdesc = shortdesc;
+		}
+	}
+	static ConVarFlagsDesc[] conVarFlags =
+	{
+		new(FCvar.Archive,  "ARCHIVE", "a" ),
+		new(FCvar.SingleplayerOnly,  "SPONLY", "sp" ),
+		new(FCvar.GameDLL,  "GAMEDLL", "sv" ),
+		new(FCvar.Cheat,  "CHEAT", "cheat" ),
+		new(FCvar.UserInfo,  "USERINFO", "user" ),
+		new(FCvar.Notify,  "NOTIFY", "nf" ),
+		new(FCvar.Protected,  "PROTECTED", "prot" ),
+		new(FCvar.PrintableOnly,  "PRINTABLEONLY", "print" ),
+		new(FCvar.Unlogged,  "UNLOGGED", "log" ),
+		new(FCvar.NeverAsString,  "NEVER_AS_STRING", "numeric" ),
+		new(FCvar.Replicated,  "REPLICATED", "rep" ),
+		new(FCvar.Demo,  "DEMO", "demo" ),
+		new(FCvar.DontRecord,  "DONTRECORD", "norecord" ),
+		new(FCvar.ServerCanExecute,  "SERVER_CAN_EXECUTE", "server_can_execute" ),
+		new(FCvar.ClientCmdCanExecute,  "CLIENTCMD_CAN_EXECUTE", "clientcmd_can_execute" ),
+		new(FCvar.ClientDLL, "CLIENTDLL", "cl" ),
+	};
+
+	private void PrintCvar(ConVar var) {
+		string[] flagstr = new string[conVarFlags.Length];
+		int i = 0;
+		foreach(var entry in conVarFlags) {
+			if (var.IsFlagSet(entry.bit)) {
+				flagstr[i++] = entry.shortdesc;
+			}
+		}
+		string flagstrF = string.Join(", ", flagstr);
+		string valstr;
+		if (var.GetInt() == Convert.ToInt32(var.GetDouble()))
+			valstr = $"{var.GetInt()}";
+		else
+			valstr = $"{Math.Round(var.GetDouble(), 3)}";
+
+		Dbg.ConMsg($"{var.Name.PadRight(40)} : {valstr.PadRight(8)} : {flagstrF.PadRight(16)} : {var.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}");
+	}
+
+	private void PrintCommand(ConCommand cmd) {
+		Dbg.ConMsg($"{cmd.Name.PadRight(40)} : {"cmd".PadRight(8)} : {"".PadRight(16)} : {cmd.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}");
 	}
 }
