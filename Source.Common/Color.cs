@@ -47,6 +47,8 @@ public struct Color
 		return raw;
 	}
 
+	public static implicit operator System.Drawing.Color(Color self) => System.Drawing.Color.FromArgb(self.A, self.R, self.G, self.B);
+
 	public unsafe ColorType this[int index] {
 		get {
 			return *((ColorType*)Unsafe.AsPointer(ref this) + index);

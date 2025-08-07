@@ -14,7 +14,7 @@ using static Source.Dbg;
 namespace Source.Engine;
 
 
-public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSystem) : IEngineAPI, IDisposable
+public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSystem, Sys Sys) : IEngineAPI, IDisposable
 {
 	public bool Dedicated;
 
@@ -41,6 +41,7 @@ public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSyste
 
 	public void SetStartupInfo(in StartupInfo info) {
 		startupInfo = info;
+		Sys.TextMode = info.TextMode;
 		COM.InitFilesystem(info.InitialMod);
 	}
 
