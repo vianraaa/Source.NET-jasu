@@ -26,7 +26,7 @@ public unsafe struct TokenizedCommand
 	/// The argument buffer past the first argument
 	/// </summary>
 	/// <returns></returns>
-	public readonly ReadOnlySpan<char> ArgS() => argV0Size > 0 ? argSBuffer!.AsSpan()[..argV0Size] : [];
+	public readonly ReadOnlySpan<char> ArgS() => argV0Size > 0 ? argSBuffer!.AsSpan()[argV0Size..(strlen - 1)] : [];
 	public readonly ReadOnlySpan<char> Arg(int index) {
 		if (index < 0 || index >= argCount)
 			return [];

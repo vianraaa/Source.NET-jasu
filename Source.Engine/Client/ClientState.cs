@@ -12,8 +12,15 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Client state, in CLIENT. Often referred to by 'cl'
 /// </summary>
-public class ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state) : BaseClientState(Host, fileSystem, Net)
+public class ClientState : BaseClientState
 {
+	readonly Host Host;
+	readonly IFileSystem fileSystem;
+	readonly Net Net;
+	readonly CommonHostState host_state;
+	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state) : base(Host, fileSystem, Net) {
+		Socket = Net.GetSocket(NetSocketType.Client);
+	}
 	public bool ProcessConnectionlessPacket(in NetPacket packet) {
 		return false;
 	}

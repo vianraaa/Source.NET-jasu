@@ -233,8 +233,11 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public virtual void FullConnect(NetAddress adr) { } // a connection was established
 	public virtual void Connect(string adr, string sourceTag) {
 		RetryChallenge = (Random.Shared.Next(0, 0x0FFF) << 16) | (Random.Shared.Next(0, 0xFFFF));
+		Net.ipname.SetValue(adr.Split(':')[0]);
+		Net.SetMultiplayer(true);
 		GameServerSteamID = 0;
 		RetrySourceTag = sourceTag;
+		RetryAddress = adr;
 		cl_connectmethod.SetValue(sourceTag);
 
 		SetSignonState(SignOnState.Challenge, -1);

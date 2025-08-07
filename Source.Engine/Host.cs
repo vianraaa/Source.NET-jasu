@@ -20,7 +20,7 @@ public class CommonHostState
 }
 
 public class Host(
-	EngineParms host_parms, CommonHostState host_state, GameServer sv, ClientState cl,
+	EngineParms host_parms, CommonHostState host_state, GameServer sv,
 	IServiceProvider services
 	)
 {
@@ -36,6 +36,7 @@ public class Host(
 	SV SV;
 	ServerGlobalVariables serverGlobalVariables;
 	Cbuf Cbuf;
+	ClientState cl;
 	Cmd Cmd;
 	Con Con;
 	Cvar Cvar;
@@ -375,6 +376,7 @@ public class Host(
 		var engineAPI = services.GetRequiredService<IEngineAPI>();
 		var hostState = services.GetRequiredService<IHostState>();
 		Sys = services.GetRequiredService<Sys>();
+		cl = services.GetRequiredService<ClientState>();
 
 		clientGlobalVariables = services.GetRequiredService<ClientGlobalVariables>();
 		serverGlobalVariables = services.GetRequiredService<ServerGlobalVariables>();

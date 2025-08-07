@@ -11,6 +11,7 @@ using Snappier;
 using Microsoft.Extensions.DependencyInjection;
 using Source.Common.Bitbuffers;
 using Source.Common.Compression;
+using Source.Common.Commands;
 
 namespace Source.Common.Networking;
 
@@ -131,6 +132,10 @@ public class Net
 		ep = null;
 		if (host == null) return false;
 
+		if (host == "localhost") {
+			ep = new IPEndPoint(IPAddress.Loopback, port);
+			return true;
+		}
 		if (IPAddress.TryParse(host, out IPAddress? ip)) {
 			ep = new IPEndPoint(ip, port < 0 ? 0 : port);
 			return true;
@@ -698,7 +703,19 @@ public class Net
 		// unimplemented
 	}
 	public void CloseAllSockets() {
+		for (int i = 0; i < NetSockets.Count; i++) {
+			if (NetSockets[i] != null && NetSockets[i].Port > 0) {
+				if (NetSockets[i].UDP != null) CloseSocket(NetSockets[i].UDP!);
+				if (NetSockets[i].TCP != null) CloseSocket(NetSockets[i].TCP!);
 
+				NetSockets[i].Port = 0;
+				NetSockets[i].Listening = false;
+				NetSockets[i].UDP = null;
+				NetSockets[i].TCP = null;
+			}
+		}
+
+		Msg("Closed all sockets.\n");
 	}
 	public void ConfigLoopbackBuffers(bool alloc) {
 		ClearLoopbackBuffers();
@@ -718,10 +735,10 @@ public class Net
 
 	public ushort GetHostPort() => PORT_SERVER;
 	public ushort GetClientPort() => PORT_CLIENT;
-	public string IPName { get; set; } // TODO: CONVAR!!!
+	public ConVar ipname = new("ip", "localhost", 0, "Overrides IP for multihomed hosts");
 
 	public void OpenSockets() {
-		//OpenSocketInternal(NetSocketType.Server, GetHostPort(), PORT_SERVER, "server", ProtocolType.Udp, false);
+		OpenSocketInternal(NetSocketType.Server, GetHostPort(), PORT_SERVER, "server", ProtocolType.Udp, false);
 		OpenSocketInternal(NetSocketType.Client, GetClientPort(), PORT_SERVER, "client", ProtocolType.Udp, true);
 	}
 
@@ -731,10 +748,10 @@ public class Net
 		Socket? socket;
 
 		if (netSock.Port <= 0) {
-			socket = OpenSocket(IPName, port, protocol);
+			socket = OpenSocket(ipname.GetString(), port, protocol);
 			if (socket == null && tryAny) {
 				port = PORT_ANY;
-				socket = OpenSocket(IPName, port, protocol);
+				socket = OpenSocket(ipname.GetString(), port, protocol);
 			}
 
 			if (socket == null) {
