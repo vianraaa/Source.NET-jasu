@@ -19,7 +19,7 @@ public class CommandBuffer
 {
 	public const int ARGS_BUFFER_LENGTH = 2 << 13;
 
-	class Command
+	public class Command
 	{
 		public long Tick;
 		public int FirstArgS;
@@ -55,7 +55,7 @@ public class CommandBuffer
 		currentTick = cmd.Tick;
 		if (cmd.BufferSize > 0) {
 			fixed (char* buff = argsBuffer) {
-				currentCommand.Tokenize(new Span<char>((char*)((nint)buff + cmd.FirstArgS), cmd.BufferSize));
+				currentCommand.Tokenize(new Span<char>((char*)((nint)buff + (cmd.FirstArgS * sizeof(char))), cmd.BufferSize));
 			}
 		}
 
@@ -136,33 +136,33 @@ public class CommandBuffer
 				return false;
 		}
 
-		fixed (char* pArgSBuffer = argsBuffer) {
-			argS.CopyTo(new Span<char>(pArgSBuffer, argsBuffer.Length));
-			argsBuffer[argBufferSize + commandSize] = '\0';
-			++commandSize;
+		fixed (char* pArgSBuffer = argsBuffer) 
+			argS.CopyTo(new Span<char>((void*)(((nint)pArgSBuffer) + (argBufferSize * sizeof(char))), argsBuffer.Length));
+		
+		argsBuffer[argBufferSize + commandSize] = '\0';
+		++commandSize;
 
-			Command command = new();
-			command.Tick = tick;
-			command.FirstArgS = argBufferSize;
-			command.BufferSize = commandSize;
-			argBufferSize += commandSize;
+		Command command = new();
+		command.Tick = tick;
+		command.FirstArgS = argBufferSize;
+		command.BufferSize = commandSize;
+		argBufferSize += commandSize;
 
-			if (!isProcessingCommands || (tick > currentTick)) {
-				InsertCommandAtAppropriateTime(command);
-			}
-			else {
-				InsertImmediateCommand(command);
-			}
-
-			return true;
+		if (!isProcessingCommands || (tick > currentTick)) {
+			InsertCommandAtAppropriateTime(command);
 		}
+		else {
+			InsertImmediateCommand(command);
+		}
+
+		return true;
 	}
 
 	private void InsertImmediateCommand(Command command) {
 		if (nextCommand == null)
-			Commands.AddFirst(command);
+			Commands.AddLast(command);
 		else
-			Commands.AddBefore(nextCommand, command);
+			Commands.AddAfter(nextCommand, command);
 	}
 
 	private void InsertCommandAtAppropriateTime(Command command) {
@@ -235,6 +235,10 @@ public class CommandBuffer
 	}
 
 	public bool IsProcessingCommands() => isProcessingCommands;
+
+	internal LinkedListNode<Command>? GetNextCommandHandle() {
+		return nextCommand;
+	}
 }
 
 public class Cbuf(IServiceProvider provider)

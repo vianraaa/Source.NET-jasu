@@ -62,7 +62,7 @@ public unsafe struct TokenizedCommand
 			command.CopyTo(new Span<char>(pArgSBuffer, command.Length));
 			strlen = command.Length;
 
-			StringReader bufParse = new StringReader(new(argSBuffer));
+			StringReader bufParse = new StringReader(new(argSBuffer, 0, command.Length));
 			int argvbuffersize = 0;
 			while (bufParse.IsValid() && (argCount < COMMAND_MAX_ARGC)) {
 				Span<char> argvBuf = new Span<char>(pArgVBuffer, COMMAND_MAX_LENGTH)[argvbuffersize..];
@@ -94,7 +94,8 @@ public unsafe struct TokenizedCommand
 						--argV0Size;
 				}
 
-				ppArgv[argCount++] = argvBuf.ToArray();
+				// WOW - this sucks! WOW!!!
+				ppArgv[argCount++] = new string(argvBuf[..size].ToArray()).Trim('\0').ToCharArray();
 				if (argCount >= COMMAND_MAX_ARGC)
 					Dbg.Warning("CCommand::Tokenize: Encountered command which overflows the argument buffer.. Clamped!\n");
 

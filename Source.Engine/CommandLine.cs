@@ -218,10 +218,10 @@ public class CommandLine : ICommandLine
 		if (IsInvalidIndex(index))
 			return defaultValue;
 
-		if (IsLikelyCmdLineParameter(index))
+		if (IsLikelyCmdLineParameter(index + 1))
 			return defaultValue;
 
-		return parms[index];
+		return parms[index + 1];
 	}
 
 	public unsafe void RemoveParm(string name) {

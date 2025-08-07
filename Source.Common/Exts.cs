@@ -144,7 +144,7 @@ public static class UnmanagedUtils
 			return null;
 
 		int current = (int)posField!.GetValue(buffer)!;
-		return underlying.AsSpan()[current..(current + length)];
+		return underlying.AsSpan()[current..(current + Math.Min(length, underlying.Length))];
 	}
 	public static ReadOnlySpan<char> PeekToEnd(this StringReader buffer) {
 		string? underlying = (string?)strField!.GetValue(buffer);

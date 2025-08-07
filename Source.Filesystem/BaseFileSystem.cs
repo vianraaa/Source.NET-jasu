@@ -67,6 +67,7 @@ public class SearchPathIDCollection : Dictionary<string, SearchPathCollection>
 	/// <param name="collection"></param>
 	/// <returns>True if the collection was created, false if it already existed.</returns>
 	public bool OpenOrCreateCollection(string pathID, out SearchPathCollection collection) {
+		pathID = pathID.ToLower();
 		if (TryGetValue(pathID, out var c)) {
 			collection = c;
 			return false;
@@ -79,6 +80,7 @@ public class SearchPathIDCollection : Dictionary<string, SearchPathCollection>
 	}
 
 	public new bool Remove(string pathID) {
+		pathID = pathID.ToLower();
 		base.Remove(pathID);
 		return pathOrder.Remove(pathID);
 	}
@@ -269,14 +271,14 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public IEnumerable<SearchPath> GetCollections(string pathID) {
-		if (pathID == null) {
+		if (string.IsNullOrEmpty(pathID)) {
 			foreach (var path in SearchPaths.Values)
 				if (!path.RequestOnly)
 					foreach (var searchPath in path)
 						yield return searchPath;
 		}
 		else {
-			if (!SearchPaths.TryGetValue(new(pathID), out var collection))
+			if (!SearchPaths.TryGetValue(new(pathID.ToLower()), out var collection))
 				yield break;
 
 			foreach (var searchPath in collection)

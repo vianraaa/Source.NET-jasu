@@ -97,7 +97,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			}
 		}
 
-		if(commandBase != null && source == CommandSource.Command && CommandLine.CheckParm("-default") && !commandBase.IsFlagSet(FCvar.ExecDespiteDefault)) {
+		if (commandBase != null && source == CommandSource.Command && CommandLine.CheckParm("-default") && !commandBase.IsFlagSet(FCvar.ExecDespiteDefault)) {
 			Dbg.Msg($"Ignoring cvar \"{commandBase.GetName()}\" due to -default on command line\n");
 			return null;
 		}
@@ -105,7 +105,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 		if (cv.IsCommand(command))
 			return commandBase;
 
-		if(source == CommandSource.Command) {
+		if (source == CommandSource.Command) {
 			if (cl.IsConnected()) {
 				ForwardToServer(command);
 			}
@@ -139,7 +139,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 
 	[ConCommand(helpText: "Parses and stuffs command line + commands to command buffer.")]
 	void stuffcmds(in TokenizedCommand args) {
-		if(args.ArgC() != 1) {
+		if (args.ArgC() != 1) {
 			Dbg.ConMsg("stuffcmds: execute command line parameters\n");
 			return;
 		}
@@ -147,7 +147,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 		StringBuilder build = new();
 		for (int i = 1; i < CommandLine.ParmCount(); i++) {
 			ReadOnlySpan<char> parm = CommandLine.GetParm(i);
-			if (parm == null) continue;
+			if (parm == null || parm.Length == 0) continue;
 
 			if (parm[0] == '-') {
 				ReadOnlySpan<char> value = CommandLine.ParmValueByIndex(i);
@@ -157,7 +157,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			}
 			if (parm[0] == '+') {
 				ReadOnlySpan<char> value = CommandLine.ParmValueByIndex(i);
-				if(value != null) {
+				if (value != null && value.Length > 0) {
 					build.Append($"{parm[1..]} {value}\n");
 					i++;
 				}
@@ -168,19 +168,22 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			}
 			else {
 				ReadOnlySpan<char> translated = TranslateFileAssociation(CommandLine.GetParm(i));
-				if(translated != null) {
+				if (translated != null) {
 					build.Append(translated);
 					build.Append('\n');
 				}
 			}
 		}
+		build.Append('\0');
+		if (build.Length > 0)
+			Cbuf.InsertText(build.ToString());
 	}
-	
+
 	static bool IsValidFileExtension(ReadOnlySpan<char> filename) {
 		if (filename == null)
 			return false;
 
-		if(
+		if (
 			filename.Contains(".exe", StringComparison.OrdinalIgnoreCase) ||
 			filename.Contains(".vbs", StringComparison.OrdinalIgnoreCase) ||
 			filename.Contains(".com", StringComparison.OrdinalIgnoreCase) ||
@@ -200,12 +203,12 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 	void exec(in TokenizedCommand args) {
 		lock (Cbuf.Buffer) {
 			int argc = args.ArgC();
-			if(argc != 2) {
+			if (argc != 2) {
 				Dbg.ConMsg("exec <filename>: execute a script file\n");
 				return;
 			}
 
-			ReadOnlySpan<char> file = args[1];
+			ReadOnlySpan<char> file = $"cfg/{args[1]}";
 			ReadOnlySpan<char> pathID = "MOD";
 
 			if (!COM.IsValidPath(file)) {
@@ -221,22 +224,38 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			if (true) {
 				if (fileSystem.FileExists(file)) {
 					long size = fileSystem.Size(file);
-					if(size > 1 * 1024 * 1024) {
+					if (size > 1 * 1024 * 1024) {
 						Dbg.ConMsg($"exec {file}: file size larger than 1 MiB!\n");
 						return;
 					}
 				}
 				else {
-					Dbg.ConMsg($"'{file}' not present; not executing.");
+					Dbg.ConMsg($"'{file}' not present; not executing.\n");
 					return;
 				}
 			}
 
 			using var execFile = fileSystem.Open(file, FileOpenOptions.Read, pathID);
+			using StreamReader reader = new StreamReader(execFile!.Stream);
 			Dbg.ConDMsg($"execing {file}\n");
+			LinkedListNode<CommandBuffer.Command>? hCommand = Cbuf.Buffer.GetNextCommandHandle();
 			// check to make sure we're not going to overflow later
-			while (true) {
-				
+			while (!reader.EndOfStream) {
+				string? line = reader.ReadLine().Trim() + "\0";
+				if (line == null)
+					break;
+
+				Cbuf.InsertText(line);
+
+				while (Cbuf.Buffer.GetNextCommandHandle() != hCommand) {
+					if (Cbuf.Buffer.DequeueNextCommand()) {
+						Cbuf.ExecuteCommand(Cbuf.Buffer.GetCommand(), CommandSource.Command);
+					}
+					else {
+						Dbg.Assert(false);
+						break;
+					}
+				}
 			}
 		}
 	}

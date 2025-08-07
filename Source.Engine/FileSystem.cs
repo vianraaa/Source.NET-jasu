@@ -26,7 +26,7 @@ public enum FSReturnCode
 /// <summary>
 /// Internal engine filesystem initializer.
 /// </summary>
-public class FileSystem {
+public class FileSystem(IFileSystem fileSystem) {
 	FSReturnCode SetupFileSystemError(bool run, FSReturnCode ret, ReadOnlySpan<char> msg) {
 		Dbg.Error($"{msg}\n");
 		return ret;
@@ -41,7 +41,7 @@ public class FileSystem {
 			return retVal;
 
 		string baseDir;
-		if(GetBaseDir(out baseDir))
+		if(!GetBaseDir(out baseDir))
 			return SetupFileSystemError(false, FSReturnCode.InvalidParameters, "FileSystem.GetBaseDir: failed.");
 
 		const string GAMEINFOPATH_TOKEN = "|gameinfo_path|";
@@ -51,7 +51,25 @@ public class FileSystem {
 		bool lowViolence = initInfo.LowViolence;
 		bool firstGamePath = true;
 		foreach(KeyValues cur in searchPaths!) {
+			string location = cur.GetString();
+			string lBaseDir = baseDir;
+			if(location.Contains(GAMEINFOPATH_TOKEN, StringComparison.OrdinalIgnoreCase)) {
+				location = location.Substring(GAMEINFOPATH_TOKEN.Length);
+				lBaseDir = initInfo.DirectoryName;
+			}
+			else if (location.Contains(BASESOURCEPATHS_TOKEN, StringComparison.OrdinalIgnoreCase)) {
+				Dbg.Warning($"all_source_engine_paths not implemented, ignoring.\n");
+				continue;
+			}
 
+			string absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, location));
+			// TODO; theres a lot of weird logic here I don't fully understand yet.
+			// So just do what we can here
+			string[] pathIDs = cur.Name.Split('+');
+			for (int i = 0; i < pathIDs.Length; i++) {
+				pathIDs[i] = pathIDs[i].Trim();
+				initInfo.FileSystem.AddSearchPath(absSearchPath, pathIDs[i]);
+			}
 		}
 
 		initInfo.FileSystem.MarkPathIDByRequestOnly("executable_path", true);
@@ -65,7 +83,8 @@ public class FileSystem {
 	}
 
 	private bool GetBaseDir(out string baseDir) {
-		throw new NotImplementedException();
+		baseDir = AppContext.BaseDirectory;
+		return true;
 	}
 
 	public const string GAMEINFO_FILENAME = "gameinfo.txt";
@@ -81,11 +100,11 @@ public class FileSystem {
 			return SetupFileSystemError(true, FSReturnCode.MissingGameInfoFile, $"{gameInfoFilename} is missing.");
 
 		fileSystemInfo = mainFile.FindKey("FileSystem");
-		if (mainFile == null)
+		if (fileSystemInfo == null)
 			return SetupFileSystemError(true, FSReturnCode.InvalidGameInfoFile, $"{gameInfoFilename} is not a valid format (missing FileSystem).");
 
-		searchPaths = mainFile.FindKey("SearchPaths");
-		if (mainFile == null)
+		searchPaths = fileSystemInfo.FindKey("SearchPaths");
+		if (searchPaths == null)
 			return SetupFileSystemError(true, FSReturnCode.InvalidGameInfoFile, $"{gameInfoFilename} is not a valid format (missing SearchPaths).");
 
 		return FSReturnCode.OK;

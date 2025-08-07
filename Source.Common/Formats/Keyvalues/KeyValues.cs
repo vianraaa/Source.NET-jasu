@@ -26,6 +26,7 @@ public class KeyValues : LinkedList<KeyValues>
 	public string Name = "";
 	public Types Type;
 	public object? Value;
+	public string StringValue;
 	
 	bool useEscapeSequences;
 
@@ -50,6 +51,7 @@ public class KeyValues : LinkedList<KeyValues>
 				return;
 			if (!char.IsWhiteSpace((char)c))
 				return;
+			reader.Read();
 		}
 	}
 
@@ -58,6 +60,8 @@ public class KeyValues : LinkedList<KeyValues>
 		//    1. A quote mark, in which case we need to read up to a quote
 		//    2. Anything else, we read until whitespace
 		SkipWhitespace(reader);
+		SkipComments(reader);
+
 		string key = (char)reader.Peek() == '"' ? ReadQuoteTerminatedString(reader, useEscapeSequences) : ReadWhitespaceTerminatedString(reader);
 		Name = key;
 		// Determine what we're reading next.
@@ -67,6 +71,7 @@ public class KeyValues : LinkedList<KeyValues>
 		// The value will then be set based on the string. int.TryParse will try to make it an int, same for double, and Color.
 		// We then will leave.
 		SkipWhitespace(reader);
+		SkipComments(reader);
 
 		char nextAction = (char)reader.Peek();
 		switch (nextAction) {
@@ -94,9 +99,11 @@ public class KeyValues : LinkedList<KeyValues>
 
 		while (true) {
 			SkipWhitespace(reader);
-			if (reader.Peek() == '}')
+			if (reader.Peek() == '}') {
+				reader.Read();
 				break;
-
+			}
+			SkipComments(reader);
 			// Start reading keyvalues.
 			KeyValues kvpair = new();
 			kvpair.ReadKV(reader);
@@ -104,7 +111,28 @@ public class KeyValues : LinkedList<KeyValues>
 		}
 	}
 
+	private void SkipComments(StreamReader reader) {
+		if (reader.Peek() == '/') {
+			// We need to check the stream for another /
+			reader.BaseStream.Seek(1, SeekOrigin.Current);
+			if (reader.Peek() == '/') { // We got //, its a comment
+										// We read until the end of the line.
+				while (true) {
+					char c = (char)reader.Read();
+					if (c == '\n')
+						break;
+				}
+			}
+			else {
+				// Go back, the / is fine.
+				reader.BaseStream.Seek(-1, SeekOrigin.Current);
+			}
+		}
+	}
+
 	private void DetermineValueType(string input) {
+		StringValue = input;
+
 		// Try Int32
 		if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i32)) {
 			Value = i32;
@@ -135,6 +163,7 @@ public class KeyValues : LinkedList<KeyValues>
 			if (c == -1) break;
 			if (char.IsWhiteSpace(c)) break;
 			work[i] = c;
+			reader.Read();
 		}
 
 		if (i >= len)
@@ -156,14 +185,17 @@ public class KeyValues : LinkedList<KeyValues>
 				lastCharacterWasEscape = false;
 			}
 			else {
-				if (c == '"')
+				if (c == '"') {
+					reader.Read();
 					break;
-				else if (c == '\\' && useEscapeSequences) { 
+				}
+				else if (c == '\\' && useEscapeSequences) {
 					lastCharacterWasEscape = true;
 					continue;
 				}
 			}
 			work[i] = c;
+			reader.Read();
 		}
 
 		if (i >= len)
@@ -193,4 +225,6 @@ public class KeyValues : LinkedList<KeyValues>
 
 		return null;
 	}
+
+	public string GetString() => StringValue ?? "";
 }
