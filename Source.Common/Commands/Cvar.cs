@@ -169,6 +169,7 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 				PrintCommand((ConCommand)cmd);
 			else
 				PrintCvar((ConVar)cmd);
+			count++;
 		}
 
 		Dbg.ConMsg($"--------------\n{count} total convars/concommands\n");
@@ -212,17 +213,17 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 				flagstr[i++] = entry.shortdesc;
 			}
 		}
-		string flagstrF = string.Join(", ", flagstr);
+		string flagstrF = string.Join(", ", flagstr[0..i]);
 		string valstr;
 		if (var.GetInt() == Convert.ToInt32(var.GetDouble()))
 			valstr = $"{var.GetInt()}";
 		else
 			valstr = $"{Math.Round(var.GetDouble(), 3)}";
 
-		Dbg.ConMsg($"{var.Name.PadRight(40)} : {valstr.PadRight(8)} : {flagstrF.PadRight(16)} : {var.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}");
+		Dbg.ConMsg($"{var.Name.PadRight(40)} : {valstr.PadRight(8)} : {flagstrF.PadRight(16)} : {var.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}\n");
 	}
 
 	private void PrintCommand(ConCommand cmd) {
-		Dbg.ConMsg($"{cmd.Name.PadRight(40)} : {"cmd".PadRight(8)} : {"".PadRight(16)} : {cmd.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}");
+		Dbg.ConMsg($"{cmd.Name.PadRight(40)} : {"cmd".PadRight(8)} : {"".PadRight(16)} : {cmd.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}\n");
 	}
 }
