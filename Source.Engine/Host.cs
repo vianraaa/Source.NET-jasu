@@ -34,20 +34,22 @@ public class Host(
 	public ConVar host_name = new("hostname", "", 0, "Hostname for server.");
 	public ConVar host_map = new("host_map", "", 0, "Current map name.");
 
-	ClientGlobalVariables clientGlobalVariables;
-	CL CL;
-	SV SV;
-	ServerGlobalVariables serverGlobalVariables;
-	Cbuf Cbuf;
-	ClientState cl;
-	Cmd Cmd;
-	Con Con;
-	Cvar Cvar;
-	Net Net;
-	Sys Sys;
-	ClientDLL ClientDLL;
-	IBaseClientDLL? clientDLL;
-	IServerGameDLL? serverDLL;
+	public ClientGlobalVariables clientGlobalVariables;
+	public CL CL;
+	public SV SV;
+	public ServerGlobalVariables serverGlobalVariables;
+	public Cbuf Cbuf;
+	public ClientState cl;
+	public Cmd Cmd;
+	public Con Con;
+	public EngineVGui EngineVGui;
+	public Cvar Cvar;
+	public Scr Scr;
+	public Net Net;
+	public Sys Sys;
+	public ClientDLL ClientDLL;
+	public IBaseClientDLL? clientDLL;
+	public IServerGameDLL? serverDLL;
 
 
 	public bool Initialized;
@@ -530,8 +532,9 @@ public class Host(
 #if !SWDS
 		if (!dedicated) {
 			CL = engineAPI.InitSubsystem<CL>()!;
-			CL.Init();
+			EngineVGui = engineAPI.InitSubsystem<EngineVGui>()!;
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
+			Scr = engineAPI.InitSubsystem<Scr>()!;
 			// engineAPI.InitSubsystem<Scr>();
 			// engineAPI.InitSubsystem<Render>();
 			// engineAPI.InitSubsystem<Decal>();
@@ -567,7 +570,7 @@ public class Host(
 
 	[ConCommand]
 	void disconnect(in TokenizedCommand args) {
-		if(clientDLL == null || !clientDLL.DisconnectAttempt()) {
+		if (clientDLL == null || !clientDLL.DisconnectAttempt()) {
 			Disconnect();
 		}
 	}
@@ -579,6 +582,33 @@ public class Host(
 	internal void CheckGore() {
 		// todo
 	}
+
+	public bool ChangeLevel(bool loadFromSavedGame, ReadOnlySpan<char> levelName, ReadOnlySpan<char> landmarkName) {
+		if (!sv.IsActive()) {
+			Dbg.ConMsg("Only the server may changelevel\n");
+			return false;
+		}
+
+#if !SWDS
+		Scr.BeginLoadingPlaque();
+		// stop sounds
+#endif
+
+		sv.InactivateClients();
+		// do the rest later
+		return true;
+	}
+
+	public bool NewGame(ReadOnlySpan<char> mapName, bool loadGame, bool backgroundLevel, ReadOnlySpan<char> oldMap, ReadOnlySpan<char> landmark, bool oldSave) {
+#if !SWDS
+		Scr.BeginLoadingPlaque();
+#endif
+
+		// do the rest later
+		return true;
+	}
+
+
 
 	delegate void printer(ReadOnlySpan<char> text);
 
@@ -613,7 +643,7 @@ public class Host(
 			Sys.Error($"Engine only supported 255 ConVars marked {flags}\n");
 		}
 
-		foreach(var var in Cvar.GetCommands()) {
+		foreach (var var in Cvar.GetCommands()) {
 			if (var.IsCommand())
 				continue;
 
@@ -653,5 +683,29 @@ public class Host(
 		}
 
 		return count;
+	}
+
+	internal void AllowQueuedMaterialSystem(bool v) {
+		// todo
+	}
+
+	[ConCommand(helpText: "Reload the most recent saved game (add setpos to jump to current view position on reload).")]
+	void reload(in TokenizedCommand args, CommandSource source, int clientSlot = -1) {
+		if (
+#if !SWDS
+#endif
+			!sv.IsActive())
+			return;
+
+		if (sv.IsMultiplayer())
+			return;
+
+		if (source != CommandSource.Command)
+			return;
+
+		bool rememberLocation = args.ArgC() == 2 && args[1].Equals("setpos", StringComparison.OrdinalIgnoreCase);
+		Scr.BeginLoadingPlaque();
+		Disconnect(false);
+		Dbg.Msg("reload incomplete!\n");
 	}
 }

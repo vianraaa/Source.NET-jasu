@@ -11,4 +11,8 @@ public class Con
 	public void Init() { }
 	public void Shutdown() { }
 	public void Execute() { }
+
+	internal void ClearNotify() {
+
+	}
 }

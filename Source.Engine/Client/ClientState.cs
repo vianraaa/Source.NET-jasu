@@ -27,6 +27,7 @@ public class ClientState : BaseClientState
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
+	readonly Scr Scr;
 
 
 	public double LastServerTickTime;
@@ -72,13 +73,14 @@ public class ClientState : BaseClientState
 	public static ConVar cl_downloadfilter = new("all", FCvar.Archive, "Determines which files can be downloaded from the server (all, none, nosounds, mapsonly)");
 
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv,
-		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState)
+		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
 		this.Net = Net;
 		this.host_state = host_state;
 		this.CL = CL;
+		this.Scr = Scr;
 		this.ClockDriftMgr = new(this, Host, host_state);
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
@@ -114,9 +116,9 @@ public class ClientState : BaseClientState
 				break;
 			case SignOnState.Connected:
 				EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SignOnConnected);
-				if (NetChannel == null) throw new Exception();
+				Scr.BeginLoadingPlaque();
 
-				NetChannel.Clear();
+				NetChannel!.Clear();
 
 				NetChannel.SetTimeout(NetChannel.SIGNON_TIME_OUT);
 				NetChannel.SetMaxBufferSize(true, Protocol.MAX_PAYLOAD);
@@ -148,7 +150,7 @@ public class ClientState : BaseClientState
 				NetChannel!.SetTimeout(NetChannel.SIGNON_TIME_OUT);
 				if (MaxClients > 1)
 					EngineVGui?.EnabledProgressBarForNextLoad();
-
+				Scr.BeginLoadingPlaque();
 				if(MaxClients > 1)
 					EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ChangeLevel);
 				break;

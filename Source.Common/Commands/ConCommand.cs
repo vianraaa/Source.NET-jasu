@@ -4,6 +4,7 @@ namespace Source.Common.Commands;
 
 public delegate void FnCommandCallbackVoid();
 public delegate void FnCommandCallback(in TokenizedCommand command);
+public delegate void FnCommandCallbackSourced(in TokenizedCommand command, CommandSource source, int clientSlot = -1);
 public interface ICommandCallback {
 	public void CommandCallback(in TokenizedCommand command);
 }
@@ -31,6 +32,13 @@ public class ConCommand : ConCommandBase {
 		this.autocomplete = completionFunc;
 	}
 	public ConCommand(string name, FnCommandCallback callback, string? helpString = null, FCvar flags = 0, FnCommandCompletionCallback? completionFunc = null) {
+		this.Name = name;
+		this.callback = callback;
+		this.HelpString = helpString;
+		this.Flags = flags;
+		this.autocomplete = completionFunc;
+	}
+	public ConCommand(string name, FnCommandCallbackSourced callback, string? helpString = null, FCvar flags = 0, FnCommandCompletionCallback? completionFunc = null) {
 		this.Name = name;
 		this.callback = callback;
 		this.HelpString = helpString;
@@ -69,7 +77,7 @@ public class ConCommand : ConCommandBase {
 	[MemberNotNullWhen(true, nameof(autocomplete))]
 	public bool CanAutoComplete() => autocomplete != null;
 
-	public void Dispatch(in TokenizedCommand command) {
+	public void Dispatch(in TokenizedCommand command, CommandSource source, int clientSlot) {
 		if (!CanDispatch())
 			return;
 
@@ -77,8 +85,11 @@ public class ConCommand : ConCommandBase {
 			case FnCommandCallbackVoid cb: 
 				cb(); 
 				return;
-			case FnCommandCallback cb: 
+			case FnCommandCallback cb:
 				cb(in command);
+				return;
+			case FnCommandCallbackSourced cb:
+				cb(in command, source, clientSlot);
 				return;
 			case ICommandCallback cb:
 				cb.CommandCallback(in command); 

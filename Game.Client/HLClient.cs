@@ -27,4 +27,8 @@ public class HLClient(IInput input) : IBaseClientDLL
 		return input.WriteUsercmdDeltaToBuffer(buf, from, to, isNewCommand);
 	}
 	public bool DisconnectAttempt() => false;
+
+	public void HudText(ReadOnlySpan<char> text) {
+
+	}
 }

@@ -12,4 +12,5 @@ public interface IBaseClientDLL
 	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active);
 	public bool WriteUsercmdDeltaToBuffer(bf_write buf, int from, int to, bool isNewCommand);
 	bool DisconnectAttempt();
+	void HudText(ReadOnlySpan<char> text);
 }

@@ -55,19 +55,14 @@ public static class ClassUtils
 			.GetMethods()
 			.Where(x => x.Name == "Init")
 			.FirstOrDefault(m => ParametersMatch(m.GetParameters(), argTypes));
-		// No method, no success
-		if (method == null) {
-			error = $"The subsystem '{typeof(T).Name}' does not contain method Init({string.Join(", ", argTypes.Select(x => x.Name))})";
-			return null;
-		}
 		// If the method returns booleans, return whatever the call provides
-		if (method.ReturnType == typeof(bool)) {
+		if (method != null && method.ReturnType == typeof(bool)) {
 			bool ok = (bool)(method.Invoke(instance, parms) ?? true);
 			error = ok ? null : $"The subsystem '{typeof(T).Name}' failed to initialize.";
 			return ok ? instance : null;
 		}
 		// Method invoke, return true
-		method.Invoke(instance, parms);
+		method?.Invoke(instance, parms);
 		error = null;
 		return instance;
 	}
@@ -83,7 +78,7 @@ public static class UnmanagedUtils
 
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {
 		fixed (T* ptr = array) {
-			for (int i = 0, c = array.Length; i < c; i++) 
+			for (int i = 0, c = array.Length; i < c; i++)
 				ptr[i] = default;
 		}
 	}
@@ -254,5 +249,68 @@ public static class UnmanagedUtils
 		}
 
 		return wordLen;
+	}
+}
+
+/// <summary>
+/// Various C# reflection utilities
+/// </summary>
+public static class ReflectionUtils
+{
+	public static bool DoesMethodMatch<T>(this MethodInfo m, object? instance, [NotNullWhen(true)] out T? asDelegate) where T : Delegate {
+		return (asDelegate =
+			(T?)(instance == null
+				? Delegate.CreateDelegate(typeof(T), m, false)
+				: Delegate.CreateDelegate(typeof(T), instance, m, false))
+			) != null;
+	}
+
+	public static bool DoesMethodMatch(this MethodInfo m, Type[] delegateParams, Type delegateReturn, Func<MethodInfo, bool>? preFilter = null) {
+		if (preFilter != null)
+			return preFilter(m);
+
+		if (m.ReturnType != delegateReturn)
+			return false;
+
+		var methodParams = m.GetParameters().Select(p => p.ParameterType).ToArray();
+		if (methodParams.Length != delegateParams.Length)
+			return false;
+
+		for (int i = 0; i < methodParams.Length; i++) {
+			if (methodParams[i] != delegateParams[i])
+				return false;
+		}
+
+		return true;
+	}
+	public static MethodInfo? FindMatchingMethod(this Type targetType, Type[] delegateParams, Type delegateReturn, Func<MethodInfo, bool>? preFilter = null)
+		=> targetType
+			.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+			.FirstOrDefault(m => DoesMethodMatch(m, delegateParams, delegateReturn, preFilter));
+	public static MethodInfo? FindMatchingMethod(this Type targetType, Type delegateType, Func<MethodInfo, bool>? preFilter = null) {
+		if (!typeof(Delegate).IsAssignableFrom(delegateType))
+			throw new ArgumentException("delegateType must be a delegate", nameof(delegateType));
+
+		var invoke = delegateType.GetMethod("Invoke")!;
+		var delegateParams = invoke.GetParameters().Select(p => p.ParameterType).ToArray();
+		var delegateReturn = invoke.ReturnType;
+		return FindMatchingMethod(targetType, delegateParams, delegateReturn, preFilter);
+	}
+	public static MethodInfo? FindMatchingMethod<T>(this Type targetType, Func<MethodInfo, bool>? preFilter = null) where T : Delegate => FindMatchingMethod(targetType, typeof(T), preFilter);
+
+
+	public static bool TryFindMatchingMethod(this Type targetType, Type[] delegateParams, Type delegateReturn, Func<MethodInfo, bool>? preFilter, [NotNullWhen(true)] out MethodInfo? info) {
+		info = FindMatchingMethod(targetType, delegateParams, delegateReturn, preFilter);
+		return info != null;
+	}
+
+	public static bool TryFindMatchingMethod(this Type targetType, Type delegateType, Func<MethodInfo, bool>? preFilter, [NotNullWhen(true)] out MethodInfo? info) {
+		info = FindMatchingMethod(targetType, delegateType, preFilter);
+		return info != null;
+	}
+
+	public static bool TryFindMatchingMethod<T>(this Type targetType, Func<MethodInfo, bool>? preFilter, [NotNullWhen(true)] out MethodInfo? info) where T : Delegate {
+		info = FindMatchingMethod<T>(targetType, preFilter);
+		return info != null;
 	}
 }

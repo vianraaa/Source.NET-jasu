@@ -139,7 +139,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 
 	private void Dispatch(ConCommandBase commandBase, in TokenizedCommand command) {
 		ConCommand conCommand = (ConCommand)commandBase;
-		conCommand.Dispatch(in command);
+		conCommand.Dispatch(in command, Source, ClientSlot);
 	}
 
 	public bool ShouldPreventClientCommand(ConCommandBase? cmd) {

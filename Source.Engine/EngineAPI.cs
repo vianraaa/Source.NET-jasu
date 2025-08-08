@@ -174,11 +174,15 @@ public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSyste
 				}
 
 				// Construct a new ConCommand
+				string cmdName = attribute.Name ?? method.Name;
 				ConCommand cmd;
-				if (method.GetParameters().Length == 0)
-					cmd = new ConCommand(attribute.Name ?? method.Name, method.CreateDelegate<FnCommandCallbackVoid>(instance), attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.GetParameters().Length == 1 && method.GetParameters().First().ParameterType == typeof(TokenizedCommand).MakeByRefType())
-					cmd = new ConCommand(attribute.Name ?? method.Name, method.CreateDelegate<FnCommandCallback>(instance), attribute.HelpText, attribute.Flags, completionCallback);
+
+				if (method.DoesMethodMatch<FnCommandCallbackVoid>(instance, out var callbackVoid))
+					cmd = new(cmdName, callbackVoid, attribute.HelpText, attribute.Flags, completionCallback);
+				else if (method.DoesMethodMatch<FnCommandCallback>(instance, out var callback))
+					cmd = new(cmdName, callback, attribute.HelpText, attribute.Flags, completionCallback);
+				else if (method.DoesMethodMatch<FnCommandCallbackSourced>(instance, out var callbackSourced))
+					cmd = new(cmdName, callbackSourced, attribute.HelpText, attribute.Flags, completionCallback);
 				else
 					throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
 

@@ -23,7 +23,7 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui)
+	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr)
 {
 	public ClientState cl;
 	public IBaseClientDLL ClientDLL;
@@ -148,6 +148,7 @@ public class CL(IServiceProvider services, Net Net,
 			Host.Disconnect(false);
 			Net.SetMultiplayer(true);
 			EngineVGui?.EnabledProgressBarForNextLoad();
+			Scr.BeginLoadingPlaque();
 			EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SignOnSpawn);
 		}
 		else {

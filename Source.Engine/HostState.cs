@@ -191,7 +191,7 @@ public class HostState : IHostState
 			case HostStates.Run: break;
 			case HostStates.LoadGame:
 			case HostStates.NewGame:
-				// begin loading plaque?
+				Host.Scr.BeginLoadingPlaque();
 				goto case HostStates.GameShutdown;
 
 			case HostStates.Shutdown:
