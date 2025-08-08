@@ -7,7 +7,7 @@ namespace Game.Client;
 
 public class HLClient(IInput input) : IBaseClientDLL
 {
-	public static void PreInject(IServiceCollection services) {
+	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
 	}
 

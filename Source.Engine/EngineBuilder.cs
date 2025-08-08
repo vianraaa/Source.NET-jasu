@@ -28,7 +28,7 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 
 	static void PreInject<T>(IServiceCollection services) {
 		Type t = typeof(T);
-		var preInject = t.GetMethod(nameof(PreInject), BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
+		var preInject = t.GetMethod("DLLInit", BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
 		if (preInject != null) 
 			preInject(services);
 	}
@@ -66,6 +66,7 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
 		this.AddSingleton<COM>();
+		this.AddSingleton<Util>();
 		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
 		// Engine components, individually...
