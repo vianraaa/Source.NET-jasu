@@ -16,15 +16,16 @@ public unsafe struct TokenizedCommand
 	Range[] ppArgs;
 
 	/// <summary>
-	/// How many arguments are in the tokenized command
+	/// How many arguments are in the tokenized command?
 	/// </summary>
 	/// <returns></returns>
 	public readonly int ArgC() => argCount;
 	/// <summary>
-	/// The argument buffer past the first argument
+	/// The argument buffer past the provided argument.
 	/// </summary>
-	/// <returns></returns>
-	public readonly ReadOnlySpan<char> ArgS() => argCount > 1 ? argSBuffer!.AsSpan()[ppArgs[1].Start..] : [];
+	/// <returns>All text, as a <see cref="ReadOnlySpan{char}"/> slice of the internal command buffer, after the provided arguments starting position (0 returning all text, 1 returning all after the initial command, etc..)</returns>
+	public readonly ReadOnlySpan<char> ArgS(int startingArg = 1) 
+		=> argCount > startingArg ? argSBuffer!.AsSpan()[ppArgs[startingArg].Start..ppArgs[argCount - 1].End] : [];
 	public readonly ReadOnlySpan<char> Arg(int index) {
 		if (index < 0 || index >= argCount)
 			return [];
@@ -33,6 +34,9 @@ public unsafe struct TokenizedCommand
 	}
 
 	public readonly ReadOnlySpan<char> GetCommandString() => argSBuffer;
+	public readonly void CopyTo(Span<char> target) {
+		ArgS(0).CopyTo(target);
+	}
 
 	[MemberNotNull(nameof(argSBuffer))]
 	[MemberNotNull(nameof(ppArgs))]

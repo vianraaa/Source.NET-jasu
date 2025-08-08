@@ -238,8 +238,19 @@ public class CommandBuffer
 
 	public bool IsProcessingCommands() => isProcessingCommands;
 
-	internal LinkedListNode<Command>? GetNextCommandHandle() {
+	public LinkedListNode<Command>? GetNextCommandHandle() {
 		return nextCommand;
+	}
+
+	public int GetArgumentBufferSize() {
+		return argBufferSize;
+	}
+	public int GetMaxArgumentBufferSize() {
+		return maxArgBufferLength;
+	}
+
+	public void SetWaitEnabled(bool wait) {
+		waitEnabled = wait;
 	}
 }
 
@@ -280,5 +291,79 @@ public class Cbuf(IServiceProvider provider)
 			}
 			Buffer.EndProcessingCommands();
 		}
+	}
+
+
+	public const string CMDSTR_ADD_EXECUTION_MARKER = "[$&*,`]";
+	public const int MAX_EXECUTION_MARKERS = 2048;
+	List<int> ExecutionMarkers = [];
+	public bool HasRoomForExecutionMarkers(int executionMarkersCount) {
+		return ExecutionMarkers.Count + executionMarkersCount < MAX_EXECUTION_MARKERS;
+	}
+	public bool AddTextWithMarkers(CmdExecutionMarker markerLeft, ReadOnlySpan<char> text, CmdExecutionMarker markerRight) {
+		if (!HasRoomForExecutionMarkers(2)) {
+			Dbg.ConMsg("Cbuf.AddTextWithMarkers: execution marker overflow\n");
+			return false;
+		}
+
+		int markerCodeLeft = CreateExecutionMarker();
+		int markerCodeRight = CreateExecutionMarker();
+
+		Span<char> strMarkerLeft = stackalloc char[512];
+		Span<char> strMarkerRight = stackalloc char[512];
+
+		$"{CMDSTR_ADD_EXECUTION_MARKER} {markerLeft} {markerCodeLeft}".CopyTo(strMarkerLeft);
+		$"{CMDSTR_ADD_EXECUTION_MARKER} {markerRight} {markerCodeRight}".CopyTo(strMarkerRight);
+
+		int strLeftLen = strMarkerLeft.IndexOf('\0');
+		int strRightLen = strMarkerRight.IndexOf('\0');
+		int textToBeAddedLen = strLeftLen + strRightLen + text.Length + 3;
+
+		lock (Buffer) {
+			if(Buffer.GetArgumentBufferSize() + textToBeAddedLen + 1 > Buffer.GetMaxArgumentBufferSize()) {
+				FindAndRemoveExecutionMarker(markerCodeLeft);
+				FindAndRemoveExecutionMarker(markerCodeRight);
+
+				Dbg.ConMsg("Cbuf.AddTextWithMarkers: buffer overflow\n");
+				return false;
+			}
+
+			bool success = AddExecutionMarker(markerLeft, strMarkerLeft[..strLeftLen]) && Buffer.AddText(text) && AddExecutionMarker(markerRight, strMarkerRight[..strRightLen]);
+			if (!success) 
+				Dbg.ConMsg("Cbuf.AddTextWithMarkers: buffer overflow\n");
+
+			return true;
+		}
+	}
+
+	private bool AddExecutionMarker(CmdExecutionMarker marker, ReadOnlySpan<char> markerCode) {
+		if(marker == CmdExecutionMarker.EnableServerCanExecute) {
+			Buffer.SetWaitEnabled(false);
+		}
+		else if(marker == CmdExecutionMarker.DisableServerCanExecute) {
+			Buffer.SetWaitEnabled(true);
+		}
+
+		return Buffer.AddText(markerCode);
+	}
+
+	public bool FindAndRemoveExecutionMarker(int code) => ExecutionMarkers.Remove(code);
+
+	public int CreateExecutionMarker() {
+		if(ExecutionMarkers.Count >= MAX_EXECUTION_MARKERS) {
+			// todo
+		}
+
+		int randomNumber;
+		while (true) {
+			randomNumber = Random.Shared.Next(0, 1 << 30);
+			if (ExecutionMarkers.Contains(randomNumber))
+				continue;
+			else
+				break;
+		}
+
+		ExecutionMarkers.Add(randomNumber);
+		return randomNumber;
 	}
 }

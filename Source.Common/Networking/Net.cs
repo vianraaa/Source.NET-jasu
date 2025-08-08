@@ -17,6 +17,20 @@ namespace Source.Common.Networking;
 
 public class Net
 {
+	internal static readonly ConVar net_showmsg = new("net_showmsg", "0", 0, "Show incoming message: <0|1|name>");
+	internal static readonly ConVar net_showfragments = new("net_showfragments", "0", 0, "Show netchannel fragments");
+	internal static readonly ConVar net_showpeaks = new("net_showpeaks", "0", 0, "Show messages for large packets only: <size>");
+	internal static readonly ConVar net_blockmsg = new("net_blockmsg", "none", FCvar.Cheat, "Discards incoming message: <0|1|name>");
+	internal static readonly ConVar net_showdrop = new("net_showdrop", "0", 0, "Show dropped packets in console");
+	internal static readonly ConVar net_drawslider = new("net_drawslider", "0", 0, "Draw completion slider during signon");
+	internal static readonly ConVar net_chokeloopback = new("net_chokeloop", "0", 0, "Apply bandwidth choke to loopback packets");
+	internal static readonly ConVar net_maxfilesize = new("net_maxfilesize", "16", 0, "Maximum allowed file size for uploading in MiB", 0, 64);
+	internal static readonly ConVar net_compresspackets = new("net_compresspackets", "1", 0, "Use compression on game packets.");
+	internal static readonly ConVar net_compresspackets_minsize = new("net_compresspackets_minsize", "1024", 0, "Don't bother compressing packets below this size.");
+	internal static readonly ConVar net_maxcleartime = new("net_maxcleartime", "4.0", 0, "Max # of seconds we can wait for next packets to be sent based on rate setting (0 == no limit).");
+	internal static readonly ConVar net_maxpacketdrop = new("net_maxpacketdrop", "5000", 0, "Ignore any packets with the sequence number more than this ahead (0 == no limit)");
+
+
 	/// <summary>
 	/// NOP command used for padding.
 	/// </summary>
@@ -147,6 +161,9 @@ public class Net
 	public bool StringToAdr(string host, [NotNullWhen(true)] out IPEndPoint? ep) {
 		ep = null;
 		if (host == null) return false;
+
+		if (host.IndexOf(':') == -1)
+			host = $"{host}:27015";
 
 		return IPEndPoint.TryParse(host, out ep);
 	}

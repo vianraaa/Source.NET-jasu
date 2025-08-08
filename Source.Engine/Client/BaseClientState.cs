@@ -2,6 +2,7 @@
 using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Networking;
+using Source.Engine.Server;
 
 using Steamworks;
 
@@ -13,11 +14,13 @@ using System.Xml.Linq;
 
 using static Source.Dbg;
 
+using GameServer = Source.Engine.Server.GameServer;
+
 namespace Source.Engine.Client;
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
-public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
+public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
 
@@ -172,58 +175,151 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 	public virtual bool ProcessMessage(INetMessage message) {
 		switch (message) {
-			case NET_SignonState signonstate:
-				SetSignonState(signonstate.SignOnState, signonstate.SpawnCount);
-				break;
-			case svc_UserMessage usermsg:
-				byte[] userdata = new byte[Constants.MAX_USER_MSG_DATA];
-
-				bf_read userMsg = new bf_read("UserMessage(read)", userdata, Constants.MAX_USER_MSG_DATA);
-				int bitsRead = usermsg.DataIn.ReadBitsClamped(userdata, (uint)usermsg.Length);
-				userMsg.StartReading(userdata, Net.Bits2Bytes(bitsRead));
-
-				/*if (!UserMessages.DispatchUserMessage(usermsg.MessageType, userMsg)) {
-					ConWarning($"Couldn't dispatch user message ({userMsg})\n");
-					return false;
-				}*/
-
-				return true;
-			case NET_Tick tickmsg:
-				NetChannel.SetRemoteFramerate(tickmsg.HostFrameTime, tickmsg.HostFrameDeviation);
-				SetClientTickCount(tickmsg.Tick);
-				SetServerTickCount(tickmsg.Tick);
-				// string tables?
-
-				return GetServerTickCount() > 0;
-			case svc_PacketEntities entmsg:
-				// Cheating; need to better implement all of this
-				if (SignOnState < SignOnState.Spawn) {
-					ConWarning("Received packet entities while connecting!\n");
-					return false;
-				}
-
-				if (entmsg.UpdateBaseline) {
-					var clcAck = new clc_BaselineAck(0, entmsg.Baseline);
-					NetChannel.SendNetMsg(clcAck, true);
-				}
-
-				if (SignOnState == SignOnState.Spawn) {
-					if (!entmsg.IsDelta) {
-						SetSignonState(SignOnState.Full, ServerCount);
-					}
-					else {
-						ConWarning("Received delta packet entities while spawning!\n");
-						return false;
-					}
-				}
-
-				if (DeltaTick >= 0 || !entmsg.IsDelta)
-					DeltaTick = GetServerTickCount();
-
-				break;
+			case NET_Tick msg: return ProcessTick(msg);
+			case NET_SignonState msg: return ProcessSignonState(msg);
+			case NET_SetConVar msg: return ProcessSetConVar(msg);
+			case NET_StringCmd msg: return ProcessStringCmd(msg);
+			case svc_Print msg: return ProcessPrint(msg);
+			case svc_ServerInfo msg: return ProcessServerInfo(msg);
+			case svc_CreateStringTable msg: return ProcessCreateStringTable(msg);
+			case svc_UpdateStringTable msg: return ProcessUpdateStringTable(msg);
+			case svc_ClassInfo msg: return ProcessClassInfo(msg);
+			case svc_BSPDecal msg: return ProcessBSPDecal(msg);
+			case svc_VoiceInit msg: return ProcessVoiceInit(msg);
+			case svc_GameEventList msg: return ProcessGameEventList(msg);
+			case svc_FixAngle msg: return ProcessFixAngle(msg);
+			case svc_SetView msg: return ProcessSetView(msg);
+			case svc_UserMessage msg: return ProcessUserMessage(msg);
+			case svc_PacketEntities msg: return ProcessPacketEntities(msg);
+			case svc_TempEntities msg: return ProcessTempEntities(msg);
+			case svc_GMod_ServerToClient msg: return ProcessGMod_ServerToClient(msg);
 		}
 		// ignore
 		return true;
+	}
+
+	private bool ProcessGMod_ServerToClient(svc_GMod_ServerToClient msg) {
+		return true;
+	}
+
+	private bool ProcessTempEntities(svc_TempEntities msg) {
+		return true;
+	}
+
+	private bool ProcessPacketEntities(svc_PacketEntities msg) {
+		// Cheating; need to better implement all of this
+		if (SignOnState < SignOnState.Spawn) {
+			ConWarning("Received packet entities while connecting!\n");
+			return false;
+		}
+
+		if (msg.UpdateBaseline) {
+			var clcAck = new clc_BaselineAck(0, msg.Baseline);
+			NetChannel.SendNetMsg(clcAck, true);
+		}
+
+		if (SignOnState == SignOnState.Spawn) {
+			if (!msg.IsDelta) {
+				SetSignonState(SignOnState.Full, ServerCount);
+			}
+			else {
+				ConWarning("Received delta packet entities while spawning!\n");
+				return false;
+			}
+		}
+
+		if (DeltaTick >= 0 || !msg.IsDelta)
+			DeltaTick = GetServerTickCount();
+
+		return true;
+	}
+
+	private bool ProcessUserMessage(svc_UserMessage msg) {
+		byte[] userdata = new byte[Constants.MAX_USER_MSG_DATA];
+
+		bf_read userMsg = new bf_read("UserMessage(read)", userdata, Constants.MAX_USER_MSG_DATA);
+		int bitsRead = msg.DataIn.ReadBitsClamped(userdata, (uint)msg.Length);
+		userMsg.StartReading(userdata, Net.Bits2Bytes(bitsRead));
+
+		/*if (!UserMessages.DispatchUserMessage(usermsg.MessageType, userMsg)) {
+			ConWarning($"Couldn't dispatch user message ({userMsg})\n");
+			return false;
+		}*/
+
+		return true;
+	}
+
+	private bool ProcessSetView(svc_SetView msg) {
+		return true;
+	}
+
+	private bool ProcessFixAngle(svc_FixAngle msg) {
+		return true;
+	}
+
+	private bool ProcessGameEventList(svc_GameEventList msg) {
+		return true;
+	}
+
+	private bool ProcessBSPDecal(svc_BSPDecal msg) {
+		return true;
+	}
+
+	private bool ProcessVoiceInit(svc_VoiceInit msg) {
+		return true;
+	}
+
+	private bool ProcessClassInfo(svc_ClassInfo msg) {
+		return true;
+	}
+
+	private bool ProcessUpdateStringTable(svc_UpdateStringTable msg) {
+		return true;
+	}
+
+	private bool ProcessCreateStringTable(svc_CreateStringTable msg) {
+		return true;
+	}
+
+	private bool ProcessServerInfo(svc_ServerInfo msg) {
+		return true;
+	}
+
+	private bool ProcessPrint(svc_Print msg) {
+		return true;
+	}
+
+	private bool ProcessStringCmd(NET_StringCmd msg) {
+		if(!RestrictServerCommands || sv.IsActive()) {
+			Cbuf.AddText(msg.Command);
+			return true;
+		}
+
+		if (!Cbuf.HasRoomForExecutionMarkers(2)) {
+			AssertMsg(false, "BaseClientState.ProcessStringCmd called, but there is no room for the execution markers. Ignoring command.");
+			return true;
+		}
+
+		Cbuf.AddTextWithMarkers(CmdExecutionMarker.EnableServerCanExecute, msg.Command, CmdExecutionMarker.DisableServerCanExecute);
+		return true;
+	}
+
+	private bool ProcessSetConVar(NET_SetConVar msg) {
+		return true;
+	}
+
+	private bool ProcessSignonState(NET_SignonState msg) {
+		SetSignonState(msg.SignOnState, msg.SpawnCount);
+		return true;
+	}
+
+	private bool ProcessTick(NET_Tick msg) {
+		NetChannel.SetRemoteFramerate(msg.HostFrameTime, msg.HostFrameDeviation);
+		SetClientTickCount(msg.Tick);
+		SetServerTickCount(msg.Tick);
+		// string tables?
+
+		return GetServerTickCount() > 0;
 	}
 
 	public bool IsActive() => SignOnState == SignOnState.Full;
@@ -404,4 +500,24 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public virtual void SetServerTickCount(int tick) { }
 
 	public virtual void SetClientAndServerTickCount(int tick) { }
+
+	public void ForceFullUpdate() {
+		if (DeltaTick == -1)
+			return;
+		FreeEntityBaselines();
+		DeltaTick = -1;
+		DevMsg("Requesting full game update...\n");
+	}
+
+	private void FreeEntityBaselines() {
+		throw new NotImplementedException();
+	}
+
+	public void SendStringCmd(ReadOnlySpan<char> str) {
+		if(NetChannel != null) {
+			NET_StringCmd stringCmd = new NET_StringCmd();
+			stringCmd.Command = new(str);
+			NetChannel.SendNetMsg(stringCmd);
+		}
+	}
 }

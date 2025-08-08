@@ -6,6 +6,7 @@ using static Source.Common.Networking.Protocol;
 using static Source.Dbg;
 using Source.Common.Bitbuffers;
 using Source.Common.Hashing;
+using Source.Common.Commands;
 
 namespace Source.Common.Networking;
 public class NetChannel : INetChannelInfo, INetChannel
@@ -286,8 +287,6 @@ public class NetChannel : INetChannelInfo, INetChannel
 		OutSequenceAck = outSequenceAcknowledged;
 	}
 
-	public static double net_maxcleartime = 4.0;
-
 	public bool CanSendPacket() => ClearTime < Net.Time;
 
 	public void SetChoked() {
@@ -513,7 +512,9 @@ public class NetChannel : INetChannelInfo, INetChannel
 					Debug.Assert(subchan.State != SubChannelState.Free);
 
 					if (subchan.State == SubChannelState.Waiting) {
-						Msg($"Resending subchan {subchan.Index}: start {subchan.StartFragment[0]}, num {subchan.NumFragments[0]}");
+						if (Net.net_showfragments.GetBool())
+							Msg($"Resending subchan {subchan.Index}: start {subchan.StartFragment[0]}, num {subchan.NumFragments[0]}");
+
 						subchan.State = SubChannelState.ToSend;
 					}
 					else if (subchan.State == SubChannelState.Dirty) {
@@ -583,7 +584,8 @@ public class NetChannel : INetChannelInfo, INetChannel
 		DataFragments data = WaitingList[list][0];
 
 		if (data.AckedFragments == data.NumFragments) {
-			Msg($"Sending complete: {data.NumFragments} fragments, {data.Bytes} bytes\n");
+			if (Net.net_showfragments.GetBool())
+				Msg($"Sending complete: {data.NumFragments} fragments, {data.Bytes} bytes\n");
 			RemoveHeadInWaitingList(list);
 			return;
 		}
@@ -660,7 +662,8 @@ public class NetChannel : INetChannelInfo, INetChannel
 		}
 
 		// Got all fragments
-		Msg($"Receiving complete: {data.NumFragments} fragments, {data.Bytes} bytes\n");
+		if (Net.net_showfragments.GetBool())
+			Msg($"Receiving complete: {data.NumFragments} fragments, {data.Bytes} bytes\n");
 
 		if (data.Compressed)
 			UncompressFragments(data);
@@ -739,6 +742,9 @@ public class NetChannel : INetChannelInfo, INetChannel
 	}
 
 	public bool ProcessMessages(bf_read buf) {
+		string showmsgname = Net.net_showmsg.GetString();
+		string blockmsgname = Net.net_blockmsg.GetString();
+
 		int startbit = buf.BitsRead;
 		while (true) {
 			if (buf.Overflowed) {
@@ -772,8 +778,14 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 				UpdateMessageStats(netMsg.GetGroup(), buf.BitsRead - msgStartBit);
 
-				if (true) {
+
+				if (showmsgname != "0" && (showmsgname == "1" || showmsgname.Equals(netMsg.GetName(), StringComparison.OrdinalIgnoreCase))) {
 					Msg($"Msg from {RemoteAddress}: {netMsg.ToString()?.Trim('\n')}\n");
+				}
+
+				if (blockmsgname != "0" && (blockmsgname == "1" || blockmsgname.Equals(netMsg.GetName(), StringComparison.OrdinalIgnoreCase))) {
+					Msg($"Blocking message {netMsg.ToString()?.Trim('\n')}\n");
+					continue;
 				}
 
 				// todo: block
@@ -1064,6 +1076,9 @@ public class NetChannel : INetChannelInfo, INetChannel
 				throw new Exception("Cannot upload file syet!!!");
 			}
 
+			if (Net.net_showfragments.GetBool())
+				ConMsg($"Sending subchan {subChan.Index}: start {subChan.StartFragment[i]}, num {subChan.NumFragments[i]}");
+
 			subChan.SendSeqNumber = OutSequence;
 			subChan.State = SubChannelState.Waiting;
 		}
@@ -1199,8 +1214,8 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 		double addTime = totalSize / (double)Rate;
 		ClearTime += addTime;
-		if (net_maxcleartime > 0) {
-			double latestClearTime = Net.Time + net_maxcleartime;
+		if (Net.net_maxcleartime.GetDouble() > 0) {
+			double latestClearTime = Net.Time + Net.net_maxcleartime.GetDouble();
 			if (ClearTime > latestClearTime)
 				ClearTime = latestClearTime;
 		}

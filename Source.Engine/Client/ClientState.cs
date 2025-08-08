@@ -2,10 +2,13 @@
 using Source.Common.Hashing;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
+using Source.Engine.Server;
 
 using Steamworks;
 
 using static Source.Constants;
+
+using GameServer = Source.Engine.Server.GameServer;
 
 namespace Source.Engine.Client;
 
@@ -19,7 +22,7 @@ public class ClientState : BaseClientState
 	readonly Net Net;
 	readonly CommonHostState host_state;
 	readonly ClockDriftMgr ClockDriftMgr;
-	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state) : base(Host, fileSystem, Net) {
+	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Cbuf Cbuf) : base(Host, fileSystem, Net, sv, Cbuf) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
 		this.Net = Net;

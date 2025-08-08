@@ -115,8 +115,15 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 		return null;
 	}
 
-	private void ForwardToServer(TokenizedCommand command) {
-
+	private void ForwardToServer(in TokenizedCommand command) {
+#if !SWDS
+		Span<char> str = stackalloc char[1024];
+		if (command.Arg(0).Equals("cmd", StringComparison.OrdinalIgnoreCase))
+			command.ArgS(1).CopyTo(str);
+		else
+			command.ArgS(0).CopyTo(str);
+		cl.SendStringCmd(str);
+#endif
 	}
 
 	private void Dispatch(ConCommandBase commandBase, in TokenizedCommand command) {
@@ -137,6 +144,33 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 		return false;
 	}
 
+	[ConCommand(helpText: "Forward command to server.")]
+	void cmd(in TokenizedCommand args) {
+		ForwardToServer(in args);
+	}
+
+	[ConCommand(helpText: "Alias a command.")]
+	void alias(in TokenizedCommand args) {
+		int argc = args.ArgC();
+		if (argc == 1) {
+			Dbg.ConMsg("Current alias commands:\n");
+			foreach (var alias in aliases) {
+				Dbg.ConMsg($"  {alias.Key} : {alias.Value}\n");
+			}
+			return;
+		}
+
+		ReadOnlySpan<char> s = args[1];
+		ReadOnlySpan<char> restOfCommandLine = args.ArgS(startingArg: 2);
+
+		aliases[new string(s)] = new string(restOfCommandLine);
+	}
+	[ConCommand(helpText: "Echos text to console.")]
+	void echo(in TokenizedCommand args) {
+		for (int i = 1, argc = args.ArgC(); i < argc; i++)
+			Dbg.ConMsg($"{args[i]} ");
+		Dbg.ConMsg("\n");
+	}
 	[ConCommand(helpText: "Parses and stuffs command line + commands to command buffer.")]
 	void stuffcmds(in TokenizedCommand args) {
 		if (args.ArgC() != 1) {
