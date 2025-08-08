@@ -318,11 +318,11 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 			}
 
 			if (!cv.IsFlagSet(FCvar.Replicated)) {
-				ConMsg($"SetConVar: Can't set server svar {var.Name} to {var.Value}, not marked as FCvar.Replicated on client\n");
+				ConMsg($"SetConVar: Can't set server cvar {var.Name} to {var.Value}, not marked as FCvar.Replicated on client\n");
 				continue;
 			}
 
-			if (sv.IsActive()) {
+			if (!sv.IsActive()) {
 				cv.SetValue(var.Value);
 				DevMsg($"SetConVar: {var.Name} = {var.Value}\n");
 			}

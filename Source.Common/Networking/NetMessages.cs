@@ -98,6 +98,7 @@ public class NET_SetConVar : NetMessage
 
 	public override bool ReadFromBuffer(bf_read buffer) {
 		int numvars = buffer.ReadByte();
+		DevMsg($"{numvars} vars received\n");
 
 		convars.Clear();
 
