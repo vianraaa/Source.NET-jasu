@@ -465,18 +465,24 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 		// Stale/duplicated packets
 		if (sequence <= InSequence) {
-			if (sequence == InSequence)
-				Warning($"{RemoteAddress}: duplicate packet {sequence} at {InSequence}\n");
-			else
-				Warning($"{RemoteAddress}: out-of-order packet {sequence} at {InSequence}\n");
+			if (Net.net_showdrop.GetBool()) {
+				if (sequence == InSequence)
+					Warning($"{RemoteAddress}: duplicate packet {sequence} at {InSequence}\n");
+				else
+					Warning($"{RemoteAddress}: out-of-order packet {sequence} at {InSequence}\n");
+			}
 
 			return PacketFlag.Invalid;
 		}
 
 		packetDrop = sequence - (InSequence + choked + 1);
 		if (packetDrop > 0)
-			Warning($"{RemoteAddress}: dropped {packetDrop} packets at {sequence}\n");
+			if (Net.net_showdrop.GetBool())
+				Warning($"{RemoteAddress}: Dropped {packetDrop} packets at {sequence}\n");
 
+		if(Net.net_maxpacketdrop.GetInt() > 0 && packetDrop > Net.net_maxpacketdrop.GetInt())
+			if (Net.net_showdrop.GetBool())
+				Warning($"{RemoteAddress}: Too many dropped packets ({packetDrop}) at {sequence}\n");
 		// todo: net_maxpacketdrop
 
 		for (i = 0; i < SubChannel.MAX; i++) {
