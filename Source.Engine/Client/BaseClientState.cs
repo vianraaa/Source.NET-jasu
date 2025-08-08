@@ -21,7 +21,7 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
-public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
+public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
 
@@ -279,10 +279,16 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private bool ProcessCreateStringTable(svc_CreateStringTable msg) {
+#if !SWDS
+		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessStringTable);
+#endif
 		return true;
 	}
 
 	private bool ProcessServerInfo(svc_ServerInfo msg) {
+#if !SWDS
+		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessServerInfo);
+#endif
 		return true;
 	}
 
@@ -347,7 +353,9 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 	public bool IsActive() => SignOnState == SignOnState.Full;
 	public bool IsConnected() => SignOnState >= SignOnState.Connected;
-	public virtual void Clear() { }
+	public virtual void Clear() { 
+	
+	}
 	public virtual void FullConnect(NetAddress to) {
 		NetChannel = Net.CreateNetChannel(NetSocketType.Client, to, "CLIENT", this) ?? throw new Exception("Failed to create networking channel");
 		Debug.Assert(NetChannel != null);
@@ -386,7 +394,6 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 			return false;
 		}
 
-		Msg($"SourceClient: Tracked SignOnState {SignOnState} -> {state}\n");
 		SignOnState = state;
 
 		return true;

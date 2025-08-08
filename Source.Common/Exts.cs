@@ -81,6 +81,13 @@ public static class UnmanagedUtils
 		}
 	}
 
+	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {
+		fixed (T* ptr = array) {
+			for (int i = 0, c = array.Length; i < c; i++) 
+				ptr[i] = default;
+		}
+	}
+
 	public static string[] Split(this ReadOnlySpan<char> input, char separator) {
 		Span<Range> ranges = stackalloc Range[64];
 		var splits = input.Split(ranges, ' ');
@@ -108,7 +115,7 @@ public static class UnmanagedUtils
 
 			buffer.Seek(2, SeekOrigin.Current);
 
-			for(char c = buffer.GetChar(); buffer.IsValid(); c = buffer.GetChar()) {
+			for (char c = buffer.GetChar(); buffer.IsValid(); c = buffer.GetChar()) {
 				if (c == '\n')
 					break;
 			}
@@ -210,11 +217,11 @@ public static class UnmanagedUtils
 			int len = 0;
 			while (buffer.IsValid()) {
 				c = buffer.GetChar();
-				if(c == '\"' || c == 0) {
+				if (c == '\"' || c == 0) {
 					return len;
 				}
 				tokenBuf[len] = c;
-				if(++len == tokenBuf.Length) {
+				if (++len == tokenBuf.Length) {
 					return tokenBuf.Length;
 				}
 			}
@@ -233,14 +240,14 @@ public static class UnmanagedUtils
 				break;
 
 			tokenBuf[wordLen] = c;
-			if(++wordLen == tokenBuf.Length) {
+			if (++wordLen == tokenBuf.Length) {
 				return tokenBuf.Length;
 			}
 
 			c = buffer.GetChar();
 
 
-			if(breaks.Contains(c) || c == '\"' || (c > '\0' && c <= ' ')) {
+			if (breaks.Contains(c) || c == '\"' || (c > '\0' && c <= ' ')) {
 				buffer.Seek(-1, SeekOrigin.Current);
 				break;
 			}

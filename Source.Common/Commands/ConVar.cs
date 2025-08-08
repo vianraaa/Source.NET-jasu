@@ -4,6 +4,17 @@ namespace Source.Common.Commands;
 
 public class ConVar : ConCommandBase, IConVar
 {
+	public override bool Equals(object? obj) {
+		if(obj == null) return false;
+		return obj is ConVar cv ? cv.Name == Name : false;
+	}
+	public override int GetHashCode() => Name.GetHashCode();
+	public override string ToString() {
+		return $"ConVar '{Name}'"
+			+ (IsFlagSet(FCvar.NeverAsString) ? "" : 
+			($"[{value}" + ((defaultValue != value) ? $", default {defaultValue}" : "]")));
+	}
+
 	internal ConVar? parent;
 
 	string defaultValue = "";
@@ -51,7 +62,11 @@ public class ConVar : ConCommandBase, IConVar
 		Dbg.Assert(!hasMin || doubleValue >= minVal);
 		Dbg.Assert(!hasMax || doubleValue <= maxVal);
 
+#pragma warning disable CS8604 // Possible null reference argument. 
+		// Note: the warning is suppressed here because null is only expected as an argument
+		// in this specific context, and any other context should make things complain.
 		CreateBase(name, helpString, flags);
+#pragma warning restore CS8604
 	}
 
 	public ConVar(string name, string defaultValue, FCvar flags) {
@@ -249,7 +264,7 @@ public class ConVar : ConCommandBase, IConVar
 			Dbg.ConMsg($" - {str}\n");
 	}
 
-	private string GetDefault() {
+	public string GetDefault() {
 		return parent!.defaultValue;
 	}
 

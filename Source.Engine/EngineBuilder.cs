@@ -19,7 +19,7 @@ namespace Source.Engine;
 /// <summary>
 /// Builds a capable engine instance and provides EngineAPI to interact with it.
 /// </summary>
-public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) : ServiceCollection
+public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 {
 	public EngineBuilder Add<I, T>() where T : class, I where I : class {
 		this.AddSingleton<I, T>();
@@ -45,6 +45,11 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		return this;
 	}
 
+	/// <summary>
+	/// Finalizes the dependency injection setup and returns a finalized <see cref="IServiceProvider"/> (as an <see cref="EngineAPI"/>).
+	/// </summary>
+	/// <param name="dedicated"></param>
+	/// <returns></returns>
 	public EngineAPI Build(bool dedicated) {
 		// We got the ICommandLine from EngineBuilder, insert it into the app system
 		this.AddSingleton(cmdLine);
@@ -83,6 +88,10 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<GameServer>();
 		this.AddSingleton<ClientGlobalVariables>();
 		this.AddSingleton<ServerGlobalVariables>();
+		// Engine VGUI and how to read it later
+		this.AddSingleton<EngineVGui>();
+		this.AddSingleton<IEngineVGuiInternal, EngineVGui>(x => x.GetRequiredService<EngineVGui>());
+		this.AddSingleton<IEngineVGui, EngineVGui>(x => x.GetRequiredService<EngineVGui>());
 		// These interfaces go to client and game dll's
 		this.AddSingleton<IEngineClient, EngineClient>();
 		this.AddSingleton<IEngineServer, EngineServer>();

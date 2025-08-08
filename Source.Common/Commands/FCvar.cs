@@ -7,6 +7,7 @@ public enum CmdExecutionMarker {
 	DisableClientCmdCanExecute = 'd'
 }
 
+[Flags]
 public enum FCvar
 {
 	None = 0,

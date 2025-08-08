@@ -6,6 +6,7 @@ using Source.Engine.Server;
 
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 
 namespace Source.Engine;
 
@@ -20,7 +21,17 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 	public bool Dedicated;
 	public bool TextMode;
 
+	public string? DisconnectReason = null;
+	public string? ExtendedDisconnectReason = null;
+	public bool ExtendedError = false;
+
+	public Thread? MainThread;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool InMainThread() => Thread.CurrentThread == MainThread;
+
 	public bool InitGame(bool dedicated, string rootDirectory) {
+		MainThread = Thread.CurrentThread;
 		Dbg.SpewActivate("console", 1);
 		Dbg.SpewOutputFunc(SpewFunc);
 		host.Initialized = false;
@@ -127,7 +138,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		return SpewRetval.Continue;
 	}
 
-	private void Error(string v) {
+	public void Error(string v) {
 		Dbg.Warning(v);
 		Dbg.AssertMsg(false, v);
 	}

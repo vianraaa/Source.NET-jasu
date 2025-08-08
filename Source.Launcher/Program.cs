@@ -29,8 +29,7 @@ public class Bootloader : IDisposable
 	public void Boot() {
 		bool needsRestart;
 		do {
-
-			engineAPI = new EngineBuilder(commandLine, baseDir, false)
+			engineAPI = new EngineBuilder(commandLine)
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.Build(false);

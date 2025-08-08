@@ -121,7 +121,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 	public double ConnectTime;
 
 	public int Rate { get; set; }
-	public float Timeout { get; set; }
+	double Timeout;
 
 	public int OutSequence { get; private set; }
 	public int InSequence { get; private set; }
@@ -1484,5 +1484,9 @@ public class NetChannel : INetChannelInfo, INetChannel
 	public void SetRemoteFramerate(float hostFrameTime, float hostFrameDeviation) {
 		RemoteFrameTime = hostFrameTime;
 		RemoteFrameTimeStdDeviation = hostFrameDeviation;
+	}
+
+	public void SetTimeout(double time) {
+		Timeout = time;
 	}
 }

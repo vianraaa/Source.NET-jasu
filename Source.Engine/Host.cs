@@ -530,6 +530,7 @@ public class Host(
 #if !SWDS
 		if (!dedicated) {
 			CL = engineAPI.InitSubsystem<CL>()!;
+			CL.Init();
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
 			// engineAPI.InitSubsystem<Scr>();
 			// engineAPI.InitSubsystem<Render>();
@@ -599,7 +600,58 @@ public class Host(
 		print($"hostname: {host_name.GetString()}\n");
 	}
 
-	private void Client_Print(ReadOnlySpan<char> text) {
+	public void Client_Print(ReadOnlySpan<char> text) {
 
+	}
+
+	public void BuildConVarUpdateMessage(NET_SetConVar convars, FCvar flags, bool nonDefault) {
+		int count = CountVariablesWithFlags(flags, nonDefault);
+		if (count <= 0)
+			return;
+
+		if (count > 255) {
+			Sys.Error($"Engine only supported 255 ConVars marked {flags}\n");
+		}
+
+		foreach(var var in Cvar.GetCommands()) {
+			if (var.IsCommand())
+				continue;
+
+			ConVar convar = (ConVar)var;
+			if (!convar.IsFlagSet(flags))
+				continue;
+
+			if (nonDefault && convar.GetDefault() != convar.GetString())
+				continue;
+
+			cvar_s acvar = new();
+			acvar.Name = convar.GetName();
+			acvar.Value = CleanupConVarStringValue(convar.GetString());
+			convars.ConVars.Add(acvar);
+		}
+	}
+
+	public string CleanupConVarStringValue(string v) {
+		// todo.
+		return v;
+	}
+
+	public int CountVariablesWithFlags(FCvar flags, bool nonDefault) {
+		int count = 0;
+		foreach (var var in Cvar.GetCommands()) {
+			if (var.IsCommand())
+				continue;
+
+			ConVar convar = (ConVar)var;
+			if (!convar.IsFlagSet(flags))
+				continue;
+
+			if (nonDefault && convar.GetDefault() != convar.GetString())
+				continue;
+
+			count++;
+		}
+
+		return count;
 	}
 }

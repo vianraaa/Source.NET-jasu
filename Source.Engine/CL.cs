@@ -13,6 +13,7 @@ using static Source.Common.Networking.Protocol;
 using Source.Common.Networking;
 using Source.Common.Client;
 using Source.Common.Commands;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Source.Engine;
 
@@ -20,10 +21,12 @@ namespace Source.Engine;
 /// Various clientside methods. In Source, these would mostly be represented by
 /// CL_MethodName's in the static global namespace
 /// </summary>
-public class CL(IServiceProvider services, ClientState cl, Net Net, 
+public class CL(IServiceProvider services, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	IBaseClientDLL ClientDLL, CommonHostState host_state, Host Host, Cbuf Cbuf)
+	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui)
 {
+	public ClientState cl;
+	public IBaseClientDLL ClientDLL;
 	public void ApplyAddAngle() {
 
 	}
@@ -37,7 +40,8 @@ public class CL(IServiceProvider services, ClientState cl, Net Net,
 	}
 
 	public void Init() {
-
+		cl = services.GetRequiredService<ClientState>();
+		ClientDLL = services.GetRequiredService<IBaseClientDLL>();
 	}
 
 	public void ReadPackets(bool finalTick) {
@@ -134,11 +138,17 @@ public class CL(IServiceProvider services, ClientState cl, Net Net,
 		}
 	}
 
+	public void FullyConnected() {
+		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.FullyConnected);
+		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ReadyToPlay);
+	}
+
 	public void Connect(string address, string sourceTag) {
 		if(!address.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
 			Host.Disconnect(false);
 			Net.SetMultiplayer(true);
-			// begin loading plague?
+			EngineVGui?.EnabledProgressBarForNextLoad();
+			EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SignOnSpawn);
 		}
 		else {
 			cl.Disconnect("Connecting to local host", false);

@@ -79,18 +79,17 @@ public class NET_Tick : NetMessage
 }
 public class NET_SetConVar : NetMessage
 {
-	List<cvar_s> convars;
+	public List<cvar_s> ConVars;
 	public NET_SetConVar() : base(SetConVar) {
-		convars = [];
+		ConVars = [];
 	}
 
-	public IEnumerable<cvar_s> ConVars => convars;
 
 	public void AddCVar(string name, string value) {
 		name = name.Length >= 260 ? name.Substring(0, 260) : name;
 		value = value.Length >= 260 ? value.Substring(0, 260) : value;
 
-		convars.Add(new() {
+		ConVars.Add(new() {
 			Name = name,
 			Value = value
 		});
@@ -100,13 +99,13 @@ public class NET_SetConVar : NetMessage
 		int numvars = buffer.ReadByte();
 		DevMsg($"{numvars} vars received\n");
 
-		convars.Clear();
+		ConVars.Clear();
 
 		for (int i = 0; i < numvars; i++) {
 			cvar_s var = new();
 			buffer.ReadString(out var.Name, 260);
 			buffer.ReadString(out var.Value, 260);
-			convars.Add(var);
+			ConVars.Add(var);
 		}
 
 		return !buffer.Overflowed;
@@ -114,11 +113,11 @@ public class NET_SetConVar : NetMessage
 	public override bool WriteToBuffer(bf_write buffer) {
 		buffer.WriteNetMessageType(this);
 
-		nint numvars = convars.Count;
+		nint numvars = ConVars.Count;
 		Debug.Assert(numvars <= byte.MaxValue);
 
 		buffer.WriteByte((int)numvars);
-		foreach (var cvar in convars) {
+		foreach (var cvar in ConVars) {
 			buffer.WriteString(cvar.Name, limit: 260);
 			buffer.WriteString(cvar.Value, limit: 260);
 		}
@@ -127,11 +126,11 @@ public class NET_SetConVar : NetMessage
 	}
 
 	public override string ToString() {
-		string[] vars = new string[convars.Count];
-		for (int i = 0; i < convars.Count; i++) {
-			vars[i] = $"    {convars[i].Name}: {convars[i].Value}";
+		string[] vars = new string[ConVars.Count];
+		for (int i = 0; i < ConVars.Count; i++) {
+			vars[i] = $"    {ConVars[i].Name}: {ConVars[i].Value}";
 		}
-		return $"NET_SetConVar: {convars.Count}, \n" + string.Join("\n", vars);
+		return $"NET_SetConVar: {ConVars.Count}, \n" + string.Join("\n", vars);
 	}
 }
 public class NET_StringCmd : NetMessage
