@@ -23,6 +23,9 @@ public class ClientState : BaseClientState
 	readonly Net Net;
 	readonly CommonHostState host_state;
 	readonly ClockDriftMgr ClockDriftMgr;
+
+	public static ConVar cl_timeout = new();
+
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Cbuf Cbuf, Cmd Cmd, ICvar cvar) : base(Host, fileSystem, Net, sv, Cbuf, cvar) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;

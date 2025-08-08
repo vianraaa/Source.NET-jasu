@@ -21,6 +21,12 @@ public class ConCommandBase
 	public virtual bool IsFlagSet(FCvar flag) => (Flags & flag) == flag;
 	public virtual void AddFlags(FCvar flags) => Flags |= flags;
 	public virtual string GetName() => Name;
+	/// <summary>
+	/// For internal use only
+	/// </summary>
+	/// <param name="name"></param>
+	/// <returns></returns>
+	public virtual string SetName(string name) => Name = name!;
 	public virtual string? GetHelpText() => HelpString;
 	public ConCommandBase? GetNext() => Next;
 	public virtual bool IsRegistered() => Registered;

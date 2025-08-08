@@ -19,7 +19,19 @@ public class ConVar : ConCommandBase, IConVar
 
 	public event FnChangeCallback? Changed;
 
-	public void Create(string name, string defaultValue, FCvar flags, string? helpString = null,
+	/// <summary>
+	/// Initializes the convar parameters.
+	/// </summary>
+	/// <param name="name">Convar name, if null, means that it MUST be resolved by the DI system later.</param>
+	/// <param name="defaultValue"></param>
+	/// <param name="flags"></param>
+	/// <param name="helpString"></param>
+	/// <param name="useMin"></param>
+	/// <param name="min"></param>
+	/// <param name="useMax"></param>
+	/// <param name="max"></param>
+	/// <param name="callback"></param>
+	public void Create(string? name, string defaultValue, FCvar flags, string? helpString = null,
 		bool useMin = false, double min = 0, bool useMax = false, double max = 0,
 		FnChangeCallback? callback = null) {
 		parent = this;
@@ -50,6 +62,16 @@ public class ConVar : ConCommandBase, IConVar
 	}
 	public ConVar(string name, string defaultValue, FCvar flags, string helpText, double? min = null, double? max = null, FnChangeCallback? callback = null) {
 		Create(name, defaultValue, flags, helpText, min.HasValue, min ?? 0, max.HasValue, max ?? 0, callback);
+	}
+
+	public ConVar(string defaultValue, FCvar flags) {
+		Create(null, defaultValue, flags);
+	}
+	public ConVar(string defaultValue, FCvar flags, string helpText) {
+		Create(null, defaultValue, flags, helpText);
+	}
+	public ConVar(string defaultValue, FCvar flags, string helpText, double? min = null, double? max = null, FnChangeCallback? callback = null) {
+		Create(null, defaultValue, flags, helpText, min.HasValue, min ?? 0, max.HasValue, max ?? 0, callback);
 	}
 
 	public void SetDefault(string? def) {

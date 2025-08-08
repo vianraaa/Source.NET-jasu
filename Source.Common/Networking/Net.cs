@@ -717,6 +717,11 @@ public class Net
 			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
+			// This disables the exception when the UDP socket is forcibly closed
+			const int SIO_UDP_CONNRESET = -1744830452;
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) 
+				socket.IOControl((IOControlCode)SIO_UDP_CONNRESET, [0, 0, 0, 0], null);
+
 			// Determine IP address to bind to
 			IPAddress ipAddress = IPAddress.Any;
 			if (!string.IsNullOrEmpty(netInterface) && netInterface != "localhost") {

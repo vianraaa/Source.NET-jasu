@@ -120,22 +120,32 @@ public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSyste
 				if (getMethod == null)
 					continue;
 
-				if (getMethod.IsStatic)
+				if (getMethod.IsStatic) {
 					// Pull a static reference out to link
-					cvar.RegisterConCommand((ConVar)getMethod.Invoke(null, null)!);
+					ConVar cv = (ConVar)getMethod.Invoke(null, null)!;
+					cv.SetName(prop.Name);
+					cvar.RegisterConCommand(cv);
+				}
 				else if (type != typeof(ConVar)) {
 					object? instance = DetermineInstance(type);
-					cvar.RegisterConCommand((ConVar)getMethod.Invoke(instance, null)!);
+					ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
+					cv.SetName(prop.Name);
+					cvar.RegisterConCommand(cv);
 				}
 			}
 
 			foreach (var field in fields.Where(x => x.FieldType == typeof(ConVar))) {
-				if (field.IsStatic)
+				if (field.IsStatic) {
 					// Pull a static reference out to link
-					cvar.RegisterConCommand((ConVar)field.GetValue(null)!);
+					ConVar cv = (ConVar)field.GetValue(null)!;
+					cv.SetName(field.Name);
+					cvar.RegisterConCommand(cv);
+				}
 				else if (type != typeof(ConVar)) {
 					object? instance = DetermineInstance(type);
-					cvar.RegisterConCommand((ConVar)field.GetValue(instance)!);
+					ConVar cv = (ConVar)field.GetValue(instance)!;
+					cv.SetName(field.Name);
+					cvar.RegisterConCommand(cv);
 				}
 			}
 
