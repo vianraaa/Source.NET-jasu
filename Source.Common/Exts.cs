@@ -9,6 +9,7 @@ using Source.Common.Engine;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 
@@ -323,6 +324,9 @@ public static class ReflectionUtils
 		return info != null;
 	}
 	static IEnumerable<Type> safeTypeGet(Assembly assembly) {
+		if (!IsOkAssembly(assembly))
+			yield break;
+
 		IEnumerable<Type?> types;
 		try {
 			types = assembly.GetTypes();
@@ -330,12 +334,21 @@ public static class ReflectionUtils
 		catch (ReflectionTypeLoadException e) {
 			types = e.Types;
 		}
-		foreach (var t in types.Where(t => t != null && t.Assembly.GetName().Name != "Steamworks.NET"))
+
+		foreach (var t in types.Where(t => t != null))
 			yield return t!;
 	}
 
+	private static bool IsOkAssembly(Assembly assembly) {
+		// ugh
+		if (assembly.GetName().Name == "Steamworks.NET")
+			return false;
+
+		return true;
+	}
+
 	public static IEnumerable<Assembly> GetAssemblies()
-		=> AppDomain.CurrentDomain.GetAssemblies();
+		=> AppDomain.CurrentDomain.GetAssemblies().Where(IsOkAssembly);
 	public static IEnumerable<Type> GetLoadedTypes()
 		=> AppDomain.CurrentDomain.GetAssemblies()
 			.SelectMany(safeTypeGet);
