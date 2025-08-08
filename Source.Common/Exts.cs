@@ -257,12 +257,20 @@ public static class UnmanagedUtils
 /// </summary>
 public static class ReflectionUtils
 {
-	public static bool DoesMethodMatch<T>(this MethodInfo m, object? instance, [NotNullWhen(true)] out T? asDelegate) where T : Delegate {
+	public static bool TryToDelegate<T>(this MethodInfo m, object? instance, [NotNullWhen(true)] out T? asDelegate) where T : Delegate {
 		return (asDelegate =
 			(T?)(instance == null
 				? Delegate.CreateDelegate(typeof(T), m, false)
 				: Delegate.CreateDelegate(typeof(T), instance, m, false))
 			) != null;
+	}
+
+	public static bool TryExtractMethodDelegate<T>(this Type type, object? instance, Func<MethodInfo, bool> preFilter, [NotNullWhen(true)] out T? asDelegate) where T : Delegate {
+		if (TryFindMatchingMethod(type, typeof(T), preFilter, out MethodInfo? methodInfo) && TryToDelegate(methodInfo, instance, out asDelegate))
+			return true;
+
+		asDelegate = null;
+		return false;
 	}
 
 	public static bool DoesMethodMatch(this MethodInfo m, Type[] delegateParams, Type delegateReturn, Func<MethodInfo, bool>? preFilter = null) {

@@ -154,34 +154,19 @@ public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSyste
 				object? instance = method.IsStatic ? null : DetermineInstance(type);
 
 				// Lets see if we can find a FnCommandCompletionCallback...
-				MethodInfo? completionMethod = attribute.AutoCompleteMethod == null
-					? null
-					: type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
-						.Where(x =>
-							x.Name == attribute.AutoCompleteMethod
-							&& x.GetParameters().Length == 1
-							&& x.GetParameters()[0].ParameterType == typeof(string)
-							&& x.ReturnParameter.ParameterType == typeof(IEnumerable<string>)
-							)
-						.First();
-
 				FnCommandCompletionCallback? completionCallback = null;
-				if (completionMethod != null) {
-					if (completionMethod.IsStatic)
-						completionCallback = completionMethod.CreateDelegate<FnCommandCompletionCallback>();
-					else
-						completionCallback = completionMethod.CreateDelegate<FnCommandCompletionCallback>(instance);
-				}
+				if (attribute.AutoCompleteMethod != null)
+					type.TryExtractMethodDelegate(instance, x => x.Name == attribute.AutoCompleteMethod, out completionCallback);
 
 				// Construct a new ConCommand
 				string cmdName = attribute.Name ?? method.Name;
 				ConCommand cmd;
 
-				if (method.DoesMethodMatch<FnCommandCallbackVoid>(instance, out var callbackVoid))
+				if (method.TryToDelegate<FnCommandCallbackVoid>(instance, out var callbackVoid))
 					cmd = new(cmdName, callbackVoid, attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.DoesMethodMatch<FnCommandCallback>(instance, out var callback))
+				else if (method.TryToDelegate<FnCommandCallback>(instance, out var callback))
 					cmd = new(cmdName, callback, attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.DoesMethodMatch<FnCommandCallbackSourced>(instance, out var callbackSourced))
+				else if (method.TryToDelegate<FnCommandCallbackSourced>(instance, out var callbackSourced))
 					cmd = new(cmdName, callbackSourced, attribute.HelpText, attribute.Flags, completionCallback);
 				else
 					throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
