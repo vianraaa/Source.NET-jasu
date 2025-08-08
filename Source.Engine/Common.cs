@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
+/// <summary>
+/// Common functionality
+/// </summary>
+/// <param name="providers"></param>
 public class Common(IServiceProvider providers)
 {
 	readonly static CharacterSet BreakSet = new("{}()");

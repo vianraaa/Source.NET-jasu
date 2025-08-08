@@ -188,7 +188,7 @@ public class EngineVGui(Sys Sys, Net Net) : IEngineVGuiInternal
 		perc = perc * (1.0f - ProgressBias) + ProgressBias;
 
 		if (Sys.TextMode) {
-			Dbg.Msg($"Progress: {desc.Description} [{new string('=', Convert.ToInt32(perc * 30)),-30}]");
+			Console.Title = ($"Progress: {desc.Description} [{new string('=', Convert.ToInt32(perc * 30)),-30}]\n");
 		}
 		else {
 

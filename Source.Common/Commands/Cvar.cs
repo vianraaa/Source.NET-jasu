@@ -1,19 +1,41 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Client;
+using Source.Common.Server;
+
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 
 namespace Source.Common.Commands;
 
-public class Cvar(ICommandLine CommandLine) : ICvar
+public class Cvar(ICommandLine CommandLine, IServiceProvider services) : ICvar
 {
 	public event FnChangeCallback? Changed;
 	List<IConsoleDisplayFunc> DisplayFuncs = [];
 	Assembly? NextDLLIdentifier;
 	ConCommandBase? ConCommandList;
 
+	IBaseClientDLL? clientDLL;
+	IServerGameDLL? serverDLL;
+
+	FCvar assemblyFlags = FCvar.None;
 	public void SetAssemblyIdentifier(Assembly assembly) {
 		NextDLLIdentifier = assembly;
+
+		// Pull in dependencies if they weren't resolved already
+		// done independently from ctor to avoid any headaches in the client/game dlls
+		clientDLL ??= services.GetService<IBaseClientDLL>();
+		serverDLL ??= services.GetService<IServerGameDLL>();
+		assemblyFlags = FCvar.None;
+
+		if (assembly != null) {
+			if (clientDLL != null && assembly == clientDLL.GetType().Assembly)
+				assemblyFlags |= FCvar.ClientDLL;
+			else if (serverDLL != null && assembly == serverDLL.GetType().Assembly)
+				assemblyFlags |= FCvar.GameDLL;
+		}
 	}
 
 	public void ConsoleColorPrintf(in Color clr, [StringSyntax("CompositeFormat")] string format, params object?[]? args) {
@@ -82,6 +104,8 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 			variable.Next = null;
 			return;
 		}
+
+		variable.Flags |= assemblyFlags;
 
 		ConCommandBase? other = FindVar(variable.GetName());
 		if (other != null) {
@@ -174,6 +198,23 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 
 		Dbg.ConMsg($"--------------\n{count} total convars/concommands\n");
 	}
+
+	[ConCommand(helpText: "Find help about a convar/concommand.")]
+	void help(in TokenizedCommand args) {
+		if(args.ArgC() != 2) {
+			Dbg.ConMsg("Usage:  help <cvarname>\n");
+			return;
+		}
+
+		ConCommandBase? var = FindCommandBase(args[1]);
+		if(var == null) {
+			Dbg.ConMsg($"help:  no cvar or command named {args[1]}\n");
+			return;
+		}
+
+		ConVar.PrintDescription(var);
+	}
+
 	struct ConVarFlagsDesc
 	{
 		public FCvar bit;
@@ -208,7 +249,7 @@ public class Cvar(ICommandLine CommandLine) : ICvar
 	private void PrintCvar(ConVar var) {
 		string[] flagstr = new string[conVarFlags.Length];
 		int i = 0;
-		foreach(var entry in conVarFlags) {
+		foreach (var entry in conVarFlags) {
 			if (var.IsFlagSet(entry.bit)) {
 				flagstr[i++] = entry.shortdesc;
 			}

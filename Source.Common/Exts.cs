@@ -339,7 +339,7 @@ public static class ReflectionUtils
 			yield return t!;
 	}
 
-	private static bool IsOkAssembly(Assembly assembly) {
+	public static bool IsOkAssembly(Assembly assembly) {
 		// ugh
 		if (assembly.GetName().Name == "Steamworks.NET")
 			return false;
@@ -405,4 +405,4 @@ public static class ReflectionUtils
 /// Is handled by <see cref="Source.Engine.EngineBuilder"/> later on.
 /// </summary
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class MarkForDependencyInjectionAttribute : Attribute;
+public class EngineComponentAttribute : Attribute;

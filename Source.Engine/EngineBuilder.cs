@@ -112,7 +112,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 
 			// This checks for any classes with the MarkForDependencyInjection attribute.
 			// They are then injected into the service collection.
-			foreach(var typeKVP in assembly.GetTypesWithAttribute<MarkForDependencyInjectionAttribute>()) 
+			foreach(var typeKVP in assembly.GetTypesWithAttribute<EngineComponentAttribute>()) 
 				this.AddSingleton(typeKVP.Key);
 		}
 

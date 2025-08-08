@@ -84,7 +84,19 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			if (!ShouldPreventClientCommand(commandBase) && commandBase.IsCommand()) {
 				bool isServerCommand = commandBase.IsFlagSet(FCvar.GameDLL) && source == CommandSource.Command && !sv.IsDedicated();
 
-				// Todo: hook to allow game .dll to figure out who typed the message on a listen server
+				if (sv.IsActive()) {
+					//todo: all that command stuff for servers one day
+				}
+				else if (isServerCommand) {
+					// We're not the server, but we are connected - so we'll try to forward it
+					if (cl.IsConnected()) {
+						ForwardToServer(in command);
+						return null;
+					}
+
+					// Server command, not connected, not executing
+					return null;
+				}
 
 				if (commandBase.IsFlagSet(FCvar.Cheat)) {
 					if (!Host.IsSinglePlayerGame() && !Host.CanCheat()) {

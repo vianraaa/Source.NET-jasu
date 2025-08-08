@@ -100,78 +100,83 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 	}
 	void ConVar_Register() {
 		ICvar cvar = this.GetRequiredService<ICvar>();
-		var types = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(safeTypeGet);
+		var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+			.Where(ReflectionUtils.IsOkAssembly);
 
-		foreach (var type in types) {
-			cvar.SetAssemblyIdentifier(type.Assembly);
+		foreach (var assembly in assemblies) {
+			cvar.SetAssemblyIdentifier(assembly);
+			foreach (var type in assembly.GetTypes()) {
 
-			var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-			var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-			var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+				var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+				var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+				var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 
-			// If any props/fields exist, run the cctor so we can pull out static cvars/concmds
-			if (props.Any() || fields.Any())
-				RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+				// If any props/fields exist, run the cctor so we can pull out static cvars/concmds
+				if (props.Any() || fields.Any())
+					RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 
-			foreach (var prop in props.Where(x => x.PropertyType == typeof(ConVar))) {
-				var getMethod = prop.GetGetMethod();
+				foreach (var prop in props.Where(x => x.PropertyType == typeof(ConVar))) {
+					var getMethod = prop.GetGetMethod();
 
-				if (getMethod == null)
-					continue;
+					if (getMethod == null)
+						continue;
 
-				if (getMethod.IsStatic) {
-					// Pull a static reference out to link
-					ConVar cv = (ConVar)getMethod.Invoke(null, null)!;
-					cv.SetName(prop.Name);
-					cvar.RegisterConCommand(cv);
+					if (getMethod.IsStatic) {
+						// Pull a static reference out to link
+						ConVar cv = (ConVar)getMethod.Invoke(null, null)!;
+						cv.SetName(prop.Name);
+						cvar.RegisterConCommand(cv);
+					}
+					else if (type != typeof(ConVar)) {
+						object? instance = DetermineInstance(type);
+						ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
+						cv.SetName(prop.Name);
+						cvar.RegisterConCommand(cv);
+					}
 				}
-				else if (type != typeof(ConVar)) {
-					object? instance = DetermineInstance(type);
-					ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
-					cv.SetName(prop.Name);
-					cvar.RegisterConCommand(cv);
+
+				foreach (var field in fields.Where(x => x.FieldType == typeof(ConVar))) {
+					if (field.IsStatic) {
+						// Pull a static reference out to link
+						ConVar cv = (ConVar)field.GetValue(null)!;
+						cv.SetName(field.Name);
+						cvar.RegisterConCommand(cv);
+					}
+					else if (type != typeof(ConVar)) {
+						object? instance = DetermineInstance(type);
+						ConVar cv = (ConVar)field.GetValue(instance)!;
+						cv.SetName(field.Name);
+						cvar.RegisterConCommand(cv);
+					}
 				}
-			}
 
-			foreach (var field in fields.Where(x => x.FieldType == typeof(ConVar))) {
-				if (field.IsStatic) {
-					// Pull a static reference out to link
-					ConVar cv = (ConVar)field.GetValue(null)!;
-					cv.SetName(field.Name);
-					cvar.RegisterConCommand(cv);
+				foreach (var method in methods.Where(x => x.GetCustomAttribute<ConCommandAttribute>() != null)) {
+					ConCommandAttribute attribute = method.GetCustomAttribute<ConCommandAttribute>()!; // ^^ never null!
+					object? instance = method.IsStatic ? null : DetermineInstance(type);
+
+					// Lets see if we can find a FnCommandCompletionCallback...
+					FnCommandCompletionCallback? completionCallback = null;
+					if (attribute.AutoCompleteMethod != null)
+						type.TryExtractMethodDelegate(instance, x => x.Name == attribute.AutoCompleteMethod, out completionCallback);
+
+					// Construct a new ConCommand
+					string cmdName = attribute.Name ?? method.Name;
+					string? helpText = attribute.HelpText;
+					FCvar flags = attribute.Flags;
+
+					ConCommand cmd;
+
+					if (method.TryToDelegate<FnCommandCallbackVoid>(instance, out var callbackVoid))
+						cmd = new(cmdName, callbackVoid, helpText, flags, completionCallback);
+					else if (method.TryToDelegate<FnCommandCallback>(instance, out var callback))
+						cmd = new(cmdName, callback, helpText, flags, completionCallback);
+					else if (method.TryToDelegate<FnCommandCallbackSourced>(instance, out var callbackSourced))
+						cmd = new(cmdName, callbackSourced, helpText, flags, completionCallback);
+					else
+						throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
+
+					cvar.RegisterConCommand(cmd);
 				}
-				else if (type != typeof(ConVar)) {
-					object? instance = DetermineInstance(type);
-					ConVar cv = (ConVar)field.GetValue(instance)!;
-					cv.SetName(field.Name);
-					cvar.RegisterConCommand(cv);
-				}
-			}
-
-			foreach (var method in methods.Where(x => x.GetCustomAttribute<ConCommandAttribute>() != null)) {
-				ConCommandAttribute attribute = method.GetCustomAttribute<ConCommandAttribute>()!; // ^^ never null!
-				object? instance = method.IsStatic ? null : DetermineInstance(type);
-
-				// Lets see if we can find a FnCommandCompletionCallback...
-				FnCommandCompletionCallback? completionCallback = null;
-				if (attribute.AutoCompleteMethod != null)
-					type.TryExtractMethodDelegate(instance, x => x.Name == attribute.AutoCompleteMethod, out completionCallback);
-
-				// Construct a new ConCommand
-				string cmdName = attribute.Name ?? method.Name;
-				ConCommand cmd;
-
-				if (method.TryToDelegate<FnCommandCallbackVoid>(instance, out var callbackVoid))
-					cmd = new(cmdName, callbackVoid, attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.TryToDelegate<FnCommandCallback>(instance, out var callback))
-					cmd = new(cmdName, callback, attribute.HelpText, attribute.Flags, completionCallback);
-				else if (method.TryToDelegate<FnCommandCallbackSourced>(instance, out var callbackSourced))
-					cmd = new(cmdName, callbackSourced, attribute.HelpText, attribute.Flags, completionCallback);
-				else
-					throw new ArgumentException("Cannot dynamically produce ConCommand with the arguments we were given");
-
-				cvar.RegisterConCommand(cmd);
 			}
 		}
 	}
