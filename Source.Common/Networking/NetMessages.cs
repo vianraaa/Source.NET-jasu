@@ -66,8 +66,6 @@ public class NET_Tick : NetMessage
 		HostFrameTime = buffer.ReadUBitLong(16) / NET_TICK_SCALEUP;
 		HostFrameDeviation = buffer.ReadUBitLong(16) / NET_TICK_SCALEUP;
 
-		Msg($"net_Tick: at tick {Tick}, frametime {HostFrameTime}, deviation {HostFrameDeviation}\n");
-
 		return !buffer.Overflowed;
 	}
 

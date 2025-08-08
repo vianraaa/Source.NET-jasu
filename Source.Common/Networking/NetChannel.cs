@@ -480,7 +480,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 			if (Net.net_showdrop.GetBool())
 				Warning($"{RemoteAddress}: Dropped {packetDrop} packets at {sequence}\n");
 
-		if(Net.net_maxpacketdrop.GetInt() > 0 && packetDrop > Net.net_maxpacketdrop.GetInt())
+		if (Net.net_maxpacketdrop.GetInt() > 0 && packetDrop > Net.net_maxpacketdrop.GetInt())
 			if (Net.net_showdrop.GetBool())
 				Warning($"{RemoteAddress}: Too many dropped packets ({packetDrop}) at {sequence}\n");
 		// todo: net_maxpacketdrop
@@ -1471,8 +1471,8 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 		data.AckedFragments += numFragments;
 
-		//if (net_showfragments.GetBool())
-		Msg($"Received fragments: start {startFragment}, num {numFragments}, end {data.NumFragments}\n");
+		if (Net.net_showfragments.GetBool())
+			Msg($"Received fragments: start {startFragment}, num {numFragments}, end {data.NumFragments}\n");
 
 		return true;
 	}
