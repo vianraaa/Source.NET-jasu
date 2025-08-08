@@ -22,7 +22,7 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services, ClientState cl, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	IBaseClientDLL ClientDLL, CommonHostState host_state, Host Host)
+	IBaseClientDLL ClientDLL, CommonHostState host_state, Host Host, Cbuf Cbuf)
 {
 	public void ApplyAddAngle() {
 
@@ -159,6 +159,29 @@ public class CL(IServiceProvider services, ClientState cl, Net Net,
 		else {
 			Dbg.ConMsg("Usage:  connect <server>\n");
 		}
+	}
+
+	[ConCommand(helpText: "Retry connection to last server.")]
+	void retry() {
+		Retry();
+	}
+
+	public void Retry() {
+		if (cl == null) return;
+
+		if(cl.RetryAddress == null) {
+			Dbg.ConMsg("Can't retry, no previous connection\n");
+			return;
+		}
+
+		bool canAddExecutionMarkers = Cbuf.HasRoomForExecutionMarkers(2);
+		Dbg.ConMsg($"Commencing connection retry to {cl.RetryAddress}\n");
+
+		ReadOnlySpan<char> command = $"connect {cl.RetryAddress} {cl.RetryChallenge}\n";
+		if (cl.RestrictServerCommands && canAddExecutionMarkers)
+			Cbuf.AddTextWithMarkers(CmdExecutionMarker.DisableServerCanExecute, command, CmdExecutionMarker.EnableServerCanExecute);
+		else
+			Cbuf.AddText(command);
 	}
 
 	internal void ProcessVoiceData() {

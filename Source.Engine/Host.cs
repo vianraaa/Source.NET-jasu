@@ -580,7 +580,8 @@ public class Host(
 	}
 
 	delegate void printer(ReadOnlySpan<char> text);
-	[ConCommand("Display map and connection status.")]
+
+	[ConCommand(helpText: "Display map and connection status.")]
 	void status(in TokenizedCommand args) {
 		printer print;
 		if (Cmd.Source == CommandSource.Command) {

@@ -35,8 +35,8 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public uint ChallengeNumber;
 	public double ConnectTime;
 	public int RetryNumber;
-	public string RetryAddress;
-	public string RetrySourceTag;
+	public string? RetryAddress;
+	public string? RetrySourceTag;
 	public int RetryChallenge;
 	public SignOnState SignOnState;
 	public double NextCmdTime;
@@ -48,8 +48,8 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public double PausedExpireTime;
 	public int ViewEntity;
 	public int PlayerSlot;
-	public string LevelFileName;
-	public string LevelBaseName;
+	public string? LevelFileName;
+	public string? LevelBaseName;
 	public int MaxClients;
 	// PackedEntity entity baselines
 	// ServerClassInfo
@@ -286,6 +286,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private bool ProcessPrint(svc_Print msg) {
+		Dbg.ConMsg(msg.Text);
 		return true;
 	}
 

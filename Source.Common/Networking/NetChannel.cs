@@ -870,8 +870,8 @@ public class NetChannel : INetChannelInfo, INetChannel
 		if (voice)
 			stream = StreamVoice;
 
-		if (msg.IsReliable)
-			Msg("writing " + msg + "\n");
+		//if (msg.IsReliable)
+			//Msg("writing " + msg + "\n");
 		return msg.WriteToBuffer(stream);
 	}
 

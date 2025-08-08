@@ -183,20 +183,20 @@ public class NET_SignonState : NetMessage
 }
 public class svc_Print : NetMessage
 {
-	public string? Message;
+	public string? Text;
 	public svc_Print() : base(SVC.Print) { }
 
 	public override bool WriteToBuffer(bf_write buffer) {
 		buffer.WriteNetMessageType(this);
-		return buffer.WriteString(Message ?? "svc_print NULL");
+		return buffer.WriteString(Text ?? "svc_print NULL");
 	}
 
 	public override bool ReadFromBuffer(bf_read buffer) {
-		return buffer.ReadString(out Message, 2048);
+		return buffer.ReadString(out Text, 2048);
 	}
 
 	public override string ToString() {
-		return Message ?? "NULL";
+		return Text ?? "NULL";
 	}
 }
 public class svc_ServerInfo : NetMessage
