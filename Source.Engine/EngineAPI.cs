@@ -14,7 +14,7 @@ using static Source.Dbg;
 namespace Source.Engine;
 
 
-public class EngineAPI(IServiceProvider provider, COM COM, IFileSystem fileSystem, Sys Sys) : IEngineAPI, IDisposable
+public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSystem, Sys Sys) : IEngineAPI, IDisposable
 {
 	public bool Dedicated;
 

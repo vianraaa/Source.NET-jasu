@@ -68,7 +68,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<Cmd>();
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
-		this.AddSingleton<COM>();
+		this.AddSingleton<Common>();
 		this.AddSingleton<Util>();
 		this.AddSingleton<Scr>();
 		this.AddSingleton<FileSystem>();

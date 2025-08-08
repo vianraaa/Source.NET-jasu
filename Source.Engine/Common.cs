@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class COM(IServiceProvider providers)
+public class Common(IServiceProvider providers)
 {
 	readonly static CharacterSet BreakSet = new("{}()");
 	readonly static CharacterSet BreakSetIncludingColons = new("{}()':");

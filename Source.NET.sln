@@ -9,11 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Common", "Source.Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Engine", "Source.Engine\Source.Engine.csproj", "{383661AF-A866-4A97-A4EF-F0170496D679}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Engine Main", "3. Engine Main", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2a. Engine Main", "2a. Engine Main", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Game Realms", "4. Game Realms", "{9D95D703-BE2E-44A7-A9B3-106E4FC16631}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Game Realms", "3. Game Realms", "{9D95D703-BE2E-44A7-A9B3-106E4FC16631}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Executables", "5. Executables", "{ED68CF4A-63CA-458C-8391-EBE23B835B76}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Executables", "4. Executables", "{ED68CF4A-63CA-458C-8391-EBE23B835B76}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.Shared", "Game.Shared\Game.Shared.csproj", "{ED987559-4315-4908-9873-9B3054C44F27}"
 EndProject
@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Filesystem", "Source
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1. Engine Common", "1. Engine Common", "{6C519EE4-0567-4180-A0F3-C4D73222A263}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2. Engine Components", "2. Engine Components", "{4B578BC3-0E56-46A4-9316-23258535813E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2b. Engine Components", "2b. Engine Components", "{4B578BC3-0E56-46A4-9316-23258535813E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
