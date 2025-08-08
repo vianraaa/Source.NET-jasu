@@ -21,7 +21,7 @@ namespace Source.Engine;
 /// </summary>
 public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 {
-	public EngineBuilder Add<I, T>() where T : class, I where I : class {
+	public EngineBuilder WithComponent<I, T>() where T : class, I where I : class {
 		this.AddSingleton<I, T>();
 		return this;
 	}
@@ -35,13 +35,13 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 
 	public EngineBuilder WithClientDLL<ClDLL>() where ClDLL : class, IBaseClientDLL {
 		PreInject<ClDLL>(this);
-		Add<IBaseClientDLL, ClDLL>();
+		WithComponent<IBaseClientDLL, ClDLL>();
 		return this;
 	}
 
 	public EngineBuilder WithGameDLL<SvDLL>() where SvDLL : class, IServerGameDLL {
 		PreInject<SvDLL>(this);
-		Add<IServerGameDLL, SvDLL>();
+		WithComponent<IServerGameDLL, SvDLL>();
 		return this;
 	}
 
@@ -75,8 +75,6 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<Scr>();
 		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
-		// Engine components, individually...
-		this.AddSingleton<IFileSystem, BaseFileSystem>();
 		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<IHostState, HostState>();

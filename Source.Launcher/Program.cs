@@ -1,9 +1,12 @@
 ﻿using Game.Client;
 using Game.Server;
 
+using Nucleus.FileSystem;
+
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Engine;
 
 using Steamworks;
@@ -30,6 +33,7 @@ public class Bootloader : IDisposable
 		bool needsRestart;
 		do {
 			engineAPI = new EngineBuilder(commandLine)
+				.WithComponent<IFileSystem, BaseFileSystem>()
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.Build(false);
