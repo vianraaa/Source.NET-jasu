@@ -1,4 +1,5 @@
-﻿using Source.Common.Filesystem;
+﻿using Source.Common.Commands;
+using Source.Common.Filesystem;
 using Source.Common.Hashing;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
@@ -22,7 +23,7 @@ public class ClientState : BaseClientState
 	readonly Net Net;
 	readonly CommonHostState host_state;
 	readonly ClockDriftMgr ClockDriftMgr;
-	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Cbuf Cbuf) : base(Host, fileSystem, Net, sv, Cbuf) {
+	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Cbuf Cbuf, Cmd Cmd, ICvar cvar) : base(Host, fileSystem, Net, sv, Cbuf, cvar) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
 		this.Net = Net;

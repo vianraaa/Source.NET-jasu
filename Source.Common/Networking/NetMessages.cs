@@ -34,10 +34,10 @@ public static class NetMessageExtensions
 	}
 }
 
-struct cvar_s
+public struct cvar_s
 {
-	public string name;
-	public string value;
+	public string Name;
+	public string Value;
 }
 
 public enum ServerOS : byte
@@ -84,13 +84,15 @@ public class NET_SetConVar : NetMessage
 		convars = [];
 	}
 
+	public IEnumerable<cvar_s> ConVars => convars;
+
 	public void AddCVar(string name, string value) {
 		name = name.Length >= 260 ? name.Substring(0, 260) : name;
 		value = value.Length >= 260 ? value.Substring(0, 260) : value;
 
 		convars.Add(new() {
-			name = name,
-			value = value
+			Name = name,
+			Value = value
 		});
 	}
 
@@ -101,8 +103,8 @@ public class NET_SetConVar : NetMessage
 
 		for (int i = 0; i < numvars; i++) {
 			cvar_s var = new();
-			buffer.ReadString(out var.name, 260);
-			buffer.ReadString(out var.value, 260);
+			buffer.ReadString(out var.Name, 260);
+			buffer.ReadString(out var.Value, 260);
 			convars.Add(var);
 		}
 
@@ -116,8 +118,8 @@ public class NET_SetConVar : NetMessage
 
 		buffer.WriteByte((int)numvars);
 		foreach (var cvar in convars) {
-			buffer.WriteString(cvar.name, limit: 260);
-			buffer.WriteString(cvar.value, limit: 260);
+			buffer.WriteString(cvar.Name, limit: 260);
+			buffer.WriteString(cvar.Value, limit: 260);
 		}
 
 		return !buffer.Overflowed;
@@ -126,7 +128,7 @@ public class NET_SetConVar : NetMessage
 	public override string ToString() {
 		string[] vars = new string[convars.Count];
 		for (int i = 0; i < convars.Count; i++) {
-			vars[i] = $"    {convars[i].name}: {convars[i].value}";
+			vars[i] = $"    {convars[i].Name}: {convars[i].Value}";
 		}
 		return $"NET_SetConVar: {convars.Count}, \n" + string.Join("\n", vars);
 	}

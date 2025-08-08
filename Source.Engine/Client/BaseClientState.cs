@@ -10,6 +10,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
 
 using static Source.Dbg;
@@ -20,7 +21,7 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
-public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
+public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
 
@@ -306,6 +307,27 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private bool ProcessSetConVar(NET_SetConVar msg) {
+		if (NetChannel == null) return false;
+		// TODO: loopback netchannels
+
+		foreach(var var in msg.ConVars) {
+			ConVar? cv = cvar.FindVar(var.Name);
+			if(cv == null) {
+				ConMsg($"SetConVar: No such cvar ({var.Name} set to {var.Value})\n");
+				continue;
+			}
+
+			if (!cv.IsFlagSet(FCvar.Replicated)) {
+				ConMsg($"SetConVar: Can't set server svar {var.Name} to {var.Value}, not marked as FCvar.Replicated on client\n");
+				continue;
+			}
+
+			if (sv.IsActive()) {
+				cv.SetValue(var.Value);
+				DevMsg($"SetConVar: {var.Name} = {var.Value}\n");
+			}
+		}
+
 		return true;
 	}
 
