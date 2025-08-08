@@ -3,6 +3,7 @@ using CommunityToolkit.HighPerformance.Enumerables;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common.Commands;
 using Source.Common.Engine;
 
 using System;
@@ -321,4 +322,74 @@ public static class ReflectionUtils
 		info = FindMatchingMethod<T>(targetType, preFilter);
 		return info != null;
 	}
+	static IEnumerable<Type> safeTypeGet(Assembly assembly) {
+		IEnumerable<Type?> types;
+		try {
+			types = assembly.GetTypes();
+		}
+		catch (ReflectionTypeLoadException e) {
+			types = e.Types;
+		}
+		foreach (var t in types.Where(t => t != null && t.Assembly.GetName().Name != "Steamworks.NET"))
+			yield return t!;
+	}
+
+	public static IEnumerable<Assembly> GetAssemblies()
+		=> AppDomain.CurrentDomain.GetAssemblies();
+	public static IEnumerable<Type> GetLoadedTypes()
+		=> AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(safeTypeGet);
+
+	public static IEnumerable<KeyValuePair<Type, T>> GetLoadedTypesWithAttribute<T>() where T : Attribute {
+		foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(safeTypeGet)) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(type, attr);
+		}
+	}
+
+	public static IEnumerable<KeyValuePair<Type, T>> GetTypesWithAttribute<T>(this Assembly assembly) where T : Attribute {
+		foreach (var type in assembly.GetTypes()) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(type, attr);
+		}
+	}
+
+	public static IEnumerable<KeyValuePair<ConstructorInfo, T>> GetConstructorsWithAttribute<T>(this Type type) where T : Attribute {
+		foreach (var constructor in type.GetConstructors()) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(constructor, attr);
+		}
+	}
+	public static IEnumerable<KeyValuePair<PropertyInfo, T>> GetPropertiesWithAttribute<T>(this Type type) where T : Attribute {
+		foreach (var prop in type.GetProperties()) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(prop, attr);
+		}
+	}
+	public static IEnumerable<KeyValuePair<FieldInfo, T>> GetFieldsWithAttribute<T>(this Type type) where T : Attribute {
+		foreach (var field in type.GetFields()) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(field, attr);
+		}
+	}
+	public static IEnumerable<KeyValuePair<MethodInfo, T>> GetMethodsWithAttribute<T>(this Type type) where T : Attribute {
+		foreach (var method in type.GetMethods()) {
+			T? attr = type.GetCustomAttribute<T>();
+			if (attr != null)
+				yield return new(method, attr);
+		}
+	}
 }
+
+/// <summary>
+/// Marks the class as being injectable into the <see cref="IEngineAPI"/> dependency injection collection.
+/// <br/>
+/// Is handled by <see cref="Source.Engine.EngineBuilder"/> later on.
+/// </summary
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class MarkForDependencyInjectionAttribute : Attribute;

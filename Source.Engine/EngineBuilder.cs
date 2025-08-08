@@ -102,6 +102,24 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		// Singleton implementations of IEngineAPI and IEngine
 		this.AddSingleton<IEngineAPI, EngineAPI>();
 		this.AddSingleton<IEngine, GameEngine>();
+
+		List<Type> wantsInjection = [];
+		object?[]? linkInput = [this];
+		foreach(var assembly in ReflectionUtils.GetAssemblies()) {
+			// This allows a type to define a class named SourceDllMain, with a static void Link(IServiceCollection),
+			// which allows a loaded assembly to insert whatever it wants into the DI system before the provider is
+			// fully built.
+			Type? sourceDLL = assembly.GetType("SourceDllMain");
+			sourceDLL
+				?.GetMethod("Link", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+				?.Invoke(null, linkInput);
+
+			// This checks for any classes with the MarkForDependencyInjection attribute.
+			// They are then injected into the service collection.
+			foreach(var typeKVP in assembly.GetTypesWithAttribute<MarkForDependencyInjectionAttribute>()) 
+				this.AddSingleton(typeKVP.Key);
+		}
+
 		// Everything else should be provided by the launcher!
 		ServiceProvider provider = this.BuildServiceProvider();
 		EngineAPI api = (EngineAPI)provider.GetRequiredService<IEngineAPI>();
