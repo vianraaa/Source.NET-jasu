@@ -83,6 +83,9 @@ public class EngineBuilder(ICommandLine cmdLine, string basedir, bool textmode) 
 		this.AddSingleton<GameServer>();
 		this.AddSingleton<ClientGlobalVariables>();
 		this.AddSingleton<ServerGlobalVariables>();
+		// These interfaces go to client and game dll's
+		this.AddSingleton<IEngineClient, EngineClient>();
+		this.AddSingleton<IEngineServer, EngineServer>();
 		// We have to tell the dependency injection system how to resolve parent classes ourselves.
 		this.AddSingleton<BaseClientState>(x => x.GetRequiredService<ClientState>());
 		this.AddSingleton<BaseServer>(x => x.GetRequiredService<GameServer>());

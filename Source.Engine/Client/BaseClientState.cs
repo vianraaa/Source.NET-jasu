@@ -31,7 +31,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public const double MAX_CMD_RATE = 100;
 
 	public NetSocket Socket;
-	public NetChannel NetChannel;
+	public NetChannel? NetChannel;
 	public uint ChallengeNumber;
 	public double ConnectTime;
 	public int RetryNumber;
@@ -368,7 +368,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 		return true;
 	}
-	public virtual void Disconnect(string reason, bool showMainMenu) {
+	public virtual void Disconnect(string? reason, bool showMainMenu) {
 		if (SignOnState == SignOnState.None)
 			return;
 

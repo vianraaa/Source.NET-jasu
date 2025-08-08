@@ -33,8 +33,8 @@ public class ClientState : BaseClientState
 		return false;
 	}
 
-	public override void Disconnect(string pszReason, bool bShowMainMenu) {
-		base.Disconnect(pszReason, bShowMainMenu);
+	public override void Disconnect(string? reason, bool showMainMenu) {
+		base.Disconnect(reason, showMainMenu);
 	}
 	public override void FullConnect(NetAddress adr) {
 		base.FullConnect(adr);

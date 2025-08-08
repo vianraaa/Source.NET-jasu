@@ -31,6 +31,9 @@ public class Host(
 	public string GetCurrentGame() => host_parms.Game;
 	public string GetBaseDirectory() => host_parms.BaseDir;
 
+	public ConVar host_name = new("hostname", "", 0, "Hostname for server.");
+	public ConVar host_map = new("host_map", "", 0, "Current map name.");
+
 	ClientGlobalVariables clientGlobalVariables;
 	CL CL;
 	SV SV;
@@ -549,8 +552,23 @@ public class Host(
 		PostInit();
 	}
 
-	internal void Disconnect(bool v) {
+	public void Disconnect(bool showMainMenu, string? reason = null) {
+#if !SWDS
+		if (!sv.IsDedicated()) {
+			cl.Disconnect(reason, showMainMenu);
+		}
+#endif
+	}
 
+	public void Disconnect() {
+		Disconnect(true);
+	}
+
+	[ConCommand]
+	void disconnect(in TokenizedCommand args) {
+		if(clientDLL == null || !clientDLL.DisconnectAttempt()) {
+			Disconnect();
+		}
 	}
 
 	public bool CanCheat() {
@@ -559,5 +577,28 @@ public class Host(
 
 	internal void CheckGore() {
 		// todo
+	}
+
+	delegate void printer(ReadOnlySpan<char> text);
+	[ConCommand("Display map and connection status.")]
+	void status(in TokenizedCommand args) {
+		printer print;
+		if (Cmd.Source == CommandSource.Command) {
+			if (!sv.IsActive()) {
+				Cmd.ForwardToServer(in args);
+				return;
+			}
+
+			print = (txt) => Dbg.ConMsg(txt);
+		}
+		else {
+			print = Client_Print;
+		}
+
+		print($"hostname: {host_name.GetString()}\n");
+	}
+
+	private void Client_Print(ReadOnlySpan<char> text) {
+
 	}
 }

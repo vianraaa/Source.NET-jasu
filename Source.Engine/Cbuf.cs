@@ -265,8 +265,8 @@ public class Cbuf(IServiceProvider provider)
 	}
 	public void Shutdown() { }
 
-	public void ExecuteCommand(in TokenizedCommand command, CommandSource source, int clientSlot = -1) {
-		Cmd.ExecuteCommand(in command, source);
+	public void ExecuteCommand(ref TokenizedCommand command, CommandSource source, int clientSlot = -1) {
+		Cmd.ExecuteCommand(ref command, source);
 	}
 
 	public void AddText(ReadOnlySpan<char> text) {
@@ -287,7 +287,7 @@ public class Cbuf(IServiceProvider provider)
 		lock (Buffer) {
 			Buffer.BeginProcessingCommands(1);
 			while (Buffer.DequeueNextCommand()) {
-				ExecuteCommand(in Buffer.GetCommand(), CommandSource.Command);
+				ExecuteCommand(ref Buffer.GetCommand(), CommandSource.Command);
 			}
 			Buffer.EndProcessingCommands();
 		}

@@ -51,12 +51,12 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 		}
 
 		if (v.IsFlagSet(FCvar.Replicated)) {
-			if(!sv.IsActive() && !sv.IsLoading() && (cmd.CommandSource == CommandSource.Command) && cl.IsConnected()) {
+			if(!sv.IsActive() && !sv.IsLoading() && (cmd.Source == CommandSource.Command) && cl.IsConnected()) {
 				Dbg.ConMsg($"Can't change replicated ConVar {v.GetName()} from console of client, only server operator can change its value\n");
 				return true;
 			}
 
-			Dbg.Assert(cmd.CommandSource != CommandSource.Client);
+			Dbg.Assert(cmd.Source != CommandSource.Client);
 		}
 
 		const int LEN_REMAINING = 1024;

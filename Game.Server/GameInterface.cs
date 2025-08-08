@@ -1,4 +1,8 @@
-﻿using Source.Common.Server;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Client;
+using Source.Common.Filesystem;
+using Source.Common.Server;
 using Source.Engine;
 
 using System;
@@ -28,8 +32,12 @@ public static class GameInterface
 	}
 }
 
-public class ServerGameDLL : IServerGameDLL
+public class ServerGameDLL(IEngineServer engine, IFileSystem filesystem) : IServerGameDLL
 {
+	public static void DLLInit(IServiceCollection services) {
+		
+	}
+
 	public void PostInit() {
 
 	}

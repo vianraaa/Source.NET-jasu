@@ -36,14 +36,25 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 
 	Dictionary<string, string> aliases = [];
 
-	public CommandSource CommandSource;
+	public CommandSource Source;
 	public int ClientSlot;
 
 	private void HandleExecutionMarker(ReadOnlySpan<char> command, ReadOnlySpan<char> markerCodeS) {
+		char cCommand = command[0];
 		int markerCode = (int.TryParse(markerCodeS, out int i) ? i : -1);
+
+		if (Cbuf.FindAndRemoveExecutionMarker(markerCode)) {
+			if (cCommand == (char)CmdExecutionMarker.EnableServerCanExecute) ++filterCommandsByServerCanExecute;
+			else if (cCommand == (char)CmdExecutionMarker.DisableServerCanExecute) --filterCommandsByServerCanExecute;
+			else if (cCommand == (char)CmdExecutionMarker.EnableClientCmdCanExecute) ++filterCommandsByClientCmdCanExecute;
+			else if (cCommand == (char)CmdExecutionMarker.DisableClientCmdCanExecute) --filterCommandsByClientCmdCanExecute;
+		}
+		else {
+			Dbg.Warning("Invalid execution marker code.\n");
+		}
 	}
 
-	public ConCommandBase? ExecuteCommand(in TokenizedCommand command, CommandSource source, int clientSlot = -1) {
+	public ConCommandBase? ExecuteCommand(ref TokenizedCommand command, CommandSource source, int clientSlot = -1) {
 		if (command.ArgC() == 0)
 			return null;
 
@@ -61,7 +72,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			return null;
 		}
 
-		CommandSource = source;
+		Source = source;
 		ClientSlot = clientSlot;
 
 		ConCommandBase? commandBase = cvar.FindCommandBase(command[0]);
@@ -115,7 +126,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 		return null;
 	}
 
-	private void ForwardToServer(in TokenizedCommand command) {
+	public void ForwardToServer(in TokenizedCommand command) {
 #if !SWDS
 		Span<char> str = stackalloc char[1024];
 		if (command.Arg(0).Equals("cmd", StringComparison.OrdinalIgnoreCase))
@@ -132,13 +143,33 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 	}
 
 	public bool ShouldPreventClientCommand(ConCommandBase? cmd) {
+		if (filterCommandsByClientCmdCanExecute > 0 && cmd != null && cmd.IsFlagSet(FCvar.ClientCmdCanExecute)) {
+			// If this command is in the game DLL, don't mention it because we're going to forward this
+			// request to the server and let the server handle it.
+			if (!cmd.IsFlagSet(FCvar.GameDLL)) 
+				Dbg.Warning($"FCvar.ServerCanExecute prevented server running command: {cmd.GetName()}\n");
+
+			return true;
+		}
+
 		return false;
 	}
+
+	int filterCommandsByServerCanExecute = 0;
+	int filterCommandsByClientCmdCanExecute = 0;
 
 	public bool ShouldPreventServerCommand(ConCommandBase? cmd) {
 		if (!Host.IsSinglePlayerGame()) {
 			// todo: make this work.
-			return false;
+			if (filterCommandsByServerCanExecute > 0) {
+				if (cmd == null)
+					return false;
+
+				if (!cmd.IsFlagSet(FCvar.ServerCanExecute)) {
+					Dbg.Warning($"FCvar.ServerCanExecute prevented server running command: {cmd.GetName()}\n");
+					return true;
+				}
+			}
 		}
 
 		return false;
@@ -283,7 +314,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 
 				while (Cbuf.Buffer.GetNextCommandHandle() != hCommand) {
 					if (Cbuf.Buffer.DequeueNextCommand()) {
-						Cbuf.ExecuteCommand(Cbuf.Buffer.GetCommand(), CommandSource.Command);
+						Cbuf.ExecuteCommand(ref Cbuf.Buffer.GetCommand(), CommandSource.Command);
 					}
 					else {
 						Dbg.Assert(false);

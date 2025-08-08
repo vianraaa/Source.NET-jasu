@@ -26,4 +26,5 @@ public class HLClient(IInput input) : IBaseClientDLL
 	public bool WriteUsercmdDeltaToBuffer(bf_write buf, int from, int to, bool isNewCommand) {
 		return input.WriteUsercmdDeltaToBuffer(buf, from, to, isNewCommand);
 	}
+	public bool DisconnectAttempt() => false;
 }

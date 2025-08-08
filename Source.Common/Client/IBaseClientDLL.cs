@@ -11,4 +11,5 @@ public interface IBaseClientDLL
 	void IN_SetSampleTime(double frameTime);
 	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active);
 	public bool WriteUsercmdDeltaToBuffer(bf_write buf, int from, int to, bool isNewCommand);
+	bool DisconnectAttempt();
 }
