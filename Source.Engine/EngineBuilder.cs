@@ -19,6 +19,10 @@ namespace Source.Engine;
 /// </summary>
 public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 {
+	public EngineBuilder MarkInterface<I, T>() where T : class, I where I : class {
+		this.AddSingleton<I>(x => x.GetRequiredService<T>());
+		return this;
+	}
 	public EngineBuilder WithComponent<I, T>() where T : class, I where I : class {
 		this.AddSingleton<I, T>();
 		return this;

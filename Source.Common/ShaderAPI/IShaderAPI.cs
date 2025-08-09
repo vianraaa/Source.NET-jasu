@@ -1,6 +1,6 @@
 ﻿namespace Source.Common.ShaderAPI;
 
-public interface IShaderAPI
+public interface IShaderAPI : IShaderDynamicAPI
 {
 
 }
