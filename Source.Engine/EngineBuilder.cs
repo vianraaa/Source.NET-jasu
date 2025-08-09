@@ -81,6 +81,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<EngineParms>();
 		this.AddSingleton<ClientDLL>();
 		this.AddSingleton<IMod, BaseMod>();
+		this.AddSingleton<IGame, Game>();
 		// Client state and server state singletons
 		this.AddSingleton<ClientState>();
 		this.AddSingleton<GameServer>();
