@@ -1,11 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Game.Shared;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 
 namespace Game.Client;
 
-public class HLClient(IInput input) : IBaseClientDLL
+public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 {
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
@@ -30,5 +32,13 @@ public class HLClient(IInput input) : IBaseClientDLL
 
 	public void HudText(ReadOnlySpan<char> text) {
 
+	}
+
+	public bool DispatchUserMessage(int msgType, bf_read msgData) {
+		return usermessages.DispatchUserMessage(msgType, msgData);
+	}
+
+	public bool Init() {
+		return true;
 	}
 }

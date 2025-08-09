@@ -1,5 +1,7 @@
 ﻿using Source.Common.Bitbuffers;
+using Source.Common.Client;
 using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Networking;
 using Source.Engine.Server;
@@ -21,7 +23,7 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
-public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
+public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
 
@@ -242,10 +244,10 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		int bitsRead = msg.DataIn.ReadBitsClamped(userdata, (uint)msg.Length);
 		userMsg.StartReading(userdata, Net.Bits2Bytes(bitsRead));
 
-		/*if (!UserMessages.DispatchUserMessage(usermsg.MessageType, userMsg)) {
+		if (!Host.clientDLL!.DispatchUserMessage(msg.MessageType, userMsg)) {
 			ConWarning($"Couldn't dispatch user message ({userMsg})\n");
 			return false;
-		}*/
+		}
 
 		return true;
 	}

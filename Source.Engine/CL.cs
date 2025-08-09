@@ -208,8 +208,12 @@ public class CL(IServiceProvider services, Net Net,
 /// <param name="services"></param>
 public class ClientDLL(IServiceProvider services, Sys Sys)
 {
+	IBaseClientDLL clientDLL;
 	public void Init() {
+		clientDLL = services.GetRequiredService<IBaseClientDLL>();
 
+		if (!clientDLL.Init())
+			Sys.Error("Client.dll Init() in library client failed.");
 	}
 
 	public void Update() {

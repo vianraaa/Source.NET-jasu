@@ -13,4 +13,6 @@ public interface IBaseClientDLL
 	public bool WriteUsercmdDeltaToBuffer(bf_write buf, int from, int to, bool isNewCommand);
 	bool DisconnectAttempt();
 	void HudText(ReadOnlySpan<char> text);
+	bool DispatchUserMessage(int msgType, bf_read msgData);
+	bool Init();
 }
