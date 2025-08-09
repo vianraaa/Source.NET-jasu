@@ -1489,4 +1489,6 @@ public class NetChannel : INetChannelInfo, INetChannel
 	public void SetTimeout(double time) {
 		Timeout = time;
 	}
+
+	public bool IsLoopback() => false;
 }

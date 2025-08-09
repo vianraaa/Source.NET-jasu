@@ -11,6 +11,10 @@ public interface IConsoleDisplayFunc {
 	public void DPrint(string message);
 }
 
+public interface ICvarQuery {
+	public bool AreConVarsLinkable(ConVar child, ConVar parent);
+}
+
 public interface ICvar
 {
 	public void RegisterConCommand(ConCommandBase commandBase);
@@ -36,5 +40,5 @@ public interface ICvar
 	public void ConsolePrintf([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[]? args);
 	public void ConsoleDPrintf([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[]? args);
 
-
+	public void RevertFlaggedConVars(FCvar flag);
 }

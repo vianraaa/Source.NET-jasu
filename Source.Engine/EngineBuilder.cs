@@ -75,6 +75,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<CvarUtilities>();
 		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
+		this.AddSingleton<ICvarQuery, DefaultCvarQuery>();
 		this.AddSingleton<IHostState, HostState>();
 		this.AddSingleton<CommonHostState>();
 		this.AddSingleton<EngineParms>();

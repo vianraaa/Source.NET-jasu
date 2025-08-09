@@ -16,8 +16,9 @@ public class ConVar : ConCommandBase, IConVar
 	}
 
 	internal ConVar? parent;
+	public bool HasChangeCallback => Changed != null;
 
-	string defaultValue = "";
+	internal string defaultValue = "";
 
 	string? value;
 	double doubleValue;
@@ -293,5 +294,13 @@ public class ConVar : ConCommandBase, IConVar
 	private bool GetMax(out double max) {
 		max = this.maxVal;
 		return this.hasMax;
+	}
+
+	public void Revert() {
+		parent!.SetValue(parent.defaultValue);
+	}
+
+	public void SyncChangeTo(ConVar childVar) {
+		Changed = childVar.Changed;
 	}
 }

@@ -289,6 +289,58 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 #if !SWDS
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessServerInfo);
 #endif
+
+		if (msg.Protocol != Protocol.VERSION) {
+			ConMsg($"Server returned version {msg.Protocol}, expected {Protocol.VERSION}\n");
+			return false;
+		}
+
+		ServerCount = msg.ServerCount;
+		MaxClients = msg.MaxClients;
+		ServerClasses = msg.MaxClasses;
+		ServerClassBits = (int)Math.Log2(ServerClasses) + 1;
+
+		if (MaxClients < 1 || MaxClients > Constants.ABSOLUTE_PLAYER_LIMIT) {
+			ConMsg($"Bad maxclients ({MaxClients}) from server.\n");
+			return false;
+		}
+
+		if (ServerClasses < 1 || ServerClasses > Constants.MAX_SERVER_CLASSES) {
+			ConMsg($"Bad maxclasses ({MaxClients}) from server.\n");
+			return false;
+		}
+
+#if !SWDS
+		if(!sv.IsActive() && !(NetChannel!.IsLoopback() || NetChannel.IsNull)) {
+			if(MaxClients <= 1) {
+				ConMsg($"Bad maxclients ({MaxClients}) from server.\n");
+				return false;
+			}
+
+			cvar.RevertFlaggedConVars(FCvar.Replicated);
+			cvar.RevertFlaggedConVars(FCvar.Cheat);
+			DevMsg("FCvar.Cheat cvars reverted to defaults.\n");
+		}
+#endif
+
+		FreeEntityBaselines();
+		PlayerSlot = msg.PlayerSlot;
+		ViewEntity = PlayerSlot + 1;
+
+		if(msg.TickInterval < Constants.MINIMUM_TICK_INTERVAL || msg.TickInterval > Constants.MAXIMUM_TICK_INTERVAL) {
+			ConMsg($"Interval_per_tick {msg.TickInterval} out of range [{Constants.MINIMUM_TICK_INTERVAL} to {Constants.MAXIMUM_TICK_INTERVAL}]");
+			return false;
+		}
+
+		LevelBaseName = msg.MapName;
+		
+		ConVar? skyname = cvar.FindVar("sv_skyname");
+		skyname?.SetValue(msg.SkyName);
+
+		DeltaTick = -1;
+
+		// todo: Host_DefaultMapFileName
+
 		return true;
 	}
 
@@ -298,7 +350,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private bool ProcessStringCmd(NET_StringCmd msg) {
-		if(!RestrictServerCommands || sv.IsActive()) {
+		if (!RestrictServerCommands || sv.IsActive()) {
 			Cbuf.AddText(msg.Command);
 			return true;
 		}
@@ -316,9 +368,9 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		if (NetChannel == null) return false;
 		// TODO: loopback netchannels
 
-		foreach(var var in msg.ConVars) {
+		foreach (var var in msg.ConVars) {
 			ConVar? cv = cvar.FindVar(var.Name);
-			if(cv == null) {
+			if (cv == null) {
 				ConMsg($"SetConVar: No such cvar ({var.Name} set to {var.Value})\n");
 				continue;
 			}
@@ -353,8 +405,8 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 	public bool IsActive() => SignOnState == SignOnState.Full;
 	public bool IsConnected() => SignOnState >= SignOnState.Connected;
-	public virtual void Clear() { 
-	
+	public virtual void Clear() {
+
 	}
 	public virtual void FullConnect(NetAddress to) {
 		NetChannel = Net.CreateNetChannel(NetSocketType.Client, to, "CLIENT", this) ?? throw new Exception("Failed to create networking channel");
@@ -544,7 +596,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	public void SendStringCmd(ReadOnlySpan<char> str) {
-		if(NetChannel != null) {
+		if (NetChannel != null) {
 			NET_StringCmd stringCmd = new NET_StringCmd();
 			stringCmd.Command = new(str);
 			NetChannel.SendNetMsg(stringCmd);

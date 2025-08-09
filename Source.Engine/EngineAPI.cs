@@ -124,13 +124,13 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 					if (getMethod.IsStatic) {
 						// Pull a static reference out to link
 						ConVar cv = (ConVar)getMethod.Invoke(null, null)!;
-						cv.SetName(prop.Name);
+						if(cv.GetName() == null) cv.SetName(prop.Name);
 						cvar.RegisterConCommand(cv);
 					}
 					else if (type != typeof(ConVar)) {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
-						cv.SetName(prop.Name);
+						if (cv.GetName() == null) cv.SetName(prop.Name);
 						cvar.RegisterConCommand(cv);
 					}
 				}
@@ -139,13 +139,13 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 					if (field.IsStatic) {
 						// Pull a static reference out to link
 						ConVar cv = (ConVar)field.GetValue(null)!;
-						cv.SetName(field.Name);
+						if (cv.GetName() == null) cv.SetName(field.Name);
 						cvar.RegisterConCommand(cv);
 					}
 					else if (type != typeof(ConVar)) {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)field.GetValue(instance)!;
-						cv.SetName(field.Name);
+						if (cv.GetName() == null) cv.SetName(field.Name);
 						cvar.RegisterConCommand(cv);
 					}
 				}

@@ -7,10 +7,11 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Source.Common.Commands;
 
-public class Cvar(ICommandLine CommandLine, IServiceProvider services) : ICvar
+public class Cvar(ICommandLine CommandLine, IServiceProvider services, ICvarQuery cvarQuery) : ICvar
 {
 	public event FnChangeCallback? Changed;
 	List<IConsoleDisplayFunc> DisplayFuncs = [];
@@ -115,8 +116,36 @@ public class Cvar(ICommandLine CommandLine, IServiceProvider services) : ICvar
 			else {
 				ConVar childVar = (ConVar)variable;
 				ConVar parentVar = (ConVar)other;
-				Dbg.Warning("Linking ConVar's is currently not implemented...\n");
-				throw new Exception();
+
+				if(cvarQuery.AreConVarsLinkable(childVar, parentVar)) {
+					if(childVar.defaultValue != null && parentVar.defaultValue != null && childVar.IsFlagSet(FCvar.Replicated) && parentVar.IsFlagSet(FCvar.Replicated)) {
+						if(!childVar.defaultValue.Equals(parentVar.defaultValue, StringComparison.OrdinalIgnoreCase)) 
+							Dbg.Warning($"Parent and child ConVars with different default values! " +
+								$"{childVar.defaultValue} child, {childVar.defaultValue} parent (parent wins)\n");
+
+						childVar.parent = parentVar.parent;
+						parentVar.Flags |= childVar.Flags & (FCvar.AccessibleFromThreads);
+						if (childVar.HasChangeCallback) {
+							if (!parentVar.HasChangeCallback)
+								parentVar.SyncChangeTo(childVar);
+						}
+
+						if (!string.IsNullOrEmpty(childVar.HelpString)){
+							if (!string.IsNullOrEmpty(parentVar.HelpString)) {
+								if (!parentVar.HelpString.Equals(childVar.HelpString, StringComparison.OrdinalIgnoreCase))
+									Dbg.Warning($"Convar {variable.GetName()} has multiple help strings (parent wins)\n");
+							}
+							else {
+								parentVar.HelpString = childVar.HelpString;
+							}
+						}
+
+						if ((childVar.Flags & FCvar.Cheat) != (parentVar.Flags & FCvar.Cheat))
+							Dbg.Warning($"Convar {variable.GetName()} has conflicting Cheat flags (parent wins)\n");
+						if ((childVar.Flags & FCvar.Replicated) != (parentVar.Flags & FCvar.Replicated))
+							Dbg.Warning($"Convar {variable.GetName()} has conflicting Replicated flags (parent wins)\n");
+					}
+				}
 			}
 
 			variable.Next = null;
@@ -266,5 +295,21 @@ public class Cvar(ICommandLine CommandLine, IServiceProvider services) : ICvar
 
 	private void PrintCommand(ConCommand cmd) {
 		Dbg.ConMsg($"{cmd.Name.PadRight(40)} : {"cmd".PadRight(8)} : {"".PadRight(16)} : {cmd.GetHelpText()?.Replace("\t", "")?.Replace("\n", "")}\n");
+	}
+
+	public void RevertFlaggedConVars(FCvar flag) {
+		foreach (var var in GetCommands()) {
+			if (var.IsCommand())
+				continue;
+
+			ConVar cvar = (ConVar)var;
+			if (!cvar.IsFlagSet(flag))
+				continue;
+
+			if (cvar.GetString().Equals(cvar.GetDefault(), StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			cvar.Revert();
+		}
 	}
 }
