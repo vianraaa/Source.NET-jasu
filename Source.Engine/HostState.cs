@@ -35,11 +35,14 @@ public class HostState : IHostState
 	public bool BackgroundLevel;
 	public bool WaitingForConnection;
 
+	IEngine eng;
+
 	public HostState(Host Host) {
 		this.Host = Host;
 		((IHostState)this).Init();
 	}
 	void IHostState.Init() {
+		eng = Host.Engine;
 		SetState(HostStates.Run, true);
 		CurrentState = HostStates.Run;
 		NextState = HostStates.Run;
@@ -236,9 +239,10 @@ public class HostState : IHostState
 	}
 
 	protected void State_Shutdown() {
-
+		eng.SetNextState(IEngine.State.Close);
 	}
 	protected void State_Restart() {
-
+		State_Shutdown();
+		eng.SetQuitting(IEngine.Quit.Restart);
 	}
 }

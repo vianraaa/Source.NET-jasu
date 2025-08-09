@@ -97,11 +97,15 @@ public class GameServer : BaseServer
 		throw new NotImplementedException();
 	}
 
-	internal void InactivateClients() {
+	public void InactivateClients() {
 
 	}
 
-	internal void Init(bool dedicated) {
+	public void Init(bool dedicated) {
 		
+	}
+
+	public void Shutdown() {
+
 	}
 }

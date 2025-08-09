@@ -44,6 +44,7 @@ public class Host(
 	public Con Con;
 	public EngineVGui EngineVGui;
 	public Cvar Cvar;
+	public IEngine Engine;
 	public Scr Scr;
 	public Net Net;
 	public Sys Sys;
@@ -507,6 +508,7 @@ public class Host(
 
 		host_state.IntervalPerTick = DEFAULT_TICK_INTERVAL;
 
+		Engine = services.GetRequiredService<IEngine>();
 		var engineAPI = services.GetRequiredService<IEngineAPI>();
 		var hostState = services.GetRequiredService<IHostState>();
 		Sys = services.GetRequiredService<Sys>();
@@ -724,7 +726,18 @@ public class Host(
 		Dbg.Msg("reload incomplete!\n");
 	}
 
-	internal void ShutdownServer() {
-		throw new NotImplementedException();
+	public void ShutdownServer() {
+		if (!sv.IsActive())
+			return;
+
+		AllowQueuedMaterialSystem(false);
+#if !SWDS
+
+#endif
+		// static prop manager
+		// free state and world
+		sv.Shutdown();
+		GC.WaitForPendingFinalizers();
+		GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
 	}
 }
