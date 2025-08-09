@@ -10,6 +10,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\Game.Shared\*.cs" Link="Shared\%(Filename)%(Extension)"/>
+		<Compile Include="..\Game.Shared\HL2\*.cs" Link="Shared\HL2\%(Filename)%(Extension)"/>
 	</ItemGroup>
 	<PropertyGroup>
 		<DefineConstants>$(DefineConstants);GAME_DLL</DefineConstants>
