@@ -41,6 +41,7 @@ public class HostState : IHostState
 		this.Host = Host;
 		((IHostState)this).Init();
 	}
+
 	void IHostState.Init() {
 		eng = Host.Engine;
 		SetState(HostStates.Run, true);

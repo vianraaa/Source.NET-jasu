@@ -43,8 +43,6 @@ public class Bootloader : IDisposable
 				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
 				.WithComponent<IShaderAPI, ShaderAPI_GL46>()
-					.MarkInterface<IShaderDynamicAPI, ShaderAPI_GL46>()
-				.WithComponent<IShaderDevice, ShaderDeviceBase>()
 
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()

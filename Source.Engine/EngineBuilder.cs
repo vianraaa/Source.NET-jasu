@@ -24,6 +24,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		return this;
 	}
 	public EngineBuilder WithComponent<I, T>() where T : class, I where I : class {
+		PreInject<T>(this);
 		this.AddSingleton<I, T>();
 		return this;
 	}

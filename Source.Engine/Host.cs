@@ -53,7 +53,6 @@ public class Host(
 	public IBaseClientDLL? clientDLL;
 	public IServerGameDLL? serverDLL;
 
-
 	public bool Initialized;
 	public double FrameTime;
 	public double FrameTimeUnbounded;

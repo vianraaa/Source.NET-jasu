@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Common", "Source.Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Engine", "Source.Engine\Source.Engine.csproj", "{383661AF-A866-4A97-A4EF-F0170496D679}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2a. Engine Main", "2a. Engine Main", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2b. Engine Main", "2b. Engine Main", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Game Realms", "3. Game Realms", "{9D95D703-BE2E-44A7-A9B3-106E4FC16631}"
 EndProject
@@ -25,13 +25,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Filesystem", "Source
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1. Engine Common", "1. Engine Common", "{6C519EE4-0567-4180-A0F3-C4D73222A263}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2b. Engine Components", "2b. Engine Components", "{4B578BC3-0E56-46A4-9316-23258535813E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2c. Post-Engine Components", "2c. Post-Engine Components", "{4B578BC3-0E56-46A4-9316-23258535813E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLManager", "Source.SDLManager\Source.SDLManager.csproj", "{B4D05C60-0069-4314-822D-159D9A7BE764}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLInputSystem", "Source.SDLInputSystem\Source.SDLInputSystem.csproj", "{EAEB4D68-6F22-4838-941A-594E8C887268}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.ShaderAPI.GL46", "Source.ShaderAPI.GL46\Source.ShaderAPI.GL46.csproj", "{6AB81CA0-C196-44AE-875C-72E987D2E835}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2a. Pre-Engine Components", "2a. Pre-Engine Components", "{7717E508-10C7-4CBC-B833-4933D7D8E2F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
