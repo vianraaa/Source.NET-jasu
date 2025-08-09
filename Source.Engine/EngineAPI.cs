@@ -4,6 +4,8 @@ using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
+using Source.Common.Input;
+using Source.Common.Launcher;
 
 using System.Reflection;
 
@@ -14,7 +16,7 @@ using static Source.Dbg;
 namespace Source.Engine;
 
 
-public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSystem, Sys Sys) : IEngineAPI, IDisposable
+public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSystem, Sys Sys, ILauncherManager launcherMgr, IInputSystem inputSystem) : IEngineAPI, IDisposable
 {
 	public bool Dedicated;
 
@@ -54,7 +56,8 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 
 	public bool InEditMode() => false;
 	public void PumpMessages() {
-
+		launcherMgr.PumpWindowsMessageLoop();
+		inputSystem.PollInputState();
 	}
 	public void PumpMessagesEditMode(bool idle, long idleCount) => throw new NotImplementedException();
 	public void ActivateEditModeShaders(bool active) { }

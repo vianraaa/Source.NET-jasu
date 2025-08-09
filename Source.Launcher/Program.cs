@@ -12,6 +12,8 @@ using Source.Engine;
 using Steamworks;
 using Source.Common.Launcher;
 using Source.SDLManager;
+using Source.Common.Input;
+using Nucleus.SDL3Window;
 
 namespace Source.Launcher;
 
@@ -36,7 +38,8 @@ public class Bootloader : IDisposable
 		do {
 			engineAPI = new EngineBuilder(commandLine)
 				.WithComponent<IFileSystem, BaseFileSystem>()
-				.WithComponent<ILauncherManager, SDL3Manager>()
+				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
+				.WithComponent<IInputSystem, SDL3_InputSystem>()
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.Build(false);

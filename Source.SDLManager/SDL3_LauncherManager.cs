@@ -4,40 +4,38 @@ using Source.Common.Launcher;
 
 namespace Source.SDLManager;
 
-public unsafe class SDL3Manager : ILauncherManager
+public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherManager
 {
-	SDL_Window* hWindow;
+	SDL3_Window window;
 	public nint CreateExtraContext() {
-		throw new NotImplementedException();
+		return 0;
 	}
 
 	public bool CreateGameWindow(string title, bool windowed, int width, int height) {
 		SDL_WindowFlags flags = 0;
 
-		hWindow = SDL3.SDL_CreateWindow(title, width, height, flags);
-		if (hWindow == null)
-			return false;
+		window = new SDL3_Window(services).Create(title, width, height, flags);
 		return true;
 	}
 
 	public void DeleteContext(nint context) {
-		throw new NotImplementedException();
+
 	}
 
 	public void DestroyGameWindow() {
-		throw new NotImplementedException();
+
 	}
 
 	public void DisplayedSize(out uint width, out uint height) {
-		throw new NotImplementedException();
+		width = height = 0;
 	}
 
 	public nint GetGLContextForWindow(nint windowref) {
-		throw new NotImplementedException();
+		return 0;
 	}
 
 	public nint GetMainContext() {
-		throw new NotImplementedException();
+		return 0;
 	}
 
 	public void GetMouseDelta(out int x, out int y, bool ignoreNextMouseDelta = false) {
@@ -53,17 +51,12 @@ public unsafe class SDL3Manager : ILauncherManager
 	}
 
 	public bool MakeContextCurrent(nint context) {
-		throw new NotImplementedException();
+		return false;
 	}
 
 	public void MoveWindow(int x, int y) {
-		throw new NotImplementedException();
-	}
 
-	public void PumpWindowsMessageLoop() {
-		throw new NotImplementedException();
 	}
-
 	public void RenderedSize(ref uint width, ref uint height, bool set) {
 		throw new NotImplementedException();
 	}
@@ -84,9 +77,7 @@ public unsafe class SDL3Manager : ILauncherManager
 		throw new NotImplementedException();
 	}
 
-	public nint GetWindowHandle() => (nint)hWindow;
-
-	public int GetEvents(WindowEvent[] eventBuffer, int length) {
-		throw new NotImplementedException();
-	}
+	public nint GetWindowHandle() => (nint)window.GetSDLWindowHandle();
+	public void PumpWindowsMessageLoop() => window.PumpMessages();
+	public int GetEvents(WindowEvent[] eventBuffer, int length) => window.GetEvents(eventBuffer, length);
 }
