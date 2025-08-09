@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2b. Engine Components", "2b
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLManager", "Source.SDLManager\Source.SDLManager.csproj", "{B4D05C60-0069-4314-822D-159D9A7BE764}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLInputSystem", "Source.SDLInputSystem\Source.SDLInputSystem.csproj", "{EAEB4D68-6F22-4838-941A-594E8C887268}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{B4D05C60-0069-4314-822D-159D9A7BE764}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4D05C60-0069-4314-822D-159D9A7BE764}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4D05C60-0069-4314-822D-159D9A7BE764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAEB4D68-6F22-4838-941A-594E8C887268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAEB4D68-6F22-4838-941A-594E8C887268}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAEB4D68-6F22-4838-941A-594E8C887268}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAEB4D68-6F22-4838-941A-594E8C887268}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +86,6 @@ Global
 		{F4CC2608-D7FA-4B85-915F-02174B94ABE6} = {9D95D703-BE2E-44A7-A9B3-106E4FC16631}
 		{29AE1289-1EEE-4B35-95A4-7BD303C507A6} = {4B578BC3-0E56-46A4-9316-23258535813E}
 		{B4D05C60-0069-4314-822D-159D9A7BE764} = {4B578BC3-0E56-46A4-9316-23258535813E}
+		{EAEB4D68-6F22-4838-941A-594E8C887268} = {4B578BC3-0E56-46A4-9316-23258535813E}
 	EndGlobalSection
 EndGlobal

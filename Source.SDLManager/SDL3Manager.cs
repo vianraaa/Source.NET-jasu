@@ -1,15 +1,23 @@
-﻿using Source.Common.Launcher;
+﻿using SDL;
+
+using Source.Common.Launcher;
 
 namespace Source.SDLManager;
 
-public class SDL3Manager : ILauncherManager
+public unsafe class SDL3Manager : ILauncherManager
 {
+	SDL_Window* hWindow;
 	public nint CreateExtraContext() {
 		throw new NotImplementedException();
 	}
 
 	public bool CreateGameWindow(string title, bool windowed, int width, int height) {
-		throw new NotImplementedException();
+		SDL_WindowFlags flags = 0;
+
+		hWindow = SDL3.SDL_CreateWindow(title, width, height, flags);
+		if (hWindow == null)
+			return false;
+		return true;
 	}
 
 	public void DeleteContext(nint context) {
@@ -73,6 +81,12 @@ public class SDL3Manager : ILauncherManager
 	}
 
 	public void SizeWindow(int width, int tall) {
+		throw new NotImplementedException();
+	}
+
+	public nint GetWindowHandle() => (nint)hWindow;
+
+	public int GetEvents(WindowEvent[] eventBuffer, int length) {
 		throw new NotImplementedException();
 	}
 }

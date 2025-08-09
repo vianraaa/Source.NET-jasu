@@ -32,4 +32,6 @@ public interface ILauncherManager
 	nint CreateExtraContext();
 	void DeleteContext(nint context);
 	bool MakeContextCurrent(nint context);
+	nint GetWindowHandle();
+	int GetEvents(WindowEvent[] eventBuffer, int length);
 }

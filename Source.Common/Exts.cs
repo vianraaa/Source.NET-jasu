@@ -14,7 +14,28 @@ using System.Reflection;
 using System.Reflection.PortableExecutable;
 
 namespace Source;
-
+public static class BitVecExts
+{
+	/// <summary>
+	/// Checks if the bit is set.
+	/// </summary>
+	/// <param name="bools"></param>
+	/// <param name="bit"></param>
+	/// <returns></returns>
+	public static bool IsBitSet(this bool[] bools, int bit) => bools[bit];
+	/// <summary>
+	/// Sets the bit to 1.
+	/// </summary>
+	/// <param name="bools"></param>
+	/// <param name="bit"></param>
+	public static void Set(this bool[] bools, int bit) => bools[bit] = true;
+	/// <summary>
+	/// Sets the bit to 0.
+	/// </summary>
+	/// <param name="bools"></param>
+	/// <param name="bit"></param>
+	public static void Clear(this bool[] bools, int bit) => bools[bit] = false;
+}
 public static class ClassUtils
 {
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : class, new() {

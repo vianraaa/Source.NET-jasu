@@ -1,6 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.Input;
 using Source.Common.Launcher;
 
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem) : IGame
+public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem) : IGame
 {
 	public bool CreateGameWindow(int width, int height, bool windowed) {
 		if (launcherManager == null) {
@@ -27,8 +28,22 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		}
 
 		Console.Title = windowName;
-		return launcherManager.CreateGameWindow(windowName, windowed, width, height);
+		if (!launcherManager.CreateGameWindow(windowName, windowed, width, height))
+			return false;
+
+		SetGameWindow(launcherManager.GetWindowHandle());
+		AttachToWindow();
+
+		return true;
 	}
+
+	private void AttachToWindow() {
+		inputSystem.AttachToWindow(window);
+		inputSystem.EnableInput(true);
+		inputSystem.EnableMessagePump(false);
+	}
+
+	nint window;
 
 	public void DestroyGameWindow() {
 		throw new NotImplementedException();
@@ -57,9 +72,13 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 	public void GetWindowRect(out int x, out int y, out int w, out int h) {
 		throw new NotImplementedException();
 	}
-
+	bool ExternallySuppliedWindow = false;
 	public bool InputAttachToGameWindow() {
-		throw new NotImplementedException();
+		if (!ExternallySuppliedWindow)
+			return true;
+
+		AttachToWindow();
+		return true;
 	}
 
 	public void InputDetachFromGameWindow() {
@@ -75,7 +94,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 	}
 
 	public void SetGameWindow(nint hWnd) {
-		throw new NotImplementedException();
+		window = hWnd;
 	}
 
 	public void SetWindowSize(int w, int h) {
