@@ -67,7 +67,7 @@ public partial class UserMessages {
 			bool wantsToChat = msg.ReadByte() > 0;
 
 			if (wantsToChat) {
-				Dbg.ConMsg($"[Client #{client}]: {str}\n");
+				ChatPrint(client, ChatFilter.None, str);
 			}
 			else {
 				// todo

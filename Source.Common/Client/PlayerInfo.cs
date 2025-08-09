@@ -1,6 +1,7 @@
-﻿namespace Source.Common;
+﻿namespace Source.Common.Client;
 
-public struct PlayerInfo {
+public struct PlayerInfo
+{
 	public string Name;
 	public int UserID;
 	public string GUID;
