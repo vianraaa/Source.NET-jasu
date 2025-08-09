@@ -1,6 +1,9 @@
-﻿using SDL;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using SDL;
 
 using Source.Common.Launcher;
+using Source.Common.ShaderAPI;
 
 namespace Source.SDLManager;
 
@@ -10,11 +13,39 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 	public nint CreateExtraContext() {
 		return 0;
 	}
-
+	nint graphicsHandle;
 	public bool CreateGameWindow(string title, bool windowed, int width, int height) {
+		var shaderDevice = services.GetRequiredService<IShaderDevice>();
+		GraphicsAPI requestedGraphics = shaderDevice.GetGraphicsAPI();
+
 		SDL_WindowFlags flags = 0;
+		if ((requestedGraphics & GraphicsAPI.OpenGL) == GraphicsAPI.OpenGL) {
+			flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
+			requestedGraphics.GetGLInfo(out int major, out int minor);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_RED_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_GREEN_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, minor);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, major);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
+		}
+		else if ((requestedGraphics & GraphicsAPI.Vulkan) == GraphicsAPI.Vulkan)
+			flags |= SDL_WindowFlags.SDL_WINDOW_VULKAN;
+		else if ((requestedGraphics & GraphicsAPI.Metal) == GraphicsAPI.Metal)
+			flags |= SDL_WindowFlags.SDL_WINDOW_METAL;
 
 		window = new SDL3_Window(services).Create(title, width, height, flags);
+
+		if((requestedGraphics & GraphicsAPI.OpenGL) == GraphicsAPI.OpenGL)
+			graphicsHandle = (nint)SDL3.SDL_GL_CreateContext(window.HardwareHandle);
+
+		if (graphicsHandle == 0) {
+			Dbg.Error($"Could not provide hardware handle to IShaderAPI! (SDL3 Says: {SDL3.SDL_GetError()})\n");
+			return false;
+		}
+
 		return true;
 	}
 
@@ -31,11 +62,11 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 	}
 
 	public nint GetGLContextForWindow(nint windowref) {
-		return 0;
+		return graphicsHandle;
 	}
 
 	public nint GetMainContext() {
-		return 0;
+		return graphicsHandle;
 	}
 
 	public void GetMouseDelta(out int x, out int y, bool ignoreNextMouseDelta = false) {
@@ -77,7 +108,7 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		throw new NotImplementedException();
 	}
 
-	public nint GetWindowHandle() => (nint)window.GetSDLWindowHandle();
+	public nint GetWindowHandle() => (nint)window.HardwareHandle;
 	public void PumpWindowsMessageLoop() => window.PumpMessages();
 	public int GetEvents(WindowEvent[] eventBuffer, int length) => window.GetEvents(eventBuffer, length);
 }

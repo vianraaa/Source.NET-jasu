@@ -13,7 +13,7 @@ namespace Source.SDLManager;
 public unsafe class SDL3_Window
 {
 	private SDL_Window* window;
-	internal SDL_Window* GetSDLWindowHandle() => window;
+	internal SDL_Window* HardwareHandle => window;
 
 	public int ID => (int)SDL3.SDL_GetWindowID(window);
 
@@ -62,6 +62,8 @@ public unsafe class SDL3_Window
 		this.systems = systems;
 		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
 			throw new Exception("Couldn't initialize SDL3's video subsystem.");
+		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
+			throw new Exception("Couldn't initialize SDL3's audio subsystem.");
 	}
 
 	public Vector2 Position {

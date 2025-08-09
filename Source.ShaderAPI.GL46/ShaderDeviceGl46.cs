@@ -11,9 +11,8 @@ using static OpenGL.Gl46;
 
 namespace Source.ShaderAPI.Gl46;
 
-public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
+public unsafe class ShaderDeviceGl46() : ShaderDeviceBase(GraphicsAPI.OpenGL_v460)
 {
-
 	public override GeometryShaderHandle CreateGeometryShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
 		var shader = glCreateShader(GL_GEOMETRY_SHADER);
 		glShaderSource(shader, program);
@@ -33,11 +32,8 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 		return CreateGeometryShader(reader.ReadToEnd(), shaderVersion);
 	}
 
-
-	public override IIndexBuffer CreateIndexBuffer(ShaderBufferType type, MaterialIndexFormat format, int count) {
-		IndexBufferGl46 newIndexBuffer = new();
-		return newIndexBuffer;
-	}
+	public override IIndexBuffer CreateIndexBuffer(ShaderBufferType type, MaterialIndexFormat format, int count)
+		=> throw new NotImplementedException();
 
 	public override PixelShaderHandle CreatePixelShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
 		var shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -59,10 +55,8 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 	}
 
 
-	public override IVertexBuffer CreateVertexBuffer(ShaderBufferType type, VertexFormat format, int count) {
-		VertexBufferGl46 newVertexBuffer = new();
-		return newVertexBuffer;
-	}
+	public override IVertexBuffer CreateVertexBuffer(ShaderBufferType type, VertexFormat format, int count)
+		=> throw new NotImplementedException();
 
 	public override VertexShaderHandle CreateVertexShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
 		var shader = glCreateShader(GL_VERTEX_SHADER);

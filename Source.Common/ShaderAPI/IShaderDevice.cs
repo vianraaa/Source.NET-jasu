@@ -53,11 +53,20 @@ public enum GraphicsAPI : ulong {
 	OpenGL = 1 << 61,
 	Vulkan = 1 << 60,
 	Metal = 1 << 59,
-	// 48 bits available for versions
+	// 16 bits available for versions
 	v460 = 460,
 
 	// Merged enums, only do this where actually applicable
 	OpenGL_v460 = OpenGL | v460
+}
+public static class GraphicsAPIExts {
+	public static void GetGLInfo(this GraphicsAPI graphicsAPI, out int major, out int minor) {
+		if (!graphicsAPI.HasFlag(GraphicsAPI.OpenGL))
+			throw new NotSupportedException();
+		int version = (int)graphicsAPI & 0xFFFF;
+		major = version / 100;
+		minor = (version / 10) % 10;
+	}
 }
 
 public struct ShaderDeviceInfo {
@@ -86,6 +95,7 @@ public enum ShaderBufferType {
 }
 
 public interface IShaderDevice {
+	GraphicsAPI GetGraphicsAPI();
 	ImageFormat GetBackBufferFormat();
 	void GetBackBufferDimensions(out int width, out int height);
 	bool IsUsingGraphics();
@@ -95,10 +105,6 @@ public interface IShaderDevice {
 	void Present();
 	void GetWindowSize(out int width, out int height);
 	void SetHardwareGammaRamp(float gamma, float tvRangeMin, float tvRangeMax, float tvExponent, bool tvEnabled);
-	bool AddView(nint window);
-	bool RemoveView(nint window);
-	bool SetView(nint window);
-
 
 	void DestroyVertexShader(VertexShaderHandle shaderHandle);
 	void DestroyGeometryShader(GeometryShaderHandle shaderHandle);

@@ -3,11 +3,9 @@ using Source.Common.ShaderAPI;
 
 namespace Source.ShaderAPI.Gl46;
 
-public abstract class ShaderDeviceBase : IShaderDevice
+public abstract class ShaderDeviceBase(GraphicsAPI api) : IShaderDevice
 {
-	public bool AddView(nint window) {
-		return true;
-	}
+	public GraphicsAPI GetGraphicsAPI() => api;
 
 	public abstract GeometryShaderHandle CreateGeometryShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
 	public abstract GeometryShaderHandle CreateGeometryShader(Stream program, ReadOnlySpan<char> shaderVersion);
@@ -52,16 +50,8 @@ public abstract class ShaderDeviceBase : IShaderDevice
 		throw new NotImplementedException();
 	}
 
-	public bool RemoveView(nint window) {
-		return true;
-	}
-
 	public void SetHardwareGammaRamp(float gamma, float tvRangeMin, float tvRangeMax, float tvExponent, bool tvEnabled) {
 		throw new NotImplementedException();
-	}
-
-	public bool SetView(nint window) {
-		return true;
 	}
 
 	public void SpewDriverInfo() {
