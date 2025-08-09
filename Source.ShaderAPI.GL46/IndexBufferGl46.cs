@@ -6,17 +6,6 @@ namespace Source.ShaderAPI.Gl46;
 
 public class IndexBufferGl46 : IndexBufferBase
 {
-	uint glBuffer;
-	private ShaderBufferType type;
-	private MaterialIndexFormat format;
-	private int count;
-
-	public IndexBufferGl46(ShaderBufferType type, MaterialIndexFormat format, int count) {
-		this.type = type;
-		this.format = format;
-		this.count = count;
-	}
-
 	public override void BeginCastBuffer(MaterialIndexFormat format) {
 		throw new NotImplementedException();
 	}
@@ -54,10 +43,6 @@ public class IndexBufferGl46 : IndexBufferBase
 	}
 
 	public override void ValidateData(int vertexCount, out IndexDesc desc) {
-		throw new NotImplementedException();
-	}
-
-	internal void Free() {
 		throw new NotImplementedException();
 	}
 }

@@ -5,27 +5,6 @@ namespace Source.ShaderAPI.Gl46;
 
 public class VertexBufferGl46 : VertexBufferBase
 {
-	private uint vertexBuffer;
-	private VertexFormat vertexFormat;
-	private int vertexCount;
-	private int bufferSize;
-	private int firstUnwrittenOffset;
-	private bool locked;
-	private bool dynamic;
-	private bool flush;
-
-	public VertexBufferGl46(ShaderBufferType type, VertexFormat format, int count) {
-		vertexBuffer = 0;
-		vertexFormat = format;
-		vertexCount = count;
-		bufferSize = (format == VertexFormat.Unknown) ? vertexCount : VertexSize();
-		dynamic = type == ShaderBufferType.Dynamic;
-	}
-
-	private int VertexSize() {
-		return 0;
-	}
-
 	public override void BeginCastBuffer(VertexFormat format) {
 		throw new NotImplementedException();
 	}
@@ -63,10 +42,6 @@ public class VertexBufferGl46 : VertexBufferBase
 	}
 
 	public override int VertexCount() {
-		throw new NotImplementedException();
-	}
-
-	internal void Free() {
 		throw new NotImplementedException();
 	}
 }

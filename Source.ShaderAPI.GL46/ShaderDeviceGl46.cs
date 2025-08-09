@@ -35,7 +35,7 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 
 
 	public override IIndexBuffer CreateIndexBuffer(ShaderBufferType type, MaterialIndexFormat format, int count) {
-		IndexBufferGl46 newIndexBuffer = new(type, format, count);
+		IndexBufferGl46 newIndexBuffer = new();
 		return newIndexBuffer;
 	}
 
@@ -60,7 +60,7 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 
 
 	public override IVertexBuffer CreateVertexBuffer(ShaderBufferType type, VertexFormat format, int count) {
-		VertexBufferGl46 newVertexBuffer = new(type, format, count);
+		VertexBufferGl46 newVertexBuffer = new();
 		return newVertexBuffer;
 	}
 
@@ -88,7 +88,7 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 	}
 
 	public override void DestroyIndexBuffer(IIndexBuffer indexBuffer) {
-		((IndexBufferGl46)indexBuffer).Free();
+
 	}
 
 	public override void DestroyPixelShader(PixelShaderHandle shaderHandle) {
@@ -96,7 +96,7 @@ public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 	}
 
 	public override void DestroyVertexBuffer(IVertexBuffer vertexBuffer) {
-		((VertexBufferGl46)vertexBuffer).Free();
+
 	}
 
 	public override void DestroyVertexShader(VertexShaderHandle shaderHandle) {
