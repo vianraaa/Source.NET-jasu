@@ -1,7 +1,7 @@
 ﻿using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
-namespace Source.ShaderAPI.GL46;
+namespace Source.ShaderAPI.Gl46;
 
 public abstract class ShaderDeviceBase : IShaderDevice
 {

@@ -1,4 +1,4 @@
-﻿namespace Source.ShaderAPI.GL46;
+﻿namespace Source.ShaderAPI.Gl46;
 
 public class ShaderManager {
 	public int VertexShaderIndex;

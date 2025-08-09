@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLManager", "Source
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLInputSystem", "Source.SDLInputSystem\Source.SDLInputSystem.csproj", "{EAEB4D68-6F22-4838-941A-594E8C887268}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.ShaderAPI.GL46", "Source.ShaderAPI.GL46\Source.ShaderAPI.GL46.csproj", "{6AB81CA0-C196-44AE-875C-72E987D2E835}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.ShaderAPI.Gl46", "Source.ShaderAPI.GL46\Source.ShaderAPI.Gl46.csproj", "{6AB81CA0-C196-44AE-875C-72E987D2E835}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2a. Pre-Engine Components", "2a. Pre-Engine Components", "{7717E508-10C7-4CBC-B833-4933D7D8E2F3}"
 EndProject

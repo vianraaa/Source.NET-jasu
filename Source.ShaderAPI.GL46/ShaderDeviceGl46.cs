@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Source.ShaderAPI.GL46;
+namespace Source.ShaderAPI.Gl46;
 
-public class ShaderDevice_GL46 : ShaderDeviceBase
+public class ShaderDeviceGl46 : ShaderDeviceBase
 {
 	public override IShaderBuffer CompileShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
 		throw new NotImplementedException();
