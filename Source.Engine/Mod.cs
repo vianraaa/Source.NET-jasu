@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Engine;
+using Source.Engine.Client;
 
 namespace Source.Engine;
 
@@ -9,7 +10,23 @@ public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV) :
 	private bool IsServerOnly(IEngineAPI api) => ((EngineAPI)api).Dedicated;
 
 	public bool Init(string initialMod, string initialGame) {
-		return true;
+		host_parms.Mod = initialMod;
+		host_parms.Game = initialGame;
+
+		ClientState? cl = services.GetService<ClientState>();
+
+		if(cl != null) {
+			cl.RestrictServerCommands = false;
+			cl.RestrictClientCommands = false;
+		}
+
+		int width = 1600;
+		int height = 900;
+		bool windowed = true;
+
+		IGame? game = services.GetService<IGame>();
+
+		return game?.CreateGameWindow(width, height, windowed) ?? false;
 	}
 
 	public IMod.Result Run() {

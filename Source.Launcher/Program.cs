@@ -10,6 +10,8 @@ using Source.Common.Filesystem;
 using Source.Engine;
 
 using Steamworks;
+using Source.Common.Launcher;
+using Source.SDLManager;
 
 namespace Source.Launcher;
 
@@ -34,6 +36,7 @@ public class Bootloader : IDisposable
 		do {
 			engineAPI = new EngineBuilder(commandLine)
 				.WithComponent<IFileSystem, BaseFileSystem>()
+				.WithComponent<ILauncherManager, SDL3Manager>()
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.Build(false);

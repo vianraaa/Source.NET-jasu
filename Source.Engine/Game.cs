@@ -1,4 +1,7 @@
 ﻿using Source.Common.Engine;
+using Source.Common.Filesystem;
+using Source.Common.Formats.Keyvalues;
+using Source.Common.Launcher;
 
 using System;
 using System.Collections.Generic;
@@ -8,10 +11,23 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class Game : IGame
+public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem) : IGame
 {
-	public bool CreateGameWindow() {
-		throw new NotImplementedException();
+	public bool CreateGameWindow(int width, int height, bool windowed) {
+		if (launcherManager == null) {
+			Sys.Error("Tried to call Game.CreateGameWindow without a valid ILauncherManager implementation.");
+			return false;
+		}
+
+		string windowName = "HALF-LIFE 2";
+		{
+			KeyValues modinfo = new();
+			if (modinfo.LoadFromFile(fileSystem, "gameinfo.txt"))
+				windowName = modinfo.GetString("game") ?? windowName;
+		}
+
+		Console.Title = windowName;
+		return launcherManager.CreateGameWindow(windowName, windowed, width, height);
 	}
 
 	public void DestroyGameWindow() {

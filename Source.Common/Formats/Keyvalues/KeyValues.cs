@@ -1,4 +1,5 @@
 ﻿using Source.Common.Client;
+using Source.Common.Filesystem;
 
 using System;
 using System.Collections.Generic;
@@ -227,4 +228,12 @@ public class KeyValues : LinkedList<KeyValues>
 	}
 
 	public string GetString() => StringValue ?? "";
+	public string? GetString(string key) => FindKey(key)?.GetString();
+
+	public bool LoadFromFile(IFileSystem fileSystem, ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
+		return LoadFromStream(fileSystem.Open(path, FileOpenOptions.Read, pathID)?.Stream);
+	}
+	public bool LoadFromFile(IFileSystem fileSystem, ReadOnlySpan<char> path) {
+		return LoadFromStream(fileSystem.Open(path, FileOpenOptions.Read, null)?.Stream);
+	}
 }

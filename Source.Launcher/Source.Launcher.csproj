@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Game.Server\Game.Server.csproj" />
     <ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
     <ProjectReference Include="..\Source.Filesystem\Source.Filesystem.csproj" />
+    <ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
   </ItemGroup>
 
 </Project>
