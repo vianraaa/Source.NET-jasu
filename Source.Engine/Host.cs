@@ -48,6 +48,7 @@ public class Host(
 	public Net Net;
 	public Sys Sys;
 	public ClientDLL ClientDLL;
+	public IHostState HostState;
 	public IBaseClientDLL? clientDLL;
 	public IServerGameDLL? serverDLL;
 
@@ -534,6 +535,7 @@ public class Host(
 			CL = engineAPI.InitSubsystem<CL>()!;
 			EngineVGui = engineAPI.InitSubsystem<EngineVGui>()!;
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
+			HostState = engineAPI.GetRequiredService<IHostState>();
 			Scr = engineAPI.InitSubsystem<Scr>()!;
 			// engineAPI.InitSubsystem<Scr>();
 			// engineAPI.InitSubsystem<Render>();
@@ -661,6 +663,19 @@ public class Host(
 		}
 	}
 
+	[ConCommand(helpText: "Exits the engine")]
+	void quit(in TokenizedCommand args) {
+#if !SWDS
+		if (args.FindArg("prompt") != null) {
+			// EngineVGui.ConfirmQuit();
+			return;
+		}
+
+		// TODO: game events.
+		HostState.Shutdown();
+#endif
+	}
+
 	public string CleanupConVarStringValue(string v) {
 		// todo.
 		return v;
@@ -707,5 +722,9 @@ public class Host(
 		Scr.BeginLoadingPlaque();
 		Disconnect(false);
 		Dbg.Msg("reload incomplete!\n");
+	}
+
+	internal void ShutdownServer() {
+		throw new NotImplementedException();
 	}
 }

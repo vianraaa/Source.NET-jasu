@@ -209,8 +209,32 @@ public class HostState : IHostState
 		}
 	}
 	protected void State_GameShutdown() {
+		if (Host.serverDLL != null) {
+			// todo
+		}
 
+		GameShutdown();
+		Host.ShutdownServer();
+		switch (NextState) {
+			case HostStates.LoadGame:
+			case HostStates.NewGame:
+			case HostStates.Shutdown:
+			case HostStates.Restart:
+				SetState(NextState, true);
+				break;
+			default:
+				SetState(HostStates.Run, true);
+				break;
+		}
 	}
+
+	private void GameShutdown() {
+		if (ActiveGame) {
+			Host.serverDLL?.GameShutdown();
+			ActiveGame = false;
+		}
+	}
+
 	protected void State_Shutdown() {
 
 	}

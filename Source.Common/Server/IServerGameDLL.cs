@@ -5,5 +5,6 @@
 /// </summary>
 public interface IServerGameDLL
 {
+	void GameShutdown() { }
 	public void PostInit();
 }
