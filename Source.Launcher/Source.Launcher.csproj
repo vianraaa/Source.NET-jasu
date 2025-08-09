@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Source.Filesystem\Source.Filesystem.csproj" />
     <ProjectReference Include="..\Source.SDLInputSystem\Source.SDLInputSystem.csproj" />
     <ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
+    <ProjectReference Include="..\Source.ShaderAPI.GL46\Source.ShaderAPI.GL46.csproj" />
   </ItemGroup>
 
 </Project>

@@ -14,6 +14,8 @@ using Source.Common.Launcher;
 using Source.SDLManager;
 using Source.Common.Input;
 using Nucleus.SDL3Window;
+using Source.Common.ShaderAPI;
+using Source.ShaderAPI.GL46;
 
 namespace Source.Launcher;
 
@@ -40,9 +42,10 @@ public class Bootloader : IDisposable
 				.WithComponent<IFileSystem, BaseFileSystem>()
 				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
+				.WithComponent<IShaderAPI, ShaderAPI_GL46>()
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
-				.Build(false);
+				.Build(dedicated: false);
 			PreInit();
 			var res = engineAPI.Run();
 			needsRestart = res == IEngineAPI.Result.InitRestart || res == IEngineAPI.Result.RunRestart;

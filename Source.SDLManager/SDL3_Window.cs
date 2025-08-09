@@ -284,7 +284,7 @@ public unsafe class SDL3_Window
 	}
 
 	public SDL3_Window Create(string title, int width, int height, SDL_WindowFlags flags) {
-		window = SDL3.SDL_CreateWindow("N/A", width, height, flags);
+		window = SDL3.SDL_CreateWindow(title, width, height, flags);
 
 		return this;
 	}
