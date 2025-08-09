@@ -592,7 +592,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private void FreeEntityBaselines() {
-		throw new NotImplementedException();
+
 	}
 
 	public void SendStringCmd(ReadOnlySpan<char> str) {
