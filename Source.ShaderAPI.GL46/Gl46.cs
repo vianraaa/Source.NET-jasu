@@ -86,7 +86,7 @@ using GLint64 = System.Int64;
 
 #endif
 
-namespace DotGL;
+namespace OpenGL;
 
 /// <summary>
 /// Bindings for OpenGL 4.6, both core and compatibility profiles.
@@ -94,7 +94,7 @@ namespace DotGL;
 /// Also includes a few overloads of many functions to make them a bit more C# friendly (e.g. passing arrays of bytes or floats instead of passing pointers to fixed memory locations). Significant effort has been made to make sure that the overloads are as efficient as possible, in terms of both performance and memory usage.
 /// </summary>
 [SuppressUnmanagedCodeSecurity]
-public unsafe static class GL
+public unsafe static class Gl46
 {
     /// <summary>
     /// The null pointer, just like in C/C++.
@@ -3193,9 +3193,18 @@ public unsafe static class GL
         }
         _glShaderSource(shader, count, pstring, length);
     }
+
+	public static void glShaderSource(GLuint shader, ReadOnlySpan<char> @string) {
+		int count = 1;
+		GLchar[] stringAr;
+		stringAr = Encoding.UTF8.GetBytes(@string.ToArray());
+		GLint length = @string.Length;
+		GLchar** pstring = stackalloc GLchar*[count];
+		_glShaderSource(shader, count, pstring, null);
+	}
 #endif
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLUSEPROGRAMPROC(GLuint program);
     private static PFNGLUSEPROGRAMPROC _glUseProgram;
     /// <summary>

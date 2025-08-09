@@ -80,15 +80,6 @@ public struct ShaderDeviceInfo {
 	public bool UsingMultipleWindows;
 }
 
-/// <summary>
-/// A compiled shader object. This is a block of memory which must be released when done with it.
-/// </summary>
-public interface IShaderBuffer {
-	nuint GetSize();
-	nint GetBits();
-	void Release();
-}
-
 public enum ShaderBufferType {
 	Static = 0,
 	Dynamic
@@ -108,15 +99,9 @@ public interface IShaderDevice {
 	bool RemoveView(nint window);
 	bool SetView(nint window);
 
-	IShaderBuffer CompileShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
 
-	VertexShaderHandle CreateVertexShader(IShaderBuffer shaderBuffer);
 	void DestroyVertexShader(VertexShaderHandle shaderHandle);
-
-	GeometryShaderHandle CreateGeometryShader(IShaderBuffer shaderBuffer);
 	void DestroyGeometryShader(GeometryShaderHandle shaderHandle);
-
-	PixelShaderHandle CreatePixelShader(IShaderBuffer shaderBuffer);
 	void DestroyPixelShader(PixelShaderHandle shaderHandle);
 
 	// Utility methods to make shader creation simpler

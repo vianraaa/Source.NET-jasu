@@ -1,9 +1,86 @@
 ﻿namespace Source.Common.MaterialSystem;
 
-public interface IMesh;
-public interface IVertexBuffer;
-public interface IIndexBuffer;
+public unsafe struct VertexDesc {
+	public const int VERTEX_MAX_TEXTURE_COORDINATES = 8;
+	public const int BONE_MATRIX_INDEX_INVALID = 255;
 
+	public int VertexSize_Position;
+	public int VertexSize_BoneWeight;
+	public int VertexSize_BoneMatrixIndex;
+	public int VertexSize_Normal;
+	public int VertexSize_Color;
+	public int VertexSize_Specular;
+	public fixed int VertexSize_TexCoord[VERTEX_MAX_TEXTURE_COORDINATES];
+	public int VertexSize_TangentS;
+	public int VertexSize_TangentT;
+	public int VertexSize_Wrinkle;
+
+	public int VertexSize_UserData;
+	public int ActualVertexSize;
+
+	public VertexCompressionType CompressionType;
+	public int NumBoneWeights;
+
+	public float* Position;
+	public float* BoneWeight;
+	public byte* BoneMatrixIndex;
+	public float* Normal;
+	public byte* Color;
+	public byte* Specular;
+	public float** TexCoord;
+	public float* TangentS;
+	public float* TangentT;
+	public float* Wrinkle;
+	public float* UserData;
+
+	public uint FirstIndex;
+	public uint Offset;
+}
+public unsafe struct IndexDesc {
+	public const int INDEX_BUFFER_SIZE = 32768;
+	public const int DYNAMIC_VERTEX_BUFFER_MEMORY = (1024 + 512) * 1024;
+	public const int DYNAMIC_VERTEX_BUFFER_MEMORY_SMALL = 384 * 1024;
+
+	public ushort* Indices;
+	public uint FirstIndex;
+	public uint Offset;
+	public byte IndexSize;
+}
+public struct MeshDesc {
+	public VertexDesc Vertices;
+	public IndexDesc Indices;
+}
+
+public interface IVertexBuffer {
+	int VertexCount();
+	VertexFormat GetVertexFormat();
+	bool IsDynamic();
+	void BeginCastBuffer(VertexFormat format);
+	void EndCastBuffer();
+	int GetRoomRemaining();
+	bool Lock(int vetexCount, bool append, in VertexDesc desc);
+	bool Unlock(int vetexCount, in VertexDesc desc);
+	void Spew(int vertexCount, out VertexDesc desc);
+	void ValidateData(int vertexCount, out VertexDesc desc);
+}
+public interface IIndexBuffer {
+	int IndexCount();
+	MaterialIndexFormat GetIndexFormat();
+	bool IsDynamic();
+	void BeginCastBuffer(MaterialIndexFormat format);
+	void EndCastBuffer();
+	int GetRoomRemaining();
+	bool Lock(int vetexCount, bool append, in IndexDesc desc);
+	bool Unlock(int vetexCount, in IndexDesc desc);
+	void Spew(int vertexCount, out IndexDesc desc);
+	void ValidateData(int vertexCount, out IndexDesc desc);
+}
+
+public interface IMesh {
+	void SetPrimitiveType(MaterialPrimitiveType type);
+	void Draw(int firstIndex = -1, int indexCount = 0);
+	void SetColorMesh(IMesh colorMesh, int vertexOffset);
+}
 [Flags]
 public enum VertexFormat : ulong {
 	Position = 0x0001,
@@ -24,21 +101,21 @@ public enum VertexFormat : ulong {
 	UserDataSizeBit = LastBit + 4,
 	TexCoordSizeBit = LastBit + 7,
 
-	BoneWeightMask = 0x7l << (int)BoneWeightBit,
-	UserDataSizeMask = 0x7l << (int)UserDataSizeBit,
+	BoneWeightMask = 0x7L << (int)BoneWeightBit,
+	UserDataSizeMask = 0x7L << (int)UserDataSizeBit,
 	FormatFieldMask = 0x0FF,
 
 	Unknown = 0,
 
-	BoneWeight1 = 1l << (int)BoneWeightBit,
-	BoneWeight2 = 2l << (int)BoneWeightBit,
-	BoneWeight3 = 3l << (int)BoneWeightBit,
-	BoneWeight4 = 4l << (int)BoneWeightBit,
+	BoneWeight1 = 1L << (int)BoneWeightBit,
+	BoneWeight2 = 2L << (int)BoneWeightBit,
+	BoneWeight3 = 3L << (int)BoneWeightBit,
+	BoneWeight4 = 4L << (int)BoneWeightBit,
 
-	UserDataSize1 = 1l << (int)UserDataSizeBit,
-	UserDataSize2 = 2l << (int)UserDataSizeBit,
-	UserDataSize3 = 3l << (int)UserDataSizeBit,
-	UserDataSize4 = 4l << (int)UserDataSizeBit,
+	UserDataSize1 = 1L << (int)UserDataSizeBit,
+	UserDataSize2 = 2L << (int)UserDataSizeBit,
+	UserDataSize3 = 3L << (int)UserDataSizeBit,
+	UserDataSize4 = 4L << (int)UserDataSizeBit,
 
 	TexCoordMask1 = (0x7ul) << (int)(TexCoordSizeBit + 3 * 1),
 	TexCoordMask2 = (0x7ul) << (int)(TexCoordSizeBit + 3 * 2),

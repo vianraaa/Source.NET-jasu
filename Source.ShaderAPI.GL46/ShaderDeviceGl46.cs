@@ -7,76 +7,100 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using static OpenGL.Gl46;
+
 namespace Source.ShaderAPI.Gl46;
 
-public class ShaderDeviceGl46 : ShaderDeviceBase
+public unsafe class ShaderDeviceGl46 : ShaderDeviceBase
 {
-	public override IShaderBuffer CompileShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
-	}
-
-	public override GeometryShaderHandle CreateGeometryShader(IShaderBuffer shaderBuffer) {
-		throw new NotImplementedException();
-	}
 
 	public override GeometryShaderHandle CreateGeometryShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		var shader = glCreateShader(GL_GEOMETRY_SHADER);
+		glShaderSource(shader, program);
+
+		uint prog = glCreateProgram();
+		glProgramParameteri(prog, GL_PROGRAM_SEPARABLE, GL_TRUE);
+		glAttachShader(prog, shader);
+		glLinkProgram(prog);
+
+		glDeleteShader(shader);
+
+		return new((nint)prog);
 	}
 
 	public override GeometryShaderHandle CreateGeometryShader(Stream program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		using StreamReader reader = new(program);
+		return CreateGeometryShader(reader.ReadToEnd(), shaderVersion);
 	}
+
 
 	public override IIndexBuffer CreateIndexBuffer(ShaderBufferType type, MaterialIndexFormat format, int count) {
-		throw new NotImplementedException();
-	}
-
-	public override PixelShaderHandle CreatePixelShader(IShaderBuffer shaderBuffer) {
-		throw new NotImplementedException();
+		IndexBufferGl46 newIndexBuffer = new(type, format, count);
+		return newIndexBuffer;
 	}
 
 	public override PixelShaderHandle CreatePixelShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		var shader = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(shader, program);
+
+		uint prog = glCreateProgram();
+		glProgramParameteri(prog, GL_PROGRAM_SEPARABLE, GL_TRUE);
+		glAttachShader(prog, shader);
+		glLinkProgram(prog);
+
+		glDeleteShader(shader);
+
+		return new((nint)prog);
 	}
 
 	public override PixelShaderHandle CreatePixelShader(Stream program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		using StreamReader reader = new(program);
+		return CreatePixelShader(reader.ReadToEnd(), shaderVersion);
 	}
+
 
 	public override IVertexBuffer CreateVertexBuffer(ShaderBufferType type, VertexFormat format, int count) {
-		throw new NotImplementedException();
-	}
-
-	public override VertexShaderHandle CreateVertexShader(IShaderBuffer shaderBuffer) {
-		throw new NotImplementedException();
+		VertexBufferGl46 newVertexBuffer = new(type, format, count);
+		return newVertexBuffer;
 	}
 
 	public override VertexShaderHandle CreateVertexShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		var shader = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(shader, program);
+
+		uint prog = glCreateProgram();
+		glProgramParameteri(prog, GL_PROGRAM_SEPARABLE, GL_TRUE);
+		glAttachShader(prog, shader);
+		glLinkProgram(prog);
+
+		glDeleteShader(shader);
+
+		return new((nint)prog);
 	}
 
 	public override VertexShaderHandle CreateVertexShader(Stream program, ReadOnlySpan<char> shaderVersion) {
-		throw new NotImplementedException();
+		using StreamReader reader = new(program);
+		return CreateVertexShader(reader.ReadToEnd(), shaderVersion);
 	}
 
 	public override void DestroyGeometryShader(GeometryShaderHandle shaderHandle) {
-		throw new NotImplementedException();
+		glDeleteProgram((uint)shaderHandle.Handle);
 	}
 
-	public override void DestroyIndexBuffer(IIndexBuffer vertexBuffer) {
-		throw new NotImplementedException();
+	public override void DestroyIndexBuffer(IIndexBuffer indexBuffer) {
+		((IndexBufferGl46)indexBuffer).Free();
 	}
 
 	public override void DestroyPixelShader(PixelShaderHandle shaderHandle) {
-		throw new NotImplementedException();
+		glDeleteProgram((uint)shaderHandle.Handle);
 	}
 
 	public override void DestroyVertexBuffer(IVertexBuffer vertexBuffer) {
-		throw new NotImplementedException();
+		((VertexBufferGl46)vertexBuffer).Free();
 	}
 
 	public override void DestroyVertexShader(VertexShaderHandle shaderHandle) {
-		throw new NotImplementedException();
+		glDeleteProgram((uint)shaderHandle.Handle);
 	}
 
 	public override IIndexBuffer GetDynamicIndexBuffer(int streamID, VertexFormat format, bool buffered = true) {

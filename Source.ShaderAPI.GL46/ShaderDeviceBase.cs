@@ -9,17 +9,12 @@ public abstract class ShaderDeviceBase : IShaderDevice
 		return true;
 	}
 
-	public abstract IShaderBuffer CompileShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
-	public abstract GeometryShaderHandle CreateGeometryShader(IShaderBuffer shaderBuffer);
 	public abstract GeometryShaderHandle CreateGeometryShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
 	public abstract GeometryShaderHandle CreateGeometryShader(Stream program, ReadOnlySpan<char> shaderVersion);
 	public abstract IIndexBuffer CreateIndexBuffer(ShaderBufferType type, MaterialIndexFormat format, int count);
-	public abstract PixelShaderHandle CreatePixelShader(IShaderBuffer shaderBuffer);
 	public abstract PixelShaderHandle CreatePixelShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
 	public abstract PixelShaderHandle CreatePixelShader(Stream program, ReadOnlySpan<char> shaderVersion);
 	public abstract IVertexBuffer CreateVertexBuffer(ShaderBufferType type, VertexFormat format, int count);
-
-	public abstract VertexShaderHandle CreateVertexShader(IShaderBuffer shaderBuffer);
 	public abstract VertexShaderHandle CreateVertexShader(ReadOnlySpan<char> program, ReadOnlySpan<char> shaderVersion);
 	public abstract VertexShaderHandle CreateVertexShader(Stream program, ReadOnlySpan<char> shaderVersion);
 

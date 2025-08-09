@@ -11,6 +11,5 @@ public class ShaderAPIGl46 : IShaderAPI
 		// EngineBuilder will run PreInit
 		services.AddSingleton<IShaderDynamicAPI, ShaderAPIGl46>(x => x.GetRequiredService<ShaderAPIGl46>());
 		services.AddSingleton<IShaderDevice, ShaderDeviceGl46>();
-		services.AddSingleton<ShaderManager>();
 	}
 }

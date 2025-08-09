@@ -11,6 +11,19 @@ public enum MaterialBufferTypes {
 	Back
 }
 
+public enum MaterialPrimitiveType {
+	Points,
+	Lines,
+	Triangles,
+	TriangleStrip,
+	LineStrip,
+	LineLoop,
+	Polygon,
+	Quads,
+	InstancedQuads,
+	Heterogenous
+}
+
 public enum MaterialCullMode
 {
 	CounterClockwise,
