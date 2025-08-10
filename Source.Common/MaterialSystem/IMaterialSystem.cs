@@ -35,6 +35,38 @@ public enum MaterialIndexFormat {
 	x16Bits,
 	x32Bits
 }
+public record struct VertexShaderHandle
+{
+	public VertexShaderHandle(nint handle) {
+		Handle = handle;
+	}
+
+	public nint Handle;
+	public static implicit operator nint(VertexShaderHandle handle) => handle.Handle;
+	public static implicit operator VertexShaderHandle(nint handle) => new(handle);
+}
+
+public record struct GeometryShaderHandle
+{
+	public GeometryShaderHandle(nint handle) {
+		Handle = handle;
+	}
+
+	public nint Handle;
+	public static implicit operator nint(GeometryShaderHandle handle) => handle.Handle;
+	public static implicit operator GeometryShaderHandle(nint handle) => new(handle);
+}
+
+public record struct PixelShaderHandle
+{
+	public PixelShaderHandle(nint handle) {
+		Handle = handle;
+	}
+
+	public nint Handle;
+	public static implicit operator nint(PixelShaderHandle handle) => handle.Handle;
+	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
+}
 
 public interface IMaterialSystem
 {

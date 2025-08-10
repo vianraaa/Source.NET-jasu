@@ -19,6 +19,7 @@ using Source.ShaderAPI.Gl46;
 using System.Runtime.Loader;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Source.Common.MaterialSystem;
 
 namespace Source.Launcher;
 
@@ -45,7 +46,7 @@ public class Bootloader : IDisposable
 				.WithComponent<IFileSystem, BaseFileSystem>()
 				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
-				.WithComponent<IShaderAPI, ShaderAPIGl46>()
+				.WithComponent<IMaterialSystem, MaterialSystem>()
 
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
