@@ -68,9 +68,14 @@ public record struct PixelShaderHandle
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
 }
 
+public interface IMatRenderContext {
+	void BeginRender();
+	void EndRender();
+	void Flush(bool flushHardware);
+}
+
 public interface IMaterialSystem
 {
 	void ModInit();
 	void ModShutdown();
-
 }

@@ -9,4 +9,12 @@ public class MaterialSystem : IMaterialSystem
 	public static void DLLInit(IServiceCollection services) {
 
 	}
+
+	public void ModInit() {
+
+	}
+
+	public void ModShutdown() {
+
+	}
 }
