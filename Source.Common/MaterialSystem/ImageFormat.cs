@@ -1,4 +1,4 @@
-﻿namespace Source.Common.ShaderAPI;
+﻿namespace Source.Common.MaterialSystem;
 
 public enum ImageFormat
 {
