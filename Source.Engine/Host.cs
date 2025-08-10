@@ -574,7 +574,11 @@ public class Host(
 	[ConCommand]
 	void disconnect(in TokenizedCommand args) {
 		if (clientDLL == null || !clientDLL.DisconnectAttempt()) {
-			Disconnect();
+			string test = args.ArgS(1).ToString();
+			if (string.IsNullOrEmpty(test))
+				Disconnect();
+			else
+				Disconnect(false, test.ToString());
 		}
 	}
 
