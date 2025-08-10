@@ -70,5 +70,7 @@ public record struct PixelShaderHandle
 
 public interface IMaterialSystem
 {
+	void ModInit();
+	void ModShutdown();
 
 }
