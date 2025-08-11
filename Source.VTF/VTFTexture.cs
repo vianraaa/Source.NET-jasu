@@ -4,6 +4,7 @@ using Source.Common.Bitmap;
 
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -16,7 +17,7 @@ public sealed class VTFTexture : IVTFTexture
 	int Height;
 	int Depth;
 	ImageFormat Format;
-	
+
 	int MipCount;
 	int FaceCount;
 	int FrameCount;
@@ -40,7 +41,7 @@ public sealed class VTFTexture : IVTFTexture
 	int FinestMipmapLevel;
 	int CoarsestMipmapLevel;
 
-	List<ResourceEntryInfo> ResourcesInfo = [];
+	List<ResourceEntryInfo> Resources = [];
 	float IVTFTexture.BumpScale() => BumpScale;
 
 	public void ComputeAlphaFlags() {
@@ -127,23 +128,40 @@ public sealed class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	private ResourceEntryInfo? FindResourceEntryInfo(ResourceEntryType type) {
-		return null; // ??????
+
+	private ref ResourceEntryInfo FindOrCreateResourceEntryInfo(ResourceEntryType type) {
+		for (int i = 0, c = Resources.Count; i < c; i++) {
+			ref ResourceEntryInfo searchResource = ref CollectionsMarshal.AsSpan(Resources)[i];
+			if (searchResource.Tag == type)
+				return ref searchResource;
+		}
+
+		Resources.Add(new());
+		ref ResourceEntryInfo newResource = ref CollectionsMarshal.AsSpan(Resources)[Resources.Count - 1];
+		return ref newResource;
+	}
+
+	private ref ResourceEntryInfo FindResourceEntryInfo(ResourceEntryType type) {
+		for (int i = 0, c = Resources.Count; i < c; i++) {
+			ref ResourceEntryInfo searchResource = ref CollectionsMarshal.AsSpan(Resources)[i];
+			if (searchResource.Tag == type)
+				return ref searchResource;
+		}
+
+		return ref ResourceEntryInfo.NULL;
 	}
 
 	public void ImageFileInfo(int frame, int face, int mipLevel, out int startLocation, out int sizeInBytes) {
 		int i, mipWidth, mipHeight, mipDepth;
 
-		ResourceEntryInfo? pInfo = FindResourceEntryInfo(ResourceEntryType.HighResImageData);
+		ref ResourceEntryInfo imageDataInfo = ref FindResourceEntryInfo(ResourceEntryType.HighResImageData);
 
-		if (!pInfo.HasValue) {
+		if (Unsafe.IsNullRef(ref imageDataInfo)) {
 			Dbg.Assert(false);
 			startLocation = 0;
 			sizeInBytes = 0;
 			return;
 		}
-
-		ResourceEntryInfo imageDataInfo = pInfo.Value;
 
 		int offset = (int)imageDataInfo.Offset;
 		for (i = MipCount - 1; i > mipLevel; --i) {
@@ -249,7 +267,7 @@ public sealed class VTFTexture : IVTFTexture
 			Dbg.Warning("*** Encountered VTF invalid texture size!\n");
 			return false;
 		}
-		if(header.ImageFormat < ImageFormat.Unknown || header.ImageFormat >= ImageFormat.Count) {
+		if (header.ImageFormat < ImageFormat.Unknown || header.ImageFormat >= ImageFormat.Count) {
 			Dbg.Warning("*** Encountered VTF invalid image format!\n");
 			return false;
 		}
@@ -275,7 +293,7 @@ public sealed class VTFTexture : IVTFTexture
 		Version[0] = header.Version[0];
 		Version[1] = header.Version[1];
 
-		if(header.LowResImageWidth == 0 || header.LowResImageHeight == 0) {
+		if (header.LowResImageWidth == 0 || header.LowResImageHeight == 0) {
 			LowResImageWidth = LowResImageHeight = 0;
 		}
 		else {
@@ -287,8 +305,36 @@ public sealed class VTFTexture : IVTFTexture
 		if (LowResImageFormat < ImageFormat.Unknown || LowResImageFormat >= ImageFormat.Count)
 			return false;
 
-		// todo: read resources. I have the code for this somewhere...
+		if (header.NumResources > 0) {
+			Resources = new((int)header.NumResources);
+			long curStreamPos = stream.Position;
+			stream.Seek(header.ResourcesOffset, SeekOrigin.Begin);
+			using (BinaryReader reader = new(stream, Encoding.ASCII, true)) {
+				reader.ReadNothing(8); // what is this?
+				for (int i = 0; i < header.NumResources; i++) {
+					Resources.Add(new());
+					ref ResourceEntryInfo resource = ref CollectionsMarshal.AsSpan(Resources)[i];
 
+					byte b1 = reader.ReadByte(), b2 = reader.ReadByte(), b3 = reader.ReadByte();
+					resource.Tag = ResourceEntryInfo.ParseTag(b1, b2, b3);
+					resource.Flags = reader.ReadByte();
+					resource.Offset = reader.ReadUInt32();
+				}
+			}
+			stream.Seek(curStreamPos, SeekOrigin.Begin);
+		}
+		else {
+			// VTF 7.0 -> 7.2 does not have resource entries
+			// have to write our own based on the old offsets
+			int lowResImageSize = ImageLoader.GetMemRequired(LowResImageWidth, LowResImageHeight, 1, LowResImageFormat, false);
+			if (lowResImageSize > 0) {
+				ref ResourceEntryInfo reiLq = ref FindOrCreateResourceEntryInfo(ResourceEntryType.LowResThumbnail);
+				reiLq.Offset = (uint)stream.Position;
+			}
+
+			ref ResourceEntryInfo reiHq = ref FindOrCreateResourceEntryInfo(ResourceEntryType.HighResImageData);
+			reiHq.Offset = (uint)(lowResImageSize + stream.Position);
+		}
 		// Caller wants the header component only
 		if (headerOnly)
 			return true;
@@ -296,13 +342,14 @@ public sealed class VTFTexture : IVTFTexture
 		return true;
 	}
 
+
 	private int ComputeMipCount() {
 		return ImageLoader.GetNumMipMapLevels(Width, Height, Depth);
 	}
 
 	private static readonly sbyte[] VTF0 = [86, 84, 70, 0]; // VTF\0
 	private unsafe bool ReadHeader(Stream stream, out VTFFileHeader header) {
-		using BinaryReader reader = new(stream);
+		using BinaryReader reader = new(stream, Encoding.ASCII, true);
 		header = new();
 
 		reader.ReadInto<sbyte>(header.FileTypeString);
@@ -372,6 +419,7 @@ public sealed class VTFTexture : IVTFTexture
 	private static bool ReadV3(BinaryReader reader, VTFFileHeaderV7_3 header) {
 		reader.ReadInto<sbyte>(header.Pad4);
 		reader.ReadInto(ref header.NumResources);
+		header.ResourcesOffset = reader.BaseStream.Position;
 		return reader.PeekChar() != -1;
 	}
 	private static bool ReadV4(BinaryReader reader, VTFFileHeader header) {

@@ -3,6 +3,7 @@ using Source.Common.Filesystem;
 
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Source.Common;
 
@@ -241,6 +242,7 @@ public class VTFFileHeaderV7_3 : VTFFileHeaderV7_2
 {
 	public readonly sbyte[] Pad4 = new sbyte[3];
 	public uint NumResources;
+	public long ResourcesOffset; // The offset into the stream where we can read resource data later
 
 	public static new readonly ushort Size = (ushort)(VTFFileHeaderV7_2.Size
 		+ (sizeof(sbyte) * 3) // Pad4
@@ -248,7 +250,10 @@ public class VTFFileHeaderV7_3 : VTFFileHeaderV7_2
 		);
 }
 
-public class VTFFileHeader : VTFFileHeaderV7_3;
+public class VTFFileHeader : VTFFileHeaderV7_3
+{
+
+}
 
 public enum HeaderDetails : short {
 	MaxRSRCDictionaryEntries = 32
@@ -256,6 +261,7 @@ public enum HeaderDetails : short {
 
 public struct ResourceEntryInfo
 {
+	public static ref ResourceEntryInfo NULL => ref Unsafe.NullRef<ResourceEntryInfo>();
 	public ResourceEntryType Tag;
 	public byte Flags;
 	public uint Offset;
