@@ -11,12 +11,7 @@ using System.Runtime.CompilerServices;
 namespace Source.Engine;
 public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 {
-	public Lazy<Stopwatch> Timer = new Lazy<Stopwatch>(() => {
-		Stopwatch stopwatch = new Stopwatch();
-		stopwatch.Start();
-		return stopwatch;
-	});
-	public double Time => Timer.Value.Elapsed.TotalSeconds;
+	public static double Time => Platform.Time;
 	public bool Dedicated;
 	public bool TextMode;
 

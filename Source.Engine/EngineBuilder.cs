@@ -5,6 +5,7 @@ using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
+using Source.Common.GameUI;
 using Source.Common.Networking;
 using Source.Common.Server;
 using Source.Engine.Client;
@@ -34,6 +35,12 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		var preInject = t.GetMethod("DLLInit", BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
 		if (preInject != null) 
 			preInject(services);
+	}
+
+	public EngineBuilder WithGameUIDLL<UIDLL>() where UIDLL : class, IGameUI {
+		PreInject<UIDLL>(this);
+		WithComponent<IGameUI, UIDLL>();
+		return this;
 	}
 
 	public EngineBuilder WithClientDLL<ClDLL>() where ClDLL : class, IBaseClientDLL {

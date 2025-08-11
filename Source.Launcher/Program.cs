@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Source.Common.MaterialSystem;
 using Source;
+using Game.UI;
 
 namespace Source.Launcher;
 
@@ -49,6 +50,7 @@ public class Bootloader : IDisposable
 
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
+				.WithGameUIDLL<GameUI>()
 				.Build(dedicated: false);
 			PreInit();
 			var res = engineAPI.Run();

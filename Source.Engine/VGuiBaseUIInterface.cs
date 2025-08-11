@@ -2,7 +2,9 @@
 
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.GameUI;
 using Source.Common.GUI;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
 using Source.GUI.Controls;
@@ -70,18 +72,18 @@ public interface IEngineVGuiInternal : IEngineVGui
 	void Paint(PaintMode paintMode);
 }
 
-public class EnginePanel : EditablePanel
+public class EnginePanel(Panel? parent, string name) : EditablePanel(parent, name)
 {
 
 }
 
 
-public class StaticPanel : Panel {
+public class StaticPanel(Panel? parent, string name) : Panel(parent, name) {
 
 }
 
 
-public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, IMaterialSystem materials) : IEngineVGuiInternal
+public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, IMaterialSystem materials, ILauncherManager launcherMgr, ICommandLine CommandLine) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
 
@@ -126,6 +128,8 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface
 	LoadingProgressDescription[]? activeDescriptions = null;
 
 
+	Common Common;
+	IGameUI staticGameUIFuncs;
 	ISurface surface;
 	StaticPanel staticPanel;
 	EnginePanel staticClientDLLPanel;
@@ -237,7 +241,137 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface
 	}
 
 	public void Init() {
+		// Load gameui
+		Common = engineAPI.GetRequiredService<Common>();
 		surface = engineAPI.GetRequiredService<ISurface>();
+		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
+		// IGameConsole, but later.
+		// todo: language string
+		// todo: IMatSystemSurface, InstallPlaySoundFunc
+		// todo: scheme loading
+
+		// Ideal hierarchy:
+		
+		// Root -- staticPanel
+		//		staticBackgroundImagePanel (from gamui) zpos == 0
+		//      staticClientDLLPanel ( zpos == 25 )
+		//		staticClientDLLToolsPanel ( zpos == 28
+		//		staticGameDLLPanel ( zpos == 30 )
+		//		staticEngineToolsPanel ( zpos == 75 )
+		//		staticGameUIPanel ( GameUI stuff ) ( zpos == 100 )
+		//		staticDebugSystemPanel ( Engine debug stuff ) zpos == 125 )
+
+		int w = 0, h = 0;
+		launcherMgr.RenderedSize(false, ref w, ref h);
+
+		staticPanel = new StaticPanel(null, "staticPanel");
+		staticPanel.SetBounds(0, 0, w, h);
+		staticPanel.SetPaintBorderEnabled(false);
+		staticPanel.SetPaintBackgroundEnabled(false);
+		staticPanel.SetPaintEnabled(false);
+		staticPanel.SetVisible(true);
+		staticPanel.SetCursor(CursorCode.None);
+		staticPanel.SetZPos(0);
+		staticPanel.SetVisible(true);
+		staticPanel.SetParent(surface.GetEmbeddedPanel());
+
+		staticClientDLLPanel = new EnginePanel(staticPanel, "staticClientDLLPanel");
+		staticClientDLLPanel.SetBounds(0, 0, w, h);
+		staticClientDLLPanel.SetPaintBorderEnabled(false);
+		staticClientDLLPanel.SetPaintBackgroundEnabled(false);
+		staticClientDLLPanel.SetKeyboardInputEnabled(false); 
+		staticClientDLLPanel.SetPaintEnabled(false);
+		staticClientDLLPanel.SetVisible(false);
+		staticClientDLLPanel.SetCursor(CursorCode.None);
+		staticClientDLLPanel.SetZPos(25);
+
+		CreateAskConnectPanel(staticPanel);
+
+		staticClientDLLToolsPanel = new EnginePanel(staticPanel, "staticClientDLLToolsPanel");
+		staticClientDLLToolsPanel.SetBounds(0, 0, w, h);
+		staticClientDLLToolsPanel.SetPaintBorderEnabled(false);
+		staticClientDLLToolsPanel.SetPaintBackgroundEnabled(false);
+		staticClientDLLToolsPanel.SetKeyboardInputEnabled(false); 
+		staticClientDLLToolsPanel.SetPaintEnabled(false);
+		staticClientDLLToolsPanel.SetVisible(true);
+		staticClientDLLToolsPanel.SetCursor(CursorCode.None);
+		staticClientDLLToolsPanel.SetZPos(28);
+
+		staticEngineToolsPanel = new EnginePanel(staticPanel, "Engine Tools");
+		staticEngineToolsPanel.SetBounds(0, 0, w, h);
+		staticEngineToolsPanel.SetPaintBorderEnabled(false);
+		staticEngineToolsPanel.SetPaintBackgroundEnabled(false);
+		staticEngineToolsPanel.SetPaintEnabled(false);
+		staticEngineToolsPanel.SetVisible(true);
+		staticEngineToolsPanel.SetCursor(CursorCode.None);
+		staticEngineToolsPanel.SetZPos(75);
+
+		staticGameUIPanel = new EnginePanel(staticPanel, "GameUI Panel");
+		staticGameUIPanel.SetBounds(0, 0, w, h);
+		staticGameUIPanel.SetPaintBorderEnabled(false);
+		staticGameUIPanel.SetPaintBackgroundEnabled(false);
+		staticGameUIPanel.SetPaintEnabled(false);
+		staticGameUIPanel.SetVisible(true);
+		staticGameUIPanel.SetCursor(CursorCode.None);
+		staticGameUIPanel.SetZPos(100);
+
+		staticGameDLLPanel = new EnginePanel(staticPanel, "staticGameDLLPanel");
+		staticGameDLLPanel.SetBounds(0, 0, w, h);
+		staticGameDLLPanel.SetPaintBorderEnabled(false);
+		staticGameDLLPanel.SetPaintBackgroundEnabled(false);
+		staticGameDLLPanel.SetKeyboardInputEnabled(false);
+		staticGameDLLPanel.SetPaintEnabled(false);
+		staticGameDLLPanel.SetCursor(CursorCode.None);
+		staticGameDLLPanel.SetZPos(135);
+
+		if (CommandLine.CheckParm("-tools")) 
+			staticGameDLLPanel.SetVisible(true);
+		else 
+			staticGameDLLPanel.SetVisible(false);
+
+		// TODO: the other panels...
+		// Specifically,
+		// - DebugSystemPanel
+		// - DemoUIPanel (if we even do demos)
+		// - FogUIPanel
+		// - TxViewPanel
+		// - FocusOverlayPanel
+		// - Con_CreateConsolePanel
+		// - CL_CreateEntityReportPanel
+		// - VGui_CreateDrawTreePanel
+		// - CL_CreateTextureListPanel
+		// - CreateVProfPanels
+
+		// cacheusedmaterials
+		// localization files
+		staticGameUIFuncs.Start();
+
+		ActivateGameUI();
+	}
+
+	private void ActivateGameUI() {
+		if (staticGameUIFuncs == null)
+			return;
+
+		staticGameUIPanel.SetVisible(true);
+		staticGameUIPanel.MoveToFront();
+
+		staticClientDLLPanel.SetVisible(false);
+		staticGameUIPanel.SetMouseInputEnabled(true);
+
+		surface.SetCursor(CursorCode.Arrow);
+		SetEngineVisible(false);
+		staticGameUIFuncs.OnGameUIActivated();
+	}
+
+	private void SetEngineVisible(bool state) {
+		if(staticClientDLLPanel != null) {
+			staticClientDLLPanel.SetVisible(state);
+		}
+	}
+
+	private void CreateAskConnectPanel(Panel staticPanel) {
+
 	}
 
 	public void Simulate() {

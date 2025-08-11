@@ -9,6 +9,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Dependencies\Raylib-cs\Raylib-cs.csproj" />
 		<ProjectReference Include="..\Source.Common\Source.Common.csproj" />
+		<ProjectReference Include="..\Source.GUI.Controls\Source.GUI.Controls.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup>

@@ -1,9 +1,72 @@
 ﻿using Source.Common.GUI;
 
 namespace Source.GUI.Controls;
+
+
+[Flags]
+public enum PanelFlags
+{
+	MarkedForDeletion = 0x0001,
+	NeedsRepaint = 0x0002,
+	PaintBorderEnabled = 0x0004,
+	PaintBackgroundEnabled = 0x0008,
+	PaintEnabled = 0x0010,
+	PostChildPaintEnabled = 0x0020,
+	AutoDeleteEnabled = 0x0040,
+	NeedsLayout = 0x0080,
+	NeedsSchemeUpdate = 0x0100,
+	NeedsDefaultSettingsApplied = 0x0200,
+	AllowChainKeybindingToParent = 0x0400,
+	InPerformLayout = 0x0800,
+	IsProportional = 0x1000,
+	TriplePressAllowed = 0x2000,
+	DragRequiresPanelExit = 0x4000,
+	IsMouseDisabledForThisPanelOnly = 0x8000,
+	All = 0xFFFF,
+}
+
 public class Panel : IPanel
 {
-	IPanel? parent;
+	public void Init(int x, int y, int w, int h) {
+		panelName = null;
+		tooltipText = null;
+		SetPos(x, y);
+		SetSize(w, h);
+		flags |= PanelFlags.NeedsLayout | PanelFlags.NeedsSchemeUpdate | PanelFlags.NeedsDefaultSettingsApplied;
+		flags |= PanelFlags.AutoDeleteEnabled | PanelFlags.PaintBorderEnabled | PanelFlags.PaintBackgroundEnabled | PanelFlags.PaintEnabled;
+		flags |= PanelFlags.AllowChainKeybindingToParent;
+		alpha = 255.0f;
+	}
+
+	public Panel() {
+		Init(0, 0, 64, 24);
+	}
+
+	public Panel(Panel? parent) {
+		Init(0, 0, 64, 24);
+		SetParent(parent);
+	}
+
+	public Panel(Panel? parent, ReadOnlySpan<char> panelName) {
+		Init(0, 0, 64, 24);
+		SetName(panelName);
+		SetParent(parent);
+	}
+	public Panel(Panel? parent, ReadOnlySpan<char> panelName, IScheme scheme) {
+		Init(0, 0, 64, 24);
+		SetName(panelName);
+		SetParent(parent);
+		SetScheme(scheme);
+	}
+
+	private void SetScheme(IScheme scheme) {
+		throw new NotImplementedException();
+	}
+
+	Panel? parent;
+
+	string? panelName;
+	string? tooltipText;
 	short x, y;
 	short w, h;
 	short minW, minH;
@@ -17,8 +80,10 @@ public class Panel : IPanel
 	bool popup;
 	bool mouseInput;
 	bool kbInput;
-	bool isTOpmostPopup;
-	List<IPanel> children = [];
+	bool isTopmostPopup;
+	float alpha;
+	PanelFlags flags;
+	List<Panel> children = [];
 
 	public void DeletePanel() {
 		throw new NotImplementedException();
@@ -28,21 +93,17 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public IPanel GetChild(int index) {
-		throw new NotImplementedException();
+	public Panel GetChild(int index) {
+		return children[index];
 	}
 
 	public int GetChildCount() {
-		throw new NotImplementedException();
+		return children.Count;
 	}
 
-	public IEnumerable<IPanel> GetChildren() {
-		throw new NotImplementedException();
-	}
+	public IEnumerable<IPanel> GetChildren() => children;
 
-	public ReadOnlySpan<char> GetClassName() {
-		throw new NotImplementedException();
-	}
+	public ReadOnlySpan<char> GetClassName() => GetType().Name;
 
 	public void GetClipRect(out int x0, out int y0, out int x1, out int y1) {
 		throw new NotImplementedException();
@@ -62,11 +123,14 @@ public class Panel : IPanel
 	}
 
 	public ReadOnlySpan<char> GetName() {
-		throw new NotImplementedException();
+		if (panelName != null)
+			return panelName;
+
+		return "";
 	}
 
 	public IPanel? GetParent() {
-		throw new NotImplementedException();
+		return parent;
 	}
 
 	public void GetPos(out int x, out int y) {
@@ -88,15 +152,23 @@ public class Panel : IPanel
 	}
 
 	public int GetZPos() {
-		throw new NotImplementedException();
+		return zpos;
 	}
 
 	public bool HasParent(IPanel potentialParent) {
-		throw new NotImplementedException();
+		IPanel? parent = this.parent;
+
+		while(parent != null) {
+			if (parent == potentialParent)
+				return true;
+			parent = parent.GetParent();
+		}
+
+		return false;
 	}
 
-	public void InternalFocusChanged(bool lost) {
-		throw new NotImplementedException();
+	public virtual void InternalFocusChanged(bool lost) {
+
 	}
 
 	public bool IsAutoDeleteSet() {
@@ -111,28 +183,22 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public bool IsKeyBoardInputEnabled() {
-		throw new NotImplementedException();
-	}
+	public bool IsKeyboardInputEnabled() => kbInput;
 
-	public bool IsMouseInputEnabled() {
-		throw new NotImplementedException();
-	}
+	public bool IsMouseInputEnabled() => mouseInput;
 
 	public bool IsPopup() {
-		throw new NotImplementedException();
+		return popup;
 	}
 
 	public bool IsProportional() {
 		throw new NotImplementedException();
 	}
 
-	public bool IsTopmostPopup() {
-		throw new NotImplementedException();
-	}
+	public bool IsTopmostPopup() => isTopmostPopup;
 
 	public bool IsVisible() {
-		throw new NotImplementedException();
+		return visible;
 	}
 
 	public IPanel IsWithinTraverse(int x, int y, bool traversePopups) {
@@ -144,11 +210,11 @@ public class Panel : IPanel
 	}
 
 	public void MoveToFront() {
-		throw new NotImplementedException();
+		// todo... ugh
 	}
 
-	public void OnChildAdded(IPanel child) {
-		throw new NotImplementedException();
+	public virtual void OnChildAdded(IPanel child) {
+
 	}
 
 	public virtual void OnSizeChanged(int newWide, int newTall) {
@@ -164,11 +230,11 @@ public class Panel : IPanel
 	}
 
 	public void Repaint() {
-		throw new NotImplementedException();
+		// todo
 	}
 
 	public void RequestFocus(int direction = 0) {
-		throw new NotImplementedException();
+
 	}
 
 	public bool RequestFocusNext(IPanel existingPanel) {
@@ -184,6 +250,10 @@ public class Panel : IPanel
 		SetSize(wide, tall);
 	}
 
+	public void SetCursor(ICursor cursor) {
+		// todo
+	}
+
 	public void SetEnabled(bool state) {
 		throw new NotImplementedException();
 	}
@@ -192,8 +262,8 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public void SetKeyBoardInputEnabled(bool state) {
-		throw new NotImplementedException();
+	public void SetKeyboardInputEnabled(bool state) {
+		kbInput = state;
 	}
 
 	public void SetMinimumSize(int wide, int tall) {
@@ -205,7 +275,7 @@ public class Panel : IPanel
 			currentWidth = wide;
 
 		int currentHeight = h;
-		if(currentHeight < tall)
+		if (currentHeight < tall)
 			currentHeight = tall;
 
 		if (currentWidth != w || currentHeight != h)
@@ -213,11 +283,24 @@ public class Panel : IPanel
 	}
 
 	public void SetMouseInputEnabled(bool state) {
-		throw new NotImplementedException();
+		mouseInput = state;
+	}
+
+	public void SetName(ReadOnlySpan<char> panelName) {
+		if (this.panelName != null && panelName != null && !panelName.Equals(this.panelName, StringComparison.Ordinal))
+			return;
+
+		if (this.panelName != null)
+			panelName = null;
+
+		if (panelName != null)
+			this.panelName = new(panelName);
 	}
 
 	public void SetParent(IPanel? newParent) {
-		throw new NotImplementedException();
+		parent?.children.Remove(this);
+
+		parent = (Panel)newParent!;
 	}
 
 	public void SetPopup(bool state) {
@@ -249,11 +332,46 @@ public class Panel : IPanel
 	}
 
 	public void SetVisible(bool state) {
-		throw new NotImplementedException();
+		if (visible == state)
+			return;
+		
+		// need to tell the surface later... UGH... HOW DO WE GET THE SURFACE RELIABLY HERE??
+		visible = state;
 	}
 
 	public void SetZPos(int z) {
-		throw new NotImplementedException();
+		zpos = (short)z;
+		if(parent != null) {
+			int childCount = parent.GetChildCount();
+			int i;
+			for(i = 0; i < childCount; i++) {
+				if (parent.GetChild(i) == this)
+					break;
+			}
+
+			if (i == childCount)
+				return;
+
+			while (true) {
+				Panel? prevChild = null, nextChild = null;
+				if (i > 0)
+					prevChild = parent.GetChild(i - 1);
+				if (i < (childCount - 1))
+					nextChild = parent.GetChild(i + 1);
+
+				if(i > 0 && prevChild != null && prevChild.zpos > zpos) {
+					// Swap with lower
+					parent.children[i] = prevChild;
+					parent.children[i - 1] = this;
+				}
+				else if(i < (childCount - 1) && nextChild != null && nextChild.zpos < zpos) {
+					parent.children[i] = nextChild;
+					parent.children[i + 1] = this;
+				}
+				else 
+					break;
+			}
+		}
 	}
 
 	public void Solve() {
@@ -263,4 +381,12 @@ public class Panel : IPanel
 	public void Think() {
 		throw new NotImplementedException();
 	}
+
+	public void SetPanelBorderEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintEnabled : flags &= ~PanelFlags.PaintEnabled;
+	public void SetPaintBackgroundEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintBackgroundEnabled : flags &= ~PanelFlags.PaintBackgroundEnabled;
+	public void SetPaintBorderEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintBorderEnabled : flags &= ~PanelFlags.PaintBorderEnabled;
+	public void SetPaintEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintEnabled : flags &= ~PanelFlags.PaintEnabled;
+	public void SetPostChildPaintEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PostChildPaintEnabled : flags &= ~PanelFlags.PostChildPaintEnabled;
+
+	IPanel IPanel.GetChild(int index) => GetChild(index);
 }

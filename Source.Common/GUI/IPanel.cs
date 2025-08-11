@@ -42,9 +42,9 @@ public interface IPanel
 	void DeletePanel();
 
 	// input interest
-	void SetKeyBoardInputEnabled(bool state);
+	void SetKeyboardInputEnabled(bool state);
 	void SetMouseInputEnabled(bool state);
-	bool IsKeyBoardInputEnabled();
+	bool IsKeyboardInputEnabled();
 	bool IsMouseInputEnabled();
 
 	// calculates the panels current position within the hierarchy

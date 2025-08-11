@@ -357,4 +357,8 @@ public static class Dbg
 
 		spewGroup.Level = level;
 	}
+
+	public static void TimestampedLog(string v) {
+		double curStamp = Platform.Time;
+	}
 }

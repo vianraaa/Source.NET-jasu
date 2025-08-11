@@ -28,8 +28,10 @@ public struct ScissorRect
 	public int Bottom;
 }
 
-public class MatSystemSurface(MaterialSystem materials) : ISurface
+
+public class MatSystemSurface : ISurface
 {
+	readonly IMaterialSystem materials;
 	bool InDrawing;
 	bool In3DPaintMode;
 	float zPos;
@@ -44,6 +46,16 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	public IFont? DrawTextFont = null;
 	public int TextPosX;
 	public int TextPosY;
+	IPanel DefaultEmbeddedPanel;
+	IPanel? EmbeddedPanel;
+
+	public MatSystemSurface(MaterialSystem materials) {
+		this.materials = materials;
+
+		// TODO; allocate a white material
+		DefaultEmbeddedPanel = new MatEmbeddedPanel();
+		SetEmbeddedPanel(DefaultEmbeddedPanel);
+	}
 
 	public bool FullyTransparent => DrawColor.A <= 0;
 
@@ -249,7 +261,7 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public IPanel GetEmbeddedPanel() {
-		throw new NotImplementedException();
+		return EmbeddedPanel;
 	}
 
 	public IPanel? GetPopup(int index) {
@@ -364,7 +376,7 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public void SetCursor(ICursor cursor) {
-		throw new NotImplementedException();
+		Warning("MatSystemSurface.SetCursor not implemented.");
 	}
 
 	public void SetCursorAlwaysVisible(bool visible) {
@@ -372,7 +384,8 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public void SetEmbeddedPanel(IPanel panel) {
-		throw new NotImplementedException();
+		EmbeddedPanel = panel;
+		EmbeddedPanel.RequestFocus();
 	}
 
 	public bool SetFontGlyphSet(IFont font, ReadOnlySpan<char> windowsFontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags, int rangeMin = 0, int rangeMax = 0) {
