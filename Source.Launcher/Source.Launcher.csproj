@@ -16,14 +16,4 @@
 		<ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
 		<ProjectReference Include="..\Source.ShaderAPI.GL46\Source.MaterialSystem.csproj" />
 	</ItemGroup>
-
-	<Target Name="MoveBuildArtifacts" AfterTargets="CopyFilesToOutputDirectory">
-		<MakeDir Directories="$(TargetDir)bin" Condition="!Exists('$(TargetDir)bin')" />
-		<ItemGroup>
-			<BuildArtifacts Include="&#xD;&#xA;							$(TargetDir)*.dll;&#xD;&#xA;							$(TargetDir)*.pdb;&#xD;&#xA;							$(TargetDir)*.xml;&#xD;&#xA;							" />
-		</ItemGroup>
-		<Move SourceFiles="@(BuildArtifacts)" DestinationFolder="$(TargetDir)bin" OverwriteReadOnlyFiles="true" />
-		<Move SourceFiles="$(TargetDir)bin/Source.Launcher.dll;$(TargetDir)bin/Source.Launcher.pdb" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
-	</Target>
-
 </Project>

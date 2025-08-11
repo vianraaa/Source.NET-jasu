@@ -24,8 +24,8 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
-		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
 
 		window = new SDL3_Window(services).Create(title, width, height, flags);
@@ -33,6 +33,15 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 		if (graphicsHandle == 0) {
 			Dbg.Error($"Could not create graphics! (SDL3 Says: {SDL3.SDL_GetError()})\n");
+			return false;
+		}
+
+		// Set up the current context for materialsystem
+		SDL3.SDL_GL_MakeCurrent(window.HardwareHandle, (SDL_GLContextState*)graphicsHandle);
+		SDL3.SDL_GL_SetSwapInterval(0);
+
+		if (!materials.InitializeGraphics(graphicsHandle, window.Width, window.Height)) {
+			Dbg.Error($"Could not set graphics context!\n");
 			return false;
 		}
 

@@ -77,6 +77,22 @@ public unsafe class SDL3_Window
 		}
 	}
 
+	public int Width {
+		get {
+			int x, y;
+			SDL3.SDL_GetWindowSize(window, &x, &y);
+			return x;
+		}
+	}
+
+	public int Height {
+		get {
+			int x, y;
+			SDL3.SDL_GetWindowSize(window, &x, &y);
+			return y;
+		}
+	}
+
 	public Vector2 Size {
 		get {
 			int x, y;

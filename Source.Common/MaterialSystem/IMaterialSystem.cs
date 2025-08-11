@@ -76,6 +76,7 @@ public interface IMatRenderContext {
 
 public interface IMaterialSystem
 {
+	bool InitializeGraphics(nint graphics, int width, int height);
 	void ModInit();
 	void ModShutdown();
 }
