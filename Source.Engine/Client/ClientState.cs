@@ -157,6 +157,9 @@ public class ClientState : BaseClientState
 
 	public override void Disconnect(string? reason, bool showMainMenu) {
 		base.Disconnect(reason, showMainMenu);
+
+		// CL_ClearState
+		Clear(); // RaphaelIT7: Works for now though we should implement CL_ClearState at a later point
 	}
 	public override void FullConnect(NetAddress adr) {
 		base.FullConnect(adr);
