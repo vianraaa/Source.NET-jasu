@@ -274,7 +274,7 @@ public class EngineVGui(
 		int w = 0, h = 0;
 		launcherMgr.RenderedSize(false, ref w, ref h);
 
-		staticPanel = new engineAPI.New<StaticPanel>(null, "staticPanel");
+		staticPanel = engineAPI.New<StaticPanel>(null, "staticPanel");
 		staticPanel.SetBounds(0, 0, w, h);
 		staticPanel.SetPaintBorderEnabled(false);
 		staticPanel.SetPaintBackgroundEnabled(false);
