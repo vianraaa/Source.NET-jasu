@@ -12,7 +12,7 @@ using static Source.Dbg;
 
 // ToDo: We need to implement Host_Error and replace all Error calls with Host_Error
 
-public class CNetworkStringTableItem
+public class NetworkStringTableItem
 {
 	public const int MAX_USERDATA_BITS = 19; // RaphaelIT7: Unlike all other source games, gmod has this at 19 bits! Rubat probably did this for the singleplayer client lua files workaround
 	public const int MAX_USERDATA_SIZE = 1 << MAX_USERDATA_BITS;
@@ -30,7 +30,7 @@ public class CNetworkStringTableItem
 	public int TickCreated;
 	public List<ItemChange>? ChangeList;
 
-	public CNetworkStringTableItem()
+	public NetworkStringTableItem()
 	{
 		UserData = null;
 		UserDataLength = 0;
@@ -109,12 +109,12 @@ public interface INetworkStringDict
 	public bool IsValidIndex(int index);
 	public int Insert(string pString);
 	public int Find(string pString);
-	public CNetworkStringTableItem Element(int index);
+	public NetworkStringTableItem Element(int index);
 };
 
-public class CNetworkStringDict : INetworkStringDict
+public class NetworkStringDict : INetworkStringDict
 {
-	private readonly Dictionary<string, CNetworkStringTableItem> Lookup = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, NetworkStringTableItem> Lookup = new(StringComparer.OrdinalIgnoreCase);
 	private readonly List<string> Keys = new();
 
 	public int Count() => Lookup.Count;
@@ -139,7 +139,7 @@ public class CNetworkStringDict : INetworkStringDict
 	{
 		if (!Lookup.ContainsKey(value))
 		{
-			Lookup[value] = new CNetworkStringTableItem();
+			Lookup[value] = new NetworkStringTableItem();
 			Keys.Add(value);
 		}
 
@@ -154,7 +154,7 @@ public class CNetworkStringDict : INetworkStringDict
 		return Keys.IndexOf(value);
 	}
 
-	public CNetworkStringTableItem Element(int index)
+	public NetworkStringTableItem Element(int index)
 	{
 		if (!IsValidIndex(index))
 			throw new IndexOutOfRangeException();
@@ -164,7 +164,7 @@ public class CNetworkStringDict : INetworkStringDict
 	}
 }
 
-public class CNetworkStringTable : INetworkStringTable
+public class NetworkStringTable : INetworkStringTable
 {
 	private int TableID;
 	private string TableName;
@@ -192,7 +192,7 @@ public class CNetworkStringTable : INetworkStringTable
 	private const int SUBSTRING_BITS = 5;
 	private const int MAX_ENTRY_LENGTH = 1024;
 
-	public CNetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames)
+	public NetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames)
 	{
 		AllowClientSideAddString = false;
 		TableID = tableID;
@@ -203,17 +203,17 @@ public class CNetworkStringTable : INetworkStringTable
 		UserDataSize = userdatafixedsize;
 		UserDataSizeBits = userdatanetworkbits;
 
-		if (UserDataSizeBits > CNetworkStringTableItem.MAX_USERDATA_BITS)
+		if (UserDataSizeBits > NetworkStringTableItem.MAX_USERDATA_BITS)
 		{
 			Error("String tables user data bits restricted to %i bits, requested %i is too large\n", 
-				CNetworkStringTableItem.MAX_USERDATA_BITS,
+				NetworkStringTableItem.MAX_USERDATA_BITS,
 				UserDataSizeBits );
 		}
 
-		if (UserDataSize > CNetworkStringTableItem.MAX_USERDATA_SIZE)
+		if (UserDataSize > NetworkStringTableItem.MAX_USERDATA_SIZE)
 		{
 			Error("String tables user data size restricted to %i bytes, requested %i is too large\n", 
-				CNetworkStringTableItem.MAX_USERDATA_SIZE,
+				NetworkStringTableItem.MAX_USERDATA_SIZE,
 				UserDataSize);
 		}
 
@@ -225,10 +225,10 @@ public class CNetworkStringTable : INetworkStringTable
 		if (bIsFilenames)
 		{
 			IsFilenames = true;
-			Items = new CNetworkStringDict(); //new CNetworkStringFilenameDict;
+			Items = new NetworkStringDict(); //new CNetworkStringFilenameDict;
 		} else {
 			IsFilenames = false;
-			Items = new CNetworkStringDict();
+			Items = new NetworkStringDict();
 		}
 	}
 
@@ -287,7 +287,7 @@ public class CNetworkStringTable : INetworkStringTable
 		}
 
 		bool bHasChanged = false;
-		CNetworkStringTableItem? item = null;
+		NetworkStringTableItem? item = null;
 		if (!isServer && ItemsClientSide != null)
 		{
 			i = ItemsClientSide.Find(value);
@@ -399,7 +399,7 @@ public class CNetworkStringTable : INetworkStringTable
 			stringNumber = -stringNumber;
 		}
 
-		CNetworkStringTableItem p = dict.Element(stringNumber);
+		NetworkStringTableItem p = dict.Element(stringNumber);
 		if (p.SetUserData(TickCount, length, userData))
 		{
 			DataChanged(saveStringNumber, p);
@@ -415,7 +415,7 @@ public class CNetworkStringTable : INetworkStringTable
 			stringNumber = -stringNumber;
 		}
 
-		CNetworkStringTableItem p = dict.Element(stringNumber);
+		NetworkStringTableItem p = dict.Element(stringNumber);
 		return p.GetUserData(out length);
 	}
 
@@ -441,7 +441,7 @@ public class CNetworkStringTable : INetworkStringTable
 			ChangeHistoryEnabled = true;
 	}
 
-	private void DataChanged(int stringNumber, CNetworkStringTableItem item)
+	private void DataChanged(int stringNumber, NetworkStringTableItem item)
 	{
 		LastChangedTick = TickCount;
 
@@ -467,7 +467,7 @@ public class CNetworkStringTable : INetworkStringTable
 
 		if (AllowClientSideAddString)
 		{
-			ItemsClientSide = new CNetworkStringDict();
+			ItemsClientSide = new NetworkStringDict();
 			ItemsClientSide.Insert( "___clientsideitemsplaceholder0___" );
 			ItemsClientSide.Insert( "___clientsideitemsplaceholder1___" );
 		}
@@ -535,7 +535,7 @@ public class CNetworkStringTable : INetworkStringTable
 				if (isSubstring)
 				{
 					uint index = buf.ReadUBitLong(5);
-					uint bytesToCopy = buf.ReadUBitLong(CNetworkStringTable.SUBSTRING_BITS);
+					uint bytesToCopy = buf.ReadUBitLong(NetworkStringTable.SUBSTRING_BITS);
 					if (index >= history.Count)
 					{
 						Error("Server sent bogus substring index %i for table %s\n", entryIndex, GetTableName());
@@ -562,8 +562,8 @@ public class CNetworkStringTable : INetworkStringTable
 					pUserData = new byte[GetUserDataSizeBits()];
 					buf.ReadBits(pUserData, GetUserDataSizeBits());
 				} else {
-					nBytes = (int)buf.ReadUBitLong(CNetworkStringTableItem.MAX_USERDATA_BITS);
-					if (nBytes > CNetworkStringTableItem.MAX_USERDATA_SIZE)
+					nBytes = (int)buf.ReadUBitLong(NetworkStringTableItem.MAX_USERDATA_BITS);
+					if (nBytes > NetworkStringTableItem.MAX_USERDATA_SIZE)
 					{
 						Error("CNetworkStringTableClient::ParseUpdate: message too large (%i bytes).", nBytes);
 						continue;
@@ -607,13 +607,13 @@ public class CNetworkStringTable : INetworkStringTable
 	}
 }
 
-public class CNetworkStringTableContainer : INetworkStringTableContainer
+public class NetworkStringTableContainer : INetworkStringTableContainer
 {
 	private bool AllowCreation;
 	private int TickCount;
 	private bool Locked;
 	private bool EnableRollback;
-	private List<CNetworkStringTable> Tables = new List<CNetworkStringTable>();
+	private List<NetworkStringTable> Tables = new List<NetworkStringTable>();
 
 	public INetworkStringTable? CreateStringTable(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits)
 	{
@@ -628,7 +628,7 @@ public class CNetworkStringTableContainer : INetworkStringTableContainer
 			return null;
 		}
 
-		CNetworkStringTable? pTable = (CNetworkStringTable?)FindTable(tableName);
+		NetworkStringTable? pTable = (NetworkStringTable?)FindTable(tableName);
 		if (pTable != null)
 		{
 			Error("Tried to create string table '%s' twice\n", tableName);
@@ -642,7 +642,7 @@ public class CNetworkStringTableContainer : INetworkStringTableContainer
 		}
 
 		int id = Tables.Count();
-		pTable = new CNetworkStringTable(id, tableName, maxEntries, userDataFixedSize, userDataNetworkBits, isFilenames);
+		pTable = new NetworkStringTable(id, tableName, maxEntries, userDataFixedSize, userDataNetworkBits, isFilenames);
 
 		if (EnableRollback)
 		{
@@ -663,7 +663,7 @@ public class CNetworkStringTableContainer : INetworkStringTableContainer
 
 	public INetworkStringTable? FindTable(string tableName)
 	{
-		foreach(CNetworkStringTable pTable in Tables)
+		foreach(NetworkStringTable pTable in Tables)
 		{
 			if (pTable.GetTableName() == tableName)
 				return pTable;
@@ -684,7 +684,7 @@ public class CNetworkStringTableContainer : INetworkStringTableContainer
 
 	public void SetAllowClientSideAddString(INetworkStringTable table, bool allowClientSideAddString)
 	{
-		foreach(CNetworkStringTable pTable in Tables)
+		foreach(NetworkStringTable pTable in Tables)
 		{
 			if (pTable == table)
 			{
@@ -696,7 +696,7 @@ public class CNetworkStringTableContainer : INetworkStringTableContainer
 
 	public void Dump()
 	{
-		foreach(CNetworkStringTable pTable in Tables)
+		foreach(NetworkStringTable pTable in Tables)
 		{
 			pTable.Dump();
 		}

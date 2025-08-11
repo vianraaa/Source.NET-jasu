@@ -72,7 +72,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public bool RestrictClientCommands;
 
 	// Source does it differently but who really cares, this works fine... I think
-	public CNetworkStringTableContainer? StringTableContainer;
+	public NetworkStringTableContainer? StringTableContainer;
 
 	public virtual void Clear()
 	{
@@ -319,7 +319,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		int startbit = msg.DataIn.BitsRead;
 		if(StringTableContainer != null) // RaphaelIT7: In the Source Engine during level transmission in rare cases the svc_UpdateStringTable could be received before the server info.
 		{
-			CNetworkStringTable? table = (CNetworkStringTable?)StringTableContainer.GetTable(msg.TableID);
+			NetworkStringTable? table = (NetworkStringTable?)StringTableContainer.GetTable(msg.TableID);
 			if (table != null)
 			{
 				table.ParseUpdate(msg.DataIn, msg.ChangedEntries);
@@ -339,7 +339,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		
 		StringTableContainer?.SetAllowCreation(true);
 
-		CNetworkStringTable? table = (CNetworkStringTable?)StringTableContainer?.CreateStringTableEx(msg.TableName, msg.MaxEntries, msg.UserDataSize, msg.UserDataSizeBits, msg.IsFilenames);
+		NetworkStringTable? table = (NetworkStringTable?)StringTableContainer?.CreateStringTableEx(msg.TableName, msg.MaxEntries, msg.UserDataSize, msg.UserDataSizeBits, msg.IsFilenames);
 		
 		StringTableContainer?.SetAllowCreation(false);
 		
@@ -404,7 +404,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		ServerClasses = msg.MaxClasses;
 		ServerClassBits = (int)Math.Log2(ServerClasses) + 1;
 
-		StringTableContainer = (CNetworkStringTableContainer)INetworkStringTableContainer.networkStringTableContainerClient;
+		StringTableContainer = (NetworkStringTableContainer)INetworkStringTableContainer.networkStringTableContainerClient;
 
 		if (MaxClients < 1 || MaxClients > Constants.ABSOLUTE_PLAYER_LIMIT) {
 			ConMsg($"Bad maxclients ({MaxClients}) from server.\n");
