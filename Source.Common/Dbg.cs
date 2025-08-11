@@ -287,13 +287,13 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
-	static void _AssertMsg(bool exp, string message, object?[] parms, string file, int line, bool fatal) {
+	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, object?[] parms, string file, int line, bool fatal) {
 		if (!exp)
 			_AssertMsg(true, string.Format(message, parms), file, line, fatal);
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
-	static void _AssertMsg(bool exp, string message, string file, int line, bool fatal) {
+	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, string file, int line, bool fatal) {
 		if (exp) {
 
 		}
