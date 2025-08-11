@@ -12,6 +12,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Source;
 public static class BitVecExts
@@ -88,6 +90,36 @@ public static class ClassUtils
 		method?.Invoke(instance, parms);
 		error = null;
 		return instance;
+	}
+
+	// Some methods for reading binary data into arrays/value references
+	public static unsafe bool ReadInto<T>(this BinaryReader reader, ref T into) where T : unmanaged {
+		int sizeOfOne = sizeof(T);
+		Span<byte> byteAlloc = stackalloc byte[sizeOfOne];
+		if (sizeOfOne != reader.Read(byteAlloc))
+			return false; // Not enough data.
+		into = MemoryMarshal.Cast<byte, T>(byteAlloc)[0];
+		return true;
+	}
+	public static unsafe bool ReadInto<T>(this BinaryReader reader, Span<T> into) where T : unmanaged {
+		int sizeOfOne = sizeof(T);
+		int sizeOfAll = sizeOfOne * into.Length;
+		Span<byte> byteAlloc = stackalloc byte[sizeOfAll];
+		if (sizeOfAll != reader.Read(byteAlloc))
+			return false; // Not enough data.
+
+		MemoryMarshal.Cast<byte, T>(byteAlloc).CopyTo(into);
+		return true;
+	}
+	public static string? ReadString(this BinaryReader reader, int length) {
+		Span<char> str = stackalloc char[length];
+		for (int i = 0; i < length; i++) {
+			if (reader.PeekChar() == -1)
+				break;
+
+			str[i] = reader.ReadChar();
+		}
+		return new(str);
 	}
 }
 

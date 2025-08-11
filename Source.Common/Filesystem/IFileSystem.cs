@@ -24,6 +24,27 @@ public interface IBaseFileSystem
 	/// <returns></returns>
 	public IFileHandle? Open(ReadOnlySpan<char> fileName, FileOpenOptions options, ReadOnlySpan<char> pathID);
 	/// <summary>
+	/// Tries to open the file. May return null.
+	/// </summary>
+	/// <param name="fileName">The file name.</param>
+	/// <param name="options">File options.<br/><code>
+	/// |==============================================|
+	/// | r  | Read                                    |
+	/// | w  | Read                                    |
+	/// | a  | Read                                    |
+	/// | +  | Extended                                |
+	/// | b  | Binary                                  |
+	/// | n  | Text                                    |
+	/// |==============================================|
+	/// | r+ | Read   + Extended (or just ReadEx)      |
+	/// | w+ | Write  + Extended (or just WriteEx)     |
+	/// | a+ | Append + Extended (or just AppendEx)    |
+	/// |==============================================|
+	/// </code></param>
+	/// <returns></returns>
+	public IFileHandle? Open(ReadOnlySpan<char> fileName, FileOpenOptions options)
+		=> Open(fileName, options, null);
+	/// <summary>
 	/// Checks if the file is writable.
 	/// </summary>
 	/// <param name="fileName">The file name.</param>

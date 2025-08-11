@@ -1,13 +1,19 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
 
+using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
 using Source.GUI.Controls;
+
+using System.Runtime.InteropServices;
 
 namespace Source.Engine;
 
@@ -83,7 +89,11 @@ public class StaticPanel(Panel? parent, string name) : Panel(parent, name) {
 }
 
 
-public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, IMaterialSystem materials, ILauncherManager launcherMgr, ICommandLine CommandLine) : IEngineVGuiInternal
+public class EngineVGui(
+	Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, 
+	IMaterialSystem materials, ILauncherManager launcherMgr, 
+	ICommandLine CommandLine, IFileSystem fileSystem
+	) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
 
@@ -347,6 +357,33 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface
 		staticGameUIFuncs.Start();
 
 		ActivateGameUI();
+
+		// Temporary; just testing VTF here...
+		// This goes in MaterialSystem later
+		IVTFTexture vtfTexture = IVTFTexture.Create();
+		string fileName = "test.vtf";
+		IFileHandle? fileHandle = fileSystem.Open(fileName, FileOpenOptions.Read);
+		if(fileHandle == null) {
+			Dbg.Warning("couldn't load test VTF file\n");
+			return;
+		}
+
+		if (!vtfTexture.Unserialize(fileHandle, true)) {
+			Dbg.Warning($"Error reading material \"{fileName}\"");
+			goto fail;
+		}
+
+		vtfTexture.ImageFileInfo(0, 0, 0, out int imageOffset, out int imageSize);
+		if (imageSize == 0) {
+			Dbg.Warning($"Couldn't determine offset and size of material \"{fileName}\"");
+			goto fail;
+		}
+
+		byte[] memory = new byte[imageSize];
+
+
+	fail:
+		return;
 	}
 
 	private void ActivateGameUI() {

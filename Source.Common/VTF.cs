@@ -7,7 +7,7 @@ using System.Numerics;
 namespace Source.Common;
 
 
-public enum CompiledVtfFlags : ulong
+public enum CompiledVtfFlags : uint
 {
 	// flags from the *.txt config file
 	PointSample = 0x00000001,
@@ -28,11 +28,11 @@ public enum CompiledVtfFlags : ulong
 	EightBitAlpha = 0x00002000,
 
 	// newer flags from the *.txt config file
-	TEnvMap = 0x00004000,
-	TRenderTarget = 0x00008000,
-	TDepthRenderTarget = 0x00010000,
-	TNoDebugOverride = 0x00020000,
-	TSingleCopy = 0x00040000,
+	EnvMap = 0x00004000,
+	RenderTarget = 0x00008000,
+	DepthRenderTarget = 0x00010000,
+	NoDebugOverride = 0x00020000,
+	SingleCopy = 0x00040000,
 
 	StagingMemory = 0x00080000,
 	ImmediateCleanup = 0x00100000,
@@ -62,7 +62,7 @@ public enum CompiledVtfFlags : ulong
 
 public enum VersionedVtfFlags : ulong
 {
-	VERSIONED_VTF_FLAGS_MASK_7_3 = ~0xD1780400, // For a ver 7.3 or earlier only these flags are valid
+	Mask_7_3 = ~0xD1780400, // For a ver 7.3 or earlier only these flags are valid
 }
 
 public enum CubeMapFaceIndex
@@ -73,7 +73,8 @@ public enum CubeMapFaceIndex
 	Front,
 	Up,
 	Down,
-	Spheremap
+	Spheremap,
+		Count
 }
 
 public enum LookDir
@@ -109,7 +110,7 @@ public interface IVTFTexture : IDisposable
 
 	// Yes, ideally, we would have nint's. But a lot of .NET uses ints, and Span<byte>'s are no exception
 	void LowResFileInfo(out int startLocation, out int sizeInBytes);
-	void ImageFile(int frame, int face, int mip, out int startLocation, out int sizeInBytes);
+	void ImageFileInfo(int frame, int face, int mip, out int startLocation, out int sizeInBytes);
 	int FileSize(int mipSkipCount = 0);
 
 	int Width();
@@ -161,6 +162,7 @@ public interface IVTFTexture : IDisposable
 	// Implementation of VTF can add these factory methods.
 	public static event CreateVTFTextureDelegate? OnCreate;
 	public static event DestroyVTFTextureDelegate? OnDestroy;
+	public static event VTFFileHeaderSizeDelegate? OnRequestSize;
 
 	public static IVTFTexture Create() {
 		if (OnCreate == null)
@@ -172,7 +174,126 @@ public interface IVTFTexture : IDisposable
 			throw new NotImplementedException("No VTF factory available");
 		OnDestroy.Invoke(texture);
 	}
+	public static ushort FileHeaderSize(int majorVersion = -1, int minorVersion = -1) {
+		if (OnRequestSize == null)
+			throw new NotImplementedException("No VTF factory available");
+		return OnRequestSize.Invoke(majorVersion, minorVersion);
+	}
 }
-
+// Factory methods
 public delegate IVTFTexture CreateVTFTextureDelegate();
 public delegate void DestroyVTFTextureDelegate(IVTFTexture texture);
+public delegate ushort VTFFileHeaderSizeDelegate(int majorVersion, int minorVersion);
+
+public class VTFFileBaseHeader
+{
+	public readonly sbyte[] FileTypeString = new sbyte[4];
+	public readonly int[] Version = new int[2];
+	public uint HeaderSize = 0;
+
+	public static readonly ushort Size = 
+		4 // FileTypeString 
+		+ (2 * sizeof(int)) // Version 
+		+ sizeof(uint) // HeaderSize
+		;
+}
+
+public class VTFFileHeaderV7_1 : VTFFileBaseHeader {
+	public ushort Width;
+	public ushort Height;
+	public uint Flags;
+	public ushort NumFrames;
+	public ushort StartFrame;
+	public Vector3 Reflectivity;
+	public float BumpScale;
+	public ImageFormat ImageFormat;
+	public byte NumMipLevels;
+	public ImageFormat LowResImageFormat;
+	public byte LowResImageWidth;
+	public byte LowResImageHeight;
+
+	public static new readonly ushort Size = (ushort)(VTFFileBaseHeader.Size
+		+ sizeof(ushort) // Width
+		+ sizeof(ushort) // Height
+		+ sizeof(uint) // Flags
+		+ sizeof(ushort) // NumFrames
+		+ sizeof(ushort) // StartFrame
+		+ (sizeof(float) * 3) // Reflectivity
+		+ sizeof(float) // BumpScale
+		+ sizeof(ImageFormat) // ImageFormat
+		+ sizeof(byte) // NumMipLevels
+		+ sizeof(ImageFormat) // LowResImageFormat
+		+ sizeof(byte) // LowResImageWidth
+		+ sizeof(byte) // LowResImageHeight
+		);
+}
+
+public class VTFFileHeaderV7_2 : VTFFileHeaderV7_1
+{
+	public ushort Depth;
+
+	public static new readonly ushort Size = (ushort)(VTFFileHeaderV7_1.Size 
+		+ sizeof(ushort) // Depth
+		);
+}
+
+public class VTFFileHeaderV7_3 : VTFFileHeaderV7_2
+{
+	public readonly sbyte[] Pad4 = new sbyte[3];
+	public uint NumResources;
+
+	public static new readonly ushort Size = (ushort)(VTFFileHeaderV7_2.Size
+		+ (sizeof(sbyte) * 3) // Pad4
+		+ sizeof(uint) // NumResources
+		);
+}
+
+public class VTFFileHeader : VTFFileHeaderV7_3;
+
+public enum HeaderDetails : short {
+	MaxRSRCDictionaryEntries = 32
+}
+
+public struct ResourceEntryInfo
+{
+	public ResourceEntryTag Tag;
+	public byte Flags;
+	public uint Offset;
+
+	public static ResourceEntryTag ParseTag(byte byte1, byte byte2, byte byte3) {
+		return (ResourceEntryTag)((byte1 << 16) + (byte2 << 8) + byte3);
+	}
+}
+
+public enum ResourceEntryTag
+{
+	LowResThumbnail = 0x00010000,
+	HighResImageData = 0x00300000,
+	AnimatedParticleSheetData = 0x00100000,
+	CRC = 0x00435243,
+	TextureLOD = 0x004c4f44,
+	Extended = 0x0054534f,
+	KeyValueData = 0x004b5644
+}
+
+public struct TextureLODControlSettings {
+	public byte ResolutionClampX;
+	public byte ResolutionClampY;
+	// unused
+	public byte ResolutionClampX_360;
+	public byte ResolutionClampY_360;
+}
+
+public struct TextureSettingsEx {
+	public byte Flags0;
+	public byte Flags1;
+	public byte Flags2;
+	public byte Flags3;
+}
+
+public struct TextureStreamSettings_t {
+	public byte FirstAvailableMip;
+	public byte LastAvailableMip;
+	public byte Reserved0;
+	public byte Reserved1;
+}
