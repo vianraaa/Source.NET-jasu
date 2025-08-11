@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net8.0</TargetFramework>
@@ -17,4 +16,13 @@
 		<ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
 		<ProjectReference Include="..\Source.ShaderAPI.GL46\Source.MaterialSystem.csproj" />
 	</ItemGroup>
+
+	<!-- Copy Game.Assets -->
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<ItemGroup>
+			<GameAssets Include="$(MSBuildThisFileDirectory)..\Game.Assets\**\*"/>
+		</ItemGroup>
+	
+		<Copy SourceFiles="@(GameAssets)" DestinationFolder="$(OutDir)%(RecursiveDir)" SkipUnchangedFiles="true"/>
+	</Target>
 </Project>
