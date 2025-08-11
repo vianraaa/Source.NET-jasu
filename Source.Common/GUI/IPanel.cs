@@ -1,5 +1,80 @@
-﻿namespace Source.Common.GUI;
+﻿using Source.Common.Formats.Keyvalues;
+
+namespace Source.Common.GUI;
 public interface IPanel
 {
+	// methods
+	void SetPos(int x, int y);
+	void GetPos(out int x, out int y);
+	void SetSize(int wide, int tall);
+	void GetSize(out int wide, out int tall);
+	void SetMinimumSize(int wide, int tall);
+	void GetMinimumSize(out int wide, out int tall);
+	void SetZPos(int z);
+	int GetZPos();
 
+	void GetAbsPos(out int x, out int y);
+	void GetClipRect(out int x0, out int y0, out int x1, out int y1);
+	void SetInset(int left, int top, int right, int bottom);
+	void GetInset(out int left, out int top, out int right, out int bottom);
+
+	void SetVisible(bool state);
+	bool IsVisible();
+	void SetParent(IPanel? newParent);
+	int GetChildCount();
+	IPanel GetChild(int index);
+	IEnumerable<IPanel> GetChildren();
+	IPanel? GetParent();
+	void MoveToFront();
+	void MoveToBack();
+	bool HasParent(IPanel potentialParent);
+	bool IsPopup();
+	void SetPopup(bool state);
+	bool IsFullyVisible();
+
+	// gets the scheme this panel uses
+	IScheme? GetScheme();
+	// gets whether or not this panel should scale with screen resolution
+	bool IsProportional();
+	// returns true if auto-deletion flag is set
+	bool IsAutoDeleteSet();
+	// deletes the Panel * associated with the vpanel
+	void DeletePanel();
+
+	// input interest
+	void SetKeyBoardInputEnabled(bool state);
+	void SetMouseInputEnabled(bool state);
+	bool IsKeyBoardInputEnabled();
+	bool IsMouseInputEnabled();
+
+	// calculates the panels current position within the hierarchy
+	void Solve();
+
+	// gets names of the object (for debugging purposes)
+	ReadOnlySpan<char> GetName();
+	ReadOnlySpan<char> GetClassName();
+
+	// these pass through to the IClientPanel
+	void Think();
+	void PerformApplySchemeSettings();
+	void PaintTraverse(bool forceRepaint, bool allowForce = true);
+	void Repaint();
+	IPanel IsWithinTraverse(int x, int y, bool traversePopups);
+
+	void OnChildAdded(IPanel child);
+	void OnSizeChanged(int newWide, int newTall);
+
+	void InternalFocusChanged(bool lost);
+	void RequestFocus(int direction = 0);
+	bool RequestFocusPrev(IPanel existingPanel);
+	bool RequestFocusNext(IPanel existingPanel);
+	IPanel GetCurrentKeyFocus();
+	int GetTabPosition();
+
+	bool IsEnabled();
+	void SetEnabled(bool state);
+
+	// Used by the drag/drop manager to always draw on top
+	bool IsTopmostPopup();
+	void SetTopmostPopup(bool state);
 }

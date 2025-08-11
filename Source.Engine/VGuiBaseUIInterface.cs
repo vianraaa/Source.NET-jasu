@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.GUI;
+using Source.Common.MaterialSystem;
 using Source.Common.Networking;
+using Source.GUI.Controls;
 
 namespace Source.Engine;
 
@@ -67,8 +70,18 @@ public interface IEngineVGuiInternal : IEngineVGui
 	void Paint(PaintMode paintMode);
 }
 
+public class EnginePanel : EditablePanel
+{
 
-public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInternal
+}
+
+
+public class StaticPanel : Panel {
+
+}
+
+
+public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, IMaterialSystem materials) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
 
@@ -111,6 +124,16 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInt
 	];
 
 	LoadingProgressDescription[]? activeDescriptions = null;
+
+
+	ISurface surface;
+	StaticPanel staticPanel;
+	EnginePanel staticClientDLLPanel;
+	EnginePanel staticClientDLLToolsPanel;
+	EnginePanel staticGameUIPanel;
+	EnginePanel staticGameDLLPanel;
+
+	EnginePanel staticEngineToolsPanel;
 
 	bool ShowProgressDialog;
 	LevelLoadingProgress LastProgressPoint;
@@ -213,7 +236,6 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInt
 		throw new NotImplementedException();
 	}
 
-	ISurface surface;
 	public void Init() {
 		surface = engineAPI.GetRequiredService<ISurface>();
 	}
@@ -222,8 +244,59 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInt
 
 	}
 
-	public void Paint(PaintMode paintMode) {
-		surface.DrawSetColor(255, 50, 50, 255);
-		surface.DrawFilledRect(256, 256, 512, 512);
+	readonly ConVar r_drawvgui = new("r_drawvgui", "1", FCvar.Cheat, "Enable the rendering of vgui panels" );
+
+	public void Paint(PaintMode mode) {
+		if (staticPanel == null)
+			return;
+
+		IPanel embedded = surface.GetEmbeddedPanel();
+		if (embedded == null)
+			return;
+
+		bool drawGui = r_drawvgui.GetBool();
+		if (!drawGui)
+			return;
+
+		Panel panel = staticPanel;
+		using(MatRenderContextPtr renderContext = new(materials)) {
+			renderContext.GetViewport(out int x, out int y, out int w, out int h);
+			panel.SetBounds(0, 0, w, h);
+		}
+
+		panel.Repaint();
+
+		if ((mode & PaintMode.UIPanels) == PaintMode.UIPanels) {
+			bool saveVisible = staticClientDLLPanel.IsVisible();
+			bool saveToolsVisible = staticClientDLLToolsPanel.IsVisible();
+			staticClientDLLPanel.SetVisible(false);
+			staticClientDLLToolsPanel.SetVisible(false);
+
+			surface.PaintTraverseEx(embedded, true);
+
+			staticClientDLLPanel.SetVisible(saveVisible);
+			staticClientDLLToolsPanel.SetVisible(saveToolsVisible);
+		}
+
+		if ((mode & PaintMode.InGamePanels) == PaintMode.InGamePanels) {
+			bool saveVisible = panel.IsVisible();
+			panel.SetVisible(false);
+
+			IPanel? saveParent = staticClientDLLPanel.GetParent();
+			staticClientDLLPanel.SetParent(null);
+			surface.PaintTraverseEx(staticClientDLLPanel, true);
+			staticClientDLLPanel.SetParent(saveParent);
+
+			IPanel? saveToolParent = staticClientDLLToolsPanel.GetParent();
+			staticClientDLLToolsPanel.SetParent(null);
+			surface.PaintTraverseEx(staticClientDLLToolsPanel, true);
+			staticClientDLLToolsPanel.SetParent(saveParent);
+
+			embedded.SetVisible(saveVisible);
+		}
+
+		if ((mode & PaintMode.Cursor) == PaintMode.Cursor) {
+			surface.PaintSoftwareCursor();
+		}
 	}
 }

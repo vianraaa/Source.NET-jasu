@@ -4,12 +4,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Source.Common\Source.Common.csproj" />
-    <ProjectReference Include="..\Source.GUI.Controls\Source.GUI.Controls.csproj" />
   </ItemGroup>
 
 </Project>

@@ -148,4 +148,6 @@ public interface ISurface
 	bool HasCursorPosFunctions();
 	void SurfaceGetCursorPos(out int x, out int y);
 	void SurfaceSetCursorPos(int x, int y);
+	void PaintTraverseEx(IPanel embedded, bool v);
+	void PaintSoftwareCursor();
 }

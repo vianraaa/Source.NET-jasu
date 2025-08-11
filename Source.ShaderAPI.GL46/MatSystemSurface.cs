@@ -325,7 +325,10 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public void PaintTraverse(IPanel panel) {
-		throw new NotImplementedException();
+
+	}
+	public void PaintTraverseEx(IPanel panel, bool paintPopups) {
+		// todo: painting panels
 	}
 
 	public void PopMakeCurrent(IPanel panel) {
@@ -426,5 +429,9 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 
 	public void UnlockCursor() {
 		throw new NotImplementedException();
+	}
+
+	public void PaintSoftwareCursor() {
+
 	}
 }

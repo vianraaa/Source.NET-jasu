@@ -9,10 +9,11 @@ public enum VGuiPanelType {
 	GameDll,
 	ClientDllTools
 }
+[Flags]
 public enum PaintMode {
-	UIPanels,
-	InGamePanels,
-	Cursor
+	UIPanels = 1 << 0,
+	InGamePanels = 1 << 1,
+	Cursor = 1 << 2
 }
 public interface IEngineVGui
 {
