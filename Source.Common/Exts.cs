@@ -13,6 +13,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 
 namespace Source;
@@ -87,7 +88,16 @@ public static class ClassUtils
 			return ok ? instance : null;
 		}
 		// Method invoke, return true
-		method?.Invoke(instance, parms);
+		try {
+			method?.Invoke(instance, parms);
+		}
+		// If we don't do this try catch block then we don't get the inner exception in call stacks
+		// and instead get the call stack of the target invocation exception (which is pretty useless
+		// in this case)
+		catch(TargetInvocationException ex) when (ex.InnerException != null) {
+			ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+			throw;
+		}
 		error = null;
 		return instance;
 	}
