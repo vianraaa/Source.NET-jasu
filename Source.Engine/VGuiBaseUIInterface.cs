@@ -396,7 +396,10 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface
 		using(MatRenderContextPtr renderContext = new(materials)) {
 			renderContext.GetViewport(out int x, out int y, out int w, out int h);
 			panel.SetBounds(0, 0, w, h);
+
 		}
+		surface.DrawSetColor(255, 0, 0, 255);
+		surface.DrawFilledRect(256, 256, 512, 384);
 
 		panel.Repaint();
 
