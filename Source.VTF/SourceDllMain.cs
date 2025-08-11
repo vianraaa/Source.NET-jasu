@@ -27,9 +27,7 @@ public static class SourceDllMain
 	}
 
 	private static void DestroyVTFTexture(IVTFTexture texture) {
-		if (texture is not VTFTexture vtf)
-			throw new InvalidCastException();
-
-		vtf.Dispose();
+		if (texture is VTFTexture vtf)
+			vtf.Dispose();
 	}
 }
