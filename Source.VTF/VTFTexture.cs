@@ -127,8 +127,50 @@ public sealed class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public void ImageFileInfo(int frame, int face, int mip, out int startLocation, out int sizeInBytes) {
-		throw new NotImplementedException();
+	private ResourceEntryInfo? FindResourceEntryInfo(ResourceEntryType type) {
+		return null; // ??????
+	}
+
+	public void ImageFileInfo(int frame, int face, int mipLevel, out int startLocation, out int sizeInBytes) {
+		int i, mipWidth, mipHeight, mipDepth;
+
+		ResourceEntryInfo? pInfo = FindResourceEntryInfo(ResourceEntryType.HighResImageData);
+
+		if (!pInfo.HasValue) {
+			Dbg.Assert(false);
+			startLocation = 0;
+			sizeInBytes = 0;
+			return;
+		}
+
+		ResourceEntryInfo imageDataInfo = pInfo.Value;
+
+		int offset = (int)imageDataInfo.Offset;
+		for (i = MipCount - 1; i > mipLevel; --i) {
+			ComputeMipLevelDimensions(i, out mipWidth, out mipHeight, out mipDepth);
+			int mipLevelSize = ImageLoader.GetMemRequired(mipWidth, mipHeight, mipDepth, Format, false);
+			offset += mipLevelSize;
+		}
+
+		ComputeMipLevelDimensions(mipLevel, out mipWidth, out mipHeight, out mipDepth);
+		int faceSize = ImageLoader.GetMemRequired(mipWidth, mipHeight, mipDepth, Format, false);
+
+		int facesToRead = FaceCount;
+		if (IsCubeMap()) {
+			if (Version[0] == 7 && Version[1] < 1) {
+				facesToRead = 6;
+				if (face == (int)CubeMapFaceIndex.Spheremap)
+					face--;
+			}
+		}
+
+		int framesize = facesToRead * faceSize;
+		offset += framesize * frame;
+
+		offset += face * faceSize;
+
+		startLocation = offset;
+		sizeInBytes = faceSize;
 	}
 
 	public bool Init(int width, int height, int depth, ImageFormat format, int flags, int frameCount, int forceMipCount = -1) {
@@ -312,7 +354,9 @@ public sealed class VTFTexture : IVTFTexture
 		reader.ReadInto(ref header.Flags);
 		reader.ReadInto(ref header.NumFrames);
 		reader.ReadInto(ref header.StartFrame);
+		reader.ReadNothing(4); // << what are these?
 		reader.ReadInto(ref header.Reflectivity);
+		reader.ReadNothing(4); // << what are these?
 		reader.ReadInto(ref header.BumpScale);
 		reader.ReadInto(ref header.ImageFormat);
 		reader.ReadInto(ref header.NumMipLevels);

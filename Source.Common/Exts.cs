@@ -94,7 +94,7 @@ public static class ClassUtils
 		// If we don't do this try catch block then we don't get the inner exception in call stacks
 		// and instead get the call stack of the target invocation exception (which is pretty useless
 		// in this case)
-		catch(TargetInvocationException ex) when (ex.InnerException != null) {
+		catch (TargetInvocationException ex) when (ex.InnerException != null) {
 			ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
 			throw;
 		}
@@ -103,6 +103,15 @@ public static class ClassUtils
 	}
 
 	// Some methods for reading binary data into arrays/value references
+	public static unsafe bool ReadNothing(this BinaryReader reader, int howMany) {
+		while (howMany > 0) {
+			if (reader.PeekChar() == -1)
+				return false;
+			reader.Read();
+			howMany--;
+		}
+		return true;
+	}
 	public static unsafe bool ReadInto<T>(this BinaryReader reader, ref T into) where T : unmanaged {
 		int sizeOfOne = sizeof(T);
 		Span<byte> byteAlloc = stackalloc byte[sizeOfOne];

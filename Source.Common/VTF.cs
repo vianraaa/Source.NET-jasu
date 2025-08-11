@@ -256,24 +256,45 @@ public enum HeaderDetails : short {
 
 public struct ResourceEntryInfo
 {
-	public ResourceEntryTag Tag;
+	public ResourceEntryType Tag;
 	public byte Flags;
 	public uint Offset;
 
-	public static ResourceEntryTag ParseTag(byte byte1, byte byte2, byte byte3) {
-		return (ResourceEntryTag)((byte1 << 16) + (byte2 << 8) + byte3);
+	public static ResourceEntryType ParseTag(byte byte1, byte byte2, byte byte3) {
+		return (ResourceEntryType)((byte1 << 16) + (byte2 << 8) + byte3);
 	}
 }
 
-public enum ResourceEntryTag
+public enum ResourceEntryType
 {
+	/// <summary>
+	/// Equiv of VTF_LEGACY_RSRC_LOW_RES_IMAGE
+	/// </summary>
 	LowResThumbnail = 0x00010000,
+	/// <summary>
+	/// Equiv of VTF_LEGACY_RSRC_IMAGE
+	/// </summary>
 	HighResImageData = 0x00300000,
+	/// <summary>
+	/// Equiv of VTF_RSRC_SHEET (i think?)
+	/// </summary>
 	AnimatedParticleSheetData = 0x00100000,
+
+
+	/// <summary>
+	/// Equiv of VTF_RSRC_TEXTURE_CRC (i think?)
+	/// </summary>
 	CRC = 0x00435243,
+	/// <summary>
+	/// Equiv of VTF_RSRC_TEXTURE_LOD_SETTINGS (i think?)
+	/// </summary>
 	TextureLOD = 0x004c4f44,
+	/// <summary>
+	/// Equiv of VTF_RSRC_TEXTURE_SETTINGS_EX (i think?)
+	/// </summary>
 	Extended = 0x0054534f,
-	KeyValueData = 0x004b5644
+	// Wait, what is this for...
+	// KeyValueData = 0x004b5644
 }
 
 public struct TextureLODControlSettings {
