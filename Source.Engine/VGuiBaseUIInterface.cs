@@ -362,7 +362,7 @@ public class EngineVGui(
 		// This goes in MaterialSystem later
 		IVTFTexture vtfTexture = IVTFTexture.Create();
 		string fileName = "kagami.vtf";
-		IFileHandle? fileHandle = fileSystem.Open(fileName, FileOpenOptions.Read);
+		IFileHandle? fileHandle = fileSystem.Open($"materials/{fileName}", FileOpenOptions.Read);
 		if(fileHandle == null) {
 			Dbg.Warning("couldn't load test VTF file\n");
 			return;
