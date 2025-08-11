@@ -44,6 +44,8 @@ public class Host(
 	public Con Con;
 	public EngineVGui EngineVGui;
 	public Cvar Cvar;
+	public View View;
+	public Common Common;
 	public IEngine Engine;
 	public Scr Scr;
 	public Net Net;
@@ -521,8 +523,9 @@ public class Host(
 		Cmd = engineAPI.InitSubsystem<Cmd>()!;
 		Cvar = engineAPI.InitSubsystem<Cvar>()!;
 #if !SWDS
-		//engineAPI.InitSubsystem<Video>();
+		View = engineAPI.InitSubsystem<View>()!;
 #endif
+		Common = engineAPI.InitSubsystem<Common>()!;
 		//engineAPI.InitSubsystem<Filter>();
 #if !SWDS
 		//engineAPI.InitSubsystem<Key>();
@@ -538,7 +541,6 @@ public class Host(
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
 			HostState = engineAPI.GetRequiredService<IHostState>();
 			Scr = engineAPI.InitSubsystem<Scr>()!;
-			// engineAPI.InitSubsystem<Scr>();
 			// engineAPI.InitSubsystem<Render>();
 			// engineAPI.InitSubsystem<Decal>();
 		}

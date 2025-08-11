@@ -76,7 +76,9 @@ public interface IMatRenderContext {
 
 public interface IMaterialSystem
 {
-	bool InitializeGraphics(nint graphics, int width, int height);
+	unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height);
 	void ModInit();
 	void ModShutdown();
+	void BeginFrame(double frameTime);
+	void EndFrame();
 }

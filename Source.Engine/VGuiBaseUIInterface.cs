@@ -60,6 +60,7 @@ public interface IEngineVGuiInternal : IEngineVGui
 	public void StartCustomProgress();
 	public void FinishCustomProgress();
 	public void ShowErrorMessage();
+	void Simulate();
 }
 
 
@@ -205,6 +206,10 @@ public class EngineVGui(Sys Sys, Net Net) : IEngineVGuiInternal
 		throw new NotImplementedException();
 	}
 	public bool IsGameUIVisible() {
+		throw new NotImplementedException();
+	}
+
+	public void Simulate() {
 		throw new NotImplementedException();
 	}
 }

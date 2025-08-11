@@ -4,6 +4,7 @@ using Source.Common;
 using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
+using Source.Common.MaterialSystem;
 using Source.Engine.Client;
 
 using System;
@@ -24,27 +25,38 @@ public class Scr(IEngineAPI engineAPI)
 	public bool DrawLoading;
 	public int NextDrawTick;
 
+	ClientDLL ClientDLL;
 	Host Host;
 	Sys Sys;
+	CL CL;
 	IEngineVGuiInternal? EngineVGui;
 	Con Con;
+	Common Common;
+	Render Render;
+	View View;
 	IHostState HostState;
 	IFileSystem FileSystem;
 	IBaseClientDLL clientDll;
 	ClientState cl;
 	ClientGlobalVariables clientGlobalVariables;
-
+	IMaterialSystem materials;
 	public void Init() {
 		Initialized = true;
 
+		ClientDLL = engineAPI.GetRequiredService<ClientDLL>();
 		Host = engineAPI.GetRequiredService<Host>();
+		Common = engineAPI.GetRequiredService<Common>();
+		View = engineAPI.GetRequiredService<View>();
+		Render = engineAPI.GetRequiredService<Render>();
 		Sys = engineAPI.GetRequiredService<Sys>();
 		EngineVGui = engineAPI.GetRequiredService<IEngineVGuiInternal>();
 		Con = engineAPI.GetRequiredService<Con>();
 		HostState = engineAPI.GetRequiredService<IHostState>();
 		FileSystem = engineAPI.GetRequiredService<IFileSystem>();
 		clientDll = engineAPI.GetRequiredService<IBaseClientDLL>();
+		CL = engineAPI.GetRequiredService<CL>();
 		cl = engineAPI.GetRequiredService<ClientState>();
+		materials = engineAPI.GetRequiredService<IMaterialSystem>();
 		clientGlobalVariables = engineAPI.GetRequiredService<ClientGlobalVariables>();
 	}
 
@@ -80,10 +92,6 @@ public class Scr(IEngineAPI engineAPI)
 	}
 
 	public void EndLoadingPlaque() {
-
-	}
-
-	public void UpdateScreen() {
 		if (DrawLoading) {
 			EngineVGui?.OnLevelLoadingFinished();
 		}
@@ -93,6 +101,45 @@ public class Scr(IEngineAPI engineAPI)
 
 		DisabledForLoading = false;
 		DrawLoading = false;
+	}
+
+	public void UpdateScreen() {
+		if(NextDrawTick != 0) {
+			if (Host.TickCount < NextDrawTick)
+				return;
+			NextDrawTick = 0;
+		}
+
+		if (DisabledForLoading) {
+			if (!Host.IsSinglePlayerGame()) {
+				View.RenderGuiOnly();
+			}
+
+			return;
+		}
+
+		if (!Initialized || !Common.Initialized)
+			return;
+
+		materials.BeginFrame(Host.FrameTime);
+		{
+			EngineVGui?.Simulate();
+		}
+
+		ClientDLL.FrameStageNotify(ClientFrameStage.RenderStart);
+		{
+			Render.FrameBegin();
+		}
+
+		View.RenderView();
+		CL.TakeSnapshotAndSwap();
+
+		ClientDLL.FrameStageNotify(ClientFrameStage.RenderEnd);
+		{
+			Render.FrameEnd();
+		}
+
+		materials.EndFrame();
 	}
 
 	public void CenterPrint(ReadOnlySpan<char> str) { }

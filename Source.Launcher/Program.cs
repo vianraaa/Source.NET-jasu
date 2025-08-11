@@ -87,20 +87,6 @@ public class Bootloader : IDisposable
 internal class Program
 {
 	static void Main(string[] _) {
-		string binPath = Path.Combine(AppContext.BaseDirectory, "bin");
-		AssemblyLoadContext.Default.Resolving += (sender, args) => {
-			string assemblyName = new AssemblyName(args.Name!).Name + ".dll";
-			string candidate = Path.Combine(binPath, assemblyName);
-
-			if (File.Exists(candidate))
-				return Assembly.LoadFrom(candidate);
-
-			return null;
-		};
-		string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
-		if (!pathEnv.Split(Path.PathSeparator).Contains(binPath, StringComparer.OrdinalIgnoreCase)) {
-			Environment.SetEnvironmentVariable("PATH", binPath + Path.PathSeparator + pathEnv);
-		}
 		using (Bootloader bootloader = new())
 			bootloader.Boot();
 	}

@@ -5,6 +5,8 @@ using SDL;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
+using System.Runtime.InteropServices;
+
 namespace Source.SDLManager;
 
 public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherManager
@@ -14,7 +16,7 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		return 0;
 	}
 	nint graphicsHandle;
-	public bool CreateGameWindow(string title, bool windowed, int width, int height) {
+	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
 		IMaterialSystem materials = services.GetRequiredService<IMaterialSystem>();
 		SDL_WindowFlags flags = 0;
 		flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
@@ -40,7 +42,7 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		SDL3.SDL_GL_MakeCurrent(window.HardwareHandle, (SDL_GLContextState*)graphicsHandle);
 		SDL3.SDL_GL_SetSwapInterval(0);
 
-		if (!materials.InitializeGraphics(graphicsHandle, window.Width, window.Height)) {
+		if (!materials.InitializeGraphics(graphicsHandle, &GL_ProcAddress, window.Width, window.Height)) {
 			Dbg.Error($"Could not set graphics context!\n");
 			return false;
 		}
@@ -50,6 +52,11 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 	public void DeleteContext(nint context) {
 
+	}
+
+	[UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+	unsafe static void* GL_ProcAddress(byte* proc) {
+		return (void*)SDL3.SDL_GL_GetProcAddress(proc);
 	}
 
 	public void DestroyGameWindow() {

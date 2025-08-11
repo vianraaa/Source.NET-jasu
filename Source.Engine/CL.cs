@@ -198,8 +198,11 @@ public class CL(IServiceProvider services, Net Net,
 	internal void ProcessVoiceData() {
 
 	}
-}
 
+	internal void TakeSnapshotAndSwap() {
+
+	}
+}
 
 
 /// <summary>
@@ -221,6 +224,10 @@ public class ClientDLL(IServiceProvider services, Sys Sys)
 	}
 
 	public void ProcessInput() {
+
+	}
+
+	public void FrameStageNotify(ClientFrameStage stage) {
 
 	}
 }

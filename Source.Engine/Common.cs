@@ -39,6 +39,11 @@ public class Common(IServiceProvider providers)
 		FileSystem.LoadSearchPaths(in initInfo);
 	}
 
+	public bool Initialized { get; private set; }
+	public void Init() {
+		Initialized = true;
+	}
+
 	public static bool IsValidPath(ReadOnlySpan<char> filename) {
 		if (filename == null)
 			return false;
