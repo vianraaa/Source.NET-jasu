@@ -1,6 +1,7 @@
-﻿namespace Source.Common.MaterialSystem;
+﻿namespace Source.Common.Bitmap;
 
-public enum NormalDecodeMode {
+public enum NormalDecodeMode
+{
 	None = 0
 }
 public enum ImageFormat
@@ -35,5 +36,5 @@ public enum ImageFormat
 	RGBA16161616,
 	UVLX8888,
 
-		Count
+	Count
 }

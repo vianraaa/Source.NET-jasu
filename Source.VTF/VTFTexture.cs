@@ -1,5 +1,6 @@
-﻿using Source.Common;
-using Source.Common.MaterialSystem;
+﻿using Source.Bitmap;
+using Source.Common;
+using Source.Common.Bitmap;
 
 using System.Drawing;
 using System.Numerics;
@@ -254,7 +255,7 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	private int ComputeMipCount() {
-		throw new NotImplementedException();
+		return ImageLoader.GetNumMipMapLevels(Width, Height, Depth);
 	}
 
 	private static readonly sbyte[] VTF0 = [86, 84, 70, 0]; // VTF\0
