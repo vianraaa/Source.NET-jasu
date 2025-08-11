@@ -26,6 +26,7 @@ namespace Source.Engine.Client;
 public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
+	public ConVar password = new(nameof(password), "", FCvar.Archive | FCvar.ServerCannotQuery | FCvar.DontRecord, "Current server access password");
 
 	public const int CL_CONNECTION_RETRIES = 4;
 	public const double CL_MIN_RESEND_TIME = 1.5;
@@ -488,9 +489,9 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		msg.WriteLong(challengeNr);
 		msg.WriteLong(RetryChallenge);
 		msg.WriteUBitLong(2729496039, 32);
-		msg.WriteString(GetClientName());
-		msg.WriteString(""); // Password in the future
-		msg.WriteString(SteamAppInfo.GetSteamInf(fileSystem).PatchVersion);
+		msg.WriteString(GetClientName(), true, 256);
+		msg.WriteString(password.GetString(), true, 256);
+		msg.WriteString(SteamAppInfo.GetSteamInf(fileSystem).PatchVersion, true, 32);
 
 		switch (authProtocol) {
 			case Protocol.PROTOCOL_HASHEDCDKEY:
