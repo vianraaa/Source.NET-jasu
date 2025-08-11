@@ -48,7 +48,7 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 	unsafe static void raylibSpew(int logLevel, sbyte* text, sbyte* args) {
 		var message = Logging.GetLogMessage((nint)text, (nint)args);
 
-		Dbg._SpewMessage((TraceLogLevel)logLevel switch {
+		/*Dbg._SpewMessage((TraceLogLevel)logLevel switch {
 			TraceLogLevel.Info => SpewType.Message,
 			TraceLogLevel.Trace => SpewType.Log,
 			TraceLogLevel.Debug => SpewType.Message,
@@ -56,7 +56,7 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 			TraceLogLevel.Error => SpewType.Warning,
 			TraceLogLevel.Fatal => SpewType.Error,
 			_ => SpewType.Message,
-		}, "raylib", 1, new Color(255, 255, 255), message + "\n");
+		}, "raylib", 1, new Color(255, 255, 255), message + "\n");*/
 	}
 
 	public unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height) {
