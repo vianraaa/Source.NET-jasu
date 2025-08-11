@@ -369,13 +369,13 @@ public class EngineVGui(
 		}
 
 		if (!vtfTexture.Unserialize(fileHandle, true)) {
-			Dbg.Warning($"Error reading material \"{fileName}\"");
+			Dbg.Warning($"Error reading material \"{fileName}\"\n");
 			goto fail;
 		}
 
 		vtfTexture.ImageFileInfo(0, 0, 0, out int imageOffset, out int imageSize);
 		if (imageSize == 0) {
-			Dbg.Warning($"Couldn't determine offset and size of material \"{fileName}\"");
+			Dbg.Warning($"Couldn't determine offset and size of material \"{fileName}\"\n");
 			goto fail;
 		}
 
