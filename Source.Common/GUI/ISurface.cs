@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using Source.Common.Input;
+
+using System.Numerics;
 
 using static System.Net.Mime.MediaTypeNames;
 
@@ -150,4 +152,5 @@ public interface ISurface
 	void SurfaceSetCursorPos(int x, int y);
 	void PaintTraverseEx(IPanel embedded, bool v);
 	void PaintSoftwareCursor();
+	bool HandleInputEvent(in InputEvent ev);
 }

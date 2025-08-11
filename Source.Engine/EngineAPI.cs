@@ -17,7 +17,7 @@ using static Source.Dbg;
 namespace Source.Engine;
 
 
-public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSystem, Sys Sys, ILauncherManager launcherMgr, IInputSystem inputSystem) : IEngineAPI, IDisposable
+public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileSystem fileSystem, Sys Sys, ILauncherManager launcherMgr, IInputSystem inputSystem) : IEngineAPI, IDisposable
 {
 	public bool Dedicated;
 
@@ -58,6 +58,7 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 	public void PumpMessages() {
 		launcherMgr.PumpWindowsMessageLoop();
 		inputSystem.PollInputState();
+		game.DispatchAllStoredGameMessages();
 	}
 	public void PumpMessagesEditMode(bool idle, long idleCount) => throw new NotImplementedException();
 	public void ActivateEditModeShaders(bool active) { }

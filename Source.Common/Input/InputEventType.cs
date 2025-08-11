@@ -15,5 +15,10 @@ public enum InputEventType
 	IE_KeyTyped = FirstGuiEvent + 3,
 	KeyCodeTyped = FirstGuiEvent + 4,
 
-	FirstAppEvent = 2000
+	FirstAppEvent = 2000,
+
+	// Extensions of GameInputEventType
+	Close = FirstAppEvent,
+	WindowMove,
+	AppActivated
 }

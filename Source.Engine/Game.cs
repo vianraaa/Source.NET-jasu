@@ -1,6 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Launcher;
 
@@ -12,9 +13,35 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem) : IGame
+public delegate void GameMessageFn(in InputEvent ev);
+public struct GameMessageHandler {
+	public InputEventType EventType;
+	public GameMessageFn Function;
+	public GameMessageHandler(InputEventType eventType, GameMessageFn function) {
+		EventType = eventType;
+		Function = function;
+	}
+}
+
+public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, ISurface surface, IEngine eng) : IGame
 {
+	GameMessageHandler[] GameMessageHandlers;
+
+	public void HandleMsg_ActivateApp(in InputEvent ev) { }
+	public void HandleMsg_WindowMove(in InputEvent ev) { }
+	public void HandleMsg_Close(in InputEvent ev) {
+		if (eng.GetState() == IEngine.State.Active)
+			eng.SetQuitting(IEngine.Quit.ToDesktop);
+	}
+
 	public bool CreateGameWindow(int width, int height, bool windowed) {
+		GameMessageHandlers = [
+			new(InputEventType.AppActivated, HandleMsg_ActivateApp),
+			new(InputEventType.WindowMove, HandleMsg_WindowMove),
+			new(InputEventType.Close, HandleMsg_Close),
+			new(InputEventType.Quit, HandleMsg_Close),
+		];
+
 		if (launcherManager == null) {
 			Sys.Error("Tried to call Game.CreateGameWindow without a valid ILauncherManager implementation.");
 			return false;
@@ -50,7 +77,35 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 	}
 
 	public void DispatchAllStoredGameMessages() {
-		throw new NotImplementedException();
+		foreach(var ev in inputSystem.GetEventData()) {
+			DispatchInputEvent(in ev);
+		}
+	}
+
+	private void DispatchInputEvent(in InputEvent ev) {
+		switch (ev.Type) {
+			case InputEventType.ButtonPressed:
+			case InputEventType.ButtonDoubleClicked:
+			case InputEventType.ButtonReleased:
+				KeyEvent(in ev);
+				break;
+			default:
+				if (surface?.HandleInputEvent(in ev) ?? false)
+					break;
+
+				foreach(GameMessageHandler h in GameMessageHandlers) {
+					if(h.EventType == ev.Type) {
+						h.Function(in ev);
+						break;
+					}
+				}
+
+				break;
+		}
+	}
+
+	private void KeyEvent(in InputEvent ev) {
+
 	}
 
 	public void GetDesktopInfo(out int width, out int height, out int refreshrate) {

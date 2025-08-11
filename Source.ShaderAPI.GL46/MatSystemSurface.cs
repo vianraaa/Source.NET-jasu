@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 
 using Source.Common.GUI;
+using Source.Common.Input;
 using Source.Common.MaterialSystem;
 
 using System.Drawing;
@@ -386,6 +387,10 @@ public class MatSystemSurface : ISurface
 	public void SetEmbeddedPanel(IPanel panel) {
 		EmbeddedPanel = panel;
 		EmbeddedPanel.RequestFocus();
+	}
+
+	public bool HandleInputEvent(in InputEvent ev) {
+		return false;
 	}
 
 	public bool SetFontGlyphSet(IFont font, ReadOnlySpan<char> windowsFontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags, int rangeMin = 0, int rangeMax = 0) {
