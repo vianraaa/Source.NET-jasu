@@ -200,7 +200,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	internal void TakeSnapshotAndSwap() {
-		Shader.SwapBuffers();
+
 	}
 }
 

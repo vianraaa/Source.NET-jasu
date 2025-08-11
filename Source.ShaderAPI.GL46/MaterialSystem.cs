@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using OpenGL;
+
 using Raylib_cs;
 
 using Source.Common.GUI;
@@ -63,6 +65,7 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 		Dbg.SpewActivate("raylib", 1);
 		Raylib.SetTraceLogCallback(&raylibSpew);
 
+		Gl46.Import((name) => (nint)loadExts((byte*)new Utf8Buffer(name).AsPointer()));
 		Rlgl.LoadExtensions(loadExts);
 		Rlgl.GlInit(width, height);
 
@@ -72,7 +75,8 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 		Rlgl.Ortho(0, width, height, 0, 0, 1);
 		Rlgl.MatrixMode(MatrixMode.ModelView);
 		Rlgl.LoadIdentity();
-		Rlgl.ClearColor(255, 255, 255, 255);
+		Gl46.glClearColor(0, 0, 0, 1);
+		Gl46.glClear(Gl46.GL_COLOR_BUFFER_BIT | Gl46.GL_DEPTH_BUFFER_BIT);
 		Rlgl.EnableDepthTest();
 
 		Rlgl.ClearScreenBuffers();
@@ -83,9 +87,6 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 		Rlgl.LoadIdentity();
 		var mfx = Raymath.MatrixToFloatV(GetScreenMatrix());
 		Rlgl.MultMatrixf(mfx.v);
-
-		Rlgl.ClearColor(255, 0, 0, 255);
-		Rlgl.ClearScreenBuffers();
 	}
 
 	private Matrix4x4 GetScreenMatrix() {
@@ -103,6 +104,6 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 	}
 
 	public void SwapBuffers() {
-		Raylib.SwapScreenBuffer();
+		launcherMgr.Swap();
 	}
 }

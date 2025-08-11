@@ -16,6 +16,9 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		return 0;
 	}
 	nint graphicsHandle;
+	public void Swap() {
+		SDL3.SDL_GL_SwapWindow(window.HardwareHandle);
+	}
 	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
 		IMaterialSystem materials = services.GetRequiredService<IMaterialSystem>();
 		SDL_WindowFlags flags = 0;

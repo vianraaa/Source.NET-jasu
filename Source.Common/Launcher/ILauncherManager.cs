@@ -34,4 +34,5 @@ public interface ILauncherManager
 	bool MakeContextCurrent(nint context);
 	nint GetWindowHandle();
 	int GetEvents(WindowEvent[] eventBuffer, int length);
+	void Swap();
 }
