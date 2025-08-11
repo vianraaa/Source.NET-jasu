@@ -35,6 +35,12 @@ public struct QAngle
 		Z = vec.Z;
 	}
 
+	public void Init() {
+		X = 0;
+		Y = 0;
+		Z = 0;
+	}
+
 	public float this[int index] {
 		get {
 			switch (index) {

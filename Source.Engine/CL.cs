@@ -14,6 +14,7 @@ using Source.Common.Networking;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Microsoft.Extensions.DependencyInjection;
+using Source.Common.Engine;
 
 namespace Source.Engine;
 
@@ -41,6 +42,8 @@ public class CL(IServiceProvider services, Net Net,
 
 	public void Init() {
 		cl = services.GetRequiredService<ClientState>();
+		cl.Clear();
+
 		ClientDLL = services.GetRequiredService<IBaseClientDLL>();
 	}
 
