@@ -149,20 +149,11 @@ public interface IVTFTexture
 	Span<byte> LowResImageData();
 	
 	void ConvertImageFormat(ImageFormat format, bool normalToDUDV);
-	void GenerateSpheremap(LookDir lookDir = LookDir.Z);
-	void GenerateHemisphereMap(Span<byte> sphereMapBitsRGBA, int targetWidth, int targetHeight, LookDir lookDir, int frame);
-	void FixCubemapFaceOrientation();
 	void GenerateMipmaps();
-	void PutOneOverMipLevelInAlpha();
 
 	void ComputeReflectivity();
 	void ComputeAlphaFlags();
 	void ConstructLowResImage();
-
-	void PostProcess(bool generateSpheremap, LookDir lookDir = LookDir.Z, bool allowFixCubemapOrientation = true);
-	void MatchCubeMapBorders(int stage, ImageFormat finalFormat, bool skybox);
-	void SetAlphaTestThresholds(float baseThreshold, float highFreq);
-	// do the rest later. Already defining more than we need right now
 
 	public const int VTF_MAJOR_VERSION = 7;
 	public const int VTF_MINOR_VERSION = 4;
