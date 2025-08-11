@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Source.VTF;
 
-public class VTFTexture : IVTFTexture
+public sealed class VTFTexture : IVTFTexture
 {
 	readonly int[] Version = new int[2];
 	int Width;
