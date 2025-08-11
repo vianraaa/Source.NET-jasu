@@ -111,7 +111,7 @@ public class CL(IServiceProvider services, Net Net,
 			if (sendPacket)
 				SendMove();
 			else {
-				cl.NetChannel.SetChoked();
+				cl.NetChannel?.SetChoked();
 				cl.ChokedCommands++;
 			}
 		}
@@ -123,7 +123,7 @@ public class CL(IServiceProvider services, Net Net,
 
 		if (cl.IsActive()) {
 			NET_Tick mymsg = new NET_Tick(cl.DeltaTick, (float)Host.FrameTimeUnbounded, (float)Host.FrameTimeStandardDeviation);
-			cl.NetChannel.SendNetMsg(mymsg);
+			cl.NetChannel?.SendNetMsg(mymsg);
 		}
 
 		cl.LastOutgoingCommand = cl.NetChannel.SendDatagram(null);

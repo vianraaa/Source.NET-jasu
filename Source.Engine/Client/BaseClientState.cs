@@ -264,8 +264,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		if (SignOnState == SignOnState.Spawn) {
 			if (!msg.IsDelta) {
 				SetSignonState(SignOnState.Full, ServerCount);
-			}
-			else {
+			} else {
 				ConWarning("Received delta packet entities while spawning!\n");
 				return false;
 			}
@@ -286,7 +285,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 		if (!Host.clientDLL!.DispatchUserMessage(msg.MessageType, userMsg)) {
 			ConWarning($"Couldn't dispatch user message ({userMsg})\n");
-			return false;
+			return true;
 		}
 
 		return true;

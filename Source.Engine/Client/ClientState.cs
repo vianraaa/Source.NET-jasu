@@ -163,6 +163,9 @@ public class ClientState : BaseClientState
 	}
 	public override void FullConnect(NetAddress adr) {
 		base.FullConnect(adr);
+
+		LastOutgoingCommand = -1;
+		ChokedCommands = 0;
 	}
 
 	public override int GetClientTickCount() => ClockDriftMgr.ClientTick;

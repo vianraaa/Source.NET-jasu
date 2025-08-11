@@ -183,10 +183,10 @@ public static class Protocol
 	public static readonly int MAX_TABLES_BITS = (int)MathF.Log2(32);
 
 	public const int NUM_NEW_COMMAND_BITS = 4;
-	public const int MAX_NEW_COMMANDS = 1 << NUM_NEW_COMMAND_BITS;
+	public const int MAX_NEW_COMMANDS = (1 << NUM_NEW_COMMAND_BITS) - 1;
 
 	public const int NUM_BACKUP_COMMAND_BITS = 3;
-	public const int MAX_BACKUP_COMMANDS = 1 << NUM_BACKUP_COMMAND_BITS;
+	public const int MAX_BACKUP_COMMANDS = (1 << NUM_BACKUP_COMMAND_BITS) - 1;
 
 	public const int CONNECTIONLESS_HEADER = unchecked((int)0xFFFFFFFF);
 	public const int QUERY_HEADER = -1;
