@@ -113,6 +113,7 @@ public class VTFTexture : IVTFTexture
 	}
 
 	int IVTFTexture.Height() => Height;
+
 	Span<byte> IVTFTexture.ImageData() {
 		throw new NotImplementedException();
 	}
@@ -137,25 +138,16 @@ public class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public bool IsCubeMap() {
-		throw new NotImplementedException();
-	}
+	public bool IsCubeMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.EnvMap) == CompiledVtfFlags.EnvMap;
+	public bool IsNormalMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.Normal) == CompiledVtfFlags.Normal;
 
-	public bool IsNormalMap() {
-		throw new NotImplementedException();
-	}
-
-	public bool IsVolumeTexture() {
-		throw new NotImplementedException();
-	}
+	public bool IsVolumeTexture() => Depth > 1;
 
 	public void LowResFileInfo(out int startLocation, out int sizeInBytes) {
 		throw new NotImplementedException();
 	}
 
-	public ImageFormat LowResFormat() {
-		throw new NotImplementedException();
-	}
+	public ImageFormat LowResFormat() => LowResImageFormat;
 
 	Span<byte> IVTFTexture.LowResImageData() {
 		throw new NotImplementedException();

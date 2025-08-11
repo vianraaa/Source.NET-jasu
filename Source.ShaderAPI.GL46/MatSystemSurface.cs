@@ -377,7 +377,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	public void SetCursor(ICursor cursor) {
-		Warning("MatSystemSurface.SetCursor not implemented.");
+		Warning("MatSystemSurface.SetCursor not implemented.\n");
 	}
 
 	public void SetCursorAlwaysVisible(bool visible) {
