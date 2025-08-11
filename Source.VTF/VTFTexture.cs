@@ -53,7 +53,16 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public void ComputeMipLevelDimensions(int level, out int width, out int height, out int depth) {
-		throw new NotImplementedException();
+		width = Width >> level;
+		height = Height >> level;
+		depth = Depth >> level;
+
+		if (width < 1) 
+			width = 1;
+		if (height < 1) 
+			height = 1;
+		if (depth < 1) 
+			depth = 1;
 	}
 
 	public void ComputeMipLevelSubRect(Rectangle srcRect, int mipLevel, out Rectangle subRect) {
