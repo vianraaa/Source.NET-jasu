@@ -24,6 +24,23 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<I>(x => x.GetRequiredService<T>());
 		return this;
 	}
+
+	/// <summary>
+	/// Force loads an assembly.
+	/// </summary>
+	/// <param name="assemblyName"></param>
+	/// <returns></returns>
+	public EngineBuilder WithAssembly(string assemblyName)  {
+		if (!assemblyName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+			assemblyName += ".dll";
+
+		if (!Path.IsPathFullyQualified(assemblyName))
+			assemblyName = Path.Combine(AppContext.BaseDirectory, assemblyName);
+
+		Assembly.LoadFrom(assemblyName);
+
+		return this;
+	}
 	public EngineBuilder WithComponent<I, T>() where T : class, I where I : class {
 		PreInject<T>(this);
 		this.AddSingleton<I, T>();
@@ -122,15 +139,19 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 			// This allows a type to define a class named SourceDllMain, with a static void Link(IServiceCollection),
 			// which allows a loaded assembly to insert whatever it wants into the DI system before the provider is
 			// fully built.
-			Type? sourceDLL = assembly.GetType("SourceDllMain");
+			Type? sourceDLL = assembly.GetTypes().FirstOrDefault(x => x.Name == "SourceDllMain");
 			sourceDLL
 				?.GetMethod("Link", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
 				?.Invoke(null, linkInput);
 
 			// This checks for any classes with the MarkForDependencyInjection attribute.
 			// They are then injected into the service collection.
-			foreach(var typeKVP in assembly.GetTypesWithAttribute<EngineComponentAttribute>()) 
+			foreach(var typeKVP in assembly.GetTypesWithAttribute<EngineComponentAttribute>()) {
+				if (typeKVP.Key.IsAbstract && typeKVP.Key.IsSealed)
+					continue;
+
 				this.AddSingleton(typeKVP.Key);
+			}
 		}
 
 		// Everything else should be provided by the launcher!
