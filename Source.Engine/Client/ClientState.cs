@@ -78,10 +78,10 @@ public class ClientState : BaseClientState
 	public INetworkStringTable? ServerStartupTable;
 	public INetworkStringTable? DynamicModelsTable;
 
-	CPrecacheItem[] ModelPrecache = new CPrecacheItem[CPrecacheItem.MAX_MODELS];
-	CPrecacheItem[] GenericPrecache = new CPrecacheItem[CPrecacheItem.MAX_GENERIC];
-	CPrecacheItem[] SoundPrecache = new CPrecacheItem[CPrecacheItem.MAX_SOUNDS];
-	CPrecacheItem[] DecalPrecache = new CPrecacheItem[CPrecacheItem.MAX_BASE_DECAL];
+	PrecacheItem[] ModelPrecache = new PrecacheItem[PrecacheItem.MAX_MODELS];
+	PrecacheItem[] GenericPrecache = new PrecacheItem[PrecacheItem.MAX_GENERIC];
+	PrecacheItem[] SoundPrecache = new PrecacheItem[PrecacheItem.MAX_SOUNDS];
+	PrecacheItem[] DecalPrecache = new PrecacheItem[PrecacheItem.MAX_BASE_DECAL];
 
 	public static ConVar cl_timeout = new("30", FCvar.Archive, "After this many seconds without receiving a packet from the server, the client will disconnect itself");
 	public static ConVar cl_allowdownload = new("1", FCvar.Archive, "Client downloads customization files");

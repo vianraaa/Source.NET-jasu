@@ -1,8 +1,8 @@
 ﻿namespace Source.Engine;
 
 public class Model;
-public class CSfxTable;
-public class CPrecacheItem
+public class SfxTable;
+public class PrecacheItem
 {
 	public const string MODEL_PRECACHE_TABLENAME = "modelprecache";
 	public const string GENERIC_PRECACHE_TABLENAME = "genericprecache";
@@ -35,7 +35,7 @@ public class CPrecacheItem
 
 	private object? Item = null;
 
-	public CPrecacheItem()
+	public PrecacheItem()
 	{
 		ResetStats();
 		Type = ItemType.Unk;
@@ -46,7 +46,7 @@ public class CPrecacheItem
 
 	public Model? GetModel() => Type == ItemType.Model ? (Model?)Item : null;
 	public string? GetGeneric() => Type == ItemType.Generic ? (string?)Item : null;
-	public CSfxTable? GetSound() => Type == ItemType.Sound ? (CSfxTable?)Item : null;
+	public SfxTable? GetSound() => Type == ItemType.Sound ? (SfxTable?)Item : null;
 	public string? GetName() => Type == ItemType.Unk ? null : (Type == ItemType.Generic ? (string?)Item : null);
 	public string? GetDecal() => Type == ItemType.Decal ? (string?)Item : null;
 
@@ -62,7 +62,7 @@ public class CPrecacheItem
 		Init(ItemType.Generic, generic);
 	}
 
-	public void SetSound(CSfxTable sound)
+	public void SetSound(SfxTable sound)
 	{
 		Init(ItemType.Sound, sound);
 	}

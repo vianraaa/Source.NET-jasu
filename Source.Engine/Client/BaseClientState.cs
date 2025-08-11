@@ -1,6 +1,7 @@
 ﻿using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Commands;
+using Source.Common.Compression;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Networking;
@@ -368,7 +369,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 				msg.DataIn.ReadBits( compressedBuffer, msgCompressedSize * 8 );
 
 				byte[] uncompressedBuffer = new byte[msgUncompressedSize];
-				bSuccess = Common.BufferToBufferDecompress(uncompressedBuffer, ref msgUncompressedSize, compressedBuffer, msgCompressedSize);
+				uncompressedSize = (int)CLZSS.Uncompress(uncompressedBuffer, compressedBuffer);
 				bSuccess &= (uncompressedSize == msgUncompressedSize);
 
 				if (bSuccess)
