@@ -24,7 +24,6 @@ public class ClientState : BaseClientState
 	readonly IFileSystem fileSystem;
 	readonly Net Net;
 	readonly CommonHostState host_state;
-	readonly ClockDriftMgr ClockDriftMgr;
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
@@ -45,7 +44,7 @@ public class ClientState : BaseClientState
 	public int SoundSequence;
 
 	public bool IsHLTV;
-	public bool IsReplay;
+	// public bool IsReplay; // RaphaelIT7: Gmod has replay completely removed iirc
 
 	public MD5Value ServerMD5;
 
@@ -54,7 +53,7 @@ public class ClientState : BaseClientState
 	public bool AreaBitsValid;
 
 	public QAngle ViewAngles;
-	// add angle??
+	List<AddAngle> AddAngle = new();
 	public float AddAngleTotal;
 	public float PrevAddAngleTotal;
 	public CustomFile[] CustomFiles = new CustomFile[MAX_CUSTOM_FILES];
@@ -68,6 +67,21 @@ public class ClientState : BaseClientState
 	public bool CheckCRCsWithServer;
 	public double LastCRCBatchTime;
 	public bool MarkedCRCsUnverified;
+
+	public INetworkStringTable? ModelPrecacheTable;
+	public INetworkStringTable? GenericPrecacheTable;
+	public INetworkStringTable? SoundPrecacheTable;
+	public INetworkStringTable? DecalPrecacheTable;
+	public INetworkStringTable? InstanceBaselineTable;
+	public INetworkStringTable? LightStyleTable;
+	public INetworkStringTable? UserInfoTable;
+	public INetworkStringTable? ServerStartupTable;
+	public INetworkStringTable? DynamicModelsTable;
+
+	PrecacheItem[] ModelPrecache = new PrecacheItem[PrecacheItem.MAX_MODELS];
+	PrecacheItem[] GenericPrecache = new PrecacheItem[PrecacheItem.MAX_GENERIC];
+	PrecacheItem[] SoundPrecache = new PrecacheItem[PrecacheItem.MAX_SOUNDS];
+	PrecacheItem[] DecalPrecache = new PrecacheItem[PrecacheItem.MAX_BASE_DECAL];
 
 	public static ConVar cl_timeout = new("30", FCvar.Archive, "After this many seconds without receiving a packet from the server, the client will disconnect itself");
 	public static ConVar cl_allowdownload = new("1", FCvar.Archive, "Client downloads customization files");
@@ -86,15 +100,72 @@ public class ClientState : BaseClientState
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
 	}
+
+	public override void Clear()
+	{
+		base.Clear();
+
+		ModelPrecacheTable = null;
+		GenericPrecacheTable = null;
+		SoundPrecacheTable = null;
+		DecalPrecacheTable = null;
+		InstanceBaselineTable = null;
+		LightStyleTable = null;
+		UserInfoTable = null;
+		ServerStartupTable = null;
+		DynamicModelsTable = null;
+
+		Array.Clear(AreaBits, 0, AreaBits.Length);
+		UpdateSteamResources = false;
+		ShownSteamResourceUpdateProgress = false;
+		DownloadResources = false;
+		PrepareClientDLL = false;
+
+		// DeleteClientFrames(-1);
+		ViewAngles.Init();
+		LastServerTickTime = 0.0;
+		OldTickCount = 0;
+		InSimulation = false;
+
+		AddAngle.Clear();
+		AddAngleTotal = 0.0f;
+		PrevAddAngleTotal = 0.0f;
+
+		Array.Clear(ModelPrecache, 0, ModelPrecache.Length);
+		Array.Clear(SoundPrecache, 0, SoundPrecache.Length);
+		Array.Clear(DecalPrecache, 0, DecalPrecache.Length);
+		Array.Clear(GenericPrecache, 0, GenericPrecache.Length);
+
+		IsHLTV = false;
+
+		if (ServerMD5.Bits != null) // RaphaelIT7: Yes... We can be called so early that the other's constructor's weren't called yet.
+			Array.Clear(ServerMD5.Bits, 0, ServerMD5.Bits.Length);
+
+		LastCommandAck = 0;
+		CommandAck = 0;
+		SoundSequence = 0;
+		
+		if (SignOnState > SignOnState.Connected)
+		{
+			SignOnState = SignOnState.Connected;
+		}
+	}
+
 	public bool ProcessConnectionlessPacket(in NetPacket packet) {
 		return false;
 	}
 
 	public override void Disconnect(string? reason, bool showMainMenu) {
 		base.Disconnect(reason, showMainMenu);
+
+		// CL_ClearState
+		Clear(); // RaphaelIT7: Works for now though we should implement CL_ClearState at a later point
 	}
 	public override void FullConnect(NetAddress adr) {
 		base.FullConnect(adr);
+
+		LastOutgoingCommand = -1;
+		ChokedCommands = 0;
 	}
 
 	public override int GetClientTickCount() => ClockDriftMgr.ClientTick;
@@ -256,11 +327,13 @@ public class ClientState : BaseClientState
 	}
 	public void SetFrameTime(double dt) => FrameTime = dt;
 	public double GetClientInterpAmount() => throw new NotImplementedException();
-	public override void Clear() {
-		base.Clear();
-	}
 	public override void Connect(string adr, string sourceTag) {
 		Socket = Net.GetSocket(NetSocketType.Client);
 		base.Connect(adr, sourceTag);
+	}
+
+	public void ClearSounds() // RaphaelIT7: This is used by Snd_Restart_f
+	{
+		Array.Clear(SoundPrecache,  0, SoundPrecache.Length);
 	}
 }

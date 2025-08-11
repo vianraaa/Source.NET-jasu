@@ -585,7 +585,7 @@ public unsafe class bf_write : BitBuffer
 				do {
 					WriteChar(pStr[i]);
 					i++;
-				} while (i < pStr.Length);
+				} while (i < pStr.Length && pStr[i] != '\0'); // Stop at any null terminator
 			}
 			if (nullTerminate)
 				WriteChar(0); // null terminate

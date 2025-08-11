@@ -1,6 +1,7 @@
 ﻿using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Commands;
+using Source.Common.Compression;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Networking;
@@ -26,6 +27,7 @@ namespace Source.Engine.Client;
 public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
+	public ConVar password = new(nameof(password), "", FCvar.Archive | FCvar.ServerCannotQuery | FCvar.DontRecord, "Current server access password");
 
 	public const int CL_CONNECTION_RETRIES = 4;
 	public const double CL_MIN_RESEND_TIME = 1.5;
@@ -33,6 +35,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	public const double MIN_CMD_RATE = 10;
 	public const double MAX_CMD_RATE = 100;
 
+	public ClockDriftMgr ClockDriftMgr;
 	public NetSocket Socket;
 	public NetChannel? NetChannel;
 	public uint ChallengeNumber;
@@ -68,6 +71,44 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 	public bool RestrictServerCommands;
 	public bool RestrictClientCommands;
+
+	// Source does it differently but who really cares, this works fine... I think
+	public NetworkStringTableContainer? StringTableContainer;
+
+	public virtual void Clear()
+	{
+		ServerCount = -1;
+		DeltaTick = -1;
+
+		ClockDriftMgr.Clear();
+
+		CurrentSequence = 0;
+		ServerClasses = 0;
+		ServerClassBits = 0;
+		PlayerSlot = 0;
+		LevelFileName = "";
+		LevelBaseName = "";
+		MaxClients = 0;
+
+		if (StringTableContainer != null)
+		{
+			StringTableContainer.RemoveAllTables();
+			StringTableContainer = null;
+		}
+
+		FreeEntityBaselines();
+
+		// RecvTable_Term(false);
+
+		if (NetChannel != null)
+			NetChannel.Reset();
+
+		Paused = false;
+		PausedExpireTime = -1.0;
+		ViewEntity = 0;
+		ChallengeNumber = 0;
+		ConnectTime = 0.0;
+	}
 
 	public virtual bool ProcessConnectionlessPacket(ref NetPacket packet) {
 		bf_read msg = packet.Message;
@@ -224,8 +265,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		if (SignOnState == SignOnState.Spawn) {
 			if (!msg.IsDelta) {
 				SetSignonState(SignOnState.Full, ServerCount);
-			}
-			else {
+			} else {
 				ConWarning("Received delta packet entities while spawning!\n");
 				return false;
 			}
@@ -246,7 +286,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 		if (!Host.clientDLL!.DispatchUserMessage(msg.MessageType, userMsg)) {
 			ConWarning($"Couldn't dispatch user message ({userMsg})\n");
-			return false;
+			return true;
 		}
 
 		return true;
@@ -277,13 +317,76 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 	}
 
 	private bool ProcessUpdateStringTable(svc_UpdateStringTable msg) {
-		return true;
+		int startbit = msg.DataIn.BitsRead;
+		if(StringTableContainer != null) // RaphaelIT7: In the Source Engine during level transmission in rare cases the svc_UpdateStringTable could be received before the server info.
+		{
+			NetworkStringTable? table = (NetworkStringTable?)StringTableContainer.GetTable(msg.TableID);
+			if (table != null)
+			{
+				table.ParseUpdate(msg.DataIn, msg.ChangedEntries);
+			}
+		} else {
+			Warning("m_StringTableContainer is NULL in CBaseClientState::ProcessUpdateStringTable\n");
+		}
+
+		int endbit = msg.DataIn.BitsRead;
+		return (endbit - startbit) == msg.Length;
 	}
 
 	private bool ProcessCreateStringTable(svc_CreateStringTable msg) {
 #if !SWDS
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessStringTable);
 #endif
+		
+		StringTableContainer?.SetAllowCreation(true);
+
+		NetworkStringTable? table = (NetworkStringTable?)StringTableContainer?.CreateStringTableEx(msg.TableName, msg.MaxEntries, msg.UserDataSize, msg.UserDataSizeBits, msg.IsFilenames);
+		
+		StringTableContainer?.SetAllowCreation(false);
+		
+		if (table == null)
+		{
+			Error("Stringtable failed to be created!\n");
+			return false;
+		}
+
+		table.SetTick(GetServerTickCount());
+
+		HookClientStringTable(msg.TableName);
+
+		if (msg.DataCompressed)
+		{
+			int msgUncompressedSize = msg.DataIn.ReadLong();
+			int msgCompressedSize = msg.DataIn.ReadLong();
+			int uncompressedSize = msgUncompressedSize;
+			bool bSuccess = false;
+			if ( msg.DataIn.BytesAvailable > 0 &&
+				 msgCompressedSize <= (uint)msg.DataIn.BytesAvailable &&
+				 msgCompressedSize < uint.MaxValue/2 &&
+				 msgUncompressedSize < uint.MaxValue/2 )
+			{
+				byte[] compressedBuffer = new byte[msgCompressedSize];
+				msg.DataIn.ReadBits( compressedBuffer, msgCompressedSize * 8 );
+
+				byte[] uncompressedBuffer = new byte[msgUncompressedSize];
+				uncompressedSize = (int)CLZSS.Uncompress(uncompressedBuffer, compressedBuffer);
+				bSuccess &= (uncompressedSize == msgUncompressedSize);
+
+				if (bSuccess)
+				{
+					bf_read data = new bf_read(uncompressedBuffer, uncompressedSize);
+					table.ParseUpdate(data, msg.NumEntries);
+				}
+			}
+
+			if (!bSuccess)
+			{
+				Warning("Malformed message in CBaseClientState::ProcessCreateStringTable\n");
+			}
+		} else {
+			table.ParseUpdate(msg.DataIn, msg.NumEntries);
+		}
+
 		return true;
 	}
 
@@ -301,6 +404,8 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		MaxClients = msg.MaxClients;
 		ServerClasses = msg.MaxClasses;
 		ServerClassBits = (int)Math.Log2(ServerClasses) + 1;
+
+		StringTableContainer = (NetworkStringTableContainer)INetworkStringTableContainer.networkStringTableContainerClient;
 
 		if (MaxClients < 1 || MaxClients > Constants.ABSOLUTE_PLAYER_LIMIT) {
 			ConMsg($"Bad maxclients ({MaxClients}) from server.\n");
@@ -407,9 +512,6 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 
 	public bool IsActive() => SignOnState == SignOnState.Full;
 	public bool IsConnected() => SignOnState >= SignOnState.Connected;
-	public virtual void Clear() {
-
-	}
 	public virtual void FullConnect(NetAddress to) {
 		NetChannel = Net.CreateNetChannel(NetSocketType.Client, to, "CLIENT", this) ?? throw new Exception("Failed to create networking channel");
 		Debug.Assert(NetChannel != null);
@@ -488,9 +590,9 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		msg.WriteLong(challengeNr);
 		msg.WriteLong(RetryChallenge);
 		msg.WriteUBitLong(2729496039, 32);
-		msg.WriteString(GetClientName());
-		msg.WriteString(""); // Password in the future
-		msg.WriteString(SteamAppInfo.GetSteamInf(fileSystem).PatchVersion);
+		msg.WriteString(GetClientName(), true, 256);
+		msg.WriteString(password.GetString(), true, 256);
+		msg.WriteString(SteamAppInfo.GetSteamInf(fileSystem).PatchVersion, true, 32);
 
 		switch (authProtocol) {
 			case Protocol.PROTOCOL_HASHEDCDKEY:
@@ -603,5 +705,10 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 			stringCmd.Command = new(str);
 			NetChannel.SendNetMsg(stringCmd);
 		}
+	}
+
+	public void HookClientStringTable(string tableName)
+	{
+		// ToDo
 	}
 }

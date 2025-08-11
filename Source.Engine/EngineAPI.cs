@@ -49,6 +49,7 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 
 	public IEngineAPI.Result Run() {
 		ConVar_Register();
+		SetupNetworkStringTableContainers();
 		return RunListenServer();
 	}
 
@@ -183,6 +184,12 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 				}
 			}
 		}
+	}
+
+	void SetupNetworkStringTableContainers()
+	{
+		INetworkStringTableContainer.networkStringTableContainerClient = new NetworkStringTableContainer();
+		INetworkStringTableContainer.networkStringTableContainerServer = new NetworkStringTableContainer();
 	}
 
 	private object? DetermineInstance(Type type) {
