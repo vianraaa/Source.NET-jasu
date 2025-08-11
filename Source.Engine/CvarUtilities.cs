@@ -92,23 +92,29 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 	}
 
 	private void SetDirect(ConVar var, Span<char> value) {
-		ReadOnlySpan<char> sValue;
-		Span<char> sNew = stackalloc char[1024];
+		// RaphaelIT7: Let's remove everything after the first NULL terminator
+		//     This is because from the Command buffer we now have a 1024 char array and
+		//     we really don't want all that to be stored inside the ConVar
+		string strValue = new(value);
+		int nullIndex = strValue.IndexOf('\0');
+		if (nullIndex >= 0)
+		{
+			strValue = strValue.Substring(0, nullIndex);
+		}
 
 		if (var.IsFlagSet(FCvar.UserInfo)) {
 			if (sv.IsDedicated()) return;
 		}
 
-		sValue = value;
 		if (var.IsFlagSet(FCvar.PrintableOnly)) {
 			// todo
 			throw new NotImplementedException();
 		}
 
 		if (var.IsFlagSet(FCvar.NeverAsString)) {
-			var.SetValue(double.TryParse(sValue, out double n) ? n : 0);
+			var.SetValue(double.TryParse(strValue, out double n) ? n : 0);
 		}
 		else
-			var.SetValue(sValue);
+			var.SetValue(strValue);
 	}
 }
