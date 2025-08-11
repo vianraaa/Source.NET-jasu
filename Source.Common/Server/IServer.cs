@@ -77,7 +77,7 @@ public interface IServer : IConnectionlessPacketHandler
 	/// <returns></returns>
 	public int GetNetStats(in float avgIn, out float avgOut);
 	public int GetNumPlayers();
-	public bool GetPlayerInfo(int clientIndex, out PlayerInfo pinfo);
+	public bool GetPlayerInfo(int clientIndex, out EnginePlayerInfo pinfo);
 
 	public bool IsActive();
 	public bool IsLoading();

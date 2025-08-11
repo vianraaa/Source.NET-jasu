@@ -74,6 +74,11 @@ public interface IMatRenderContext {
 	void Flush(bool flushHardware);
 }
 
+public struct MaterialSystemConfig {
+	public int Width;
+	public int Height;
+}
+
 public interface IMaterialSystem
 {
 	unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height);
@@ -81,4 +86,6 @@ public interface IMaterialSystem
 	void ModShutdown();
 	void BeginFrame(double frameTime);
 	void EndFrame();
+	void SwapBuffers();
+	bool SetMode(in MaterialSystemConfig config);
 }

@@ -4,7 +4,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Source.Common.GUI;
 
-public struct Vertex
+public struct SurfaceVertex
 {
 	public Vector2 Position;
 	public Vector2 TexCoord;

@@ -8,6 +8,6 @@ public class View
 	}
 
 	internal void RenderView() {
-		throw new NotImplementedException();
+
 	}
 }

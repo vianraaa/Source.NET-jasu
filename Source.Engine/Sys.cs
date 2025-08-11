@@ -9,7 +9,6 @@ using System.Drawing;
 using System.Runtime.CompilerServices;
 
 namespace Source.Engine;
-
 public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 {
 	public Lazy<Stopwatch> Timer = new Lazy<Stopwatch>(() => {

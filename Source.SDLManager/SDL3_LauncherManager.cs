@@ -20,17 +20,19 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		IMaterialSystem materials = services.GetRequiredService<IMaterialSystem>();
 		SDL_WindowFlags flags = 0;
 		flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
+		window = new SDL3_Window(services).Create(title, width, height, flags);
 
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_RED_SIZE, 8);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_GREEN_SIZE, 8);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
-		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
 
-		window = new SDL3_Window(services).Create(title, width, height, flags);
+
 		graphicsHandle = (nint)SDL3.SDL_GL_CreateContext(window.HardwareHandle);
 
 		if (graphicsHandle == 0) {
@@ -63,8 +65,11 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 	}
 
-	public void DisplayedSize(out uint width, out uint height) {
-		width = height = 0;
+	public void DisplayedSize(out int width, out int height) {
+		int w, h;
+		SDL3.SDL_GetWindowSize(window.HardwareHandle, &w, &h);
+		width = w;
+		height = h;
 	}
 
 	public nint GetGLContextForWindow(nint windowref) {
@@ -94,8 +99,16 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 	public void MoveWindow(int x, int y) {
 
 	}
-	public void RenderedSize(ref uint width, ref uint height, bool set) {
-		throw new NotImplementedException();
+	int renderedWidth, renderedHeight;
+	public void RenderedSize(bool set, ref int width, ref int height) {
+		if (set) {
+			renderedWidth = width;
+			renderedHeight = height;
+		}
+		else {
+			width = renderedWidth;
+			height = renderedHeight;
+		}
 	}
 
 	public void SetApplicationIcon(ReadOnlySpan<char> appIconFile) {

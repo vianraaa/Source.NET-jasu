@@ -23,7 +23,7 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr)
+	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader)
 {
 	public ClientState cl;
 	public IBaseClientDLL ClientDLL;
@@ -200,7 +200,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	internal void TakeSnapshotAndSwap() {
-
+		Shader.SwapBuffers();
 	}
 }
 

@@ -1,4 +1,7 @@
-﻿using Source.Common.Engine;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Engine;
+using Source.Common.GUI;
 using Source.Common.Networking;
 
 namespace Source.Engine;
@@ -64,7 +67,7 @@ public interface IEngineVGuiInternal : IEngineVGui
 }
 
 
-public class EngineVGui(Sys Sys, Net Net) : IEngineVGuiInternal
+public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
 
@@ -209,7 +212,14 @@ public class EngineVGui(Sys Sys, Net Net) : IEngineVGuiInternal
 		throw new NotImplementedException();
 	}
 
+	ISurface surface;
+	public void Init() {
+		surface = engineAPI.GetRequiredService<ISurface>();
+	}
+
 	public void Simulate() {
-		throw new NotImplementedException();
+		// todo: make this work
+		surface.DrawSetColor(255, 50, 50, 255);
+		surface.DrawFilledRect(256, 256, 512, 512);
 	}
 }

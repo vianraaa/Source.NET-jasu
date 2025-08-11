@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Engine;
+using Source.Common.MaterialSystem;
 using Source.Engine.Client;
 
 namespace Source.Engine;
 
-public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV) : IMod
+public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV, IMaterialSystem materials) : IMod
 {
 	private bool IsServerOnly(IEngineAPI api) => ((EngineAPI)api).Dedicated;
 
@@ -25,8 +26,17 @@ public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV) :
 		bool windowed = true;
 
 		IGame? game = services.GetService<IGame>();
+		bool windowOK = game?.CreateGameWindow(width, height, windowed) ?? false;
+		if (!windowOK)
+			return false;
 
-		return game?.CreateGameWindow(width, height, windowed) ?? false;
+		services.GetRequiredService<IMaterialSystem>().ModInit();
+
+		MaterialSystemConfig config = new MaterialSystemConfig();
+		config.Width = width;
+		config.Height = height;
+
+		return materials.SetMode(in config);
 	}
 
 	public IMod.Result Run() {

@@ -6,6 +6,7 @@ using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Input;
 using Source.Common.Launcher;
+using Source.Common.MaterialSystem;
 
 using System.Reflection;
 
@@ -33,7 +34,6 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 		IEngineAPI.Result result = IEngineAPI.Result.RunOK;
 		IMod mod = provider.GetRequiredService<IMod>();
 		if (mod.Init(startupInfo.InitialMod, startupInfo.InitialGame)) {
-			Msg("Source.NET: ready\n");
 			result = (IEngineAPI.Result)mod.Run();
 			mod.Shutdown();
 		}
@@ -127,7 +127,7 @@ public class EngineAPI(IServiceProvider provider, Common COM, IFileSystem fileSy
 					if (getMethod.IsStatic) {
 						// Pull a static reference out to link
 						ConVar cv = (ConVar)getMethod.Invoke(null, null)!;
-						if(cv.GetName() == null) cv.SetName(prop.Name);
+						if (cv.GetName() == null) cv.SetName(prop.Name);
 						cvar.RegisterConCommand(cv);
 					}
 					else if (type != typeof(ConVar)) {

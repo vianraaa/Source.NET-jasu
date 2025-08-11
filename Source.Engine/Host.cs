@@ -437,8 +437,12 @@ public class Host(
 
 	}
 
-	private void _RunFrame_Render() {
+	public void UpdateScreen() {
+		Scr.UpdateScreen();
+	}
 
+	private void _RunFrame_Render() {
+		UpdateScreen();
 	}
 
 	private void _RunFrame_Sound() {

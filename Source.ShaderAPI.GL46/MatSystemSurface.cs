@@ -1,9 +1,107 @@
-﻿using Source.Common.GUI;
+﻿using Raylib_cs;
 
+using Source.Common.GUI;
+using Source.Common.MaterialSystem;
+
+using System.Drawing;
+
+using static Source.Dbg;
 namespace Source.MaterialSystem;
+
+
+public struct PaintState
+{
+	public IPanel Panel;
+	public int TranslateX;
+	public int TranslateY;
+	public int ScissorLeft;
+	public int ScissorRight;
+	public int ScissorTop;
+	public int ScissorBottom;
+}
+
+public struct ScissorRect
+{
+	public int Left;
+	public int Top;
+	public int Right;
+	public int Bottom;
+}
 
 public class MatSystemSurface(MaterialSystem materials) : ISurface
 {
+	bool InDrawing;
+	bool In3DPaintMode;
+	float zPos;
+	ScissorRect scissorRect;
+	bool scissor = false;
+	bool fullScreenScissor = false;
+	public int TranslateX;
+	public int TranslateY;
+	public float DrawAlphaMultiplier = 1;
+	public Color DrawColor = new(255, 255, 255, 255);
+	public Color DrawTextColor = new(255, 255, 255, 255);
+	public IFont? DrawTextFont = null;
+	public int TextPosX;
+	public int TextPosY;
+
+	public bool FullyTransparent => DrawColor.A <= 0;
+
+	public void InitVertex(ref SurfaceVertex vertex, int x, int y, float u, float v) {
+		vertex.Position = new(x + TranslateX, y + TranslateY);
+		vertex.TexCoord = new(u, v);
+	}
+
+	//public void InternalSetMaterial(IMaterial? material = null) {
+		// todo
+	//}
+
+	public bool ClipRect(in SurfaceVertex inUL, in SurfaceVertex inLR, out SurfaceVertex outUL, out SurfaceVertex outLR) {
+		if (scissor) {
+			outUL = new();
+			outLR = new();
+
+			outUL.Position.X = scissorRect.Left > inUL.Position.X ? scissorRect.Left : inUL.Position.X;
+			outLR.Position.X = scissorRect.Right <= inLR.Position.X ? scissorRect.Right : inLR.Position.X;
+			outUL.Position.Y = scissorRect.Top > inUL.Position.Y ? scissorRect.Top : inUL.Position.Y;
+			outLR.Position.Y = scissorRect.Bottom <= inLR.Position.Y ? scissorRect.Bottom : inLR.Position.Y;
+
+			// check non intersecting
+			if (outUL.Position.X > outLR.Position.X || outUL.Position.Y > outLR.Position.Y)
+				return false;
+
+			outUL.TexCoord = inUL.TexCoord;
+			outLR.TexCoord = inLR.TexCoord;
+		}
+		else {
+			outUL = inUL;
+			outLR = inLR;
+		}
+
+		return true;
+	}
+
+	public void DrawQuad(in SurfaceVertex ul, in SurfaceVertex lr, in Color color) {
+		Rlgl.Begin(DrawMode.Quads);
+
+		Rlgl.Normal3f(0, 0, 1);
+		Rlgl.Color4ub(color);
+
+		Rlgl.TexCoord2f(ul.TexCoord.X, ul.TexCoord.Y);
+		Rlgl.Vertex3f(ul.Position.X, ul.Position.Y, zPos);
+
+		Rlgl.TexCoord2f(ul.TexCoord.X, lr.TexCoord.Y);
+		Rlgl.Vertex3f(ul.Position.X, lr.Position.Y, zPos);
+
+		Rlgl.TexCoord2f(lr.TexCoord.X, lr.TexCoord.Y);
+		Rlgl.Vertex3f(lr.Position.X, lr.Position.Y, zPos);
+
+		Rlgl.TexCoord2f(lr.TexCoord.X, ul.TexCoord.Y);
+		Rlgl.Vertex3f(lr.Position.X, ul.Position.Y, zPos);
+
+		Rlgl.End();
+	}
+
 	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
 		throw new NotImplementedException();
 	}
@@ -41,7 +139,21 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public void DrawFilledRect(int x0, int y0, int x1, int y1) {
-		throw new NotImplementedException();
+		Assert(InDrawing);
+
+		if (FullyTransparent)
+			return;
+
+		Span<SurfaceVertex> rect = stackalloc SurfaceVertex[2];
+		Span<SurfaceVertex> clippedRect = stackalloc SurfaceVertex[2];
+		InitVertex(ref rect[0], x0, y0, 0, 0);
+		InitVertex(ref rect[1], x1, y1, 0, 0);
+
+		if (!ClipRect(in rect[0], in rect[1], out clippedRect[0], out clippedRect[1]))
+			return;
+
+		// InternalSetMaterial();
+		DrawQuad(in clippedRect[0], in clippedRect[1], in DrawColor);
 	}
 
 	public void DrawFlushText() {
@@ -81,11 +193,11 @@ public class MatSystemSurface(MaterialSystem materials) : ISurface
 	}
 
 	public void DrawSetColor(int r, int g, int b, int a) {
-		throw new NotImplementedException();
+		DrawColor.SetColor(r, g, b, a);
 	}
 
 	public void DrawSetColor(in Color color) {
-		throw new NotImplementedException();
+		DrawColor = color;
 	}
 
 	public void DrawSetTextColor(int r, int g, int b, int a) {

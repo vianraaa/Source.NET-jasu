@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -216,6 +217,7 @@ public static unsafe partial class Rlgl
     /// <summary>Define one vertex (color) - 4 byte</summary>
     [DllImport(NativeLibName, EntryPoint = "rlColor4ub", CallingConvention = CallingConvention.Cdecl)]
     public static extern void Color4ub(byte r, byte g, byte b, byte a);
+	public static void Color4ub(in Color c) => Color4ub(c.R, c.G, c.B, c.A);
 
     /// <summary>Define one vertex (color) - 3 float</summary>
     [DllImport(NativeLibName, EntryPoint = "rlColor3f", CallingConvention = CallingConvention.Cdecl)]

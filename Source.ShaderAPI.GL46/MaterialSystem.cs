@@ -3,23 +3,38 @@
 using Raylib_cs;
 
 using Source.Common.GUI;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
+using System.Numerics;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
-public class MaterialSystem : IMaterialSystem
+public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 {
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
+		services.AddSingleton(x => (x.GetRequiredService<IMaterialSystem>() as MaterialSystem)!);
 		services.AddSingleton<ISurface, MatSystemSurface>();
 	}
 
-	public void ModInit() {
+	ILauncherManager launcherMgr;
 
+	public void ModInit() {
+		launcherMgr = services.GetRequiredService<ILauncherManager>();
+	}
+
+	public bool SetMode(in MaterialSystemConfig config) {
+
+		// For now, communicate to launcherMgr our desired display mode
+		// as the current screen mode. More magic later for SetMode, when the time comes
+		int width = config.Width, height = config.Height;
+		launcherMgr.RenderedSize(true, ref width, ref height);
+
+		return true;
 	}
 
 	public void ModShutdown() {
@@ -50,7 +65,8 @@ public class MaterialSystem : IMaterialSystem
 
 		Rlgl.LoadExtensions(loadExts);
 		Rlgl.GlInit(width, height);
-		Rlgl.Viewport(0, 0 , width, height);
+
+		Rlgl.Viewport(0, 0, width, height);
 		Rlgl.MatrixMode(MatrixMode.Projection);
 		Rlgl.LoadIdentity();
 		Rlgl.Ortho(0, width, height, 0, 0, 1);
@@ -63,11 +79,30 @@ public class MaterialSystem : IMaterialSystem
 		return true;
 	}
 
-	public void BeginFrame(double frameTime) {
-		Raylib.BeginDrawing();
+	public unsafe void BeginFrame(double frameTime) {
+		Rlgl.LoadIdentity();
+		var mfx = Raymath.MatrixToFloatV(GetScreenMatrix());
+		Rlgl.MultMatrixf(mfx.v);
+
+		Rlgl.ClearColor(255, 0, 0, 255);
+		Rlgl.ClearScreenBuffers();
+	}
+
+	private Matrix4x4 GetScreenMatrix() {
+		launcherMgr.DisplayedSize(out int screenWidth, out _);
+		int renderWidth = 0, renderHeight = 0;
+		launcherMgr.RenderedSize(false, ref renderWidth, ref renderHeight);
+		float scaleRatio = (float)renderWidth / (float)screenWidth;
+		return Raymath.MatrixScale(scaleRatio, scaleRatio, 1);
 	}
 
 	public void EndFrame() {
-		Raylib.EndDrawing();
+		Rlgl.DrawRenderBatchActive();
+
+		SwapBuffers();
+	}
+
+	public void SwapBuffers() {
+		Raylib.SwapScreenBuffer();
 	}
 }

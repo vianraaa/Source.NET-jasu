@@ -10,9 +10,6 @@ public class Render (
 {
 	int framecount = 1;
 
-	ConVar r_decals = new("2048");
-
-
 	internal void FrameBegin() {
 
 		framecount++;

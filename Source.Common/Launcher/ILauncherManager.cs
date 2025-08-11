@@ -24,8 +24,8 @@ public interface ILauncherManager
 	void GetMouseDelta(out int x, out int y, bool ignoreNextMouseDelta = false);
 
 	void GetNativeDisplayInfo(int nDisplay, out uint width, out uint height, out uint refreshHz);
-	void RenderedSize(ref uint width, ref uint height, bool set);
-	void DisplayedSize(out uint width, out uint height);
+	void RenderedSize(bool set, ref int width, ref int height);
+	void DisplayedSize(out int width, out int height);
 
 	nint GetMainContext();
 	nint GetGLContextForWindow(nint windowref);
