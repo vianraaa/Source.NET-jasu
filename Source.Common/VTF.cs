@@ -129,10 +129,10 @@ public interface IVTFTexture : IDisposable
 	float BumpScale();
 
 	int LowResWidth();
-	int LowRetHeight();
+	int LowResHeight();
 	ImageFormat LowResFormat();
 
-	ReadOnlySpan<Vector3> Reflectivity();
+	Vector3 Reflectivity();
 
 	bool IsCubeMap();
 	bool IsNormalMap();

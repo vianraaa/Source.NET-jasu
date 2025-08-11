@@ -40,9 +40,7 @@ public class VTFTexture : IVTFTexture
 	int CoarsestMipmapLevel;
 
 	List<ResourceEntryInfo> ResourcesInfo = [];
-	float IVTFTexture.BumpScale() {
-		throw new NotImplementedException();
-	}
+	float IVTFTexture.BumpScale() => BumpScale;
 
 	public void ComputeAlphaFlags() {
 		throw new NotImplementedException();
@@ -80,17 +78,13 @@ public class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	int IVTFTexture.Depth() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.Depth() => Depth;
 
 	public void Dispose() {
 		throw new NotImplementedException();
 	}
 
-	int IVTFTexture.FaceCount() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.FaceCount() => FaceCount;
 
 	public int FaceSizeInBytes(int mipLevel) {
 		throw new NotImplementedException();
@@ -100,17 +94,11 @@ public class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	int IVTFTexture.Flags() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.Flags() => Flags;
 
-	ImageFormat IVTFTexture.Format() {
-		throw new NotImplementedException();
-	}
+	ImageFormat IVTFTexture.Format() => Format;
 
-	int IVTFTexture.FrameCount() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.FrameCount() => FrameCount;
 
 	public void GenerateMipmaps() {
 		throw new NotImplementedException();
@@ -124,10 +112,7 @@ public class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	int IVTFTexture.Height() {
-		throw new NotImplementedException();
-	}
-
+	int IVTFTexture.Height() => Height;
 	Span<byte> IVTFTexture.ImageData() {
 		throw new NotImplementedException();
 	}
@@ -176,21 +161,13 @@ public class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public int LowResWidth() {
-		throw new NotImplementedException();
-	}
+	public int LowResWidth() => LowResImageWidth;
 
-	public int LowRetHeight() {
-		throw new NotImplementedException();
-	}
+	public int LowResHeight() => LowResImageHeight;
 
-	int IVTFTexture.MipCount() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.MipCount() => MipCount;
 
-	ReadOnlySpan<Vector3> IVTFTexture.Reflectivity() {
-		throw new NotImplementedException();
-	}
+	Vector3 IVTFTexture.Reflectivity() => Reflectivity;
 
 	public int RowSizeInBytes(int mipLevel) {
 		throw new NotImplementedException();
@@ -409,7 +386,5 @@ public class VTFTexture : IVTFTexture
 		}
 	}
 
-	int IVTFTexture.Width() {
-		throw new NotImplementedException();
-	}
+	int IVTFTexture.Width() => Width;
 }
