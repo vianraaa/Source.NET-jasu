@@ -43,6 +43,7 @@ public class Bootloader : IDisposable
 		bool needsRestart;
 		do {
 			engineAPI = new EngineBuilder(commandLine)
+				.WithAssembly("Source.VTF")
 				.WithComponent<IFileSystem, BaseFileSystem>()
 				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
 				.WithComponent<IInputSystem, SDL3_InputSystem>()

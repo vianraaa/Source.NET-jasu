@@ -86,7 +86,7 @@ public enum LookDir
 	NegZ
 }
 
-public interface IVTFTexture
+public interface IVTFTexture : IDisposable
 {
 	bool Init(int width, int height, int depth, ImageFormat format, int flags, int frameCount, int forceMipCount = -1);
 
@@ -102,9 +102,9 @@ public interface IVTFTexture
 
 	// These are just utils for unserializing/deserializing from filesystem handles directly.
 	// Which might be nice because it does null value checking, and also checks CanRead/Write status on the stream itself
-	bool Unserialize(IFileHandle? handle, bool headerOnly = false, int skipMipLevels = 0) 
+	bool Unserialize(IFileHandle? handle, bool headerOnly = false, int skipMipLevels = 0)
 		=> handle != null && handle.Stream.CanRead && Unserialize(handle.Stream, headerOnly, skipMipLevels);
-	bool Serialize(IFileHandle? handle) 
+	bool Serialize(IFileHandle? handle)
 		=> handle != null && handle.Stream.CanWrite && Serialize(handle.Stream);
 
 	// Yes, ideally, we would have nint's. But a lot of .NET uses ints, and Span<byte>'s are no exception
@@ -123,7 +123,7 @@ public interface IVTFTexture
 	ImageFormat Format();
 	int FaceCount();
 	int FrameCount();
-		int Flags();
+	int Flags();
 
 	float BumpScale();
 
@@ -147,7 +147,7 @@ public interface IVTFTexture
 	Span<byte> ImageData(int frame, int face, int mipLevel);
 	Span<byte> ImageData(int frame, int face, int mipLevel, int x, int y, int z = 0);
 	Span<byte> LowResImageData();
-	
+
 	void ConvertImageFormat(ImageFormat format, bool normalToDUDV);
 	void GenerateMipmaps();
 
@@ -157,4 +157,22 @@ public interface IVTFTexture
 
 	public const int VTF_MAJOR_VERSION = 7;
 	public const int VTF_MINOR_VERSION = 4;
+
+	// Implementation of VTF can add these factory methods.
+	public static event CreateVTFTextureDelegate? OnCreate;
+	public static event DestroyVTFTextureDelegate? OnDestroy;
+
+	public static IVTFTexture Create() {
+		if (OnCreate == null)
+			throw new NotImplementedException("No VTF factory available");
+		return OnCreate.Invoke();
+	}
+	public static void Destroy(IVTFTexture texture) {
+		if (OnDestroy == null)
+			throw new NotImplementedException("No VTF factory available");
+		OnDestroy.Invoke(texture);
+	}
 }
+
+public delegate IVTFTexture CreateVTFTextureDelegate();
+public delegate void DestroyVTFTextureDelegate(IVTFTexture texture);

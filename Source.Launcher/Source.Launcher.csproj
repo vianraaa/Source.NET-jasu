@@ -15,14 +15,15 @@
 		<ProjectReference Include="..\Source.SDLInputSystem\Source.SDLInputSystem.csproj" />
 		<ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
 		<ProjectReference Include="..\Source.ShaderAPI.GL46\Source.MaterialSystem.csproj" />
+		<ProjectReference Include="..\Source.VTF\Source.VTF.csproj" />
 	</ItemGroup>
 
 	<!-- Copy Game.Assets -->
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 		<ItemGroup>
-			<GameAssets Include="$(MSBuildThisFileDirectory)..\Game.Assets\**\*"/>
+			<GameAssets Include="$(MSBuildThisFileDirectory)..\Game.Assets\**\*" />
 		</ItemGroup>
 	
-		<Copy SourceFiles="@(GameAssets)" DestinationFolder="$(OutDir)%(RecursiveDir)" SkipUnchangedFiles="true"/>
+		<Copy SourceFiles="@(GameAssets)" DestinationFolder="$(OutDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
 	</Target>
 </Project>
