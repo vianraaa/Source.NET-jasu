@@ -41,4 +41,12 @@ public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 	public bool Init() {
 		return true;
 	}
+
+	public void EncodeUserCmdToBuffer(bf_write buf, int slot) {
+		input.EncodeUserCmdToBuffer(buf, slot);
+	}
+
+	public void DecodeUserCmdFromBuffer(bf_read buf, int slot) {
+		input.DecodeUserCmdFromBuffer(buf, slot);
+	}
 }

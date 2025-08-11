@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Game.Shared;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
@@ -18,19 +20,19 @@ public class HLInput(IServiceProvider provider, ClientState cl) : IInput {
 
 
 	public const int MULTIPLAYER_BACKUP = 90;
-	UserCmd[] pCommands = new UserCmd[MULTIPLAYER_BACKUP];
+	UserCmd[] Commands = new UserCmd[MULTIPLAYER_BACKUP];
 
 	public unsafe ref UserCmd GetUserCmd(int sequenceNumber) {
-		ref UserCmd usercmd = ref pCommands[MathLib.Modulo(sequenceNumber, MULTIPLAYER_BACKUP)];
+		ref UserCmd usercmd = ref Commands[MathLib.Modulo(sequenceNumber, MULTIPLAYER_BACKUP)];
 		if (usercmd.CommandNumber != sequenceNumber)
-			return ref Unsafe.NullRef<UserCmd>();
+			return ref UserCmd.NULL;
 
 		return ref usercmd;
 	}
 
 	public void CreateMove(int sequenceNumber, double inputSampleFrametime, bool active) {
 		int nextcmdnr = cl.LastOutgoingCommand + cl.ChokedCommands + 1;
-		ref UserCmd cmd = ref pCommands[MathLib.Modulo(nextcmdnr, MULTIPLAYER_BACKUP)];
+		ref UserCmd cmd = ref Commands[MathLib.Modulo(nextcmdnr, MULTIPLAYER_BACKUP)];
 		{
 			cmd.Reset();
 			cmd.CommandNumber = nextcmdnr;
@@ -76,5 +78,15 @@ public class HLInput(IServiceProvider provider, ClientState cl) : IInput {
 		}
 
 		return true;
+	}
+
+	public void EncodeUserCmdToBuffer(bf_write buf, int sequenceNumber) {
+		ref UserCmd cmd = ref GetUserCmd(sequenceNumber);
+		UserCmd.WriteUsercmd(buf, in cmd, in UserCmd.NULL);
+	}
+
+	public void DecodeUserCmdFromBuffer(bf_read buf, int sequenceNumber) {
+		ref UserCmd cmd = ref Commands[MathLib.Modulo(sequenceNumber, MULTIPLAYER_BACKUP)];
+		UserCmd.ReadUsercmd(buf, ref cmd, ref UserCmd.NULL);
 	}
 }

@@ -5,15 +5,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 using static Source.Constants;
 
-namespace Source.Common.Networking;
+namespace Game.Shared;
 
 public struct UserCmd
 {
+	public static ref UserCmd NULL => ref Unsafe.NullRef<UserCmd>();
 	public void Reset() {
 		CommandNumber = 0;
 		TickCount = 0;
@@ -144,7 +146,7 @@ public struct UserCmd
 	public bool Forced;
 
 	public static void ReadUsercmd(bf_read buf, ref UserCmd move, ref UserCmd from) {
-
+		// TODO: implement
 	}
 
 	static bool HasChanged<T>(T[] from, T[] to) where T : IEquatable<T> {
