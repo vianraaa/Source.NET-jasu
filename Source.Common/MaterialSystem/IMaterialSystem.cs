@@ -68,12 +68,6 @@ public record struct PixelShaderHandle
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
 }
 
-public interface IMatRenderContext {
-	void BeginRender();
-	void EndRender();
-	void Flush(bool flushHardware);
-}
-
 public struct MaterialSystemConfig {
 	public int Width;
 	public int Height;
@@ -81,6 +75,7 @@ public struct MaterialSystemConfig {
 
 public interface IMaterialSystem
 {
+	IMatRenderContext GetRenderContext();
 	unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height);
 	void ModInit();
 	void ModShutdown();
@@ -88,4 +83,70 @@ public interface IMaterialSystem
 	void EndFrame();
 	void SwapBuffers();
 	bool SetMode(in MaterialSystemConfig config);
+}
+
+public interface IMatRenderContext
+{
+	void BeginRender();
+	void EndRender();
+	void Flush(bool flushHardware);
+
+	void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false);
+
+	void Viewport(int x, int y, int width, int height);
+	void GetViewport(out int x, out int y, out int width, out int height);
+
+	void ClearColor3ub(byte r, byte g, byte b);
+	void ClearColor4ub(byte r, byte g, byte b, byte a);
+}
+
+public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
+{
+	readonly IMatRenderContext ctx;
+	public readonly IMatRenderContext Context => ctx;
+
+	public MatRenderContextPtr(IMatRenderContext init) {
+		ctx = init;
+		init.BeginRender();
+	}
+	public MatRenderContextPtr(IMaterialSystem from) {
+		ctx = from.GetRenderContext();
+		ctx.BeginRender();
+	}
+
+	public readonly void Dispose() {
+		ctx.EndRender();
+	}
+
+	public void BeginRender() {
+		ctx.BeginRender();
+	}
+
+	public void EndRender() {
+		ctx.EndRender();
+	}
+
+	public void Flush(bool flushHardware) {
+		ctx.Flush(flushHardware);
+	}
+
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) {
+		ctx.ClearBuffers(clearColor, clearDepth, clearStencil);
+	}
+
+	public void Viewport(int x, int y, int width, int height) {
+		ctx.Viewport(x, y, width, height);
+	}
+
+	public void GetViewport(out int x, out int y, out int width, out int height) {
+		ctx.GetViewport(out x, out y, out width, out height);
+	}
+
+	public void ClearColor3ub(byte r, byte g, byte b) {
+		ctx.ClearColor3ub(r, g, b);
+	}
+
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
+		ctx.ClearColor4ub(r, g, b, a);
+	}
 }

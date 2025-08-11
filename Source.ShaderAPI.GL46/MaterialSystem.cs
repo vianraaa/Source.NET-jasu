@@ -27,6 +27,7 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 
 	public void ModInit() {
 		launcherMgr = services.GetRequiredService<ILauncherManager>();
+		matContext = new(this);
 	}
 
 	public bool SetMode(in MaterialSystemConfig config) {
@@ -105,5 +106,52 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 
 	public void SwapBuffers() {
 		launcherMgr.Swap();
+	}
+
+	MatRenderContext matContext;
+	public IMatRenderContext GetRenderContext() => matContext!;
+}
+
+public class MatRenderContext(MaterialSystem materials) : IMatRenderContext
+{
+	public void BeginRender() {
+		
+	}
+
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) {
+		uint flags = 0;
+
+		if (clearColor) 
+			flags |= Gl46.GL_COLOR_BUFFER_BIT;
+		if (clearColor) 
+			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
+		if (clearColor) 
+			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
+
+		Gl46.glClear(flags);
+	}
+
+	public void ClearColor3ub(byte r, byte g, byte b) {
+		Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
+	}
+
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
+		Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
+	}
+
+	public void EndRender() {
+		
+	}
+
+	public void Flush(bool flushHardware) {
+		
+	}
+
+	public void GetViewport(out int x, out int y, out int width, out int height) {
+		x = y = width = height = 0;
+	}
+
+	public void Viewport(int x, int y, int width, int height) {
+		
 	}
 }

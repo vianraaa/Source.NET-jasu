@@ -64,6 +64,7 @@ public interface IEngineVGuiInternal : IEngineVGui
 	public void FinishCustomProgress();
 	public void ShowErrorMessage();
 	void Simulate();
+	void Paint(PaintMode paintMode);
 }
 
 
@@ -218,7 +219,10 @@ public class EngineVGui(Sys Sys, Net Net, IEngineAPI engineAPI) : IEngineVGuiInt
 	}
 
 	public void Simulate() {
-		// todo: make this work
+
+	}
+
+	public void Paint(PaintMode paintMode) {
 		surface.DrawSetColor(255, 50, 50, 255);
 		surface.DrawFilledRect(256, 256, 512, 512);
 	}
