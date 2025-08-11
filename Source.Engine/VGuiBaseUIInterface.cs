@@ -274,7 +274,7 @@ public class EngineVGui(
 		int w = 0, h = 0;
 		launcherMgr.RenderedSize(false, ref w, ref h);
 
-		staticPanel = new StaticPanel(null, "staticPanel");
+		staticPanel = new engineAPI.New<StaticPanel>(null, "staticPanel");
 		staticPanel.SetBounds(0, 0, w, h);
 		staticPanel.SetPaintBorderEnabled(false);
 		staticPanel.SetPaintBackgroundEnabled(false);
@@ -285,7 +285,7 @@ public class EngineVGui(
 		staticPanel.SetVisible(true);
 		staticPanel.SetParent(surface.GetEmbeddedPanel());
 
-		staticClientDLLPanel = new EnginePanel(staticPanel, "staticClientDLLPanel");
+		staticClientDLLPanel = engineAPI.New<EnginePanel>(staticPanel, "staticClientDLLPanel");
 		staticClientDLLPanel.SetBounds(0, 0, w, h);
 		staticClientDLLPanel.SetPaintBorderEnabled(false);
 		staticClientDLLPanel.SetPaintBackgroundEnabled(false);
@@ -297,7 +297,7 @@ public class EngineVGui(
 
 		CreateAskConnectPanel(staticPanel);
 
-		staticClientDLLToolsPanel = new EnginePanel(staticPanel, "staticClientDLLToolsPanel");
+		staticClientDLLToolsPanel = engineAPI.New<EnginePanel>(staticPanel, "staticClientDLLToolsPanel");
 		staticClientDLLToolsPanel.SetBounds(0, 0, w, h);
 		staticClientDLLToolsPanel.SetPaintBorderEnabled(false);
 		staticClientDLLToolsPanel.SetPaintBackgroundEnabled(false);
@@ -307,7 +307,7 @@ public class EngineVGui(
 		staticClientDLLToolsPanel.SetCursor(CursorCode.None);
 		staticClientDLLToolsPanel.SetZPos(28);
 
-		staticEngineToolsPanel = new EnginePanel(staticPanel, "Engine Tools");
+		staticEngineToolsPanel = engineAPI.New<EnginePanel>(staticPanel, "Engine Tools");
 		staticEngineToolsPanel.SetBounds(0, 0, w, h);
 		staticEngineToolsPanel.SetPaintBorderEnabled(false);
 		staticEngineToolsPanel.SetPaintBackgroundEnabled(false);
@@ -316,7 +316,7 @@ public class EngineVGui(
 		staticEngineToolsPanel.SetCursor(CursorCode.None);
 		staticEngineToolsPanel.SetZPos(75);
 
-		staticGameUIPanel = new EnginePanel(staticPanel, "GameUI Panel");
+		staticGameUIPanel = engineAPI.New<EnginePanel>(staticPanel, "GameUI Panel");
 		staticGameUIPanel.SetBounds(0, 0, w, h);
 		staticGameUIPanel.SetPaintBorderEnabled(false);
 		staticGameUIPanel.SetPaintBackgroundEnabled(false);
@@ -325,7 +325,7 @@ public class EngineVGui(
 		staticGameUIPanel.SetCursor(CursorCode.None);
 		staticGameUIPanel.SetZPos(100);
 
-		staticGameDLLPanel = new EnginePanel(staticPanel, "staticGameDLLPanel");
+		staticGameDLLPanel = engineAPI.New<EnginePanel>(staticPanel, "staticGameDLLPanel");
 		staticGameDLLPanel.SetBounds(0, 0, w, h);
 		staticGameDLLPanel.SetPaintBorderEnabled(false);
 		staticGameDLLPanel.SetPaintBackgroundEnabled(false);

@@ -1,4 +1,5 @@
-﻿using Source.Common.GUI;
+﻿using Source.Common.Engine;
+using Source.Common.GUI;
 
 namespace Source.GUI.Controls;
 
@@ -27,6 +28,8 @@ public enum PanelFlags
 
 public class Panel : IPanel
 {
+	[Imported] public readonly ISurface Surface;
+
 	public void Init(int x, int y, int w, int h) {
 		panelName = null;
 		tooltipText = null;
