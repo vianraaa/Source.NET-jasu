@@ -48,11 +48,14 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		return this;
 	}
 
-	static void PreInject<T>(IServiceCollection services) {
-		Type t = typeof(T);
-		var preInject = t.GetMethod("DLLInit", BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
-		if (preInject != null) 
-			preInject(services);
+	HashSet<Type> injectedTypelist = [];
+	void PreInject<T>(IServiceCollection services) {
+		if (injectedTypelist.Add(typeof(T))) {
+			Type t = typeof(T);
+			var preInject = t.GetMethod("DLLInit", BindingFlags.Public | BindingFlags.Static)?.CreateDelegate<PreInject>();
+			if (preInject != null)
+				preInject(services);
+		}
 	}
 
 	public EngineBuilder WithGameUIDLL<UIDLL>() where UIDLL : class, IGameUI {
@@ -70,6 +73,12 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 	public EngineBuilder WithGameDLL<SvDLL>() where SvDLL : class, IServerGameDLL {
 		PreInject<SvDLL>(this);
 		WithComponent<IServerGameDLL, SvDLL>();
+		return this;
+	}
+
+	public EngineBuilder WithStdShader<StdShdrDLL>() where StdShdrDLL : class, IShaderDLL {
+		PreInject<StdShdrDLL>(this);
+		WithComponent<IShaderDLL, StdShdrDLL>();
 		return this;
 	}
 

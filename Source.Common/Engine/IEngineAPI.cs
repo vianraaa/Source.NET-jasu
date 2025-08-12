@@ -39,7 +39,11 @@ public static class ImportUtils {
 	// also is this a really bad idea? I don't know... but it sure is convenient
 	public static T New<T>(this IServiceProvider services, params object?[] args) {
 		Type type = typeof(T);
-		T instance = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+		return (T)New(services, type, args);
+	}
+
+	public static object New(this IServiceProvider services, Type type, params object?[] args) {
+		object instance = RuntimeHelpers.GetUninitializedObject(type);
 		foreach (var field in type.GetFields()) {
 			var attr = field.GetCustomAttribute<ImportedAttribute>();
 			if (attr != null) {

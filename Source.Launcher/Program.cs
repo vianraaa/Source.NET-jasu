@@ -20,6 +20,7 @@ using System.Runtime.InteropServices;
 using Source.Common.MaterialSystem;
 using Source;
 using Game.UI;
+using Source.StdShader.Gl46;
 
 namespace Source.Launcher;
 
@@ -52,6 +53,9 @@ public class Bootloader : IDisposable
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.WithGameUIDLL<GameUI>()
+
+				.WithStdShader<StdShaderGl46>()
+
 				.Build(dedicated: false);
 			PreInit();
 			var res = engineAPI.Run();
