@@ -110,19 +110,25 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 		var assemblies = AppDomain.CurrentDomain.GetAssemblies()
 			.Where(ReflectionUtils.IsOkAssembly);
 
+		Type CVAR = typeof(ConVar);
+		Type CCMD = typeof(ConCommand);
+
 		foreach (var assembly in assemblies) {
 			cvar.SetAssemblyIdentifier(assembly);
 			foreach (var type in assembly.GetTypes()) {
-
 				var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 				var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 				var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 
 				// If any props/fields exist, run the cctor so we can pull out static cvars/concmds
-				if (props.Any() || fields.Any())
+				if ((props.Length + fields.Length) > 0)
 					RuntimeHelpers.RunClassConstructor(type.TypeHandle);
 
-				foreach (var prop in props.Where(x => x.PropertyType == typeof(ConVar))) {
+				for (int i = 0; i < props.Length; i++) {
+					PropertyInfo prop = props[i];
+					if (prop.PropertyType != CVAR)
+						continue;
+
 					var getMethod = prop.GetGetMethod();
 
 					if (getMethod == null)
@@ -142,7 +148,10 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 					}
 				}
 
-				foreach (var field in fields.Where(x => x.FieldType == typeof(ConVar))) {
+				for (int i = 0; i < fields.Length; i++) {
+					FieldInfo field = fields[i];
+					if (field.FieldType != CVAR)
+						continue;
 					if (field.IsStatic) {
 						// Pull a static reference out to link
 						ConVar cv = (ConVar)field.GetValue(null)!;
@@ -157,7 +166,12 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 					}
 				}
 
-				foreach (var method in methods.Where(x => x.GetCustomAttribute<ConCommandAttribute>() != null)) {
+				for (int i = 0; i < methods.Length; i++) {
+					MethodInfo method = methods[i];
+					ConCommandAttribute? cmdAttr = method.GetCustomAttribute<ConCommandAttribute>();
+					if (cmdAttr == null)
+						continue;
+
 					ConCommandAttribute attribute = method.GetCustomAttribute<ConCommandAttribute>()!; // ^^ never null!
 					object? instance = method.IsStatic ? null : DetermineInstance(type);
 
