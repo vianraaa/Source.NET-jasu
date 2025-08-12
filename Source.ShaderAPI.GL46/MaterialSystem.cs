@@ -137,6 +137,8 @@ public class MaterialSystem : IMaterialSystem
 			manuallyCreated = material.IsManuallyCreated()
 		};
 	}
+
+	public IMaterialInternal errorMaterial;
 }
 
 public enum MatrixStackFlags : uint
@@ -259,5 +261,30 @@ public class MatRenderContext : IMatRenderContext
 		newTOS.ViewH = height;
 		RenderTargetStack.Pop();
 		RenderTargetStack.Push(newTOS);
+	}
+
+	IMaterialInternal? currentMaterial;
+
+	public void Bind(IMaterial iMaterial, object? proxyData) {
+		IMaterialInternal material = (IMaterialInternal)iMaterial;
+		// material = material.GetRealTimeVersion(); // TODO: figure out how to do this.
+		if(material == null) {
+			Dbg.Warning("Programming error: MatRenderContext.Bind NULL material\n");
+			material = ((MaterialSystem)materials).errorMaterial;
+		}
+
+		if (GetCurrentMaterialInternal() != material) {
+			if (!material.IsPrecached()) {
+				material.Precache();
+			}
+			SetCurrentMaterialInternal(material);
+		}
+	}
+
+	private IMaterialInternal? GetCurrentMaterialInternal() {
+		return currentMaterial;
+	}
+	private void SetCurrentMaterialInternal(IMaterialInternal? mat) {
+		currentMaterial = mat;
 	}
 }

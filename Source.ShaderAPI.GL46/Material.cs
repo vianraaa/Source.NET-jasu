@@ -39,6 +39,28 @@ public class Material : IMaterialInternal
 		return (flags & MaterialFlags.IsManuallyCreated) != 0;
 	}
 
+	public bool IsPrecached() {
+		return (flags & MaterialFlags.IsPrecached) != 0;
+	}
+	public bool IsPrecachedVars() {
+		return (flags & MaterialFlags.VarsIsPrecached) != 0;
+	}
+
+	public void Precache() {
+		if (IsPrecached())
+			return;
+
+		if (!PrecacheVars())
+			return;
+	}
+
+	private bool PrecacheVars(KeyValues? keyValues = null, KeyValues? patchKeyValues = null) {
+		if (IsPrecachedVars())
+			return true;
+
+		return false;
+	}
+
 	MaterialFlags flags;
 	string name;
 	string texGroupName;

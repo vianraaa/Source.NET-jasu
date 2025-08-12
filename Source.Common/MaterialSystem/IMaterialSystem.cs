@@ -127,6 +127,7 @@ public interface IMatRenderContext
 	void MatrixMode(MaterialMatrixMode mode);
 	void PushMatrix();
 	void LoadIdentity();
+	void Bind(IMaterial material, object? proxyData);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -193,5 +194,9 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public void LoadIdentity() {
 		ctx.LoadIdentity();
+	}
+
+	public void Bind(IMaterial material, object? proxyData) {
+		ctx.Bind(material, proxyData);
 	}
 }

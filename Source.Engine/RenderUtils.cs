@@ -23,6 +23,14 @@ public class RenderUtils(IMaterialSystem materials)
 		if (width <= 0 || height <= 0)
 			return;
 
-		renderContext.MatrixMode(MaterialMatrixMode.Model);
+		renderContext.MatrixMode(MaterialMatrixMode.View);
+		renderContext.PushMatrix();
+		renderContext.LoadIdentity();
+
+		renderContext.MatrixMode(MaterialMatrixMode.Projection);
+		renderContext.PushMatrix();
+		renderContext.LoadIdentity();
+
+		renderContext.Bind(material, clientRenderable);
 	}
 }

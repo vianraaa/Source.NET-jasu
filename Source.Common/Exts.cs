@@ -413,6 +413,8 @@ public static class ReflectionUtils
 
 	public static bool IsOkAssembly(Assembly assembly) {
 		// ugh
+		if (assembly.GetName().Name!.StartsWith("System."))
+			return false;
 		if (assembly.GetName().Name == "Steamworks.NET")
 			return false;
 

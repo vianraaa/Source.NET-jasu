@@ -17,4 +17,6 @@ public interface IMaterialInternal : IMaterial
 {
 	string GetName();
 	bool IsManuallyCreated();
+	bool IsPrecached();
+	void Precache();
 }
