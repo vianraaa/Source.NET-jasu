@@ -68,9 +68,10 @@ public record struct PixelShaderHandle
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
 }
 
-public struct MaterialSystemConfig {
+public class MaterialSystemConfig {
 	public int Width;
 	public int Height;
+	public int RefreshRate;
 }
 
 public interface IMaterialSystem
@@ -82,7 +83,7 @@ public interface IMaterialSystem
 	void BeginFrame(double frameTime);
 	void EndFrame();
 	void SwapBuffers();
-	bool SetMode(in MaterialSystemConfig config);
+	bool SetMode(nint v, MaterialSystemConfig config);
 }
 
 public interface IMatRenderContext

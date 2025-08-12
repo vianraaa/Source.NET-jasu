@@ -6,6 +6,7 @@ using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.GameUI;
+using Source.Common.MaterialSystem;
 using Source.Common.Networking;
 using Source.Common.Server;
 using Source.Engine.Client;
@@ -111,6 +112,8 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<CommonHostState>();
 		this.AddSingleton<EngineParms>();
 		this.AddSingleton<ClientDLL>();
+		this.AddSingleton<IVideoMode, VideoMode_MaterialSystem>();
+		this.AddSingleton<MaterialSystemConfig>();
 		this.AddSingleton<IMod, BaseMod>();
 		this.AddSingleton<IGame, Game>();
 		// Client state and server state singletons

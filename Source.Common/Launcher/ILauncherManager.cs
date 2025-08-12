@@ -35,4 +35,5 @@ public interface ILauncherManager
 	nint GetWindowHandle();
 	int GetEvents(WindowEvent[] eventBuffer, int length);
 	void Swap();
+	void CenterWindow(int v2, int v3);
 }

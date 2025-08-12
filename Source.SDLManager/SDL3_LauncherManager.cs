@@ -35,7 +35,6 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
 		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
 
-
 		graphicsHandle = (nint)SDL3.SDL_GL_CreateContext(window.HardwareHandle);
 
 		if (graphicsHandle == 0) {
@@ -133,4 +132,8 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 	public nint GetWindowHandle() => (nint)window.HardwareHandle;
 	public void PumpWindowsMessageLoop() => window.PumpMessages();
 	public int GetEvents(WindowEvent[] eventBuffer, int length) => window.GetEvents(eventBuffer, length);
+
+	public void CenterWindow(int v2, int v3) {
+
+	}
 }

@@ -113,7 +113,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 	}
 
 	public nint GetMainDeviceWindow() {
-		throw new NotImplementedException();
+		return window;
 	}
 
 	public nint GetMainWindow() {
@@ -153,10 +153,10 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 	}
 
 	public void SetWindowSize(int w, int h) {
-		throw new NotImplementedException();
+
 	}
 
 	public void SetWindowXY(int x, int y) {
-		throw new NotImplementedException();
+
 	}
 }

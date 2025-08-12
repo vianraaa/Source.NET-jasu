@@ -6,7 +6,7 @@ using Source.Engine.Client;
 
 namespace Source.Engine;
 
-public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV, IMaterialSystem materials) : IMod
+public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV, IMaterialSystem materials, IVideoMode videomode) : IMod
 {
 	private bool IsServerOnly(IEngineAPI api) => ((EngineAPI)api).Dedicated;
 
@@ -15,6 +15,7 @@ public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV, I
 		host_parms.Game = initialGame;
 
 		ClientState? cl = services.GetService<ClientState>();
+
 
 		if(cl != null) {
 			cl.RestrictServerCommands = false;
@@ -25,18 +26,7 @@ public class BaseMod(IServiceProvider services, EngineParms host_parms, SV SV, I
 		int height = 900;
 		bool windowed = true;
 
-		IGame? game = services.GetService<IGame>();
-		bool windowOK = game?.CreateGameWindow(width, height, windowed) ?? false;
-		if (!windowOK)
-			return false;
-
-		services.GetRequiredService<IMaterialSystem>().ModInit();
-
-		MaterialSystemConfig config = new MaterialSystemConfig();
-		config.Width = width;
-		config.Height = height;
-
-		return materials.SetMode(in config);
+		return videomode.CreateGameWindow(width, height, windowed);
 	}
 
 	public IMod.Result Run() {

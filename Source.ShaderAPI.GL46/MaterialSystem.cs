@@ -34,17 +34,6 @@ public class MaterialSystem : IMaterialSystem
 	public void ModInit() {
 		launcherMgr = services.GetRequiredService<ILauncherManager>();
 		matContext = new(this);
-		((TextureManager)services.GetRequiredService<ITextureManager>())!.Init();
-	}
-
-	public bool SetMode(in MaterialSystemConfig config) {
-
-		// For now, communicate to launcherMgr our desired display mode
-		// as the current screen mode. More magic later for SetMode, when the time comes
-		int width = config.Width, height = config.Height;
-		launcherMgr.RenderedSize(true, ref width, ref height);
-
-		return true;
 	}
 
 	public void ModShutdown() {
@@ -117,6 +106,13 @@ public class MaterialSystem : IMaterialSystem
 
 	MatRenderContext matContext;
 	public IMatRenderContext GetRenderContext() => matContext!;
+
+	public bool SetMode(nint window, MaterialSystemConfig config) {
+		int width = config.Width;
+		int height = config.Height;
+		launcherMgr.RenderedSize(true, ref width, ref height);
+		return true;
+	}
 }
 
 public class MatRenderContext(MaterialSystem materials) : IMatRenderContext
