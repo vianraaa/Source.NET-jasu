@@ -26,17 +26,38 @@ public enum MaterialPrimitiveType {
 	Heterogenous
 }
 
-public enum MaterialCullMode
-{
-	CounterClockwise,
-	Clockwise
+public enum ShaderParamType {
+	Texture,
+	Integer,
+	Color,
+	Vec2,
+	Vec3,
+	Vec4,
+	EnvMap,
+	Float,
+	Bool,
+	FourCC,
+	Matrix,
+	Material,
+	String,
+	Matrix4x2
 }
 
-public enum MaterialIndexFormat {
-	Unknown = -1,
-	x16Bits,
-	x32Bits
+public enum MaterialMatrixMode {
+	View,
+	Projection,
+	Texture0,
+	Texture1,
+	Texture2,
+	Texture3,
+	Texture4,
+	Texture5,
+	Texture6,
+	Texture7,
+	Model,
+	Count
 }
+
 public record struct VertexShaderHandle
 {
 	public VertexShaderHandle(nint handle) {
@@ -101,6 +122,11 @@ public interface IMatRenderContext
 
 	void ClearColor3ub(byte r, byte g, byte b);
 	void ClearColor4ub(byte r, byte g, byte b, byte a);
+	void DepthRange(double near, double far);
+
+	void MatrixMode(MaterialMatrixMode mode);
+	void PushMatrix();
+	void LoadIdentity();
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -151,5 +177,21 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
 		ctx.ClearColor4ub(r, g, b, a);
+	}
+
+	public void DepthRange(double near, double far) {
+		ctx.DepthRange(near, far);
+	}
+
+	public void MatrixMode(MaterialMatrixMode mode) {
+		ctx.MatrixMode(mode);
+	}
+
+	public void PushMatrix() {
+		ctx.PushMatrix();
+	}
+
+	public void LoadIdentity() {
+		ctx.LoadIdentity();
 	}
 }

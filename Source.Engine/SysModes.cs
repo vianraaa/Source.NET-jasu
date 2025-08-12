@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 namespace Source.Engine;
 
 
-public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials) : IVideoMode
+public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials, RenderUtils renderUtils) : IVideoMode
 {
 	VMode mode = new();
 	bool Windowed;
@@ -101,6 +101,8 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		if (backgroundTexture != null)
 			return;
 
+		using MatRenderContextPtr renderContext = new(materials);
+
 		KeyValues keyValues = new KeyValues("UnlitGeneric");
 		keyValues.SetString("$basetexture", "kagami.vtf");
 		keyValues.SetInt("$ignorez", 1);
@@ -108,9 +110,26 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		keyValues.SetInt("no_fullbright", 1);
 		keyValues.SetInt("nocull", 1);
 		IMaterial material = materials.CreateMaterial("__background", keyValues);
+
+		int w = GetModeStereoWidth();
+		int h = GetModeStereoHeight();
+		int tw = backgroundTexture!.Width();
+		int th = backgroundTexture!.Height();
+
+		renderContext.Viewport(0, 0, w, h);
+		renderContext.DepthRange(0, 1);
+		// SetToneMappingScaleLinear - what does it do...
+		float depth = 0.5f;
+
+		for (int i = 0; i < 2; i++) {
+			renderContext.ClearColor3ub(0, 0, 0);
+			renderContext.ClearBuffers(true, true, true);
+			renderUtils.DrawScreenSpaceRectangle(material, 0, 0, w, h, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
+			materials.SwapBuffers();
+		}
 	}
 
-	ITextureInternal? backgroundTexture;
+	IVTFTexture? backgroundTexture;
 
 	private void SetupStartupGraphic() {
 		string material = "materials/kagami.vtf";
@@ -121,7 +140,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		}
 	}
 
-	private ITextureInternal? LoadVTF(string material) {
+	private IVTFTexture? LoadVTF(string material) {
 		using IFileHandle? handle = fileSystem.Open(material, FileOpenOptions.Read);
 		if (handle != null) {
 			IVTFTexture texture = IVTFTexture.Create();
@@ -129,6 +148,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 				Dbg.Error($"Invalid or corrupt texture {material}\n");
 			}
 			texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
+			return texture;
 		}
 
 		return null;
@@ -142,7 +162,8 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		return false;
 	}
 }
-public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem) : VideoMode_Common(services, fileSystem, materials)
+public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem, RenderUtils renderUtils)
+	: VideoMode_Common(services, fileSystem, materials, renderUtils)
 {
 	bool SetModeOnce;
 	public override bool SetMode(int width, int height, bool windowed) {

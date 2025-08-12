@@ -22,8 +22,13 @@ public enum MaterialFlags : ushort {
 
 public class Material : IMaterialInternal
 {
-	public Material(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
-
+	public Material(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
+		name = new(materialName);
+		texGroupName = new(textureGroupName);
+		this.keyValues = keyValues;
+		if (keyValues != null) {
+			flags |= MaterialFlags.IsManuallyCreated;
+		}
 	}
 
 	public string GetName() {
@@ -36,5 +41,7 @@ public class Material : IMaterialInternal
 
 	MaterialFlags flags;
 	string name;
+	string texGroupName;
 	IShader shader;
+	KeyValues? keyValues;
 }

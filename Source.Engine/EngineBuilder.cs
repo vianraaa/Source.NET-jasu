@@ -105,6 +105,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<Render>();
 		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
+		this.AddSingleton<RenderUtils>();
 		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<ICvarQuery, DefaultCvarQuery>();

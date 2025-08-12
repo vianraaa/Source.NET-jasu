@@ -86,7 +86,7 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public void ConvertImageFormat(ImageFormat format, bool normalToDUDV) {
-		throw new NotImplementedException();
+		Dbg.Msg("no convertimageformat yet\n");
 	}
 
 	int IVTFTexture.Depth() => Depth;
