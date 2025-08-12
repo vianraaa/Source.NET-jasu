@@ -15,12 +15,18 @@ using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
-public class MaterialSystem(IServiceProvider services) : IMaterialSystem
+public class MaterialSystem : IMaterialSystem
 {
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton(x => (x.GetRequiredService<IMaterialSystem>() as MaterialSystem)!);
 		services.AddSingleton<ISurface, MatSystemSurface>();
+		services.AddSingleton<ITextureManager, TextureManager>();
+	}
+
+	readonly IServiceProvider services;
+	public MaterialSystem(IServiceProvider services) {
+		this.services = services;
 	}
 
 	ILauncherManager launcherMgr;
@@ -28,6 +34,7 @@ public class MaterialSystem(IServiceProvider services) : IMaterialSystem
 	public void ModInit() {
 		launcherMgr = services.GetRequiredService<ILauncherManager>();
 		matContext = new(this);
+		((TextureManager)services.GetRequiredService<ITextureManager>())!.Init();
 	}
 
 	public bool SetMode(in MaterialSystemConfig config) {
