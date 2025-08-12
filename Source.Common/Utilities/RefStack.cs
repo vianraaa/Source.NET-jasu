@@ -36,6 +36,12 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 		return ref store;
 	}
 
+	public ref T Push() {
+		ref T store = ref getBacking(count++);
+		store = new();
+		return ref store;
+	}
+
 	public ref T Pop() {
 		if (count <= 0) {
 			Dbg.AssertMsg(false, "stack underflow");

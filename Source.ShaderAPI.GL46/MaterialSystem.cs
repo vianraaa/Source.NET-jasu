@@ -172,6 +172,9 @@ public class MatRenderContext : IMatRenderContext
 		MatrixStacks = new RefStack<MatrixStackItem>[(int)MaterialMatrixMode.Count];
 		for (int i = 0; i < MatrixStacks.Length; i++) {
 			MatrixStacks[i] = new();
+			ref MatrixStackItem item = ref MatrixStacks[i].Push();
+			item.Matrix = Matrix4x4.Identity;
+			item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
 		}
 		RenderTargetStackElement initialElement = new() {
 			RenderTargets = [null, null, null, null],
