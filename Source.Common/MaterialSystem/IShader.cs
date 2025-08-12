@@ -1,4 +1,17 @@
-﻿namespace Source.Common.MaterialSystem;
+﻿using Source.Common.ShaderLib;
+
+namespace Source.Common.MaterialSystem;
+
+
+public struct ShaderParamInfo
+{
+	public string Name;
+	public string Help;
+	public ShaderParamType Type;
+	public string? DefaultValue;
+	public ShaderParamFlags Flags;
+}
+
 
 public interface IShader
 {
