@@ -98,7 +98,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 	public void DrawStartupGraphic() {
 		SetupStartupGraphic();
 
-		if (backgroundTexture != null)
+		if (backgroundTexture == null)
 			return;
 
 		using MatRenderContextPtr renderContext = new(materials);
