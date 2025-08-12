@@ -1,6 +1,8 @@
 ﻿using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 
+using Steamworks;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,8 @@ using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
 
-public enum MaterialFlags : ushort {
+public enum MaterialFlags : ushort
+{
 	NeedsWhiteLightmap = 0x1,
 	IsPrecached = 0x2,
 	VarsIsPrecached = 0x4,
@@ -68,11 +71,11 @@ public class Material : IMaterialInternal
 		KeyValues? vmtKeyValues = null;
 		KeyValues? patchKeyValues = null;
 
-		if(keyValues != null) {
+		if (keyValues != null) {
 			vmtKeyValues = keyValues;
 			patchKeyValues = new("vmt_patches");
 		}
-		else if(inVmtKeyValues != null) {
+		else if (inVmtKeyValues != null) {
 			vmtKeyValues = inVmtKeyValues;
 			patchKeyValues = inPatchKeyValues;
 		}
@@ -84,7 +87,7 @@ public class Material : IMaterialInternal
 		if (!error) {
 			flags |= MaterialFlags.IsPrecached;
 			KeyValues? fallbackKeyValues = InitializeShader(vmtKeyValues!, patchKeyValues, findContext);
-			if(fallbackKeyValues != null) {
+			if (fallbackKeyValues != null) {
 				InitializeMaterialProxy(fallbackKeyValues);
 				ok = true;
 			}
@@ -102,29 +105,59 @@ public class Material : IMaterialInternal
 		KeyValues? fallbackSection = null;
 
 		string shaderName = currentFallback.Name;
-		if(shaderName == null) {
+		if (shaderName == null) {
 			Dbg.Warning($"Shader not specified in material {GetName()}\nUsing wireframe instead...\n");
 			Dbg.Assert(false);
 			shaderName = MissingShaderName();
 		}
 
-		IShader shader;
+		IShader? shader;
 		IMaterialVar[] vars = new IMaterialVar[256];
 		string fallbackShaderName = "";
 		string fallbackMaterialName = "";
+		bool modelDefault = false;
 
 		while (true) {
-			shader = materials.texture
+			shader = materials.ShaderSystem.FindShader(shaderName);
+			if (shader == null) {
+				Dbg.Warning($"Error: Material \"{GetName()}\" uses unknown shader \"{shaderName}\"\n");
+
+				shaderName = MissingShaderName();
+				shader = materials.ShaderSystem.FindShader(shaderName);
+				if (shader == null)
+					return null;
+			}
+
+			ParseMaterialVars(shader, keyValues, fallbackSection, modelDefault, vars, findContext);
+			if (shader == null)
+				break;
+			materials.ShaderSystem.InitShaderParameters(shader, vars, GetName());
 		}
+
+	}
+
+	private void ParseMaterialVars(IShader shader, KeyValues keyValues, KeyValues? fallbackSection, bool modelDefault, IMaterialVar[] vars, int findContext) {
+		Span<bool> overrides = stackalloc bool[256];
+		Span<bool> conditional = stackalloc bool[256];
+		int overrideMask = 0;
+		int flagMask = 0;
+
 	}
 
 	private string MissingShaderName() {
-		throw new NotImplementedException();
+		return "Wireframe_GL46";
 	}
 
 	MaterialFlags flags;
 	string name;
 	string texGroupName;
-	IShader shader;
+	IShader? shader;
 	KeyValues? keyValues;
+
+	public void DrawMesh(VertexCompressionType vertexCompression) { }
+	public IShader? GetShader() => shader;
+	public string? GetShaderName() => shader?.GetName();
+	public void SetShader(ReadOnlySpan<char> shaderName) {
+
+	}
 }

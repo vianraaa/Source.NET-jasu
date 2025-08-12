@@ -10,3 +10,7 @@ public interface IShaderSystem
 {
 	void BindTexture(Sampler sampler, ITexture texture);
 }
+public interface IShaderDLL
+{
+	public IEnumerable<IShader>? GetShaders();
+}

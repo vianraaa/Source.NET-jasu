@@ -20,6 +20,10 @@ using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
+public enum VertexCompressionType {
+	None = 0
+}
+
 public class MaterialSystem : IMaterialSystem
 {
 	MaterialDict Dict = [];
@@ -28,6 +32,7 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton(x => (x.GetRequiredService<IMaterialSystem>() as MaterialSystem)!);
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<ITextureManager, TextureManager>();
+		services.AddSingleton<IShaderSystem, ShaderManager>();
 	}
 
 	readonly IServiceProvider services;

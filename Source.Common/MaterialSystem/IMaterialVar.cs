@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -40,6 +41,7 @@ public abstract class IMaterialVar
 	public abstract string GetStringValue();
 	public abstract void SetFourCCValue(ulong type, object? data);
 	public abstract void GetFourCCValue(ulong type, out object? data);
+
 	public abstract void SetVecValue(ReadOnlySpan<float> val);
 	public abstract void SetVecValue(float x, float y);
 	public abstract void SetVecValue(float x, float y, float z);
@@ -47,6 +49,48 @@ public abstract class IMaterialVar
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector2 xy) => SetVecValue(xy.X, xy.Y);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector3 xyz) => SetVecValue(xyz.X, xyz.Y, xyz.Z);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector4 xyzw) => SetVecValue(xyzw.X, xyzw.Y, xyzw.Z, xyzw.W);
+
+	public abstract void GetVecValue(Span<float> color);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void GetVecValue(out Vector2 vec) {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		vec = new(retv[0], retv[1]);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void GetVecValue(out Vector3 vec) {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		vec = new(retv[0], retv[1], retv[2]);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void GetVecValue(out Vector4 vec) {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		vec = new(retv[0], retv[1], retv[2], retv[3]);
+	}
+
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Vector2 GetVec2Value() {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		return new(retv[0], retv[1]);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Vector3 GetVec3Value() {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		return new(retv[0], retv[1], retv[2]);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Vector4 GetVec4Value() {
+		Span<float> retv = stackalloc float[2];
+		GetVecValue(retv);
+		return new(retv[0], retv[1], retv[2], retv[3]);
+	}
+
 	public abstract void SetTextureValue(ITexture? texture);
 	public abstract IMaterial? GetMaterialValue();
 	public abstract void SetMaterialValue(IMaterial? material);
@@ -68,4 +112,8 @@ public abstract class IMaterialVar
 	protected abstract Span<float> GetVecValueInternal();
 	protected abstract void GetVecValueInternal(Span<float> val);
 	protected abstract int VectorSizeInternal();
+
+	public int GetIntValue() {
+		return IntVal;
+	}
 }
