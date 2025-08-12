@@ -43,6 +43,10 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
+	public override void GetVecValue(Span<float> color) {
+		throw new NotImplementedException();
+	}
+
 	public override bool IsDefined() {
 		throw new NotImplementedException();
 	}
