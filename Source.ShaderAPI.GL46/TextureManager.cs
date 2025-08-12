@@ -1,7 +1,6 @@
 ﻿using Source.Common.MaterialSystem;
 
 namespace Source.MaterialSystem;
-
 public class TextureManager : ITextureManager
 {
 	public ITextureInternal CreateFileTexture(ReadOnlySpan<char> fileName, ReadOnlySpan<char> textureGroupName) {

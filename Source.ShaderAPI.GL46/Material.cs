@@ -22,7 +22,9 @@ public enum MaterialFlags : ushort {
 
 public class Material : IMaterialInternal
 {
-	public Material(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
+	public readonly MaterialSystem materials;
+	public Material(MaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
+		this.materials = materials;
 		name = new(materialName);
 		texGroupName = new(textureGroupName);
 		this.keyValues = keyValues;
@@ -54,11 +56,70 @@ public class Material : IMaterialInternal
 			return;
 	}
 
-	private bool PrecacheVars(KeyValues? keyValues = null, KeyValues? patchKeyValues = null) {
+	private bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, int findContext = 0) {
 		if (IsPrecachedVars())
 			return true;
 
-		return false;
+		// How should we load VMT includes?
+		// How should we allow async?
+
+		bool ok = false;
+		bool error = false;
+		KeyValues? vmtKeyValues = null;
+		KeyValues? patchKeyValues = null;
+
+		if(keyValues != null) {
+			vmtKeyValues = keyValues;
+			patchKeyValues = new("vmt_patches");
+		}
+		else if(inVmtKeyValues != null) {
+			vmtKeyValues = inVmtKeyValues;
+			patchKeyValues = inPatchKeyValues;
+		}
+		else {
+			// includes
+			error = true;
+		}
+
+		if (!error) {
+			flags |= MaterialFlags.IsPrecached;
+			KeyValues? fallbackKeyValues = InitializeShader(vmtKeyValues!, patchKeyValues, findContext);
+			if(fallbackKeyValues != null) {
+				InitializeMaterialProxy(fallbackKeyValues);
+				ok = true;
+			}
+		}
+
+		return ok;
+	}
+
+	private void InitializeMaterialProxy(KeyValues fallbackKeyValues) {
+
+	}
+
+	private KeyValues? InitializeShader(KeyValues keyValues, KeyValues? patchKeyValues, int findContext) {
+		KeyValues currentFallback = keyValues;
+		KeyValues? fallbackSection = null;
+
+		string shaderName = currentFallback.Name;
+		if(shaderName == null) {
+			Dbg.Warning($"Shader not specified in material {GetName()}\nUsing wireframe instead...\n");
+			Dbg.Assert(false);
+			shaderName = MissingShaderName();
+		}
+
+		IShader shader;
+		IMaterialVar[] vars = new IMaterialVar[256];
+		string fallbackShaderName = "";
+		string fallbackMaterialName = "";
+
+		while (true) {
+			shader = materials.texture
+		}
+	}
+
+	private string MissingShaderName() {
+		throw new NotImplementedException();
 	}
 
 	MaterialFlags flags;

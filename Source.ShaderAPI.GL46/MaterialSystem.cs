@@ -31,8 +31,16 @@ public class MaterialSystem : IMaterialSystem
 	}
 
 	readonly IServiceProvider services;
+	readonly TextureManager textures;
+	readonly ShaderManager shaders;
+
+	public TextureManager TextureSystem => textures;
+	public ShaderManager ShaderSystem => shaders;
+
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
+		textures = services.GetRequiredService<TextureManager>();
+		shaders = services.GetRequiredService<ShaderManager>();
 	}
 
 	ILauncherManager launcherMgr;
@@ -123,7 +131,7 @@ public class MaterialSystem : IMaterialSystem
 	public IMaterial CreateMaterial(string materialName, KeyValues keyValues) {
 		IMaterialInternal material;
 		lock (this) {
-			material = new Material(materialName, TextureGroup.Other, keyValues);
+			material = new Material(this, materialName, TextureGroup.Other, keyValues);
 		}
 
 		AddMaterialToMaterialList(material);

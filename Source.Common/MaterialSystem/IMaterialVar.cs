@@ -1,0 +1,71 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Source.Common.MaterialSystem;
+
+public enum MaterialVarType
+{
+	Float = 0,
+	String,
+	Vector,
+	Texture,
+	Int,
+	FourCC,
+	Undefined,
+	Matrix,
+	Material
+}
+
+public abstract class IMaterialVar
+{
+	protected string StringVal = "";
+	protected int IntVal;
+	protected Vector4 VecVal;
+	protected byte Type;
+	protected byte NumVectorComps;
+	protected bool FakeMaterialVar;
+	protected byte TempIndex;
+	protected string Name = "";
+
+	public abstract ITexture GetTextureValue();
+	public abstract string GetName();
+	public abstract void SetFloatValue(float val);
+	public abstract void SetIntValue(int val);
+	public abstract void SetStringValue(ReadOnlySpan<char> val);
+	public abstract string GetStringValue();
+	public abstract void SetFourCCValue(ulong type, object? data);
+	public abstract void GetFourCCValue(ulong type, out object? data);
+	public abstract void SetVecValue(ReadOnlySpan<float> val);
+	public abstract void SetVecValue(float x, float y);
+	public abstract void SetVecValue(float x, float y, float z);
+	public abstract void SetVecValue(float x, float y, float z, float w);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector2 xy) => SetVecValue(xy.X, xy.Y);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector3 xyz) => SetVecValue(xyz.X, xyz.Y, xyz.Z);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetVecValue(in Vector4 xyzw) => SetVecValue(xyzw.X, xyzw.Y, xyzw.Z, xyzw.W);
+	public abstract void SetTextureValue(ITexture? texture);
+	public abstract IMaterial? GetMaterialValue();
+	public abstract void SetMaterialValue(IMaterial? material);
+	public abstract bool IsDefined();
+	public abstract bool SetUndefined();
+	public abstract void SetMatrixValue(in Matrix4x4 matrix);
+	public abstract Matrix4x4 GetMatrixValue();
+	public abstract bool MatrixIsIdentity();
+	public abstract void CopyFrom(IMaterialVar materialVar);
+	public abstract void SetValueAutodetectType(ReadOnlySpan<char> val);
+	public abstract IMaterial GetOwningMaterial();
+	public abstract void SetVecComponentValue(float val, int component);
+
+	public MaterialVarType GetVarType() => (MaterialVarType)Type;
+	public bool IsTexture() => Type == (ushort)MaterialVarType.Texture;
+
+	protected abstract int GetIntValueInternal();
+	protected abstract float GetFloatValueInternal();
+	protected abstract Span<float> GetVecValueInternal();
+	protected abstract void GetVecValueInternal(Span<float> val);
+	protected abstract int VectorSizeInternal();
+}
