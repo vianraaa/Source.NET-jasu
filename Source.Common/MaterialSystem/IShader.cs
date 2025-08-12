@@ -9,4 +9,5 @@ public interface IShader
 	ReadOnlySpan<char> GetParamHelp(int paramIndex);
 	ShaderParamType GetParamType(int paramIndex);
     ReadOnlySpan<char> GetParamDefault(int paramIndex);
+	string GetFallbackShader(IMaterialVar[] vars);
 }

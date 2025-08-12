@@ -103,4 +103,8 @@ public class ShaderManager(MaterialSystem materials, IEngineAPI engineAPI) : ISh
 	internal string ShaderStateString(int i) {
 		return shaderStateStrings[i];
 	}
+
+	internal void InitShaderParameters(IShader shader, IMaterialVar[] vars, string v) {
+		throw new NotImplementedException();
+	}
 }

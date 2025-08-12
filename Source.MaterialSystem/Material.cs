@@ -117,6 +117,7 @@ public class Material : IMaterialInternal
 		string fallbackShaderName = "";
 		string fallbackMaterialName = "";
 		bool modelDefault = false;
+		int varCount;
 
 		while (true) {
 			shader = materials.ShaderSystem.FindShader(shaderName);
@@ -129,15 +130,32 @@ public class Material : IMaterialInternal
 					return null;
 			}
 
-			ParseMaterialVars(shader, keyValues, fallbackSection, null, modelDefault, vars, findContext);
+			varCount = ParseMaterialVars(shader, keyValues, fallbackSection, null, modelDefault, vars, findContext);
 			if (shader == null)
 				break;
+
 			materials.ShaderSystem.InitShaderParameters(shader, vars, GetName());
+
+			shaderName = shader.GetFallbackShader(vars);
+			if (shaderName == null)
+				break;
+
+			if (true) { // Yeah, we support vertex and pixel shaders... do we even really need a flag for that....
+				modelDefault = (vars[(int)ShaderMaterialVars.Flags].GetIntValue() & (int)MaterialVarFlags.Model) != 0;
+			}
+
+			for (int i = 0; i < varCount; i++) {
+				vars[i] = null;
+			}
 		}
 
+		this.Shader = shader;
+		this.ShaderParams = vars;
+
+		return currentFallback;
 	}
 
-	private void ParseMaterialVars(IShader shader, KeyValues keyValues, KeyValues? fallbackSection, KeyValues? overrideKeyValues, bool modelDefault, IMaterialVar[] vars, int findContext) {
+	private int ParseMaterialVars(IShader shader, KeyValues keyValues, KeyValues? fallbackSection, KeyValues? overrideKeyValues, bool modelDefault, IMaterialVar[] vars, int findContext) {
 		IMaterialVar? newVar;
 		Span<bool> overrides = stackalloc bool[256];
 		Span<bool> conditional = stackalloc bool[256];
@@ -229,6 +247,8 @@ public class Material : IMaterialInternal
 			if (vars[i] == null)
 				vars[i] = new MaterialVar(this, shader!.GetParamName(i));
 		}
+
+		return varCount;
 	}
 
 	private static IMaterialVar? CreateMaterialVarFromKeyValue(Material material, KeyValues keyValue) {
@@ -241,9 +261,36 @@ public class Material : IMaterialInternal
 				if (str == null || str.Length == 0)
 					return null;
 
+				IMaterialVar? matrixVar = CreateMatrixVarFromKeyValue(material, keyValue);
+				if (matrixVar != null) return matrixVar;
+
+				if (!IsVector(str))
+					return new MaterialVar(material, name, str);
+
+				return CreateVectorMaterialVarFromKeyValue(material, keyValue);
 		}
 
 		return null;
+	}
+
+	private static IMaterialVar? CreateVectorMaterialVarFromKeyValue(Material material, KeyValues keyValue) {
+		throw new NotImplementedException();
+	}
+
+	private static IMaterialVar? CreateMatrixVarFromKeyValue(Material material, KeyValues keyValue) {
+		ReadOnlySpan<char> scan = keyValue.GetString();
+		ReadOnlySpan<char> name = GetVarName(keyValue);
+		return null; // TODO: implement
+	}
+
+	private static bool IsVector(ReadOnlySpan<char> str) {
+		while (char.IsWhiteSpace(str[0])) {
+			str = str[1..];
+			if (str.Length == 0 || str[0] == '\n')
+				return false;
+		}
+
+		return str[0] == '[' || str[0] == '{';
 	}
 
 	private int FindMaterialVar(IShader? shader, ReadOnlySpan<char> varName) {
@@ -350,12 +397,13 @@ public class Material : IMaterialInternal
 	MaterialFlags flags;
 	string name;
 	string texGroupName;
-	IShader? shader;
+	IShader? Shader;
 	KeyValues? keyValues;
+	IMaterialVar[] ShaderParams;
 
 	public void DrawMesh(VertexCompressionType vertexCompression) { }
-	public IShader? GetShader() => shader;
-	public string? GetShaderName() => shader?.GetName();
+	public IShader? GetShader() => Shader;
+	public string? GetShaderName() => Shader?.GetName();
 	public void SetShader(ReadOnlySpan<char> shaderName) {
 
 	}

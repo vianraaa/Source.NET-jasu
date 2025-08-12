@@ -40,6 +40,15 @@ public sealed class MaterialVar : IMaterialVar
 		VecVal[0] = VecVal[1] = VecVal[2] = VecVal[3] = val;
 		IntVal = (int)val;
 	}
+	public MaterialVar(IMaterial material, ReadOnlySpan<char> key, ReadOnlySpan<char> val) {
+		Init();
+		owningMaterial = (IMaterialInternal)material!;
+		Name = new(key);
+		StringVal = new(val);
+		Type = MaterialVarType.String;
+		VecVal[0] = VecVal[1] = VecVal[2] = VecVal[3] = float.TryParse(val, out float r) ? r : 0;
+		IntVal = (int)VecVal[0];
+	}
 
 	public override void CopyFrom(IMaterialVar materialVar) {
 		throw new NotImplementedException();
