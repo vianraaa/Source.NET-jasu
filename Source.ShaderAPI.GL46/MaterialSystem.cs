@@ -4,6 +4,8 @@ using OpenGL;
 
 using Raylib_cs;
 
+using Source.Common;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
@@ -17,6 +19,7 @@ namespace Source.MaterialSystem;
 
 public class MaterialSystem : IMaterialSystem
 {
+	MaterialDict Dict = [];
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton(x => (x.GetRequiredService<IMaterialSystem>() as MaterialSystem)!);
@@ -112,6 +115,24 @@ public class MaterialSystem : IMaterialSystem
 		int height = config.Height;
 		launcherMgr.RenderedSize(true, ref width, ref height);
 		return true;
+	}
+
+	public IMaterial CreateMaterial(string materialName, KeyValues keyValues) {
+		IMaterialInternal material;
+		lock (this) {
+			material = new Material(materialName, TextureGroup.Other, keyValues);
+		}
+
+		AddMaterialToMaterialList(material);
+		return material;
+	}
+
+	private void AddMaterialToMaterialList(IMaterialInternal material) {
+		Dict[material] = new() {
+			material = material,
+			symbol = material.GetName().GetHashCode(),
+			manuallyCreated = material.IsManuallyCreated()
+		};
 	}
 }
 

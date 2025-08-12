@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
+using Source.Common.Bitmap;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
@@ -14,7 +18,7 @@ using System.Threading.Tasks;
 namespace Source.Engine;
 
 
-public class VideoMode_Common(IServiceProvider services) : IVideoMode
+public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials) : IVideoMode
 {
 	VMode mode = new();
 	bool Windowed;
@@ -45,9 +49,9 @@ public class VideoMode_Common(IServiceProvider services) : IVideoMode
 	public int GetModeWidth() => ModeWidth;
 	public int GetModeHeight() => ModeHeight;
 	public int GetModeBPP() => ModeBPP;
-	public int GetModeStereoWidth() =>  StereoWidth;
+	public int GetModeStereoWidth() => StereoWidth;
 	public int GetModeStereoHeight() => StereoHeight;
-	public int GetModeUIWidth() =>  UIWidth;
+	public int GetModeUIWidth() => UIWidth;
 	public int GetModeUIHeight() => UIHeight;
 
 	public void AdjustWindow(int width, int height, int bpp, bool windowed) {
@@ -92,7 +96,42 @@ public class VideoMode_Common(IServiceProvider services) : IVideoMode
 	}
 
 	public void DrawStartupGraphic() {
+		SetupStartupGraphic();
 
+		if (backgroundTexture != null)
+			return;
+
+		KeyValues keyValues = new KeyValues("UnlitGeneric");
+		keyValues.SetString("$basetexture", "kagami.vtf");
+		keyValues.SetInt("$ignorez", 1);
+		keyValues.SetInt("nofog", 1);
+		keyValues.SetInt("no_fullbright", 1);
+		keyValues.SetInt("nocull", 1);
+		IMaterial material = materials.CreateMaterial("__background", keyValues);
+	}
+
+	ITextureInternal? backgroundTexture;
+
+	private void SetupStartupGraphic() {
+		string material = "materials/kagami.vtf";
+		backgroundTexture = LoadVTF(material);
+		if (backgroundTexture == null) {
+			Dbg.Error($"Can't find background image '{material}'\n");
+			return;
+		}
+	}
+
+	private ITextureInternal? LoadVTF(string material) {
+		using IFileHandle? handle = fileSystem.Open(material, FileOpenOptions.Read);
+		if (handle != null) {
+			IVTFTexture texture = IVTFTexture.Create();
+			if (!texture.Unserialize(handle)) {
+				Dbg.Error($"Invalid or corrupt texture {material}\n");
+			}
+			texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
+		}
+
+		return null;
 	}
 
 	public void SetGameWindow(nint window) {
@@ -103,7 +142,7 @@ public class VideoMode_Common(IServiceProvider services) : IVideoMode
 		return false;
 	}
 }
-public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services) : VideoMode_Common(services)
+public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem) : VideoMode_Common(services, fileSystem, materials)
 {
 	bool SetModeOnce;
 	public override bool SetMode(int width, int height, bool windowed) {

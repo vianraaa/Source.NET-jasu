@@ -3,6 +3,7 @@ using Source.Common.Filesystem;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -218,10 +219,19 @@ public class KeyValues : LinkedList<KeyValues>
 		return ok;
 	}
 
-	public KeyValues? FindKey(string v) {
+	
+	public KeyValues? FindKey(string searchStr, bool create = false) {
 		foreach(var child in this) {
-			if (child.Name == v)
+			if (child.Name == searchStr)
 				return child;
+		}
+
+		if (create) {
+			KeyValues newKey = new(searchStr);
+			newKey.useEscapeSequences = useEscapeSequences;
+
+			AddLast(newKey);
+			return newKey;
 		}
 
 		return null;
@@ -229,6 +239,26 @@ public class KeyValues : LinkedList<KeyValues>
 
 	public string GetString() => StringValue ?? "";
 	public string? GetString(string key) => FindKey(key)?.GetString();
+
+	public void SetString(string keyName, ReadOnlySpan<char> value) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			if (dat.Type == Types.String && value.Equals(dat.Value?.ToString(), StringComparison.Ordinal))
+				return;
+
+			if (value == null)
+				value = "";
+			dat.Value = new string(value);
+
+		}
+	}
+	public void SetInt(string keyName, int value) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			dat.Value = value;
+			dat.Type = Types.Int;
+		}
+	}
 
 	public bool LoadFromFile(IFileSystem fileSystem, ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
 		return LoadFromStream(fileSystem.Open(path, FileOpenOptions.Read, pathID)?.Stream);

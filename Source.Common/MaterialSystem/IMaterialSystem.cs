@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common.Formats.Keyvalues;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,7 +69,6 @@ public record struct PixelShaderHandle
 	public static implicit operator nint(PixelShaderHandle handle) => handle.Handle;
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
 }
-
 public class MaterialSystemConfig {
 	public int Width;
 	public int Height;
@@ -84,6 +85,7 @@ public interface IMaterialSystem
 	void EndFrame();
 	void SwapBuffers();
 	bool SetMode(nint v, MaterialSystemConfig config);
+	IMaterial CreateMaterial(string v, KeyValues keyValues);
 }
 
 public interface IMatRenderContext

@@ -357,33 +357,6 @@ public class EngineVGui(
 		staticGameUIFuncs.Start();
 
 		ActivateGameUI();
-
-		// Temporary; just testing VTF here...
-		// This goes in MaterialSystem later
-		IVTFTexture vtfTexture = IVTFTexture.Create();
-		string fileName = "kagami.vtf";
-		IFileHandle? fileHandle = fileSystem.Open($"materials/{fileName}", FileOpenOptions.Read);
-		if(fileHandle == null) {
-			Dbg.Warning("couldn't load test VTF file\n");
-			return;
-		}
-
-		if (!vtfTexture.Unserialize(fileHandle, true)) {
-			Dbg.Warning($"Error reading material \"{fileName}\"\n");
-			goto fail;
-		}
-
-		vtfTexture.ImageFileInfo(0, 0, 0, out int imageOffset, out int imageSize);
-		if (imageSize == 0) {
-			Dbg.Warning($"Couldn't determine offset and size of material \"{fileName}\"\n");
-			goto fail;
-		}
-
-		byte[] memory = new byte[imageSize];
-
-
-	fail:
-		return;
 	}
 
 	private void ActivateGameUI() {
