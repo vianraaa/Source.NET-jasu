@@ -30,7 +30,7 @@ public interface IShaderSystemInternal : IShaderSystem
 	IEnumerable<IShader> GetShaders();
 }
 
-public class ShaderManager(IEngineAPI engineAPI) : IShaderSystemInternal
+public class ShaderManager(IServiceProvider engineAPI) : IShaderSystemInternal
 {
 	List<IShaderDLL> ShaderDLLs = [];
 	public void BindTexture(Sampler sampler, ITexture texture) {

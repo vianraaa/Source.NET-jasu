@@ -33,21 +33,19 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderManager>();
-		services.AddSingleton(x => (TextureManager)x.GetRequiredService<ITextureManager>());
-		services.AddSingleton(x => (ShaderManager)x.GetRequiredService<IShaderSystem>());
 	}
 
 	readonly IServiceProvider services;
-	readonly TextureManager textures;
-	readonly ShaderManager shaders;
+	readonly ITextureManager textures;
+	readonly IShaderSystem shaders;
 
-	public TextureManager TextureSystem => textures;
-	public ShaderManager ShaderSystem => shaders;
+	public TextureManager TextureSystem => (TextureManager)textures;
+	public ShaderManager ShaderSystem => (ShaderManager)shaders;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
-		textures = services.GetRequiredService<TextureManager>();
-		shaders = services.GetRequiredService<ShaderManager>();
+		textures = services.GetRequiredService<ITextureManager>();
+		shaders = services.GetRequiredService<IShaderSystem>();
 	}
 
 	ILauncherManager launcherMgr;
