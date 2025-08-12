@@ -285,7 +285,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		userMsg.StartReading(userdata, Net.Bits2Bytes(bitsRead));
 
 		if (!Host.clientDLL!.DispatchUserMessage(msg.MessageType, userMsg)) {
-			ConWarning($"Couldn't dispatch user message ({userMsg})\n");
+			ConWarning($"Couldn't dispatch user message\n");
 			return true;
 		}
 
