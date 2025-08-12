@@ -24,7 +24,7 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 	ref T getBacking(int index) {
 		int backingPtr = index / FRAGMENT_SIZE;
 		int insideBackingPtr = index % FRAGMENT_SIZE;
-		if (backingPtr > backing.Count)
+		if (backingPtr >= backing.Count)
 			backing.Add(new T[FRAGMENT_SIZE]);
 		T[] backingMemory = backing[backingPtr];
 		return ref backingMemory[insideBackingPtr];

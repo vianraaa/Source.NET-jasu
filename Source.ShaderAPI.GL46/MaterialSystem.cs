@@ -153,8 +153,8 @@ public struct MatrixStackItem
 }
 
 public struct RenderTargetStackElement {
-	public ITexture[] RenderTargets;
-	public ITexture DepthTexture;
+	public ITexture?[] RenderTargets;
+	public ITexture? DepthTexture;
 
 	public int ViewX;
 	public int ViewY;
@@ -173,6 +173,15 @@ public class MatRenderContext : IMatRenderContext
 		for (int i = 0; i < MatrixStacks.Length; i++) {
 			MatrixStacks[i] = new();
 		}
+		RenderTargetStackElement initialElement = new() {
+			RenderTargets = [null, null, null, null],
+			DepthTexture = null,
+			ViewX = 0,
+			ViewY = 0,
+			ViewW = -1,
+			ViewH = -1
+		};
+		RenderTargetStack.Push(initialElement);
 	}
 	RefStack<RenderTargetStackElement> RenderTargetStack;
 	RefStack<MatrixStackItem>[] MatrixStacks;
