@@ -33,6 +33,8 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderManager>();
+		services.AddSingleton(x => (TextureManager)x.GetRequiredService<ITextureManager>());
+		services.AddSingleton(x => (ShaderManager)x.GetRequiredService<IShaderSystem>());
 	}
 
 	readonly IServiceProvider services;
