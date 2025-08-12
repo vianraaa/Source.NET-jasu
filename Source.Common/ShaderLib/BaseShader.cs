@@ -11,7 +11,7 @@ namespace Source.Common.ShaderLib;
 public enum ShaderMaterialVars {
 	Flags = 0,
 	FlagsDefined,
-	FLags2,
+	Flags2,
 	FlagsDefined2,
 	Color,
 	Alpha,

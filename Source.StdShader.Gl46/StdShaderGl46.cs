@@ -19,7 +19,7 @@ public class StdShaderGl46 : IShaderDLL
 		}
 	}
 
-	public IEnumerable<IShader>? GetShaders() {
+	public IEnumerable<IShader> GetShaders() {
 		return shaders;
 	}
 }

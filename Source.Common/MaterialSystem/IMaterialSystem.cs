@@ -58,6 +58,11 @@ public enum MaterialMatrixMode {
 	Count
 }
 
+public enum MaterialFindContext {
+	None,
+	IsOnAModel
+}
+
 public record struct VertexShaderHandle
 {
 	public VertexShaderHandle(nint handle) {

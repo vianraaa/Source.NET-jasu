@@ -42,7 +42,13 @@ public class ShaderManager(MaterialSystem materials, IEngineAPI engineAPI) : ISh
 	}
 
 	public IShader? FindShader(ReadOnlySpan<char> shaderName) {
-		throw new NotImplementedException();
+		foreach(var shaderDLL in ShaderDLLs) {
+			foreach(var shader in shaderDLL.GetShaders()) {
+				if (shaderName.Equals(shader.GetName(), StringComparison.OrdinalIgnoreCase))
+					return shader;
+			}
+		}
+		return null;
 	}
 
 	public IEnumerable<IShader> GetShaders() {
@@ -58,5 +64,43 @@ public class ShaderManager(MaterialSystem materials, IEngineAPI engineAPI) : ISh
 		foreach(var dll in engineAPI.GetServices<IShaderDLL>()) {
 			LoadShaderDLL(dll);
 		}
+	}
+
+	static string[] shaderStateStrings = [
+		"$debug",
+		"$no_fullbright",
+		"$no_draw",
+		"$use_in_fillrate_mode",
+
+		"$vertexcolor",
+		"$vertexalpha",
+		"$selfillum",
+		"$additive",
+		"$alphatest",
+		"$multipass",
+		"$znearer",
+		"$model",
+		"$flat",
+		"$nocull",
+		"$nofog",
+		"$ignorez",
+		"$decal",
+		"$envmapsphere",
+		"$noalphamod",
+		"$envmapcameraspace",
+		"$basealphaenvmapmask",
+		"$translucent",
+		"$normalmapalphaenvmapmask",
+		"$softwareskin",
+		"$opaquetexture",
+		"$envmapmode",
+		"$nodecal",
+		"$halflambert",
+		"$wireframe",
+		"$allowalphatocoverage"
+	];
+
+	internal string ShaderStateString(int i) {
+		return shaderStateStrings[i];
 	}
 }

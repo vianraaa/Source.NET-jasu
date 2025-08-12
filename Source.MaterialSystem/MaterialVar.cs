@@ -11,6 +11,36 @@ namespace Source.MaterialSystem;
 
 public sealed class MaterialVar : IMaterialVar
 {
+	IMaterialInternal owningMaterial;
+
+	void Init() {
+
+	}
+
+
+	public MaterialVar(IMaterial material, ReadOnlySpan<char> key) {
+		Init();
+		owningMaterial = (IMaterialInternal)material!;
+		Name = new(key);
+		Type = MaterialVarType.Undefined;
+	}
+	public MaterialVar(IMaterial material, ReadOnlySpan<char> key, int val) {
+		Init();
+		owningMaterial = (IMaterialInternal)material!;
+		Name = new(key);
+		Type = MaterialVarType.Int;
+		VecVal[0] = VecVal[1] = VecVal[2] = VecVal[3] = (float)val;
+		IntVal = val;
+	}
+	public MaterialVar(IMaterial material, ReadOnlySpan<char> key, float val) {
+		Init();
+		owningMaterial = (IMaterialInternal)material!;
+		Name = new(key);
+		Type = MaterialVarType.Float;
+		VecVal[0] = VecVal[1] = VecVal[2] = VecVal[3] = val;
+		IntVal = (int)val;
+	}
+
 	public override void CopyFrom(IMaterialVar materialVar) {
 		throw new NotImplementedException();
 	}
@@ -48,7 +78,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override bool IsDefined() {
-		throw new NotImplementedException();
+		return Type != MaterialVarType.Undefined;
 	}
 
 	public override bool MatrixIsIdentity() {
@@ -83,8 +113,8 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
-	public override bool SetUndefined() {
-		throw new NotImplementedException();
+	public override void SetUndefined() {
+		Type = MaterialVarType.Undefined;
 	}
 
 	public override void SetValueAutodetectType(ReadOnlySpan<char> val) {

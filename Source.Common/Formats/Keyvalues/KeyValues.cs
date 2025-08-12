@@ -266,4 +266,16 @@ public class KeyValues : LinkedList<KeyValues>
 	public bool LoadFromFile(IFileSystem fileSystem, ReadOnlySpan<char> path) {
 		return LoadFromStream(fileSystem.Open(path, FileOpenOptions.Read, null)?.Stream);
 	}
+
+	public LinkedListNode<KeyValues>? GetFirstSubKey() => First;
+
+	public int GetInt() {
+		return Convert.ToInt32(Value);
+	}
+	public float GetFloat() {
+		return Convert.ToSingle(Value);
+	}
+	public double GetDouble() {
+		return Convert.ToDouble(Value);
+	}
 }

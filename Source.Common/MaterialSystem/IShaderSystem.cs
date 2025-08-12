@@ -12,5 +12,5 @@ public interface IShaderSystem
 }
 public interface IShaderDLL
 {
-	public IEnumerable<IShader>? GetShaders();
+	public IEnumerable<IShader> GetShaders();
 }

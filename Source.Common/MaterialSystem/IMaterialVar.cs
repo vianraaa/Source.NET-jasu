@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 
-public enum MaterialVarType
+public enum MaterialVarType : ushort
 {
 	Float = 0,
 	String,
@@ -27,7 +27,7 @@ public abstract class IMaterialVar
 	protected string StringVal = "";
 	protected int IntVal;
 	protected Vector4 VecVal;
-	protected byte Type;
+	protected MaterialVarType Type;
 	protected byte NumVectorComps;
 	protected bool FakeMaterialVar;
 	protected byte TempIndex;
@@ -95,7 +95,7 @@ public abstract class IMaterialVar
 	public abstract IMaterial? GetMaterialValue();
 	public abstract void SetMaterialValue(IMaterial? material);
 	public abstract bool IsDefined();
-	public abstract bool SetUndefined();
+	public abstract void SetUndefined();
 	public abstract void SetMatrixValue(in Matrix4x4 matrix);
 	public abstract Matrix4x4 GetMatrixValue();
 	public abstract bool MatrixIsIdentity();
@@ -104,8 +104,8 @@ public abstract class IMaterialVar
 	public abstract IMaterial GetOwningMaterial();
 	public abstract void SetVecComponentValue(float val, int component);
 
-	public MaterialVarType GetVarType() => (MaterialVarType)Type;
-	public bool IsTexture() => Type == (ushort)MaterialVarType.Texture;
+	public MaterialVarType GetVarType() => Type;
+	public bool IsTexture() => Type == MaterialVarType.Texture;
 
 	protected abstract int GetIntValueInternal();
 	protected abstract float GetFloatValueInternal();
