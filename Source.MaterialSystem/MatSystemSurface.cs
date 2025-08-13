@@ -50,7 +50,7 @@ public class MatSystemSurface : ISurface
 	IPanel DefaultEmbeddedPanel;
 	IPanel? EmbeddedPanel;
 
-	public MatSystemSurface(MaterialSystem materials) {
+	public MatSystemSurface(IMaterialSystem materials) {
 		this.materials = materials;
 
 		// TODO; allocate a white material

@@ -76,9 +76,11 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		return this;
 	}
 
+	List<Type> Shaders = [];
+
 	public EngineBuilder WithStdShader<StdShdrDLL>() where StdShdrDLL : class, IShaderDLL {
 		PreInject<StdShdrDLL>(this);
-		WithComponent<IShaderDLL, StdShdrDLL>();
+		this.AddTransient<IShaderDLL, StdShdrDLL>();
 		return this;
 	}
 

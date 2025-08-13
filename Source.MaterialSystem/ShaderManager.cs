@@ -3,6 +3,8 @@
 using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 
+using System.Collections.Generic;
+
 namespace Source.MaterialSystem;
 
 public struct ShaderRenderState
@@ -30,7 +32,7 @@ public interface IShaderSystemInternal : IShaderSystem
 	IEnumerable<IShader> GetShaders();
 }
 
-public class ShaderManager(IServiceProvider engineAPI) : IShaderSystemInternal
+public class ShaderManager : IShaderSystemInternal
 {
 	List<IShaderDLL> ShaderDLLs = [];
 	public void BindTexture(Sampler sampler, ITexture texture) {
@@ -42,8 +44,8 @@ public class ShaderManager(IServiceProvider engineAPI) : IShaderSystemInternal
 	}
 
 	public IShader? FindShader(ReadOnlySpan<char> shaderName) {
-		foreach(var shaderDLL in ShaderDLLs) {
-			foreach(var shader in shaderDLL.GetShaders()) {
+		foreach (var shaderDLL in ShaderDLLs) {
+			foreach (var shader in shaderDLL.GetShaders()) {
 				if (shaderName.Equals(shader.GetName(), StringComparison.OrdinalIgnoreCase))
 					return shader;
 			}
@@ -60,8 +62,12 @@ public class ShaderManager(IServiceProvider engineAPI) : IShaderSystemInternal
 		return true;
 	}
 
+	public ShaderManager() {
+
+	}
+	public IServiceProvider Services;
 	public void LoadAllShaderDLLs() {
-		foreach(var dll in engineAPI.GetServices<IShaderDLL>()) {
+		foreach (var dll in Services.GetServices<IShaderDLL>()) {
 			LoadShaderDLL(dll);
 		}
 	}
@@ -97,7 +103,8 @@ public class ShaderManager(IServiceProvider engineAPI) : IShaderSystemInternal
 		"$nodecal",
 		"$halflambert",
 		"$wireframe",
-		"$allowalphatocoverage"
+		"$allowalphatocoverage",
+		null
 	];
 
 	internal string ShaderStateString(int i) {

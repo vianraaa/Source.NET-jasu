@@ -29,23 +29,23 @@ public class MaterialSystem : IMaterialSystem
 	MaterialDict Dict = [];
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
-		services.AddSingleton(x => (x.GetRequiredService<IMaterialSystem>() as MaterialSystem)!);
 		services.AddSingleton<ISurface, MatSystemSurface>();
-		services.AddSingleton<ITextureManager, TextureManager>();
-		services.AddSingleton<IShaderSystem, ShaderManager>();
+		services.AddSingleton<ITextureManager>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).TextureSystem);
+		services.AddSingleton<IShaderSystem>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).ShaderSystem);
 	}
 
 	readonly IServiceProvider services;
-	readonly ITextureManager textures;
-	readonly IShaderSystem shaders;
 
-	public TextureManager TextureSystem => (TextureManager)textures;
-	public ShaderManager ShaderSystem => (ShaderManager)shaders;
+	public TextureManager TextureSystem;
+	public ShaderManager ShaderSystem;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
-		textures = services.GetRequiredService<ITextureManager>();
-		shaders = services.GetRequiredService<IShaderSystem>();
+		TextureSystem = new();
+		ShaderSystem = new() {
+			Services = services
+		};
+		ShaderSystem.LoadAllShaderDLLs();
 	}
 
 	ILauncherManager launcherMgr;

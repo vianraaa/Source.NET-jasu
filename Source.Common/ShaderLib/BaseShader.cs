@@ -104,5 +104,5 @@ public abstract class BaseShader : IShader
 		return StandardParams[paramIndex].DefaultValue;
 	}
 
-	public abstract string GetFallbackShader(IMaterialVar[] vars);
+	public abstract string? GetFallbackShader(IMaterialVar[] vars);
 }

@@ -11,9 +11,9 @@ public abstract class BaseShaderGl46 : BaseShader {
 public class StdShaderGl46 : IShaderDLL
 {
 	List<BaseShaderGl46> shaders = [];
-	public StdShaderGl46(IEngineAPI engineAPI) {
+	public StdShaderGl46(IServiceProvider engineAPI) {
 		foreach(var type in GetType().Assembly.GetTypes()) {
-			if (type.IsAssignableTo(typeof(BaseShaderGl46))) {
+			if (!type.IsAbstract && type.IsAssignableTo(typeof(BaseShaderGl46))) {
 				shaders.Add((BaseShaderGl46)engineAPI.New(type));
 			}
 		}
