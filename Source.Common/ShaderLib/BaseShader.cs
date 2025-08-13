@@ -63,6 +63,7 @@ public abstract class BaseShader : IShader
 	];
 
 	public string GetName() => GetType().Name;
+	public virtual int GetFlags() => 0;
 
 	public int CurrentMaterialVarFlags() {
 		return Params[(int)ShaderMaterialVars.Flags].GetIntValue();
@@ -80,26 +81,26 @@ public abstract class BaseShader : IShader
 		return color[0] >= 1.0f && color[1] >= 1.0f && color[2] >= 1.0f;
 	}
 
-	public int GetNumParams() {
+	public virtual int GetNumParams() {
 		return (int)ShaderMaterialVars.Count;
 	}
 
-	public ReadOnlySpan<char> GetParamName(int paramIndex) {
+	public virtual ReadOnlySpan<char> GetParamName(int paramIndex) {
 		Dbg.Assert(paramIndex < (int)ShaderMaterialVars.Count);
 		return StandardParams[paramIndex].Name;
 	}
 
-	public ReadOnlySpan<char> GetParamHelp(int paramIndex) {
+	public virtual ReadOnlySpan<char> GetParamHelp(int paramIndex) {
 		Dbg.Assert(paramIndex < (int)ShaderMaterialVars.Count);
 		return StandardParams[paramIndex].Help;
 	}
 
-	public ShaderParamType GetParamType(int paramIndex) {
+	public virtual ShaderParamType GetParamType(int paramIndex) {
 		Dbg.Assert(paramIndex < (int)ShaderMaterialVars.Count);
 		return StandardParams[paramIndex].Type;
 	}
 
-	public ReadOnlySpan<char> GetParamDefault(int paramIndex) {
+	public virtual ReadOnlySpan<char> GetParamDefault(int paramIndex) {
 		Dbg.Assert(paramIndex < (int)ShaderMaterialVars.Count);
 		return StandardParams[paramIndex].DefaultValue;
 	}
@@ -114,6 +115,14 @@ public abstract class BaseShader : IShader
 	}
 
 	protected virtual void OnInitShaderParams(IMaterialVar[] vars, string materialName) {
+
+	}
+
+	protected virtual void OnInitShaderInstance(IMaterialVar[] vars, IShaderInit shaderInit, ReadOnlySpan<char> materialName) {
+
+	}
+
+	protected virtual void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
 
 	}
 }

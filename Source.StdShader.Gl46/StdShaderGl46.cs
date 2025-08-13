@@ -1,12 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.MaterialSystem;
-using Source.Common.ShaderLib;
 
 namespace Source.StdShader.Gl46;
-
-public abstract class BaseShaderGl46 : BaseShader {
-
-}
 
 public class StdShaderGl46 : IShaderDLL
 {

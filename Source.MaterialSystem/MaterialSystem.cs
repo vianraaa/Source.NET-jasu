@@ -20,10 +20,6 @@ using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
-public enum VertexCompressionType {
-	None = 0
-}
-
 public class MaterialSystem : IMaterialSystem
 {
 	MaterialDict Dict = [];
