@@ -103,7 +103,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetIntValue(int val) {
-		throw new NotImplementedException();
+		IntVal = val;
 	}
 
 	public override void SetMaterialValue(IMaterial? material) {

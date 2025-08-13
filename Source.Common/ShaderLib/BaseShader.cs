@@ -45,7 +45,7 @@ public enum ShaderParamFlags
 
 public abstract class BaseShader : IShader
 {
-	static IMaterialVar[] Params;
+	static IMaterialVar[]? Params;
 	static ShaderParamInfo[] StandardParams = [
 		new(){ Name = "$flags",                    Help = "flags",            Type = ShaderParamType.Integer,DefaultValue =  "0", Flags = ShaderParamFlags.NotEditable },
 		new(){ Name = "$flags_defined",            Help = "flags_defined",    Type = ShaderParamType.Integer, DefaultValue = "0", Flags =ShaderParamFlags.NotEditable },
@@ -105,4 +105,15 @@ public abstract class BaseShader : IShader
 	}
 
 	public abstract string? GetFallbackShader(IMaterialVar[] vars);
+
+	public void InitShaderParams(IMaterialVar[] vars, string materialName) {
+		Dbg.Assert(Params == null);
+		Params = vars;
+		OnInitShaderParams(vars, materialName);
+		Params = null;
+	}
+
+	protected virtual void OnInitShaderParams(IMaterialVar[] vars, string materialName) {
+
+	}
 }

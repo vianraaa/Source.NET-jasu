@@ -23,4 +23,5 @@ public interface IShader
 	ShaderParamType GetParamType(int paramIndex);
     ReadOnlySpan<char> GetParamDefault(int paramIndex);
 	string? GetFallbackShader(IMaterialVar[] vars);
+	void InitShaderParams(IMaterialVar[] vars, string materialName);
 }
