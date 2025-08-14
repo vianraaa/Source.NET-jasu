@@ -95,7 +95,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetFloatValue(float val) {
-		throw new NotImplementedException();
+		VecVal[0] = val;
 	}
 
 	public override void SetFourCCValue(ulong type, object? data) {
@@ -111,7 +111,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetMatrixValue(in Matrix4x4 matrix) {
-		throw new NotImplementedException();
+		Dbg.Warning("setmatrixvalue\n");
 	}
 
 	public override void SetStringValue(ReadOnlySpan<char> val) {
@@ -143,7 +143,9 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetVecValue(float x, float y, float z) {
-		throw new NotImplementedException();
+		VecVal[0] = x;
+		VecVal[1] = y;
+		VecVal[2] = z;
 	}
 
 	public override void SetVecValue(float x, float y, float z, float w) {

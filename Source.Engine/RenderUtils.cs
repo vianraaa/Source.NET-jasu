@@ -35,8 +35,5 @@ public class RenderUtils(IMaterialSystem materials)
 
 		int xSegments = Math.Max(xDice, 1);
 		int ySegments = Math.Max(yDice, 1);
-
-		MeshBuilder meshBuilder = new MeshBuilder();
-		IMesh
 	}
 }
