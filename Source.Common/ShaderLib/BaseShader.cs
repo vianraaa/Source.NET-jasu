@@ -105,7 +105,7 @@ public abstract class BaseShader : IShader
 		return StandardParams[paramIndex].DefaultValue;
 	}
 
-	public abstract string? GetFallbackShader(IMaterialVar[] vars);
+	public virtual string? GetFallbackShader(IMaterialVar[] vars) => null;
 
 	public void InitShaderParams(IMaterialVar[] vars, string materialName) {
 		Dbg.Assert(Params == null);

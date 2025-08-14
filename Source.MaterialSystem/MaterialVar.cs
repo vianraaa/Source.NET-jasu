@@ -78,7 +78,7 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
-	public override ITexture GetTextureValue() {
+	public override ITexture? GetTextureValue() {
 		throw new NotImplementedException();
 	}
 

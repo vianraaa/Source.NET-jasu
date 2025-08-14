@@ -33,7 +33,7 @@ public abstract class IMaterialVar
 	protected byte TempIndex;
 	protected string Name = "";
 
-	public abstract ITexture GetTextureValue();
+	public abstract ITexture? GetTextureValue();
 	public abstract string GetName();
 	public abstract void SetFloatValue(float val);
 	public abstract void SetIntValue(int val);
@@ -115,5 +115,8 @@ public abstract class IMaterialVar
 
 	public int GetIntValue() {
 		return IntVal;
+	}
+	public float GetFloatValue() {
+		return VecVal.X;
 	}
 }
