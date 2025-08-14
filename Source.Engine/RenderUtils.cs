@@ -32,5 +32,11 @@ public class RenderUtils(IMaterialSystem materials)
 		renderContext.LoadIdentity();
 
 		renderContext.Bind(material, clientRenderable);
+
+		int xSegments = Math.Max(xDice, 1);
+		int ySegments = Math.Max(yDice, 1);
+
+		MeshBuilder meshBuilder = new MeshBuilder();
+		IMesh
 	}
 }

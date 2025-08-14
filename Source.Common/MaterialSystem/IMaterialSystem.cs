@@ -8,6 +8,13 @@ using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 
+public enum MaterialIndexFormat
+{
+	Unknown = -1,
+	x16 = 0,
+	x32,
+}
+
 public enum MaterialBufferTypes {
 	Front,
 	Back
