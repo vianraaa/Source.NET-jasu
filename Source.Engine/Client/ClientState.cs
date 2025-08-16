@@ -1,4 +1,6 @@
-﻿using Source.Common.Client;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -88,8 +90,9 @@ public class ClientState : BaseClientState
 	public static ConVar cl_downloadfilter = new("all", FCvar.Archive, "Determines which files can be downloaded from the server (all, none, nosounds, mapsonly)");
 
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv,
-		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI)
-		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI) {
+		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
+		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient)
+		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
 		this.Net = Net;
