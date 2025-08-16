@@ -1,4 +1,6 @@
-﻿using Source.Common.Bitbuffers;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Compression;
@@ -24,7 +26,11 @@ namespace Source.Engine.Client;
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
-public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
+public abstract class BaseClientState(
+	Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, 
+	IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI,
+	[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient
+	) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
 {
 	public ConVar cl_connectmethod = new(nameof(cl_connectmethod), "", FCvar.UserInfo | FCvar.Hidden, "Method by which we connected to the current server.");
 	public ConVar password = new(nameof(password), "", FCvar.Archive | FCvar.ServerCannotQuery | FCvar.DontRecord, "Current server access password");
@@ -405,7 +411,7 @@ public abstract class BaseClientState(Host Host, IFileSystem fileSystem, Net Net
 		ServerClasses = msg.MaxClasses;
 		ServerClassBits = (int)Math.Log2(ServerClasses) + 1;
 
-		StringTableContainer = (NetworkStringTableContainer)INetworkStringTableContainer.networkStringTableContainerClient;
+		StringTableContainer = networkStringTableContainerClient;
 
 		if (MaxClients < 1 || MaxClients > Constants.ABSOLUTE_PLAYER_LIMIT) {
 			ConMsg($"Bad maxclients ({MaxClients}) from server.\n");

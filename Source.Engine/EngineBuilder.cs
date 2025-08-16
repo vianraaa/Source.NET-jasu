@@ -104,7 +104,6 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<SV>();
 		this.AddSingleton<Sys>();
 		this.AddSingleton<Host>();
-		this.AddSingleton<Net>();
 		this.AddSingleton<Cbuf>();
 		this.AddSingleton<Cmd>();
 		this.AddSingleton<Con>();
@@ -117,6 +116,9 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
 		this.AddSingleton<RenderUtils>();
+		this.AddSingleton<Net>();
+		this.AddKeyedSingleton<NetworkStringTableContainer>(Realm.Client);
+		this.AddKeyedSingleton<NetworkStringTableContainer>(Realm.Server);
 		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<ICvarQuery, DefaultCvarQuery>();

@@ -31,11 +31,6 @@ public interface INetworkStringTable
 
 public interface INetworkStringTableContainer
 {
-#pragma warning disable CS8618
-	public static INetworkStringTableContainer networkStringTableContainerClient;
-	public static INetworkStringTableContainer networkStringTableContainerServer;
-#pragma warning restore CS8618
-
 	public INetworkStringTable? CreateStringTable(
 		string tableName,
 		int maxEntries,
