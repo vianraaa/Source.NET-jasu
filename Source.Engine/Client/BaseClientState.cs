@@ -318,6 +318,15 @@ public abstract class BaseClientState(
 	}
 
 	private bool ProcessClassInfo(svc_ClassInfo msg) {
+		if (msg.CreateOnClient) {
+			ConMsg("Can't create class tables.\n");
+			Assert(false);
+			return false;
+		}
+		
+		ServerClasses = msg.Classes.Count;
+
+
 		return true;
 	}
 
