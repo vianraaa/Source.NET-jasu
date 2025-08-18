@@ -15,6 +15,10 @@ public class SV(IServiceProvider services)
 
 	}
 
+	internal void DumpStringTables() {
+
+	}
+
 	internal void InitGameDLL() {
 
 	}

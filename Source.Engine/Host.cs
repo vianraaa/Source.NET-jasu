@@ -749,4 +749,12 @@ public class Host(
 		GC.WaitForPendingFinalizers();
 		GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
 	}
+
+	[ConCommand]
+	void dumpstringtables() {
+		SV.DumpStringTables();
+#if !SWDS
+		CL.DumpStringTables();
+#endif
+	}
 }

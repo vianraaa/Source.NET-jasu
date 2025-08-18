@@ -352,7 +352,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 		return b + 7 >> 3;
 	}
 
-	static int PAD_NUMBER(int number, int boundary) => (number + (boundary - 1)) / boundary * boundary;
+	public static int PAD_NUMBER(int number, int boundary) => (number + (boundary - 1)) / boundary * boundary;
 	static int BYTES2FRAGMENTS(int i) => (i + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
 
 

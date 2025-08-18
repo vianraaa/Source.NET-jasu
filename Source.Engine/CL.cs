@@ -205,6 +205,8 @@ public class CL(IServiceProvider services, Net Net,
 	internal void TakeSnapshotAndSwap() {
 
 	}
+
+	public void DumpStringTables() => cl.StringTableContainer?.Dump();
 }
 
 

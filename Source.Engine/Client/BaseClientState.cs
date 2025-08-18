@@ -27,7 +27,7 @@ namespace Source.Engine.Client;
 /// Base client state, in CLIENT
 /// </summary>
 public abstract class BaseClientState(
-	Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar, 
+	Host Host, IFileSystem fileSystem, Net Net, GameServer sv, Cbuf Cbuf, ICvar cvar,
 	IEngineVGuiInternal? EngineVGui, IEngineAPI engineAPI,
 	[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient
 	) : INetChannelHandler, IConnectionlessPacketHandler, IServerMessageHandler
@@ -81,8 +81,7 @@ public abstract class BaseClientState(
 	// Source does it differently but who really cares, this works fine... I think
 	public NetworkStringTableContainer? StringTableContainer;
 
-	public virtual void Clear()
-	{
+	public virtual void Clear() {
 		ServerCount = -1;
 		DeltaTick = -1;
 
@@ -96,8 +95,7 @@ public abstract class BaseClientState(
 		LevelBaseName = "";
 		MaxClients = 0;
 
-		if (StringTableContainer != null)
-		{
+		if (StringTableContainer != null) {
 			StringTableContainer.RemoveAllTables();
 			StringTableContainer = null;
 		}
@@ -271,7 +269,8 @@ public abstract class BaseClientState(
 		if (SignOnState == SignOnState.Spawn) {
 			if (!msg.IsDelta) {
 				SetSignonState(SignOnState.Full, ServerCount);
-			} else {
+			}
+			else {
 				ConWarning("Received delta packet entities while spawning!\n");
 				return false;
 			}
@@ -324,14 +323,14 @@ public abstract class BaseClientState(
 
 	private bool ProcessUpdateStringTable(svc_UpdateStringTable msg) {
 		int startbit = msg.DataIn.BitsRead;
-		if(StringTableContainer != null) // RaphaelIT7: In the Source Engine during level transmission in rare cases the svc_UpdateStringTable could be received before the server info.
+		if (StringTableContainer != null) // RaphaelIT7: In the Source Engine during level transmission in rare cases the svc_UpdateStringTable could be received before the server info.
 		{
 			NetworkStringTable? table = (NetworkStringTable?)StringTableContainer.GetTable(msg.TableID);
-			if (table != null)
-			{
+			if (table != null) {
 				table.ParseUpdate(msg.DataIn, msg.ChangedEntries);
 			}
-		} else {
+		}
+		else {
 			Warning("m_StringTableContainer is NULL in BaseClientState.ProcessUpdateStringTable\n");
 		}
 
@@ -343,15 +342,14 @@ public abstract class BaseClientState(
 #if !SWDS
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessStringTable);
 #endif
-		
+
 		StringTableContainer?.SetAllowCreation(true);
 
 		NetworkStringTable? table = (NetworkStringTable?)StringTableContainer?.CreateStringTableEx(msg.TableName, msg.MaxEntries, msg.UserDataSize, msg.UserDataSizeBits, msg.IsFilenames);
-		
+
 		StringTableContainer?.SetAllowCreation(false);
-		
-		if (table == null)
-		{
+
+		if (table == null) {
 			Error("Stringtable failed to be created!\n");
 			return false;
 		}
@@ -360,36 +358,38 @@ public abstract class BaseClientState(
 
 		HookClientStringTable(msg.TableName);
 
-		if (msg.DataCompressed)
-		{
+		if (msg.DataCompressed) {
 			int msgUncompressedSize = msg.DataIn.ReadLong();
 			int msgCompressedSize = msg.DataIn.ReadLong();
-			int uncompressedSize = msgUncompressedSize;
-			bool bSuccess = false;
-			if ( msg.DataIn.BytesAvailable > 0 &&
+			uint uncompressedSize = (uint)msgUncompressedSize;
+			bool success = false;
+			if (msg.DataIn.BytesAvailable > 0 &&
 				 msgCompressedSize <= (uint)msg.DataIn.BytesAvailable &&
-				 msgCompressedSize < uint.MaxValue/2 &&
-				 msgUncompressedSize < uint.MaxValue/2 )
-			{
-				byte[] compressedBuffer = new byte[msgCompressedSize];
-				msg.DataIn.ReadBits( compressedBuffer, msgCompressedSize * 8 );
+				 msgCompressedSize < uint.MaxValue / 2 &&
+				 msgUncompressedSize < uint.MaxValue / 2) {
+				byte[] uncompressedBuffer = new byte[NetChannel.PAD_NUMBER(msgUncompressedSize, 4)];
+				byte[] compressedBuffer = new byte[NetChannel.PAD_NUMBER(msgCompressedSize, 4)];
+				msg.DataIn.ReadBits(compressedBuffer, msgCompressedSize * 8);
 
-				byte[] uncompressedBuffer = new byte[msgUncompressedSize];
-				uncompressedSize = (int)CLZSS.Uncompress(uncompressedBuffer, compressedBuffer);
-				bSuccess &= (uncompressedSize == msgUncompressedSize);
+				unsafe {
+					fixed (byte* uncompressedBfr = uncompressedBuffer)
+					fixed (byte* compressedBfr = compressedBuffer)
+						success = Net.BufferToBufferDecompress(uncompressedBfr, ref uncompressedSize, compressedBfr, uncompressedSize);
+				}
+				success &= (uncompressedSize == msgUncompressedSize);
 
-				if (bSuccess)
-				{
+				if (success) {
 					bf_read data = new bf_read(uncompressedBuffer, uncompressedSize);
 					table.ParseUpdate(data, msg.NumEntries);
 				}
 			}
 
-			if (!bSuccess)
-			{
+			if (!success) {
+				Assert(false);
 				Warning("Malformed message in BaseClientState.ProcessCreateStringTable\n");
 			}
-		} else {
+		}
+		else {
 			table.ParseUpdate(msg.DataIn, msg.NumEntries);
 		}
 
@@ -424,8 +424,8 @@ public abstract class BaseClientState(
 		}
 
 #if !SWDS
-		if(!sv.IsActive() && !(NetChannel!.IsLoopback() || NetChannel.IsNull)) {
-			if(MaxClients <= 1) {
+		if (!sv.IsActive() && !(NetChannel!.IsLoopback() || NetChannel.IsNull)) {
+			if (MaxClients <= 1) {
 				ConMsg($"Bad maxclients ({MaxClients}) from server.\n");
 				return false;
 			}
@@ -440,13 +440,13 @@ public abstract class BaseClientState(
 		PlayerSlot = msg.PlayerSlot;
 		ViewEntity = PlayerSlot + 1;
 
-		if(msg.TickInterval < Constants.MINIMUM_TICK_INTERVAL || msg.TickInterval > Constants.MAXIMUM_TICK_INTERVAL) {
+		if (msg.TickInterval < Constants.MINIMUM_TICK_INTERVAL || msg.TickInterval > Constants.MAXIMUM_TICK_INTERVAL) {
 			ConMsg($"Interval_per_tick {msg.TickInterval} out of range [{Constants.MINIMUM_TICK_INTERVAL} to {Constants.MAXIMUM_TICK_INTERVAL}]");
 			return false;
 		}
 
 		LevelBaseName = msg.MapName;
-		
+
 		ConVar? skyname = cvar.FindVar("sv_skyname");
 		skyname?.SetValue(msg.SkyName);
 
@@ -713,8 +713,7 @@ public abstract class BaseClientState(
 		}
 	}
 
-	public void HookClientStringTable(string tableName)
-	{
+	public void HookClientStringTable(string tableName) {
 		// ToDo
 	}
 }
