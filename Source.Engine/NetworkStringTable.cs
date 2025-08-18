@@ -5,8 +5,10 @@ namespace Source.Engine;
 using Source.Common.Bitbuffers;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
+
 using System;
 using System.Diagnostics;
+
 using static Source.Common.Engine.IEngine;
 using static Source.Dbg;
 
@@ -30,41 +32,34 @@ public class NetworkStringTableItem
 	public int TickCreated;
 	public List<ItemChange>? ChangeList;
 
-	public NetworkStringTableItem()
-	{
+	public NetworkStringTableItem() {
 		UserData = null;
 		UserDataLength = 0;
 		TickChanged = -1;
 		TickCreated = -1;
 	}
 
-	public void EnableChangeHistory()
-	{
+	public void EnableChangeHistory() {
 		ChangeList ??= new List<ItemChange>();
 	}
 
-	public void UpdateChangeList(int tick, int length, byte[] userData)
-	{
+	public void UpdateChangeList(int tick, int length, byte[] userData) {
 		if (ChangeList == null)
 			return;
 
-		ChangeList.Add(new ItemChange
-		{
+		ChangeList.Add(new ItemChange {
 			Tick = tick,
 			Length = length,
 			Data = userData[..length]
 		});
 	}
 
-	public int RestoreTick(int tick)
-	{
+	public int RestoreTick(int tick) {
 		if (ChangeList == null)
 			return -1;
 
-		foreach (var change in ChangeList)
-		{
-			if (change.Tick == tick)
-			{
+		foreach (var change in ChangeList) {
+			if (change.Tick == tick) {
 				UserData = change.Data[..change.Length];
 				UserDataLength = change.Length;
 				TickChanged = tick;
@@ -75,16 +70,15 @@ public class NetworkStringTableItem
 		return -1;
 	}
 
-	public bool SetUserData(int tick, int length, byte[]? userData)
-	{
+	public bool SetUserData(int tick, int length, byte[]? userData) {
 		if (length > MAX_USERDATA_SIZE)
 			throw new ArgumentOutOfRangeException(nameof(length), "Length exceeds MAX_USERDATA_SIZE");
 
-		if (userData == null || length == 0)
-		{
+		if (userData == null || length == 0) {
 			UserData = null;
 			UserDataLength = 0;
-		} else {
+		}
+		else {
 			UserData = new byte[length];
 			Array.Copy(userData, UserData, length);
 			UserDataLength = length;
@@ -94,8 +88,7 @@ public class NetworkStringTableItem
 		return true;
 	}
 
-	public byte[]? GetUserData(out int length)
-	{
+	public byte[]? GetUserData(out int length) {
 		length = UserDataLength;
 		return UserData;
 	}
@@ -119,14 +112,12 @@ public class NetworkStringDict : INetworkStringDict
 
 	public int Count() => Lookup.Count;
 
-	public void Purge()
-	{
+	public void Purge() {
 		Lookup.Clear();
 		Keys.Clear();
 	}
 
-	public string String(int index)
-	{
+	public string String(int index) {
 		if (!IsValidIndex(index))
 			throw new IndexOutOfRangeException();
 
@@ -135,10 +126,8 @@ public class NetworkStringDict : INetworkStringDict
 
 	public bool IsValidIndex(int index) => index >= 0 && index < Keys.Count;
 
-	public int Insert(string value)
-	{
-		if (!Lookup.ContainsKey(value))
-		{
+	public int Insert(string value) {
+		if (!Lookup.ContainsKey(value)) {
 			Lookup[value] = new NetworkStringTableItem();
 			Keys.Add(value);
 		}
@@ -146,16 +135,14 @@ public class NetworkStringDict : INetworkStringDict
 		return Keys.IndexOf(value);
 	}
 
-	public int Find(string value)
-	{
+	public int Find(string value) {
 		if (value == null)
 			return -1;
 
 		return Keys.IndexOf(value);
 	}
 
-	public NetworkStringTableItem Element(int index)
-	{
+	public NetworkStringTableItem Element(int index) {
 		if (!IsValidIndex(index))
 			throw new IndexOutOfRangeException();
 
@@ -192,8 +179,7 @@ public class NetworkStringTable : INetworkStringTable
 	private const int SUBSTRING_BITS = 5;
 	private const int MAX_ENTRY_LENGTH = 1024;
 
-	public NetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames)
-	{
+	public NetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames) {
 		AllowClientSideAddString = false;
 		TableID = tableID;
 		TableName = tableName;
@@ -203,98 +189,82 @@ public class NetworkStringTable : INetworkStringTable
 		UserDataSize = userdatafixedsize;
 		UserDataSizeBits = userdatanetworkbits;
 
-		if (UserDataSizeBits > NetworkStringTableItem.MAX_USERDATA_BITS)
-		{
-			Error("String tables user data bits restricted to %i bits, requested %i is too large\n", 
+		if (UserDataSizeBits > NetworkStringTableItem.MAX_USERDATA_BITS) {
+			Error("String tables user data bits restricted to %i bits, requested %i is too large\n",
 				NetworkStringTableItem.MAX_USERDATA_BITS,
-				UserDataSizeBits );
+				UserDataSizeBits);
 		}
 
-		if (UserDataSize > NetworkStringTableItem.MAX_USERDATA_SIZE)
-		{
-			Error("String tables user data size restricted to %i bytes, requested %i is too large\n", 
+		if (UserDataSize > NetworkStringTableItem.MAX_USERDATA_SIZE) {
+			Error("String tables user data size restricted to %i bytes, requested %i is too large\n",
 				NetworkStringTableItem.MAX_USERDATA_SIZE,
 				UserDataSize);
 		}
 
-		if ((1 << EntryBits) != maxEntries)
-		{
+		if ((1 << EntryBits) != maxEntries) {
 			Error("String tables must be powers of two in size!, %i is not a power of 2\n", maxEntries);
 		}
 
-		if (bIsFilenames)
-		{
+		if (bIsFilenames) {
 			IsFilenames = true;
 			Items = new NetworkStringDict(); //new CNetworkStringFilenameDict;
-		} else {
+		}
+		else {
 			IsFilenames = false;
 			Items = new NetworkStringDict();
 		}
 	}
 
-	public int GetTableId()
-	{
+	public int GetTableId() {
 		return TableID;
 	}
 
-	public string GetTableName()
-	{
+	public string GetTableName() {
 		return TableName;
 	}
 
-	public int GetNumStrings()
-	{
+	public int GetNumStrings() {
 		return Items.Count();
 	}
 
-	public int GetMaxStrings()
-	{
+	public int GetMaxStrings() {
 		return MaxEntries;
 	}
 
-	public int GetEntryBits()
-	{
+	public int GetEntryBits() {
 		return EntryBits;
 	}
 
-	public void SetTick(int iTick)
-	{
-		TickCount = iTick;	
+	public void SetTick(int iTick) {
+		TickCount = iTick;
 	}
 
-	public bool ChangedSinceTick(int iTick)
-	{
+	public bool ChangedSinceTick(int iTick) {
 		return LastChangedTick > iTick;
 	}
 
-	public int AddString(bool isServer, string value, int length, byte[]? userData)
-	{
+	public int AddString(bool isServer, string value, int length, byte[]? userData) {
 		/*if (!value)
 		{
 			ConMsg("Warning:  Can't add NULL string to table %s\n", m_pszTableName);
 			return INetworkStringTable.INVALID_STRING_INDEX;
 		}*/
 
-		if (Locked)
-		{
+		if (Locked) {
 			DevMsg("Warning! CNetworkStringTable::AddString: adding '%s' while locked.\n", value);
 		}
 
 		int i = Items.Find(value);
-		if (!isServer && Items.IsValidIndex(i) && ItemsClientSide == null)
-		{
+		if (!isServer && Items.IsValidIndex(i) && ItemsClientSide == null) {
 			isServer = true;
 		}
 
 		bool bHasChanged = false;
 		NetworkStringTableItem? item = null;
-		if (!isServer && ItemsClientSide != null)
-		{
+		if (!isServer && ItemsClientSide != null) {
 			i = ItemsClientSide.Find(value);
-			if (!ItemsClientSide.IsValidIndex(i))
-			{
-				if (ItemsClientSide.Count() >= (uint)GetMaxStrings())
-				{
+			if (!ItemsClientSide.IsValidIndex(i)) {
+				if (ItemsClientSide.Count() >= (uint)GetMaxStrings()) {
 					ConMsg("Warning:  Table %s is full, can't add %s\n", GetTableName(), value);
 					return INetworkStringTable.INVALID_STRING_INDEX;
 				}
@@ -304,35 +274,32 @@ public class NetworkStringTable : INetworkStringTable
 				item.TickChanged = TickCount;
 				item.TickCreated = TickCount;
 
-				if (ChangeHistoryEnabled)
-				{
+				if (ChangeHistoryEnabled) {
 					item.EnableChangeHistory();
 				}
 
 				bHasChanged = true;
-			} else {
+			}
+			else {
 				item = ItemsClientSide.Element(i);
 				bHasChanged = false;
 			}
 
-			if (length > -1 && item.SetUserData(TickCount, length, userData))
-			{
+			if (length > -1 && item.SetUserData(TickCount, length, userData)) {
 				bHasChanged = true;
 			}
 
-			if (bHasChanged && !ChangeHistoryEnabled)
-			{
+			if (bHasChanged && !ChangeHistoryEnabled) {
 				DataChanged(-i, item);
 			}
 
 			i = -i;
-		} else {
+		}
+		else {
 			i = Items.Find(value);
 
-			if (!Items.IsValidIndex(i))
-			{
-				if (Items.Count() >= (uint)GetMaxStrings())
-				{
+			if (!Items.IsValidIndex(i)) {
+				if (Items.Count() >= (uint)GetMaxStrings()) {
 					ConMsg("Warning:  Table %s is full, can't add %s\n", GetTableName(), value);
 					return INetworkStringTable.INVALID_STRING_INDEX;
 				}
@@ -342,24 +309,22 @@ public class NetworkStringTable : INetworkStringTable
 				item.TickChanged = TickCount;
 				item.TickCreated = TickCount;
 
-				if (ChangeHistoryEnabled)
-				{
+				if (ChangeHistoryEnabled) {
 					item.EnableChangeHistory();
 				}
 
 				bHasChanged = true;
-			} else {
+			}
+			else {
 				item = Items.Element(i);
 				bHasChanged = false;
 			}
 
-			if (length > -1 && item.SetUserData( TickCount, length, userData))
-			{
+			if (length > -1 && item.SetUserData(TickCount, length, userData)) {
 				bHasChanged = true;
 			}
 
-			if (bHasChanged && !ChangeHistoryEnabled)
-			{
+			if (bHasChanged && !ChangeHistoryEnabled) {
 				DataChanged(i, item);
 			}
 		}
@@ -367,50 +332,41 @@ public class NetworkStringTable : INetworkStringTable
 		return i;
 	}
 
-	public string? GetString(int stringNumber)
-	{
+	public string? GetString(int stringNumber) {
 		INetworkStringDict dict = Items;
-		if (ItemsClientSide != null && stringNumber < -1)
-		{
+		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;
 			stringNumber = -stringNumber;
 		}
 
-		if (dict.IsValidIndex(stringNumber))
-		{
+		if (dict.IsValidIndex(stringNumber)) {
 			return dict.String(stringNumber);
 		}
 
 		return null;
 	}
 
-	public void SetStringUserData(int stringNumber, int length, byte[] userData)
-	{
-		if (Locked)
-		{
+	public void SetStringUserData(int stringNumber, int length, byte[] userData) {
+		if (Locked) {
 			DevMsg("Warning! CNetworkStringTable::SetStringUserData (%s): changing entry %i while locked.\n", GetTableName(), stringNumber);
 		}
 
 		INetworkStringDict dict = Items;
 		int saveStringNumber = stringNumber;
-		if (ItemsClientSide != null && stringNumber < -1)
-		{
+		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;
 			stringNumber = -stringNumber;
 		}
 
 		NetworkStringTableItem p = dict.Element(stringNumber);
-		if (p.SetUserData(TickCount, length, userData))
-		{
+		if (p.SetUserData(TickCount, length, userData)) {
 			DataChanged(saveStringNumber, p);
 		}
 	}
 
-	public byte[]? GetStringUserData(int stringNumber, out int length)
-	{
+	public byte[]? GetStringUserData(int stringNumber, out int length) {
 		INetworkStringDict dict = Items;
-		if (ItemsClientSide != null && stringNumber < -1)
-		{
+		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;
 			stringNumber = -stringNumber;
 		}
@@ -419,8 +375,7 @@ public class NetworkStringTable : INetworkStringTable
 		return p.GetUserData(out length);
 	}
 
-	public int FindStringIndex(string value)
-	{
+	public int FindStringIndex(string value) {
 		int i = Items.Find(value);
 		if (Items.IsValidIndex(i))
 			return i;
@@ -428,25 +383,21 @@ public class NetworkStringTable : INetworkStringTable
 		return INetworkStringTable.INVALID_STRING_INDEX;
 	}
 
-	public void SetStringChangedCallback(object? context, StringChangedDelegate callback)
-	{
+	public void SetStringChangedCallback(object? context, StringChangedDelegate callback) {
 		ChangeFunc = callback;
 		CallbackObject = context;
 	}
 
-	public void EnableRollback()
-	{
+	public void EnableRollback() {
 		// stringtable must be empty 
 		if (Items.Count() == 0)
 			ChangeHistoryEnabled = true;
 	}
 
-	private void DataChanged(int stringNumber, NetworkStringTableItem item)
-	{
+	private void DataChanged(int stringNumber, NetworkStringTableItem item) {
 		LastChangedTick = TickCount;
 
-		if (ChangeFunc != null)
-		{
+		if (ChangeFunc != null) {
 			int userDataSize;
 			byte[]? pUserData = item.GetUserData(out userDataSize);
 			// Ignore it's yapping, when this is called GetString should always return a valid thing.
@@ -454,91 +405,71 @@ public class NetworkStringTable : INetworkStringTable
 		}
 	}
 
-	public void SetAllowClientSideAddString(bool allowClientSideAddString)
-	{
+	public void SetAllowClientSideAddString(bool allowClientSideAddString) {
 		if (allowClientSideAddString == AllowClientSideAddString)
 			return;
 
 		AllowClientSideAddString = allowClientSideAddString;
-		if (ItemsClientSide != null)
-		{
+		if (ItemsClientSide != null) {
 			ItemsClientSide = null;
 		}
 
-		if (AllowClientSideAddString)
-		{
+		if (AllowClientSideAddString) {
 			ItemsClientSide = new NetworkStringDict();
-			ItemsClientSide.Insert( "___clientsideitemsplaceholder0___" );
-			ItemsClientSide.Insert( "___clientsideitemsplaceholder1___" );
+			ItemsClientSide.Insert("___clientsideitemsplaceholder0___");
+			ItemsClientSide.Insert("___clientsideitemsplaceholder1___");
 		}
 	}
 
-	public void Dump()
-	{
-		ConMsg("Table %s\n", GetTableName());
-		ConMsg("  %i/%i items\n", GetNumStrings(), GetMaxStrings());
-		for (int i = 0; i < GetNumStrings() ; i++)
-		{
-			ConMsg("  %i : %s\n", i, GetString(i));
-		}
+	public void Dump() {
+		ConMsg($"Table {GetTableName()}\n");
+		ConMsg($"  {GetNumStrings()}/{GetMaxStrings()} items\n");
+		for (int i = 0; i < GetNumStrings(); i++) 
+			ConMsg($"  {i} : {GetString(i)}\n");
 
 		if (ItemsClientSide != null)
-		{
-			for (int i = 0; i < (int)ItemsClientSide.Count() ; i++)
-			{
-				ConMsg("  (c)%i : %s\n", i, ItemsClientSide.String(i));
-			}
-		}
+			for (int i = 0; i < ItemsClientSide.Count(); i++)
+				ConMsg($"  (c){i} : {ItemsClientSide.String(i)}\n");
 
 		ConMsg("\n");
 	}
 
-	bool IsUserDataFixedSize()
-	{
+	bool IsUserDataFixedSize() {
 		return UserDataFixedSize;
 	}
 
-	int	GetUserDataSize()
-	{
+	int GetUserDataSize() {
 		return UserDataSize;
 	}
 
-	int	GetUserDataSizeBits()
-	{
+	int GetUserDataSizeBits() {
 		return UserDataSizeBits;
 	}
 
-	public void ParseUpdate(bf_read buf, int entries)
-	{
+	public void ParseUpdate(bf_read buf, int entries) {
 		int lastEntry = -1;
 		List<string> history = new();
-		for (int i = 0; i < entries; i++)
-		{
+		for (int i = 0; i < entries; i++) {
 			int entryIndex = lastEntry + 1;
-			if (buf.ReadOneBit() == 0)
-			{
+			if (buf.ReadOneBit() == 0) {
 				entryIndex = (int)buf.ReadUBitLong(GetEntryBits());
 			}
 
 			lastEntry = entryIndex;
-			if (entryIndex < 0 || entryIndex >= GetMaxStrings())
-			{
-				Error("Server sent bogus string index %i for table %s\n", entryIndex, GetTableName());
+			if (entryIndex < 0 || entryIndex >= GetMaxStrings()) {
+				Error($"Server sent bogus string index {entryIndex} for table {GetTableName()}\n");
 				continue;
 			}
 
 			string? pEntry = null;
 			string? substr = null;
-			if (buf.ReadOneBit() != 0)
-			{
+			if (buf.ReadOneBit() != 0) {
 				bool isSubstring = buf.ReadOneBit() != 0;
-				if (isSubstring)
-				{
+				if (isSubstring) {
 					uint index = buf.ReadUBitLong(5);
-					uint bytesToCopy = buf.ReadUBitLong(NetworkStringTable.SUBSTRING_BITS);
-					if (index >= history.Count)
-					{
-						Error("Server sent bogus substring index %i for table %s\n", entryIndex, GetTableName());
+					uint bytesToCopy = buf.ReadUBitLong(SUBSTRING_BITS);
+					if (index >= history.Count) {
+						Error($"Server sent bogus substring index {entryIndex} for table {GetTableName()}\n");
 						continue;
 					}
 
@@ -546,26 +477,25 @@ public class NetworkStringTable : INetworkStringTable
 					string prefix = baseStr.Substring(0, Math.Min((int)bytesToCopy, baseStr.Length));
 					buf.ReadString(out substr, MAX_ENTRY_LENGTH);
 					pEntry = prefix + substr;
-				} else {
+				}
+				else {
 					buf.ReadString(out pEntry, MAX_ENTRY_LENGTH);
 				}
 			}
 
 			byte[]? pUserData = null;
 			int nBytes = 0;
-			if (buf.ReadOneBit() != 0)
-			{
-				if (IsUserDataFixedSize())
-				{
+			if (buf.ReadOneBit() != 0) {
+				if (IsUserDataFixedSize()) {
 					nBytes = GetUserDataSize();
 					Debug.Assert(nBytes > 0);
 					pUserData = new byte[GetUserDataSizeBits()];
 					buf.ReadBits(pUserData, GetUserDataSizeBits());
-				} else {
+				}
+				else {
 					nBytes = (int)buf.ReadUBitLong(NetworkStringTableItem.MAX_USERDATA_BITS);
-					if (nBytes > NetworkStringTableItem.MAX_USERDATA_SIZE)
-					{
-						Error("CNetworkStringTableClient::ParseUpdate: message too large (%i bytes).", nBytes);
+					if (nBytes > NetworkStringTableItem.MAX_USERDATA_SIZE) {
+						Error($"NetworkStringTableClient.ParseUpdate: message too large ({nBytes} bytes).");
 						continue;
 					}
 
@@ -574,22 +504,19 @@ public class NetworkStringTable : INetworkStringTable
 				}
 			}
 
-			if (entryIndex < GetNumStrings())
-			{
-				if (pUserData != null)
-				{
+			if (entryIndex < GetNumStrings()) {
+				if (pUserData != null) {
 					SetStringUserData(entryIndex, nBytes, pUserData);
 				}
 
-				if (pEntry != null)
-				{
+				if (pEntry != null) {
 					Debug.Assert(pEntry == GetString(entryIndex));
 				}
 
 				pEntry = GetString(entryIndex);
-			} else {
-				if (pEntry == null)
-				{
+			}
+			else {
+				if (pEntry == null) {
 					Msg("CNetworkStringTable::ParseUpdate: NULL pEntry, table %s, index %i\n", GetTableName(), entryIndex);
 					pEntry = "";
 				}
@@ -597,8 +524,7 @@ public class NetworkStringTable : INetworkStringTable
 				AddString(true, pEntry, nBytes, pUserData);
 			}
 
-			if (history.Count > 31)
-			{
+			if (history.Count > 31) {
 				history.RemoveAt(0);
 			}
 
@@ -615,28 +541,23 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 	private bool EnableRollback;
 	private List<NetworkStringTable> Tables = new List<NetworkStringTable>();
 
-	public INetworkStringTable? CreateStringTable(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits)
-	{
+	public INetworkStringTable? CreateStringTable(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits) {
 		return CreateStringTableEx(tableName, maxEntries, userDataFixedSize, userDataNetworkBits, false);
 	}
 
-	public INetworkStringTable? CreateStringTableEx(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits, bool isFilenames)
-	{
-		if (!AllowCreation)
-		{
+	public INetworkStringTable? CreateStringTableEx(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits, bool isFilenames) {
+		if (!AllowCreation) {
 			Error("Tried to create string table '%s' at wrong time\n", tableName);
 			return null;
 		}
 
 		NetworkStringTable? pTable = (NetworkStringTable?)FindTable(tableName);
-		if (pTable != null)
-		{
+		if (pTable != null) {
 			Error("Tried to create string table '%s' twice\n", tableName);
 			return null;
 		}
 
-		if (Tables.Count() >= INetworkStringTable.MAX_TABLES)
-		{
+		if (Tables.Count() >= INetworkStringTable.MAX_TABLES) {
 			Error("Only %i string tables allowed, can't create'%s'", INetworkStringTable.MAX_TABLES, tableName);
 			return null;
 		}
@@ -644,8 +565,7 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 		int id = Tables.Count();
 		pTable = new NetworkStringTable(id, tableName, maxEntries, userDataFixedSize, userDataNetworkBits, isFilenames);
 
-		if (EnableRollback)
-		{
+		if (EnableRollback) {
 			pTable.EnableRollback();
 		}
 
@@ -656,15 +576,12 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 		return pTable;
 	}
 
-	public void RemoveAllTables()
-	{
+	public void RemoveAllTables() {
 		Tables.Clear();
 	}
 
-	public INetworkStringTable? FindTable(string tableName)
-	{
-		foreach(NetworkStringTable pTable in Tables)
-		{
+	public INetworkStringTable? FindTable(string tableName) {
+		foreach (NetworkStringTable pTable in Tables) {
 			if (pTable.GetTableName() == tableName)
 				return pTable;
 		}
@@ -672,38 +589,30 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 		return null;
 	}
 
-	public INetworkStringTable? GetTable(int tableId)
-	{
+	public INetworkStringTable? GetTable(int tableId) {
 		return Tables[tableId];
 	}
 
-	public int GetNumTables()
-	{
+	public int GetNumTables() {
 		return Tables.Count();
 	}
 
-	public void SetAllowClientSideAddString(INetworkStringTable table, bool allowClientSideAddString)
-	{
-		foreach(NetworkStringTable pTable in Tables)
-		{
-			if (pTable == table)
-			{
+	public void SetAllowClientSideAddString(INetworkStringTable table, bool allowClientSideAddString) {
+		foreach (NetworkStringTable pTable in Tables) {
+			if (pTable == table) {
 				pTable.SetAllowClientSideAddString(allowClientSideAddString);
 				return;
 			}
 		}
 	}
 
-	public void Dump()
-	{
-		foreach(NetworkStringTable pTable in Tables)
-		{
+	public void Dump() {
+		foreach (NetworkStringTable pTable in Tables) {
 			pTable.Dump();
 		}
 	}
 
-	public void SetAllowCreation(bool state)
-	{
+	public void SetAllowCreation(bool state) {
 		AllowCreation = state;
 	}
- }
+}

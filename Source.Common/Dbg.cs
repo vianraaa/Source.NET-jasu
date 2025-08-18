@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Source;
@@ -108,8 +109,9 @@ public static class Dbg
 		Line = line;
 		SpewType = type;
 	}
+
 	public static SpewRetval _SpewMessage(SpewType spewType, string groupName, int level, in Color color, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {
-		string formattedString = string.Format(new(msgFormat), args);
+		string formattedString = new(msgFormat); // we need to write a C-style formatter sometime, or find one
 
 		SpewInfo info = new() {
 			SpewOutputColor = color,
