@@ -130,7 +130,7 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 	}
 
 	public nint GetWindowHandle() => (nint)window.HardwareHandle;
-	public void PumpWindowsMessageLoop() => window.PumpMessages();
+	public void PumpWindowsMessageLoop() => window?.PumpMessages();
 	public int GetEvents(WindowEvent[] eventBuffer, int length) => window.GetEvents(eventBuffer, length);
 
 	public void CenterWindow(int v2, int v3) {

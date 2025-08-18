@@ -230,7 +230,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	}
 	public void PollInputState_Platform() {
 		while (true) {
-			int events = launcherMgr.GetEvents(eventBuffer, eventBuffer.Length);
+			int events = launcherMgr?.GetEvents(eventBuffer, eventBuffer.Length) ?? 0;
 			if (events == 0) break;
 			for (int i = 0; i < events; i++) {
 				WindowEvent ev = eventBuffer[i];
