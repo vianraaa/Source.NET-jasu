@@ -681,7 +681,7 @@ public abstract class BaseClientState(
 	public virtual bool LinkClasses() => false;
 	public virtual int GetConnectionRetryNumber() => CL_CONNECTION_RETRIES;
 
-	public ConVar cl_name = new(nameof(cl_name), "unnamed", FCvar.Archive | FCvar.UserInfo | FCvar.PrintableOnly | FCvar.ServerCanExecute, "Current user name");
+	public ConVar cl_name = new("name", "unnamed", FCvar.Archive | FCvar.UserInfo | FCvar.PrintableOnly | FCvar.ServerCanExecute, "Current user name");
 
 	public virtual string GetClientName() => cl_name.GetString();
 
