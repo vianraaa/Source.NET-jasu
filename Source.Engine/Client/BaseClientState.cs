@@ -332,7 +332,7 @@ public abstract class BaseClientState(
 				table.ParseUpdate(msg.DataIn, msg.ChangedEntries);
 			}
 		} else {
-			Warning("m_StringTableContainer is NULL in CBaseClientState::ProcessUpdateStringTable\n");
+			Warning("m_StringTableContainer is NULL in BaseClientState.ProcessUpdateStringTable\n");
 		}
 
 		int endbit = msg.DataIn.BitsRead;
@@ -387,7 +387,7 @@ public abstract class BaseClientState(
 
 			if (!bSuccess)
 			{
-				Warning("Malformed message in CBaseClientState::ProcessCreateStringTable\n");
+				Warning("Malformed message in BaseClientState.ProcessCreateStringTable\n");
 			}
 		} else {
 			table.ParseUpdate(msg.DataIn, msg.NumEntries);
