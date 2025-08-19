@@ -109,7 +109,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
 		this.AddSingleton<Common>();
-		this.AddSingleton<Util>();
+		//this.AddSingleton<Util>();
 		this.AddSingleton<Scr>();
 		this.AddSingleton<View>();
 		this.AddSingleton<Render>();
@@ -152,6 +152,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 
 		List<Type> wantsInjection = [];
 		object?[]? linkInput = [this];
+		List<FieldInfo> populateLater = [];
 		foreach(var assembly in ReflectionUtils.GetAssemblies()) {
 			// This allows a type to define a class named SourceDllMain, with a static void Link(IServiceCollection),
 			// which allows a loaded assembly to insert whatever it wants into the DI system before the provider is
@@ -164,6 +165,11 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 			// This checks for any classes with the MarkForDependencyInjection attribute.
 			// They are then injected into the service collection.
 			foreach(var typeKVP in assembly.GetTypesWithAttribute<EngineComponentAttribute>()) {
+				foreach(var field in typeKVP.Key.GetFields(BindingFlags.Static | BindingFlags.NonPublic)){
+					if (field.GetCustomAttribute<EngineComponentReferenceAttribute>() != null)
+						populateLater.Add(field);
+				}
+
 				if (typeKVP.Key.IsAbstract && typeKVP.Key.IsSealed)
 					continue;
 
@@ -174,7 +180,16 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		// Everything else should be provided by the launcher!
 		ServiceProvider provider = this.BuildServiceProvider();
 		EngineAPI api = (EngineAPI)provider.GetRequiredService<IEngineAPI>();
+		foreach(var field in populateLater) {
+			var attr = field.GetCustomAttribute<EngineComponentReferenceAttribute>()!;
+			field.SetValue(null, attr.Key == null ? provider.GetService(field.FieldType) : provider.GetKeyedService(field.FieldType, attr.Key));
+		}
+		
 		api.Dedicated = dedicated;
 		return api;
 	}
+}
+[AttributeUsage(AttributeTargets.Field)]
+public class EngineComponentReferenceAttribute : Attribute {
+	public object? Key { get; set; }
 }

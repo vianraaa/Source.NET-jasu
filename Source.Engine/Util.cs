@@ -12,7 +12,8 @@ namespace Source.Engine;
 /// <summary>
 /// Shared Util class. Various components of the engine can add their own things here.
 /// </summary>
-public class Util
+// Going to do something else, for now...
+/*public class Util
 {
 	public readonly ClientState? Client;
 	public readonly GameServer Server;
@@ -24,4 +25,4 @@ public class Util
 		Server = server;
 		Host = host;
 	}
-}
+}*/
