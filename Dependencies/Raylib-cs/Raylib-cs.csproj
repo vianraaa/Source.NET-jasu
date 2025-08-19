@@ -28,6 +28,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Gl46.cs" />
     <None Include="logo/raylib-cs_64x64.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
@@ -44,6 +45,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+
+	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);OGL_WRAPPER_API_BOTH;OGL_P_CORE;OGL_V_4_6</DefineConstants>
+	</PropertyGroup>
 
   <ItemGroup>
     <Compile Include="interop\*.cs" />

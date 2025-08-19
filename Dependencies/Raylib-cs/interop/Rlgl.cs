@@ -1,3 +1,5 @@
+using OpenGL;
+
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -445,12 +447,26 @@ public static unsafe partial class Rlgl
     [DllImport(NativeLibName, EntryPoint = "rlClearColor", CallingConvention = CallingConvention.Cdecl)]
     public static extern void ClearColor(byte r, byte g, byte b, byte a);
 
-    /// <summary>Clear used screen buffers (color and depth)</summary>
-    [DllImport(NativeLibName, EntryPoint = "rlClearScreenBuffers", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void ClearScreenBuffers();
+	// Our own binding
+    public static void ClearScreenBuffers(bool color = true, bool depth = true, bool stencil = false) {
+		uint flags = 0;
 
-    /// <summary>Check and log OpenGL error codes</summary>
-    [DllImport(NativeLibName, EntryPoint = "rlCheckErrors", CallingConvention = CallingConvention.Cdecl)]
+		if (color)
+			flags |= Gl46.GL_COLOR_BUFFER_BIT;
+		if (depth)
+			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
+		if (stencil)
+			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
+
+		Gl46.glClear(flags);
+	}
+
+	public static void DepthRange(double min, double max) {
+		Gl46.glDepthRange(min, max);
+	}
+
+	/// <summary>Check and log OpenGL error codes</summary>
+	[DllImport(NativeLibName, EntryPoint = "rlCheckErrors", CallingConvention = CallingConvention.Cdecl)]
     public static extern void CheckErrors();
 
     /// <summary>Set blending mode</summary>
@@ -487,7 +503,12 @@ public static unsafe partial class Rlgl
 
     /// <summary>Load OpenGL extensions</summary>
     [DllImport(NativeLibName, EntryPoint = "rlLoadExtensions", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void LoadExtensions(void* loader);
+    public static extern void __loadExtensions(void* loader);
+    public static void LoadExtensions(delegate* unmanaged[Cdecl]<byte*, void*> loader) {
+		__loadExtensions(loader);
+		Gl46.Import((name) => (nint)loader((byte*)new Utf8Buffer(name).AsPointer()));
+	}
+
 
     /// <summary>Get current OpenGL version</summary>
     [DllImport(NativeLibName, EntryPoint = "rlGetVersion", CallingConvention = CallingConvention.Cdecl)]

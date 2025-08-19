@@ -2,8 +2,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-using OpenGL;
-
 using Raylib_cs;
 
 using Source.Common;
@@ -77,7 +75,6 @@ public class MaterialSystem : IMaterialSystem
 		Dbg.SpewActivate("raylib", 1);
 		Raylib.SetTraceLogCallback(&raylibSpew);
 
-		Gl46.Import((name) => (nint)loadExts((byte*)new Utf8Buffer(name).AsPointer()));
 		Rlgl.LoadExtensions(loadExts);
 		Rlgl.GlInit(width, height);
 
@@ -87,8 +84,8 @@ public class MaterialSystem : IMaterialSystem
 		Rlgl.Ortho(0, width, height, 0, 0, 1);
 		Rlgl.MatrixMode(MatrixMode.ModelView);
 		Rlgl.LoadIdentity();
-		Gl46.glClearColor(0, 0, 0, 1);
-		Gl46.glClear(Gl46.GL_COLOR_BUFFER_BIT | Gl46.GL_DEPTH_BUFFER_BIT);
+		Rlgl.ClearColor(0, 0, 0, 1);
+		Rlgl.ClearScreenBuffers();
 		Rlgl.EnableDepthTest();
 
 		Rlgl.ClearScreenBuffers();
@@ -161,7 +158,8 @@ public struct MatrixStackItem
 	public MatrixStackFlags Flags;
 }
 
-public struct RenderTargetStackElement {
+public struct RenderTargetStackElement
+{
 	public ITexture?[] RenderTargets;
 	public ITexture? DepthTexture;
 
@@ -207,29 +205,17 @@ public class MatRenderContext : IMatRenderContext
 
 	}
 
-	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) {
-		uint flags = 0;
-
-		if (clearColor)
-			flags |= Gl46.GL_COLOR_BUFFER_BIT;
-		if (clearColor)
-			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
-		if (clearColor)
-			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
-
-		Gl46.glClear(flags);
-	}
-
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) => Rlgl.ClearScreenBuffers(clearColor, clearDepth, clearStencil);
 	public void ClearColor3ub(byte r, byte g, byte b) {
-		Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
+		Rlgl.ClearColor(r, g, b, 255);
 	}
 
 	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
-		Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
+		Rlgl.ClearColor(r, g, b, a);
 	}
 
 	public void DepthRange(double near, double far) {
-		Gl46.glDepthRange(near, far);
+		Rlgl.DepthRange(near, far);
 	}
 
 	public void EndRender() {
@@ -248,7 +234,7 @@ public class MatRenderContext : IMatRenderContext
 		ref MatrixStackItem item = ref CurMatrixItem;
 		item.Matrix = Matrix4x4.Identity;
 		item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
-			CurrentMatrixChanged();
+		CurrentMatrixChanged();
 	}
 
 	public void MatrixMode(MaterialMatrixMode mode) {
@@ -289,7 +275,7 @@ public class MatRenderContext : IMatRenderContext
 	public void Bind(IMaterial iMaterial, object? proxyData) {
 		IMaterialInternal material = (IMaterialInternal)iMaterial;
 		// material = material.GetRealTimeVersion(); // TODO: figure out how to do this.
-		if(material == null) {
+		if (material == null) {
 			Dbg.Warning("Programming error: MatRenderContext.Bind NULL material\n");
 			material = ((MaterialSystem)materials).errorMaterial;
 		}
