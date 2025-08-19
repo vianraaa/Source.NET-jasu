@@ -10,8 +10,6 @@ using Source.Engine.Client;
 
 using System.Runtime.CompilerServices;
 
-using static Source.Dbg;
-
 namespace Game.Client;
 
 public class HLInput(IServiceProvider provider, ClientState cl) : IInput {
