@@ -6,7 +6,13 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="Gl46.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="Gl46.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Dependencies\Raylib-cs\Raylib-cs.csproj" />
