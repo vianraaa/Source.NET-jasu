@@ -6,6 +6,9 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
+		<Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
 	</ItemGroup>
 </Project>

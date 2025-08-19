@@ -76,6 +76,9 @@ public static class Formatting
 		dispatchLiteral(stringWork);
 	}
 
+	public static void Print(this StreamWriter writer, ReadOnlySpan<char> format, params object?[] args) =>
+		Print(format, writer.Write, args);
+
 	public static void Print(this ReadOnlySpan<char> format, IncomingLiteral howToPrint, params object?[] args) =>
 		Parse(format, howToPrint, (varIdx, varType) => {
 			if (varIdx >= args.Length)

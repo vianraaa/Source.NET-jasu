@@ -105,7 +105,12 @@ public interface IFileSystem : IBaseFileSystem
 	/// <param name="requestOnly"></param>
 	public void MarkPathIDByRequestOnly(ReadOnlySpan<char> pathID, bool requestOnly);
 
-	public bool RemoveFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID);
-	public bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath, ReadOnlySpan<char> pathID);
-	public bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
+	bool RemoveFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID);
+	bool RemoveFile(ReadOnlySpan<char> relativePath) => RemoveFile(relativePath, null);
+	bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath, ReadOnlySpan<char> pathID);
+	bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath) => RenameFile(oldPath, newPath, null);
+	void CreateDirHierarchy(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID);
+	void CreateDirHierarchy(ReadOnlySpan<char> path) => CreateDirHierarchy(path, null);
+	bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
+	bool IsDirectory(ReadOnlySpan<char> fileName) => IsDirectory(fileName, null);
 }

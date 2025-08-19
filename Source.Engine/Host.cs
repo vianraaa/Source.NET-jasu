@@ -4,6 +4,7 @@ using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Common.Networking;
 using Source.Common.Server;
 using Source.Engine.Client;
@@ -21,7 +22,7 @@ public class CommonHostState
 
 public class Host(
 	EngineParms host_parms, CommonHostState host_state, GameServer sv,
-	IServiceProvider services
+	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem
 	)
 {
 	public int TimeToTicks(float dt) => (int)(0.5f + (float)dt / (float)host_state.IntervalPerTick);
@@ -500,8 +501,29 @@ public class Host(
 		this.clientDLL = clientDLL;
 	}
 
+	bool configCfgExecuted = false;
 	public void ReadConfiguration() {
 
+	}
+	public void WriteConfiguration(ReadOnlySpan<char> filename, bool allVars) {
+		bool isUserRequested = filename != null;
+		if (filename == null)
+			filename = "config.cfg";
+
+		if (!Initialized)
+			return;
+
+		if (!isUserRequested && CommandLine.CheckParm("-default"))
+			return;
+
+		if (sv.IsDedicated())
+			return;
+
+		using MemoryStream str = new();
+		using StreamWriter configBuff = new(str);
+
+		configBuff.Write($"cfg/{filename}");
+		fileSystem.CreateDirHierarchy("cfg", "MOD");
 	}
 
 	public bool IsSecureServerAllowed() => true;

@@ -9,6 +9,9 @@
 		<ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Include="..\Game.Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
 		<Compile Include="..\Game.Shared\HL2\*.cs" Link="Shared\HL2\%(Filename)%(Extension)" />
 	</ItemGroup>

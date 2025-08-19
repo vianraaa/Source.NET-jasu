@@ -407,4 +407,11 @@ public class BaseFileSystem : IFileSystem
 		string fn = new(fileName);
 		return FirstToThePost(fileName, pathID, (path) => path.Exists(fn), boolWin, false, out _);
 	}
+
+	public void CreateDirHierarchy(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
+		Span<char> scratchFileName = stackalloc char[260];
+		if (!Path.IsPathFullyQualified(path)) {
+			Assert
+		}
+	}
 }
