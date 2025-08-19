@@ -115,10 +115,6 @@ public static class Dbg
 	public static unsafe SpewRetval _SpewMessage(SpewType spewType, string groupName, int level, in Color color, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {
 		char* piece = stackalloc char[2048];
 		int writer = 0;
-		Formatting.Print(msgFormat, (ros) => {
-			ros.CopyTo(new Span<char>((char*)((nint)piece + (writer * sizeof(char))), 2048 - writer));
-			writer += ros.Length;
-		}, args);
 
 		SpewInfo info = new() {
 			SpewOutputColor = color,
@@ -126,21 +122,42 @@ public static class Dbg
 			SpewOutputLevel = level
 		};
 		SpewInfo.Value = info;
-		SpewRetval ret = _SpewOutputFunc(spewType, new(piece, writer));
-		SpewInfo.Value = null;
 
-		switch (ret) {
-			case SpewRetval.Debugger:
-				if (spewType != SpewType.Assert)
-					Debugger.Break();
-				break;
-
-			case SpewRetval.Abort:
-				Environment.Exit(1);
-				break;
-
-			case SpewRetval.Continue: break;
+		SpewRetval writeOnePiece() {
+			var result = _SpewOutputFunc(spewType, new(piece, writer));
+			writer = 0;
+			return result;
 		}
+
+		bool handleOnePiece(SpewRetval ret) {
+			switch (ret) {
+				case SpewRetval.Debugger:
+					if (spewType != SpewType.Assert)
+						Debugger.Break();
+					return true;
+
+				case SpewRetval.Abort:
+					Environment.Exit(1);
+					return false;
+
+				case SpewRetval.Continue: return true;
+			}
+
+			return true;
+		}
+
+		// This is safe enough because the stack-allocated memory never leaves the stack frame. Formatting.Print does nothing outside with the span
+		Formatting.Print(msgFormat, (ros) => {
+			if (2048 - writer <= 0) {
+				handleOnePiece(writeOnePiece());
+			}
+			ros.CopyTo(new Span<char>((char*)((nint)piece + (writer * sizeof(char))), 2048 - writer));
+			writer += ros.Length;
+		}, args);
+
+		SpewRetval ret = writeOnePiece();
+		SpewInfo.Value = null;
+		handleOnePiece(ret);
 		return ret;
 	}
 	public static bool FindSpewGroup(string groupName, [NotNullWhen(true)] out SpewGroup? group) {
