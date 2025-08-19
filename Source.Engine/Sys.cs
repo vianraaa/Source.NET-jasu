@@ -42,7 +42,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 	}
 	ThreadLocal<bool> inSpew = new();
 	ThreadLocal<string> groupWrite = new();
-	private void Write(string group, string str, in Color color) {
+	private void Write(string group, ReadOnlySpan<char> str, in Color color) {
 		if (!groupWrite.IsValueCreated)
 			groupWrite.Value = "";
 
@@ -79,7 +79,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		if (bufferIdx > 0)
 			Console.Write(((ReadOnlySpan<char>)buffer[..bufferIdx]).Pastel(color));
 	}
-	public SpewRetval SpewFunc(SpewType spewType, string msg) {
+	public SpewRetval SpewFunc(SpewType spewType, ReadOnlySpan<char> msg) {
 		if (!inSpew.IsValueCreated)
 			inSpew.Value = false;
 

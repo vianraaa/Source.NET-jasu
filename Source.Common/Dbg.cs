@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using Source.Common;
+
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
@@ -44,7 +46,7 @@ public struct SpewInfo()
 	public int SpewOutputLevel;
 }
 
-public delegate SpewRetval SpewOutputFunc(SpewType spewType, string message);
+public delegate SpewRetval SpewOutputFunc(SpewType spewType, ReadOnlySpan<char> message);
 public delegate void AssertFailedNotifyFunc(string file, int line, string message);
 
 public static class Dbg
@@ -70,9 +72,9 @@ public static class Dbg
 	public static void SpewOutputFunc(SpewOutputFunc? func) => _SpewOutputFunc = func ?? DefaultSpewFunc;
 	public static SpewOutputFunc GetSpewOutputFunc() => _SpewOutputFunc != null ? _SpewOutputFunc : DefaultSpewFunc;
 
-	public static SpewRetval DefaultSpewFunc(SpewType type, string message) {
-		System.Console.Write(message);
-		Debug.Print(message);
+	public static SpewRetval DefaultSpewFunc(SpewType type, ReadOnlySpan<char> message) {
+		foreach(char c in message) 
+			System.Console.Write(c);
 #if DEBUG
 		if (type == SpewType.Assert) {
 			return SpewRetval.Debugger;
@@ -110,8 +112,13 @@ public static class Dbg
 		SpewType = type;
 	}
 
-	public static SpewRetval _SpewMessage(SpewType spewType, string groupName, int level, in Color color, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {
-		string formattedString = new(msgFormat); // we need to write a C-style formatter sometime, or find one
+	public static unsafe SpewRetval _SpewMessage(SpewType spewType, string groupName, int level, in Color color, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {
+		char* piece = stackalloc char[2048];
+		int writer = 0;
+		Formatting.Print(msgFormat, (ros) => {
+			ros.CopyTo(new Span<char>((char*)((nint)(piece) + writer), 2048 - writer));
+			writer += ros.Length;
+		}, args);
 
 		SpewInfo info = new() {
 			SpewOutputColor = color,
@@ -119,7 +126,7 @@ public static class Dbg
 			SpewOutputLevel = level
 		};
 		SpewInfo.Value = info;
-		SpewRetval ret = _SpewOutputFunc(spewType, formattedString);
+		SpewRetval ret = _SpewOutputFunc(spewType, new(piece, writer));
 		SpewInfo.Value = null;
 
 		switch (ret) {
