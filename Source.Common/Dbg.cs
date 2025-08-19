@@ -116,7 +116,7 @@ public static class Dbg
 		char* piece = stackalloc char[2048];
 		int writer = 0;
 		Formatting.Print(msgFormat, (ros) => {
-			ros.CopyTo(new Span<char>((char*)((nint)(piece) + writer), 2048 - writer));
+			ros.CopyTo(new Span<char>((char*)((nint)piece + (writer * sizeof(char))), 2048 - writer));
 			writer += ros.Length;
 		}, args);
 

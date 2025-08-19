@@ -422,7 +422,7 @@ public class NetworkStringTable : INetworkStringTable
 	}
 
 	public void Dump() {
-		ConMsg($"Table {GetTableName()}\n");
+		ConMsg($"Table %s\n", GetTableName());
 		ConMsg($"  {GetNumStrings()}/{GetMaxStrings()} items\n");
 		for (int i = 0; i < GetNumStrings(); i++) 
 			ConMsg($"  {i} : {GetString(i)}\n");
