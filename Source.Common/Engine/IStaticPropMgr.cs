@@ -7,9 +7,6 @@ public class GameTrace { } // RaphaelIT7: Just as a note, a Ray & a GameTrace ar
 public class IClientRenderable { }
 public class IPhysicsEnvironment { }
 public class IVPhysicsKeyHandler { }
-public class ICollideable { }
-public struct BaseHandle { }
-public class IHandleEntity { }
 
 public interface IStaticPropMgr
 {
