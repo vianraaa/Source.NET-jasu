@@ -1,4 +1,6 @@
-﻿using Source.Common.Formats.Keyvalues;
+﻿using Raylib_cs;
+
+using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
 
@@ -58,6 +60,64 @@ public class Material : IMaterialInternal
 
 		if (!PrecacheVars())
 			return;
+
+		flags |= MaterialFlags.IsPrecached;
+		if(Shader != null) 
+			materials.ShaderSystem.InitShaderInstance(Shader, ShaderParams, GetName(), GetTextureGroupName());
+
+		RecomputeStateSnapshots();
+		FindRepresentativeTexture();
+		PrecacheMappingDimensions();
+		Assert(IsValidRenderState());
+	}
+
+	private void RecomputeStateSnapshots() {
+		bool ok = InitializeStateSnapshots();
+		if (!ok)
+			SetupErrorShader();
+	}
+
+	private bool InitializeStateSnapshots() {
+		if (IsPrecached()) {
+			if(materials.GetCurrentMaterial() == this) {
+				Rlgl.DrawRenderBatchActive();
+			}
+
+			CleanUpStateSnapshots();
+
+			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ref ShaderRenderState, GetName())) {
+				flags &= ~MaterialFlags.ValidRenderState;
+				return false;
+			}
+
+			flags |= MaterialFlags.ValidRenderState;
+		}
+
+		return true;
+	}
+
+	private void CleanUpStateSnapshots() {
+		throw new NotImplementedException();
+	}
+
+	private void SetupErrorShader() {
+		throw new NotImplementedException();
+	}
+
+	private void FindRepresentativeTexture() {
+
+	}
+
+	private void PrecacheMappingDimensions() {
+
+	}
+
+	private bool IsValidRenderState() {
+		return (flags & MaterialFlags.ValidRenderState) != 0;
+	}
+
+	private string GetTextureGroupName() {
+		return "";
 	}
 
 	private bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, int findContext = 0) {
@@ -105,7 +165,7 @@ public class Material : IMaterialInternal
 		KeyValues currentFallback = keyValues;
 		KeyValues? fallbackSection = null;
 
-		string shaderName = currentFallback.Name;
+		string? shaderName = currentFallback.Name;
 		if (shaderName == null) {
 			Dbg.Warning($"Shader not specified in material {GetName()}\nUsing wireframe instead...\n");
 			Dbg.Assert(false);
@@ -134,7 +194,7 @@ public class Material : IMaterialInternal
 			if (shader == null)
 				break;
 
-			materials.ShaderSystem.InitShaderParameters(shader, vars, GetName());
+			materials.ShaderSystem.InitShaderParameters(shader, vars, GetName(), null);
 
 			shaderName = shader.GetFallbackShader(vars);
 			if (shaderName == null)
@@ -400,6 +460,8 @@ public class Material : IMaterialInternal
 	IShader? Shader;
 	KeyValues? keyValues;
 	IMaterialVar[] ShaderParams;
+	// IMaterialProxy
+	ShaderRenderState ShaderRenderState;
 
 	public void DrawMesh(VertexCompressionType vertexCompression) { }
 	public IShader? GetShader() => Shader;

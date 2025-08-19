@@ -5,6 +5,7 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Source.MaterialSystem;
@@ -24,12 +25,15 @@ public class ShaderRenderState
 	public bool IsAlphaTested() => (Flags & SHADER_OPACITY_ALPHATEST) != 0;
 }
 
-public interface IShaderSystemInternal : IShaderSystem
+public interface IShaderSystemInternal : IShaderInit, IShaderSystem
 {
 	void LoadAllShaderDLLs();
 	bool LoadShaderDLL<T>(T instance) where T : IShaderDLL;
 	IShader? FindShader(ReadOnlySpan<char> shaderName);
 
+	void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
+	bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState shaderRenderState, ReadOnlySpan<char> materialName);
+	// void CleanupRenderState(ref ShaderRenderState renderState);
 	void DrawElements(IShader shader, Span<IMaterialVar> parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
 	IEnumerable<IShader> GetShaders();
 }
@@ -117,7 +121,7 @@ public class ShaderManager : IShaderSystemInternal
 		return shaderStateStrings[i];
 	}
 
-	internal void InitShaderParameters(IShader shader, IMaterialVar[] vars, string materialName) {
+	public void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		PrepForShaderDraw(shader, vars, null, 0);
 		shader.InitShaderParams(vars, materialName);
 		DoneWithShaderDraw();
@@ -187,10 +191,88 @@ public class ShaderManager : IShaderSystemInternal
 	}
 
 	private void PrepForShaderDraw(IShader shader, IMaterialVar[] vars, ShaderRenderState? renderState, int modulation) {
-		Dbg.Assert(RenderState == null);
+		Assert(RenderState == null);
 		// LATER; plug into spew?
 		RenderState = renderState;
 		Modulation = (byte)modulation;
 		RenderPass = 0;
+	}
+
+	public void InitShaderInstance(IShader shader, IMaterialVar[] shaderParams, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
+		PrepForShaderDraw(shader, shaderParams, null, 0);
+		shader.InitShaderInstance(shaderParams, this, materialName, textureGroupName);
+		DoneWithShaderDraw();
+	}
+
+	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0) {
+		throw new NotImplementedException();
+	}
+
+	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState, ReadOnlySpan<char> materialName) {
+		Assert(RenderState == null);
+		InitRenderStateFlags(ref renderState, shaderParams);
+		InitStateSnapshots(shader, shaderParams, ref renderState);
+
+		// todo
+
+		ComputeRenderStateFlagsFromSnapshot(ref renderState);
+
+		if (!ComputeVertexFormatFromSnapshot(shaderParams, ref renderState)) {
+			Warning("Material \"%s\":\n   Shader \"%s\" can't be used with models!\n", new string(materialName), shader.GetName());
+			CleanupRenderState(ref renderState);
+			return false;
+		}
+
+		return true;
+	}
+
+	private void CleanupRenderState(ref ShaderRenderState renderState) {
+		throw new NotImplementedException();
+	}
+
+	private void ComputeRenderStateFlagsFromSnapshot(ref ShaderRenderState renderState) {
+		throw new NotImplementedException();
+	}
+
+	private bool ComputeVertexFormatFromSnapshot(IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
+		throw new NotImplementedException();
+	}
+
+	private void InitStateSnapshots(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
+		if (IsFlagSet(shaderParams, MaterialVarFlags.Debug)) {
+			Debugger.Break();
+		}
+
+		float alpha;
+		Span<float> color = stackalloc float[3];
+		shaderParams[(int)ShaderMaterialVars.Color].GetVecValue(color);
+		alpha = shaderParams[(int)ShaderMaterialVars.Alpha].GetFloatValue();
+		bool bakedLighting = IsFlag2Set(shaderParams, MaterialVarFlags2.UseFixedFunctionBakedLighting);
+		bool flashlight = IsFlag2Set(shaderParams, MaterialVarFlags2.UseFlashlight);
+		bool editor = IsFlag2Set(shaderParams, MaterialVarFlags2.UseEditor);
+
+		Span<float> white = [1, 1, 1];
+		Span<float> grey = [.5f, .5f, .5f];
+	}
+
+	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {
+		throw new NotImplementedException();
+	}
+
+	private static bool IsFlagSet(IMaterialVar[] shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & flag) != 0;
+	private static bool IsFlagSet(IMaterialVar[] shaderParams, MaterialVarFlags flag) => IsFlagSet(shaderParams, (int)flag);
+	private static bool IsFlag2Set(IMaterialVar[] shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() & flag) != 0;
+	private static bool IsFlag2Set(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => IsFlag2Set(shaderParams, (int)flag);
+
+	private static void SetFlags(IMaterialVar[] shaderParams, int flag)
+		=> shaderParams[(int)ShaderMaterialVars.Flags].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() | flag);
+	private static void SetFlags(IMaterialVar[] shaderParams, MaterialVarFlags flag) => SetFlags(shaderParams, (int)flag);
+	private static void SetFlags2(IMaterialVar[] shaderParams, int flag)
+		=> shaderParams[(int)ShaderMaterialVars.Flags2].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() | flag);
+	private static void SetFlags2(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => SetFlags2(shaderParams, (int)flag);
+
+	private void InitRenderStateFlags(ref ShaderRenderState renderState, IMaterialVar[] shaderParams) {
+		renderState.Flags = 0;
+		renderState.Flags &= ~ShaderRenderState.SHADER_OPACITY_MASK;
 	}
 }

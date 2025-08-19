@@ -62,7 +62,7 @@ public class UnlitGeneric : BaseVSShader
 		info.BaseTextureTransform = ShaderMaterialVars.BaseTextureTransform;
 		info.Albedo = ALBEDO;
 	}
-	protected override void OnInitShaderParams(IMaterialVar[] vars, string materialName) {
+	protected override void OnInitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 		VertexLitGeneric_Gl46_Vars invars = new();
 		SetupVars(ref invars);
 		VertexLitGeneric_Gl46_Helper.InitParams(this, vars, materialName, false, in invars);

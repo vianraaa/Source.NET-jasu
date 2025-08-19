@@ -23,7 +23,8 @@ public interface IShader
 	ShaderParamType GetParamType(int paramIndex);
     ReadOnlySpan<char> GetParamDefault(int paramIndex);
 	string? GetFallbackShader(IMaterialVar[] vars);
-	void InitShaderParams(IMaterialVar[] vars, string materialName);
+	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
+	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
 }
 
 public interface IShaderInit {

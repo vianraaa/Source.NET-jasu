@@ -117,7 +117,7 @@ public class MaterialSystem : IMaterialSystem
 	}
 
 	ThreadLocal<MatRenderContext> matContext;
-	public IMatRenderContext GetRenderContext() => matContext.Value;
+	public IMatRenderContext GetRenderContext() => matContext!.Value!;
 
 	public bool SetMode(nint window, MaterialSystemConfig config) {
 		int width = config.Width;
@@ -142,6 +142,10 @@ public class MaterialSystem : IMaterialSystem
 			symbol = material.GetName().GetHashCode(),
 			manuallyCreated = material.IsManuallyCreated()
 		};
+	}
+
+	public IMaterial? GetCurrentMaterial() {
+		return GetRenderContext().GetCurrentMaterial();
 	}
 
 	public IMaterialInternal errorMaterial;
@@ -293,5 +297,9 @@ public class MatRenderContext : IMatRenderContext
 	}
 	private void SetCurrentMaterialInternal(IMaterialInternal? mat) {
 		currentMaterial = mat;
+	}
+
+	public IMaterial? GetCurrentMaterial() {
+		return currentMaterial;
 	}
 }
