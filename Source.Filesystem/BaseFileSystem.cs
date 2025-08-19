@@ -49,6 +49,9 @@ public abstract class SearchPath
 	/// <param name="path"></param>
 	/// <returns></returns>
 	public abstract DateTime Time(ReadOnlySpan<char> path);
+	internal abstract ReadOnlySpan<char> GetPathString();
+	internal abstract object? GetPackFile();
+	internal abstract object? GetPackedStore();
 }
 
 public class SearchPathCollection : List<SearchPath>
@@ -203,6 +206,16 @@ public class DiskSearchPath : SearchPath
 
 		return info.LastWriteTimeUtc;
 	}
+
+	internal override ReadOnlySpan<char> GetPathString() => DiskPath;
+
+	internal override object? GetPackFile() {
+		return null;
+	}
+
+	internal override object? GetPackedStore() {
+		return null;
+	}
 }
 
 // Maybe we redo this one day...
@@ -265,7 +278,7 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public static bool Hash(in ReadOnlySpan<char> str, out int hash) {
-		if(str == null || str.Length <= 0) {
+		if (str == null || str.Length <= 0) {
 			hash = 0;
 			return false;
 		}
@@ -408,10 +421,57 @@ public class BaseFileSystem : IFileSystem
 		return FirstToThePost(fileName, pathID, (path) => path.Exists(fn), boolWin, false, out _);
 	}
 
-	public void CreateDirHierarchy(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID) {
+	public void CreateDirHierarchy(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID) {
 		Span<char> scratchFileName = stackalloc char[260];
-		if (!Path.IsPathFullyQualified(path)) {
-			Assert
+		if (!Path.IsPathFullyQualified(relativePath)) {
+			Assert(pathID != null);
+			ComputeFullWritePath(scratchFileName, relativePath, pathID);
 		}
+		else {
+			relativePath.CopyTo(scratchFileName);
+		}
+		Directory.CreateDirectory(new(scratchFileName));
+	}
+	private SearchPath? FindWritePath(ReadOnlySpan<char> filename, ReadOnlySpan<char> pathID) {
+		if(!Hash(pathID, out int hash)) return null;
+		foreach (var searchPaths in SearchPaths) {
+			foreach (var searchPath in searchPaths.Value) {
+				if (searchPath.GetPackFile() != null || searchPath.GetPackedStore() != null)
+					continue;
+
+				if (pathID == null || searchPaths.Key == hash)
+					return searchPath;
+			}
+		}
+		return null;
+	}
+	private ReadOnlySpan<char> GetWritePath(ReadOnlySpan<char> filename, ReadOnlySpan<char> pathID) {
+		SearchPath? searchPath = null;
+		if (pathID != null && pathID.Length > 0) {
+			if (pathID.Equals("game", StringComparison.OrdinalIgnoreCase))
+				searchPath = FindWritePath(filename, "game_write");
+			else if (pathID.Equals("game", StringComparison.OrdinalIgnoreCase))
+				searchPath = FindWritePath(filename, "mod_write");
+
+			searchPath ??= FindWritePath(filename, pathID);
+			if (searchPath != null)
+				return searchPath.GetPathString();
+
+			Warning("Requested non-existent write path %s!\n", new string(pathID));
+		}
+
+		searchPath = FindWritePath(filename, "DEFAULT_WRITE_PATH");
+		if (searchPath != null) return searchPath.GetPathString();
+
+		searchPath = FindWritePath(filename, null);
+		if (searchPath != null) return searchPath.GetPathString();
+
+		// Hope this is reasonable!!
+		return "./";
+	}
+
+	private void ComputeFullWritePath(Span<char> dest, ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID) {
+		string combined = Path.Combine(new(GetWritePath(relativePath, pathID)), new(relativePath));
+		combined.AsSpan().CopyTo(dest);
 	}
 }
