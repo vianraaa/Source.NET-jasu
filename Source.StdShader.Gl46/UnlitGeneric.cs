@@ -108,6 +108,6 @@ public class UnlitGeneric : BaseVSShader
 	protected override void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
 		VertexLitGeneric_Gl46_Vars invars = new();
 		SetupVars(ref invars);
-		//DrawVertexLitGeneric_DX9(this, GetNumParams, shaderAPI, shaderShadow, false, vars, vertexCompression);
+		VertexLitGeneric_Gl46_Helper.Draw(this, vars, false, in invars, vertexCompression);
 	}
 }
