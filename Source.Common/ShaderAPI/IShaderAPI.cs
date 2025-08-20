@@ -7,10 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common.ShaderAPI;
-
-public interface IShaderShadow {
-	
-}
 public interface IShaderAPI : IShaderDynamicAPI
 {
 

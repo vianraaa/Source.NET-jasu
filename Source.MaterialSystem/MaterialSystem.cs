@@ -29,6 +29,7 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderManager>();
+		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
 		services.AddSingleton<MeshMgr>();
 	}
 
@@ -39,6 +40,7 @@ public class MaterialSystem : IMaterialSystem
 	public readonly ShaderAPIGl46 ShaderAPI;
 	public readonly ShaderShadowGl46 ShaderShadow;
 	public readonly MeshMgr MeshMgr;
+	public readonly HardwareConfig HardwareConfig;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
@@ -47,6 +49,7 @@ public class MaterialSystem : IMaterialSystem
 		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
+		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
 		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderManager)!;
 
 		// Link up
@@ -55,6 +58,7 @@ public class MaterialSystem : IMaterialSystem
 		ShaderSystem.Services = services;
 		ShaderSystem.materials = this;
 		ShaderSystem.shaderAPI = ShaderAPI;
+		ShaderShadow.HardwareConfig = HardwareConfig;
 
 		ShaderSystem.LoadAllShaderDLLs();
 	}

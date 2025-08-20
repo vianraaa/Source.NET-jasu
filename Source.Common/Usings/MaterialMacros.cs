@@ -23,4 +23,5 @@ public static class MaterialMacros
 		int nshift = VertexFormatFlags.TexCoordSizeBit + (3 * index);
 		return (VertexFormat)(n64 << nshift);
 	}
+	public static bool IsPlatformOpenGL() => true;
 }

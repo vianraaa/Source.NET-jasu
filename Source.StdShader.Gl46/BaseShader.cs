@@ -9,6 +9,8 @@ public abstract class BaseShader : IShader
 	static IMaterialVar[]? Params;
 	static int ModulationFlags;
 	static IShaderInit? ShaderInit;
+	static IShaderDynamicAPI? ShaderAPI;
+	static IShaderShadow? ShaderShadow;
 	static string? TextureGroupName;
 
 	static ShaderParamInfo[] StandardParams = [
@@ -95,20 +97,50 @@ public abstract class BaseShader : IShader
 		Assert(Params == null);
 		Params = vars;
 		ModulationFlags = modulationFlags;
+		ShaderAPI = shaderAPI;
+		ShaderShadow = shadow;
 
 		if (IsSnapshotting()) {
 			SetInitialShadowState();
 		}
 
 		OnDrawElements(vars, shadow, shaderAPI, vertexCompression, ref contextData);
+
+		ModulationFlags = 0;
+		Params = null;
+		ShaderAPI = null;
+		ShaderShadow = null;
+		// MeshBuilder = null
 	}
 
 	private void SetInitialShadowState() {
-		throw new NotImplementedException();
+		ShaderShadow!.SetDefaultState();
+		int flags = Params![(int)ShaderMaterialVars.Flags].GetIntValue();
+		if ((flags & (int)MaterialVarFlags.IgnoreZ) != 0) {
+			ShaderShadow.EnableDepthTest(false);
+			ShaderShadow.EnableDepthWrites(false);
+		}
+
+		if ((flags & (int)MaterialVarFlags.Decal) != 0) {
+			ShaderShadow.EnablePolyOffset(PolygonOffsetMode.Decal);
+			ShaderShadow.EnableDepthWrites(false);
+		}
+
+		if ((flags & (int)MaterialVarFlags.NoCull) != 0)
+			ShaderShadow.EnableCulling(false);
+
+		if ((flags & (int)MaterialVarFlags.ZNearer) != 0)
+			ShaderShadow.DepthFunc(ShaderDepthFunc.Nearer);
+
+		if ((flags & (int)MaterialVarFlags.Wireframe) != 0)
+			ShaderShadow.PolyMode(ShaderPolyModeFace.FrontAndBack, ShaderPolyMode.Line);
+
+		if ((flags & (int)MaterialVarFlags.AllowAlphaToCoverage) != 0)
+			ShaderShadow.EnableAlphaToCoverage(true);
 	}
 
 	private bool IsSnapshotting() {
-		throw new NotImplementedException();
+		return ShaderShadow != null;
 	}
 
 	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
