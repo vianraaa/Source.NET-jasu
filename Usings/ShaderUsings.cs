@@ -1,1 +1,1 @@
-﻿global using static Source.ShaderUsings
+﻿global using StateSnapshot_t = short;

@@ -5,13 +5,16 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-	<ItemGroup> <Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" /> </ItemGroup>
-	<ItemGroup> <Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/ShaderUsings.cs" /> </ItemGroup>
+	<ItemGroup> <Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/Globals/GlobalUsings.cs" /> </ItemGroup>
+	<ItemGroup> <Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/Globals/ShaderUsings.cs" /> </ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
 		<PackageReference Include="Pastel" Version="6.0.1" />
 		<PackageReference Include="Snappier" Version="1.2.0" />
 		<PackageReference Include="Steamworks.NET" Version="20.1.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Usings\" />
 	</ItemGroup>
 </Project>

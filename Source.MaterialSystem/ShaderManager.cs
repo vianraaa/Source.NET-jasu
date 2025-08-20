@@ -1,6 +1,4 @@
-﻿global using StateSnapshot_t = short;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Engine;

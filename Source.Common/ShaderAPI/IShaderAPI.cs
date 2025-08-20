@@ -1,6 +1,4 @@
-﻿global using StateSnapshot_t = short;
-
-using Source.Common.MaterialSystem;
+﻿using Source.Common.MaterialSystem;
 
 using System;
 using System.Collections.Generic;
