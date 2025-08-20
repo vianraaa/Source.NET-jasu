@@ -85,7 +85,7 @@ public sealed class MaterialVar : IMaterialVar
 
 	public override unsafe void GetVecValue(Span<float> val) {
 		fixed(Vector4* v4 = &VecVal)
-			new Span<float>(v4, 4).CopyTo(val);
+			new Span<float>(v4, val.Length > 4 ? 4 : val.Length).CopyTo(val);
 	}
 
 	public override bool IsDefined() {
