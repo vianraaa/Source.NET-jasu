@@ -9,7 +9,7 @@
 		<ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\Game.Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />

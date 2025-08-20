@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
-		<Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="ppy.SDL3-CS" Version="2025.703.0" />

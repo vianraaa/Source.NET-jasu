@@ -49,6 +49,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Bitmap", "Source.Bit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.StdShader.Gl46", "Source.StdShader.Gl46\Source.StdShader.Gl46.csproj", "{DACE2A97-2C34-44CA-82F6-B77501B89E3C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Usings", "0. Usings", "{D287F29B-08EA-45EE-AD68-D46F801ECB5C}"
+	ProjectSection(SolutionItems) = preProject
+		Usings\GlobalUsings.cs = Usings\GlobalUsings.cs
+		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
+		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

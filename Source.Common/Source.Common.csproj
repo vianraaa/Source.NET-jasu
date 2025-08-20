@@ -5,7 +5,8 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-	<ItemGroup> <Compile Include="..\GlobalUsings.cs" Link="GlobalUsings.cs" /> </ItemGroup>
+	<ItemGroup> <Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" /> </ItemGroup>
+	<ItemGroup> <Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/ShaderUsings.cs" /> </ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />

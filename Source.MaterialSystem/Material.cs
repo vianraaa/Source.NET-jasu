@@ -213,8 +213,8 @@ public class Material : IMaterialInternal
 
 		string? shaderName = currentFallback.Name;
 		if (shaderName == null) {
-			Dbg.Warning($"Shader not specified in material {GetName()}\nUsing wireframe instead...\n");
-			Dbg.Assert(false);
+			Warning($"Shader not specified in material {GetName()}\nUsing wireframe instead...\n");
+			Assert(false);
 			shaderName = MissingShaderName();
 		}
 

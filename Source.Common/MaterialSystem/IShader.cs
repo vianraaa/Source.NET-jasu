@@ -1,4 +1,5 @@
-﻿using Source.Common.ShaderLib;
+﻿using Source.Common.ShaderAPI;
+using Source.Common.ShaderLib;
 
 namespace Source.Common.MaterialSystem;
 
@@ -25,7 +26,7 @@ public interface IShader
 	string? GetFallbackShader(IMaterialVar[] vars);
 	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
 	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	void DrawElements(IMaterialVar[] shaderParams, IShaderShadow shadow, int i, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
+	void DrawElements(IMaterialVar[] shaderParams, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, int i, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
 }
 
 public interface IShaderInit {
@@ -38,5 +39,6 @@ public enum VertexCompressionType
 	None = 0
 }
 
-public interface IShaderShadow;
-public interface IShaderDynamicAPI;
+public interface IShaderDynamicAPI {
+
+}

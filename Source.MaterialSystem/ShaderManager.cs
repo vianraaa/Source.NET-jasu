@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿global using StateSnapshot_t = short;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Engine;
@@ -9,7 +11,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 
-using StateSnapshot_t = short;
 namespace Source.MaterialSystem;
 
 public class RenderPassList
@@ -20,6 +21,7 @@ public class RenderPassList
 	public StateSnapshot_t[] Snapshot = new StateSnapshot_t[MAX_RENDER_PASSES];
 	public BasePerMaterialContextData[] ContextData = new BasePerMaterialContextData[MAX_RENDER_PASSES];
 }
+
 public class ShaderRenderState
 {
 	public const int SHADER_OPACITY_ALPHATEST = 0x0010;
@@ -358,6 +360,8 @@ public class ShaderManager : IShaderSystemInternal
 		else {
 			renderState.VertexFormat = renderState.VertexUsage;
 		}
+
+		return true
 	}
 
 	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {

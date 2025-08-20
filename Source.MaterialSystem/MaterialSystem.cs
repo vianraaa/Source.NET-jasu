@@ -9,6 +9,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
 using System.Numerics;
@@ -25,26 +26,32 @@ public class MaterialSystem : IMaterialSystem
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
-		services.AddSingleton<ITextureManager>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).TextureSystem);
-		services.AddSingleton<IShaderSystem>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).ShaderSystem);
+		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
+		services.AddSingleton<ITextureManager, TextureManager>();
+		services.AddSingleton<IShaderSystem, ShaderManager>();
 	}
 
 	readonly IServiceProvider services;
 
-	public TextureManager TextureSystem;
-	public ShaderManager ShaderSystem;
-	public ShaderAPIGl46 ShaderAPI;
+	public readonly TextureManager TextureSystem;
+	public readonly ShaderManager ShaderSystem;
+	public readonly ShaderAPIGl46 ShaderAPI;
+	public readonly ShaderShadowGl46 ShaderShadow;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
+
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
-		TextureSystem = new();
-		ShaderSystem = new() {
-			Services = services,
-			materials = this,
-			shaderAPI = ShaderAPI
-		};
-		ShaderSystem.LoadAllShaderDLLs();
+		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
+		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
+
+		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderManager)!;
+		{
+			ShaderSystem.Services = services;
+			ShaderSystem.materials = this;
+			ShaderSystem.shaderAPI = ShaderAPI;
+			ShaderSystem.LoadAllShaderDLLs();
+		}
 	}
 
 	ILauncherManager launcherMgr;
