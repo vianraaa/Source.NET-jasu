@@ -34,9 +34,11 @@ public interface IShaderInit {
 }
 
 
-public enum VertexCompressionType
+public enum VertexCompressionType : uint
 {
-	None = 0
+	Invalid = 0xFFFFFFFF,
+	None = 0,
+	On = 1
 }
 
 public interface IShaderDynamicAPI {

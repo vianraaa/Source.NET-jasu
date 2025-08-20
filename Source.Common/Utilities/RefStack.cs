@@ -44,7 +44,7 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 
 	public ref T Pop() {
 		if (count <= 0) {
-			Dbg.AssertMsg(false, "stack underflow");
+			AssertMsg(false, "stack underflow");
 			return ref Unsafe.NullRef<T>();
 		}
 
@@ -53,7 +53,7 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 	}
 	public ref T Peek() {
 		if (count <= 0) {
-			Dbg.AssertMsg(false, "stack underflow");
+			AssertMsg(false, "stack underflow");
 			return ref Unsafe.NullRef<T>();
 		}
 
@@ -73,4 +73,8 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 	}
 
 	public int Count => count;
+
+	public ref T this[int index] {
+		get => ref getBacking(index);
+	}
 }

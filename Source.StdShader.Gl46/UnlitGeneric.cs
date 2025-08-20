@@ -1,4 +1,5 @@
 ﻿using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System;

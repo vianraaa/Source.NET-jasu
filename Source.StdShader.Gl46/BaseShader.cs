@@ -1,4 +1,5 @@
 ﻿using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 namespace Source.StdShader.Gl46;
@@ -90,7 +91,7 @@ public abstract class BaseShader : IShader
 
 	}
 
-	public void DrawElements(IMaterialVar[] vars, IShaderShadow shadow, int modulationFlags, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+	public void DrawElements(IMaterialVar[] vars, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, int modulationFlags, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
 		Assert(Params == null);
 		Params = vars;
 		ModulationFlags = modulationFlags;
@@ -99,7 +100,7 @@ public abstract class BaseShader : IShader
 			SetInitialShadowState();
 		}
 
-		OnDrawElements(vars, null, null, vertexCompression, ref contextData);
+		OnDrawElements(vars, shadow, shaderAPI, vertexCompression, ref contextData);
 	}
 
 	private void SetInitialShadowState() {

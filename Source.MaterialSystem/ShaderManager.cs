@@ -56,7 +56,7 @@ public class ShaderManager : IShaderSystemInternal
 	ShaderRenderState? RenderState;
 	byte Modulation;
 	byte RenderPass;
-	internal IMaterialSystem materials;
+	internal MaterialSystem materials;
 	internal ShaderAPIGl46 shaderAPI;
 
 	public void BindTexture(Sampler sampler, ITexture texture) {
@@ -297,7 +297,7 @@ public class ShaderManager : IShaderSystemInternal
 
 			PrepForShaderDraw(shader, shaderParams, renderState, i);
 			renderState.Snapshots[i].PassCount = 0;
-			shader.DrawElements(shaderParams, null, i, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
+			shader.DrawElements(shaderParams, materials.ShaderShadow, materials.ShaderAPI, i, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
 		}
 
 		shaderParams[(int)ShaderMaterialVars.Color].SetVecValue(color);
@@ -359,7 +359,7 @@ public class ShaderManager : IShaderSystemInternal
 			renderState.VertexFormat = renderState.VertexUsage;
 		}
 
-		return true
+		return true;
 	}
 
 	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {

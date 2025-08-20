@@ -107,6 +107,11 @@ public interface IIndexBuffer
 
 public interface IMesh : IVertexBuffer, IIndexBuffer
 {
+	public const int VERTEX_MAX_TEXTURE_COORDINATES = 8;
+	public const int BONE_MATRIX_INDEX_INVALID = 255;
+	public const int INDEX_BUFFER_SIZE = 32768;
+	public const int DYNAMIC_VERTEX_BUFFER_MEMORY = (1024 + 512) * 1024;
+	public const int DYNAMIC_VERTEX_BUFFER_MEMORY_SMALL = 384 * 1024; // Only allocate this much during map transitions
 	void SetPrimitiveType(MaterialPrimitiveType type);
 	void Draw(int firstIndex = -1, int indexCount = 0);
 	void SetColorMesh(IMesh colorMesh, int vertexOffset);

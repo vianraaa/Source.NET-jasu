@@ -29,6 +29,7 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderManager>();
+		services.AddSingleton<MeshMgr>();
 	}
 
 	readonly IServiceProvider services;
@@ -37,6 +38,7 @@ public class MaterialSystem : IMaterialSystem
 	public readonly ShaderManager ShaderSystem;
 	public readonly ShaderAPIGl46 ShaderAPI;
 	public readonly ShaderShadowGl46 ShaderShadow;
+	public readonly MeshMgr MeshMgr;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
@@ -44,14 +46,17 @@ public class MaterialSystem : IMaterialSystem
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
 		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
-
+		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
 		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderManager)!;
-		{
-			ShaderSystem.Services = services;
-			ShaderSystem.materials = this;
-			ShaderSystem.shaderAPI = ShaderAPI;
-			ShaderSystem.LoadAllShaderDLLs();
-		}
+
+		// Link up
+		ShaderAPI.MeshMgr = MeshMgr;
+		MeshMgr.Materials = this;
+		ShaderSystem.Services = services;
+		ShaderSystem.materials = this;
+		ShaderSystem.shaderAPI = ShaderAPI;
+
+		ShaderSystem.LoadAllShaderDLLs();
 	}
 
 	ILauncherManager launcherMgr;

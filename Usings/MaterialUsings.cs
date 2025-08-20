@@ -1,1 +1,1 @@
-﻿
+﻿global using static Source.MaterialMacros;
