@@ -27,9 +27,12 @@ public delegate bool IncomingVariable(int idx, VariableType var);
 
 public static class Formatting
 {
+	const int MAX_LITERAL = 256;
 	public static void Parse(this ReadOnlySpan<char> str, IncomingLiteral literal, IncomingVariable variable) {
-		const int MAX_LITERAL = 256;
 		Span<char> stringWork = stackalloc char[MAX_LITERAL];
+		Parse(str, (work) => literal(work), variable, stringWork);
+	}
+	public static void Parse(this ReadOnlySpan<char> str, IncomingLiteral literal, IncomingVariable variable, Span<char> stringWork) {
 		int stringWriter = 0;
 		int reachedVariable = 0;
 
@@ -42,9 +45,9 @@ public static class Formatting
 			return variable(reachedVariable++, type);
 		}
 		bool literalEmpty() => stringWriter <= 0;
-		bool literalOverflow() => stringWriter >= MAX_LITERAL;
+		bool literalOverflow(Span<char> s) => stringWriter >= s.Length;
 		void writeToLiteral(Span<char> s, char c) {
-			if (literalOverflow())
+			if (literalOverflow(s))
 				dispatchLiteral(s);
 			s[stringWriter++] = c;
 		}
@@ -78,6 +81,20 @@ public static class Formatting
 
 	public static void Print(this StreamWriter writer, ReadOnlySpan<char> format, params object?[] args) =>
 		Print(format, writer.Write, args);
+
+	public static unsafe void Print(this Span<char> writeTo, ReadOnlySpan<char> format, params object?[] args) {
+		fixed (char* writeToPtr = writeTo) {
+			// This sucks. But I think that since the stack frame never
+			// escapes, the char* pointer will always be valid, so this is
+			// probably not that unsafe. We just can't pass a ref struct through
+			// a delegate boundary for obvious reasons.
+			nint writeToIAmBeingHorriblyUnsafe = (nint)writeToPtr;
+			int length = writeTo.Length;
+			Print(format, (incoming) => {
+				new Span<char>((void*)writeToIAmBeingHorriblyUnsafe, length);
+			}, args);
+		}
+	}
 
 	public static void Print(this ReadOnlySpan<char> format, IncomingLiteral howToPrint, params object?[] args) =>
 		Parse(format, howToPrint, (varIdx, varType) => {
