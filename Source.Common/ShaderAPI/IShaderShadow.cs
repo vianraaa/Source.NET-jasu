@@ -2,7 +2,6 @@
 
 namespace Source.Common.ShaderAPI;
 
-
 public enum ShaderDepthFunc
 {
 	Never,

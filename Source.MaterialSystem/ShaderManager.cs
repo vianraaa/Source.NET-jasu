@@ -241,7 +241,18 @@ public class ShaderManager : IShaderSystemInternal
 	}
 
 	private void ComputeRenderStateFlagsFromSnapshot(ref ShaderRenderState renderState) {
-		throw new NotImplementedException();
+		StateSnapshot_t snapshot = renderState.Snapshots[0].Snapshot[0];
+		if (shaderAPI.IsTranslucent(snapshot)) {
+
+		}
+		else {
+			if (shaderAPI.IsAlphaTested(snapshot)) {
+
+			}
+			else {
+
+			}
+		}
 	}
 
 	private void InitStateSnapshots(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {

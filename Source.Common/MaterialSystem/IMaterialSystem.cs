@@ -72,6 +72,7 @@ public enum MaterialFindContext {
 
 public record struct VertexShaderHandle
 {
+	public static readonly VertexShaderHandle INVALID = new(-1);
 	public VertexShaderHandle(nint handle) {
 		Handle = handle;
 	}
@@ -83,6 +84,7 @@ public record struct VertexShaderHandle
 
 public record struct GeometryShaderHandle
 {
+	public static readonly GeometryShaderHandle INVALID = new(-1);
 	public GeometryShaderHandle(nint handle) {
 		Handle = handle;
 	}
@@ -94,6 +96,7 @@ public record struct GeometryShaderHandle
 
 public record struct PixelShaderHandle
 {
+	public static readonly PixelShaderHandle INVALID = new(-1);
 	public PixelShaderHandle(nint handle) {
 		Handle = handle;
 	}

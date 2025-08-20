@@ -9,14 +9,63 @@ using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
 
+public struct TextureStageShadowState
+{
+	public uint ColorOp;
+	public int ColorArg1;
+	public int ColorArg2;
+	public uint AlphaOp;
+	public int AlphaArg1;
+	public int AlphaArg2;
+	public int TexCoordIndex;
+}
 public struct SamplerShadowState
 {
 	public bool TextureEnable;
+	public bool SRGBReadEnable;
+	public bool Fetch4Enable;
+	public bool ShadowFilterEnable;
 }
 
-public unsafe struct ShadowState {
+public unsafe struct ShadowState
+{
 	public const int MAX_SAMPLERS = 16;
 	public const int MAX_TEXTURE_STAGES = 16;
+
+	public uint ZFunc;
+	public uint ZEnable;
+	public uint ColorWriteEnable;
+	public uint FillMode;
+	public uint SrcBlend;
+	public uint DestBlend;
+	public uint BlendOp;
+	public uint SrcBlendAlpha;
+	public uint DestBlendAlpha;
+	public uint BlendOpAlpha;
+	public uint AlphaFunc;
+	public uint AlphaRef;
+	public TextureStageShadowState[] TextureStage;
+	public SamplerShadowState[] SamplerState;
+	public ShaderFogMode FogMode;
+	public bool ZWriteEnable;
+	public byte ZBias;
+	public bool CullEnable;
+	public bool Lighting;
+	public bool SpecularEnable;
+	public bool AlphaBlendEnable;
+	public bool AlphaTestEnable;
+	public bool UsingFixedFunction;
+	public bool VertexBlendEnable;
+	public bool SRGBWriteEnable;
+	public bool SeparateAlphaBlendEnable;
+	public bool StencilEnable;
+	public bool DisableFogGammaCorrection;
+	public bool EnableAlphaToCoverage;
+
+	public ShadowState() {
+		TextureStage = new TextureStageShadowState[MAX_TEXTURE_STAGES];
+		SamplerState = new SamplerShadowState[MAX_SAMPLERS];
+	}
 }
 
 public struct ShadowShaderState
@@ -48,27 +97,27 @@ public class ShaderShadowGl46 : IShaderShadow
 	}
 
 	public void EnableAlphaToCoverage(bool v) {
-		
+
 	}
 
 	public void EnableCulling(bool v) {
-		
+
 	}
 
 	public void EnableDepthTest(bool v) {
-		
+
 	}
 
 	public void EnableDepthWrites(bool v) {
-		
+
 	}
 
 	public void EnablePolyOffset(PolygonOffsetMode decal) {
-		
+
 	}
 
 	public void PolyMode(ShaderPolyModeFace frontAndBack, ShaderPolyMode line) {
-		
+
 	}
 
 	public void SetDefaultState() {
@@ -134,175 +183,175 @@ public class ShaderShadowGl46 : IShaderShadow
 	}
 
 	public void EnableStencil(bool enable) {
-		
+
 	}
 
 	public void StencilFunc(ShaderStencilFunc stencilFunc) {
-		
+
 	}
 
 	public void StencilPassOp(ShaderStencilOp stencilOp) {
-		
+
 	}
 
 	public void StencilFailOp(ShaderStencilOp stencilOp) {
-		
+
 	}
 
 	public void StencilDepthFailOp(ShaderStencilOp stencilOp) {
-		
+
 	}
 
 	public void StencilReference(int nReference) {
-		
+
 	}
 
 	public void StencilMask(int nMask) {
-		
+
 	}
 
 	public void StencilWriteMask(int nMask) {
-		
+
 	}
 
 	public void EnableColorWrites(bool enable) {
-		
+
 	}
 
 	public void EnableAlphaWrites(bool enable) {
-		
+
 	}
 
 	public void EnableBlending(bool enable) {
-		
+
 	}
 
 	public void BlendFunc(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
-		
+
 	}
 
 	public void EnableAlphaTest(bool enable) {
-		
+
 	}
 
 	public void AlphaFunc(ShaderAlphaFunc alphaFunc, float alphaRef) {
-		
+
 	}
 
 	public void EnableConstantColor(bool enable) {
-		
+
 	}
 
 	public void VertexShaderVertexFormat(uint flags, int texCoordCount, Span<int> texCoordDimensions, int userDataSize) {
-		
+
 	}
 
 	public void SetVertexShader(ReadOnlySpan<char> fileName, int nStaticVshIndex) {
-		
+
 	}
 
 	public void SetPixelShader(ReadOnlySpan<char> fileName, int nStaticPshIndex = 0) {
-		
+
 	}
 
 	public void EnableLighting(bool enable) {
-		
+
 	}
 
 	public void EnableSpecular(bool enable) {
-		
+
 	}
 
 	public void EnableSRGBWrite(bool enable) {
-		
+
 	}
 
 	public void EnableSRGBRead(Sampler sampler, bool enable) {
-		
+
 	}
 
 	public void EnableVertexBlend(bool enable) {
-		
+
 	}
 
 	public void OverbrightValue(TextureStage stage, float value) {
-		
+
 	}
 
 	public void EnableTexture(Sampler sampler, bool enable) {
-		
+
 	}
 
 	public void EnableTexGen(TextureStage stage, bool enable) {
-		
+
 	}
 
 	public void TexGen(TextureStage stage, ShaderTexGenParam param) {
-		
+
 	}
 
 	public void EnableCustomPixelPipe(bool enable) {
-		
+
 	}
 
 	public void CustomTextureStages(int stageCount) {
-		
+
 	}
 
 	public void CustomTextureOperation(TextureStage stage, ShaderTexChannel channel, ShaderTexOp op, ShaderTexArg arg1, ShaderTexArg arg2) {
-		
+
 	}
 
 	public void DrawFlags(ShaderDrawBitField drawFlags) {
-		
+
 	}
 
 	public void EnableAlphaPipe(bool enable) {
-		
+
 	}
 
 	public void EnableConstantAlpha(bool enable) {
-		
+
 	}
 
 	public void EnableVertexAlpha(bool enable) {
-		
+
 	}
 
 	public void EnableTextureAlpha(TextureStage stage, bool enable) {
-		
+
 	}
 
 	public void EnableBlendingSeparateAlpha(bool enable) {
-		
+
 	}
 
 	public void BlendFuncSeparateAlpha(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
-		
+
 	}
 
 	public void FogMode(ShaderFogMode fogMode) {
-		
+
 	}
 
 	public void SetDiffuseMaterialSource(ShaderMaterialSource materialSource) {
-		
+
 	}
 
 	public void DisableFogGammaCorrection(bool bDisable) {
-		
+
 	}
 
 	public void SetShadowDepthFiltering(Sampler stage) {
-		
+
 	}
 
 	public void BlendOp(ShaderBlendOp blendOp) {
-		
+
 	}
 
 	public void BlendOpSeparateAlpha(ShaderBlendOp blendOp) {
-		
+
 	}
 }
 
@@ -334,13 +383,13 @@ public class ShaderAPIGl46 : IShaderAPI
 			flags |= fmt.VertexFlags();
 
 			VertexCompressionType newCompression = fmt.CompressionType();
-			if(compression != newCompression && compression != VertexCompressionType.Invalid) {
+			if (compression != newCompression && compression != VertexCompressionType.Invalid) {
 				Warning("Encountered a material with two passes that specify different vertex compression types!\n");
 				compression = VertexCompressionType.Invalid;
 			}
 
 			int newNumBones = fmt.NumBoneWeights();
-			if((numBones != newNumBones) && newNumBones != 0) {
+			if ((numBones != newNumBones) && newNumBones != 0) {
 				if (numBones != 0) {
 					Warning("Encountered a material with two passes that use different numbers of bones!\n");
 				}
@@ -369,5 +418,24 @@ public class ShaderAPIGl46 : IShaderAPI
 		}
 
 		return MeshMgr.ComputeVertexFormat(flags, IMesh.VERTEX_MAX_TEXTURE_COORDINATES, texCoordSize, numBones, userDataSize);
+	}
+
+	public bool IsAlphaTested(StateSnapshot_t id) {
+		return TransitionTable.GetSnapshot(id).AlphaBlendEnable;
+	}
+
+	public bool IsTranslucent(StateSnapshot_t id) {
+		return TransitionTable.GetSnapshot(id).AlphaTestEnable;
+	}
+	public bool IsDepthWriteEnabled(StateSnapshot_t id) {
+		return TransitionTable.GetSnapshot(id).ZWriteEnable;
+	}
+
+	public bool UsesVertexAndPixelShaders(StateSnapshot_t id) {
+		return TransitionTable.GetSnapshotShader(id).VertexShader != VertexShaderHandle.INVALID;
+	}
+
+	public StateSnapshot_t TakeSnapshot() {
+		return TransitionTable.TakeSnapshot();
 	}
 }

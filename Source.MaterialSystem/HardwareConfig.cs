@@ -1,4 +1,6 @@
-﻿using Source.Common.MaterialSystem;
+﻿using OpenGL;
+
+using Source.Common.MaterialSystem;
 
 using System;
 using System.Collections.Generic;
@@ -50,8 +52,10 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 		throw new NotImplementedException();
 	}
 
-	public int GetSamplerCount() {
-		throw new NotImplementedException();
+	public unsafe int GetSamplerCount() {
+		int r;
+		Gl46.glGetIntegerv(Gl46.GL_MAX_TEXTURE_IMAGE_UNITS, &r);
+		return r;
 	}
 
 	public ReadOnlySpan<char> GetShaderDLLName() {
@@ -63,7 +67,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public int GetTextureStageCount() {
-		throw new NotImplementedException();
+		return GetSamplerCount();
 	}
 
 	public int GetVertexTextureCount() {
