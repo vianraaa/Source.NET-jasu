@@ -9,6 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Source.MaterialSystem;
 
@@ -19,7 +20,8 @@ public enum InternalTextureFlags
 	Excluded = 0x00000020, // actual exclusion state
 	ShouldExclude = 0x00000040, // desired exclusion state
 }
-public struct TexDimensions {
+public struct TexDimensions
+{
 	public ushort Width;
 	public ushort Height;
 	public ushort MipCount;
@@ -33,7 +35,7 @@ public struct TexDimensions {
 	}
 }
 
-public class Texture : ITextureInternal
+public class Texture(MaterialSystem materials) : ITextureInternal
 {
 	public void DecrementReferenceCount() {
 		throw new NotImplementedException();
@@ -121,6 +123,131 @@ public class Texture : ITextureInternal
 		Name = ITextureInternal.NormalizeTextureName(fileName);
 	}
 
+	public ref struct ScratchVTF
+	{
+		readonly Texture _parent;
+		IVTFTexture? scratchVTF;
+
+		public ScratchVTF(Texture tex) {
+			_parent = tex;
+			scratchVTF = tex.GetScratchVTFTexture();
+		}
+
+		public readonly IVTFTexture? Get() => scratchVTF;
+		public void TakeOwnership() {
+			scratchVTF = null;
+		}
+
+		public void Dispose() {
+			if (scratchVTF != null)
+				_parent.ReleaseScratchVTFTexture(scratchVTF);
+			scratchVTF = null;
+		}
+	}
+
+
+	private IVTFTexture? GetScratchVTFTexture() {
+		throw new NotImplementedException();
+	}
+
+	private void ReleaseScratchVTFTexture(IVTFTexture scratchVTF) {
+		throw new NotImplementedException();
+	}
+
+
+	public void Precache() {
+		if (IsRenderTarget() || IsProcedural())
+			return;
+
+		if (HasBeenAllocated())
+			return;
+
+		if (Name.Equals("env_cubemap", StringComparison.InvariantCulture))
+			return;
+
+		int nAdditionalFlags = 0;
+		if ((Flags & (uint)CompiledVtfFlags.Streamable) != 0) {
+			// If we were previously streamed in, make sure we still do this time around.
+			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCourse;
+			Assert((Flags & (long)CompiledVtfFlags.StreamableFine) == 0);
+		}
+
+		using ScratchVTF scratch = new(this);
+		IVTFTexture vtfTexture = scratch.Get()!;
+
+		// The texture name doubles as the relative file name
+		// It's assumed to have already been set by this point	
+		// Compute the cache name
+		Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
+		cacheFileName.Print("materials/%s.vtf", Name);
+
+		ushort nHeaderSize = IVTFTexture.FileHeaderSize(IVTFTexture.VTF_MAJOR_VERSION);
+		Span<byte> mem = stackalloc byte[nHeaderSize];
+		if (!materials.FileSystem.ReadFile(cacheFileName, null, mem, nHeaderSize)) {
+			goto precacheFailed;
+		}
+		unsafe {
+			fixed (byte* pMem = mem) {
+				using UnmanagedMemoryStream vtfStream = new UnmanagedMemoryStream(pMem, mem.Length);
+				if (!vtfTexture.Unserialize(vtfStream, true)) {
+					Warning($"Error reading material \"{cacheFileName}\"\n");
+					goto precacheFailed;
+				}
+
+				// NOTE: Don't set the image format in case graphics are active
+				Reflectivity = vtfTexture.Reflectivity();
+				DimsMapping.Width = (ushort)vtfTexture.Width();
+				DimsMapping.Height = (ushort)vtfTexture.Height();
+				DimsMapping.Depth = (ushort)vtfTexture.Depth();
+				Flags = (uint)(vtfTexture.Flags() | nAdditionalFlags);
+				FrameCount = (ushort)vtfTexture.FrameCount();
+				if (TextureHandles == null) {
+					// NOTE: m_nFrameCount and m_pTextureHandles are strongly associated
+					// whenever one is modified the other must also be modified
+					AllocateTextureHandles();
+				}
+
+				return;
+			}
+		}
+
+	precacheFailed:
+		Reflectivity = new(0, 0, 0);
+		DimsMapping.Width = 32;
+		DimsMapping.Height = 32;
+		DimsMapping.Depth = 1;
+		Flags = (uint)CompiledVtfFlags.NoMip;
+		SetErrorTexture(true);
+		FrameCount = 1;
+		if (TextureHandles == null) 
+			AllocateTextureHandles();
+		
+	}
+
+	private void AllocateTextureHandles() {
+		Assert(TextureHandles == null);
+		Assert(FrameCount > 0);
+		if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) != 0)
+			Assert(FrameCount >= 2);
+
+		TextureHandles = new ShaderAPITextureHandle_t[FrameCount];
+		for (int i = 0; i < FrameCount; i++) 
+			TextureHandles[i] = INVALID_SHADERAPI_TEXTURE_HANDLE;
+	}
+	private void ReleaseTextureHandles() {
+		if(TextureHandles != null) {
+			TextureHandles = null;
+		}
+	}
+
+	private void SetErrorTexture(bool v) {
+		throw new NotImplementedException();
+	}
+
+	private bool HasBeenAllocated() {
+		return (InternalFlags & (int)InternalTextureFlags.Allocated) != 0;
+	}
+
 	Vector3 Reflectivity;
 	string Name;
 	string TextureGroupName;
@@ -140,6 +267,7 @@ public class Texture : ITextureInternal
 	byte LowResImageHeight;
 	ushort DesiredDimensionLimit;
 	ushort ActualDimensionLimit;
+	ShaderAPITextureHandle_t[]? TextureHandles;
 
 
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Raylib_cs;
 
 using Source.Common;
+using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Launcher;
@@ -35,6 +36,7 @@ public class MaterialSystem : IMaterialSystem
 
 	readonly IServiceProvider services;
 
+	public readonly IFileSystem FileSystem;
 	public readonly TextureManager TextureSystem;
 	public readonly ShaderManager ShaderSystem;
 	public readonly ShaderAPIGl46 ShaderAPI;
@@ -45,6 +47,7 @@ public class MaterialSystem : IMaterialSystem
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
 
+		FileSystem = services.GetRequiredService<IFileSystem>();
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
 		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
@@ -54,6 +57,7 @@ public class MaterialSystem : IMaterialSystem
 
 		// Link up
 		ShaderAPI.MeshMgr = MeshMgr;
+		TextureSystem.MaterialSystem = this;
 		MeshMgr.Materials = this;
 		ShaderSystem.Services = services;
 		ShaderSystem.materials = this;

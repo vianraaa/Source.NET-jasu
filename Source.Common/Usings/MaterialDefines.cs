@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Source;
 
-public static class MaterialMacros
+public static class MaterialDefines
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static VertexFormat VERTEX_BONEWEIGHT(int n) => (VertexFormat)(((ulong)n) << VertexFormatFlags.VertexBoneWeightBit);
@@ -24,4 +24,5 @@ public static class MaterialMacros
 		return (VertexFormat)(n64 << nshift);
 	}
 	public static bool IsPlatformOpenGL() => true;
+	public const int MATERIAL_MAX_PATH = 256;
 }

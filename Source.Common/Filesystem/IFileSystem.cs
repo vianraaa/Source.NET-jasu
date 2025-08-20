@@ -68,6 +68,10 @@ public interface IBaseFileSystem
 	public long Size(ReadOnlySpan<char> fileName) => Size(fileName, null);
 	public DateTime Time(ReadOnlySpan<char> fileName) => Time(fileName, null);
 	public bool FileExists(ReadOnlySpan<char> fileName) => FileExists(fileName, null);
+
+	public bool ReadFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> path, Span<byte> buf, int startingByte);
+	public bool ReadFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> path, Span<char> buf, int startingByte);
+
 }
 
 public interface IFileSystem : IBaseFileSystem

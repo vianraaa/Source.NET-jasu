@@ -1,6 +1,8 @@
 ﻿// TODO: Logging calls when things go wrong, ie. try/catches
 
 
+using CommunityToolkit.HighPerformance;
+
 using Source.Common.Filesystem;
 
 using System.Diagnostics.CodeAnalysis;
@@ -473,5 +475,17 @@ public class BaseFileSystem : IFileSystem
 	private void ComputeFullWritePath(Span<char> dest, ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID) {
 		string combined = Path.Combine(new(GetWritePath(relativePath, pathID)), new(relativePath));
 		combined.AsSpan().CopyTo(dest);
+	}
+
+	public bool ReadFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> path, Span<byte> buf, int startingByte) {
+		using var handle = Open(fileName, FileOpenOptions.Read, path);
+		if (handle == null) return false;
+
+		int bytes = handle.Stream.Read(buf[startingByte..]);
+		return bytes > 0;
+	}
+
+	public bool ReadFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> path, Span<char> buf, int startingByte) {
+		throw new Exception();
 	}
 }
