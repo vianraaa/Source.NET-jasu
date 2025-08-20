@@ -26,6 +26,28 @@ public enum MaterialFlags : ushort
 	ArtificalRefCount = 0x80,
 }
 
+public class EditorRenderStateList : List<RenderPassList>
+{
+	public EditorRenderStateList() : base() {
+		for (int i = 0; i < ShaderManager.SNAPSHOT_COUNT_EDITOR; i++) {
+			Add(new() {
+
+			});
+		}
+	}
+}
+
+public class StandardRenderStateList : List<RenderPassList>
+{
+	public StandardRenderStateList() : base() {
+		for (int i = 0; i < ShaderManager.SNAPSHOT_COUNT_NORMAL; i++) {
+			Add(new() {
+
+			});
+		}
+	}
+}
+
 public class Material : IMaterialInternal
 {
 	public readonly MaterialSystem materials;
@@ -37,7 +59,29 @@ public class Material : IMaterialInternal
 		if (keyValues != null) {
 			flags |= MaterialFlags.IsManuallyCreated;
 		}
+		ShaderParams = null;
+		MappingWidth = MappingHeight = 0;
+		if(keyValues != null) {
+			flags |= MaterialFlags.IsManuallyCreated;
+		}
+
+		ShaderRenderState.Flags = 0;
+		ShaderRenderState.VertexFormat = ShaderRenderState.VertexUsage = 0;
+		ShaderRenderState.Snapshots = CreateRenderPassList();
 	}
+
+	private List<RenderPassList> CreateRenderPassList() {
+		List<RenderPassList> renderPassList;
+		if (!materials.CanUseEditorMaterials()) 
+			renderPassList = new StandardRenderStateList();
+		else 
+			renderPassList = new EditorRenderStateList();
+		
+		return renderPassList;
+	}
+
+	public int MappingWidth;
+	public int MappingHeight;
 
 	public string GetName() {
 		return name;
@@ -461,7 +505,7 @@ public class Material : IMaterialInternal
 	string texGroupName;
 	IShader? Shader;
 	KeyValues? keyValues;
-	IMaterialVar[] ShaderParams;
+	IMaterialVar[]? ShaderParams;
 	// IMaterialProxy
 	ShaderRenderState ShaderRenderState = new();
 

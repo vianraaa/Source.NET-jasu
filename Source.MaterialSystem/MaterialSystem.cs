@@ -24,6 +24,7 @@ public class MaterialSystem : IMaterialSystem
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<ISurface, MatSystemSurface>();
+		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
 		services.AddSingleton<ITextureManager>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).TextureSystem);
 		services.AddSingleton<IShaderSystem>(x => ((MaterialSystem)x.GetRequiredService<IMaterialSystem>()).ShaderSystem);
 	}
@@ -32,13 +33,16 @@ public class MaterialSystem : IMaterialSystem
 
 	public TextureManager TextureSystem;
 	public ShaderManager ShaderSystem;
+	public ShaderAPIGl46 ShaderAPI;
 
 	public MaterialSystem(IServiceProvider services) {
 		this.services = services;
+		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
 		TextureSystem = new();
 		ShaderSystem = new() {
 			Services = services,
-			materials = this
+			materials = this,
+			shaderAPI = ShaderAPI
 		};
 		ShaderSystem.LoadAllShaderDLLs();
 	}

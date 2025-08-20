@@ -422,7 +422,7 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public void CreateDirHierarchy(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID) {
-		Span<char> scratchFileName = stackalloc char[260];
+		Span<char> scratchFileName = stackalloc char[MAX_PATH];
 		if (!Path.IsPathFullyQualified(relativePath)) {
 			Assert(pathID != null);
 			ComputeFullWritePath(scratchFileName, relativePath, pathID);

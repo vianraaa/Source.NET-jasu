@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
@@ -56,6 +57,7 @@ public class ShaderManager : IShaderSystemInternal
 	byte Modulation;
 	byte RenderPass;
 	internal IMaterialSystem materials;
+	internal ShaderAPIGl46 shaderAPI;
 
 	public void BindTexture(Sampler sampler, ITexture texture) {
 		throw new NotImplementedException();
@@ -242,10 +244,6 @@ public class ShaderManager : IShaderSystemInternal
 		throw new NotImplementedException();
 	}
 
-	private bool ComputeVertexFormatFromSnapshot(IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
-		throw new NotImplementedException();
-	}
-
 	private void InitStateSnapshots(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
 		renderState ??= new();
 		if (IsFlagSet(shaderParams, MaterialVarFlags.Debug)) {
@@ -319,6 +317,48 @@ public class ShaderManager : IShaderSystemInternal
 	public const int SNAPSHOT_COUNT_EDITOR = 32;
 	public int SnapshotTypeCount() => materials.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
 
+	static void AddSnapshotsToList(RenderPassList passList, ref int snapshotID, Span<StateSnapshot_t> snapshots) {
+		int numPassSnapshots = passList.PassCount;
+		for (int i = 0; i < numPassSnapshots; i++) {
+			snapshots[snapshotID] = passList.Snapshot[i];
+			snapshotID++;
+		}
+	}
+
+	public bool ComputeVertexFormatFromSnapshot(IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
+		int modulationSnapshotCount = GetModulationSnapshotCount(shaderParams);
+		int numSnapshots = renderState.Snapshots[0].PassCount;
+		if (modulationSnapshotCount >= (int)ShaderUsing.Flashlight)
+			numSnapshots += renderState.Snapshots[(int)ShaderUsing.Flashlight].PassCount;
+		if (materials.CanUseEditorMaterials())
+			numSnapshots += renderState.Snapshots[(int)ShaderUsing.Editor].PassCount;
+
+		Span<StateSnapshot_t> snapshots = stackalloc StateSnapshot_t[numSnapshots];
+		int snapshotID = 0;
+		AddSnapshotsToList(renderState.Snapshots[0], ref snapshotID, snapshots);
+		if (modulationSnapshotCount >= (int)ShaderUsing.Flashlight)
+			AddSnapshotsToList(renderState.Snapshots[(int)ShaderUsing.Flashlight], ref snapshotID, snapshots);
+		if (materials.CanUseEditorMaterials())
+			AddSnapshotsToList(renderState.Snapshots[(int)ShaderUsing.Editor], ref snapshotID, snapshots);
+
+		Assert(snapshotID == numSnapshots);
+
+		for (int mod = 0; mod < modulationSnapshotCount; mod++) {
+			int numSnapshotsTest = renderState.Snapshots[mod].PassCount;
+			Span<StateSnapshot_t> snapshotsTest = stackalloc StateSnapshot_t[numSnapshotsTest];
+			for (int i = 0; i < numSnapshotsTest; i++) {
+				snapshotsTest[i] = renderState.Snapshots[mod].Snapshot[i];
+			}
+			VertexFormat usageTest = shaderAPI.ComputeVertexUsage(snapshotsTest);
+		}
+
+		if (IsPC()) {
+			renderState.VertexUsage = shaderAPI.ComputeVertexUsage(snapshots);
+		}
+		else {
+			renderState.VertexFormat = renderState.VertexUsage;
+		}
+	}
 
 	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {
 		int snapshotCount = SnapshotTypeCount();

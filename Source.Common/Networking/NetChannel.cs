@@ -1393,7 +1393,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 				if (buf.ReadOneBit() == 1) // is it a file ?
 				{
 					data.TransferID = buf.ReadUBitLong(32);
-					data.Filename = buf.ReadString(260);
+					data.Filename = buf.ReadString(MAX_PATH);
 				}
 
 				// data compressed ?
