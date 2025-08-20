@@ -382,25 +382,6 @@ public class ShaderManager : IShaderSystemInternal
 		return snapshotCount;
 	}
 
-	private static bool IsFlagSet(IMaterialVar[] shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & flag) != 0;
-	private static bool IsFlagSet(IMaterialVar[] shaderParams, MaterialVarFlags flag) => IsFlagSet(shaderParams, (int)flag);
-	private static bool IsFlag2Set(IMaterialVar[] shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() & flag) != 0;
-	private static bool IsFlag2Set(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => IsFlag2Set(shaderParams, (int)flag);
-
-	private static void SetFlags(IMaterialVar[] shaderParams, int flag)
-		=> shaderParams[(int)ShaderMaterialVars.Flags].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() | flag);
-	private static void SetFlags(IMaterialVar[] shaderParams, MaterialVarFlags flag) => SetFlags(shaderParams, (int)flag);
-	private static void SetFlags2(IMaterialVar[] shaderParams, int flag)
-		=> shaderParams[(int)ShaderMaterialVars.Flags2].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() | flag);
-	private static void SetFlags2(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => SetFlags2(shaderParams, (int)flag);
-
-	private static void ClearFlags(IMaterialVar[] shaderParams, int flag)
-		=> shaderParams[(int)ShaderMaterialVars.Flags].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & ~flag);
-	private static void ClearFlags(IMaterialVar[] shaderParams, MaterialVarFlags flag) => SetFlags(shaderParams, (int)flag);
-	private static void ClearFlags2(IMaterialVar[] shaderParams, int flag)
-		=> shaderParams[(int)ShaderMaterialVars.Flags2].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() & ~flag);
-	private static void ClearFlags2(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => SetFlags2(shaderParams, (int)flag);
-
 	private void InitRenderStateFlags(ref ShaderRenderState renderState, IMaterialVar[] shaderParams) {
 		renderState.Flags = 0;
 		renderState.Flags &= ~ShaderRenderState.SHADER_OPACITY_MASK;

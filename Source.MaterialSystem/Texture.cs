@@ -202,8 +202,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 				Flags = (uint)(vtfTexture.Flags() | nAdditionalFlags);
 				FrameCount = (ushort)vtfTexture.FrameCount();
 				if (TextureHandles == null) {
-					// NOTE: m_nFrameCount and m_pTextureHandles are strongly associated
-					// whenever one is modified the other must also be modified
 					AllocateTextureHandles();
 				}
 
@@ -224,6 +222,10 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		
 	}
 
+	/// <summary>
+	/// FrameCount and TextureHandles are closely associated
+	/// todo: can we just make it an array in C# land with no FrameCount...?
+	/// </summary>
 	private void AllocateTextureHandles() {
 		Assert(TextureHandles == null);
 		Assert(FrameCount > 0);

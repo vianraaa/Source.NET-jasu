@@ -1,4 +1,5 @@
-﻿using Source.Common.MaterialSystem;
+﻿using Source.Common.Engine;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
@@ -6,12 +7,14 @@ namespace Source.StdShader.Gl46;
 
 public abstract class BaseShader : IShader
 {
-	static IMaterialVar[]? Params;
-	static int ModulationFlags;
-	static IShaderInit? ShaderInit;
-	static IShaderDynamicAPI? ShaderAPI;
-	static IShaderShadow? ShaderShadow;
-	static string? TextureGroupName;
+	[Imported] internal IMaterialSystemHardwareConfig HardwareConfig;
+
+	internal static IMaterialVar[]? Params;
+	internal static int ModulationFlags;
+	internal static IShaderInit? ShaderInit;
+	internal static IShaderDynamicAPI? ShaderAPI;
+	internal static IShaderShadow? ShaderShadow;
+	internal static string? TextureGroupName;
 
 	static ShaderParamInfo[] StandardParams = [
 		new(){ Name = "$flags",                    Help = "flags",            Type = ShaderParamType.Integer,DefaultValue =  "0", Flags = ShaderParamFlags.NotEditable },
@@ -154,5 +157,19 @@ public abstract class BaseShader : IShader
 		TextureGroupName = null;
 		Params = null;
 		ShaderInit = null;
+	}
+
+	protected void LoadCubeMap(int envmapVar) {
+		throw new NotImplementedException();
+	}
+
+	protected void LoadTexture(int textureVar, int additionalCreationFlags = 0) {
+		if (Params == null || textureVar == -1)
+			return;
+
+		IMaterialVar nameVar = Params[textureVar];
+		if(nameVar != null && nameVar.IsDefined()) {
+			ShaderInit!.LoadTexture(nameVar, TextureGroupName, additionalCreationFlags);
+		}
 	}
 }
