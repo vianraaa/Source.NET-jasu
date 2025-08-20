@@ -8,8 +8,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 
+using StateSnapshot_t = short;
 namespace Source.MaterialSystem;
 
+public class RenderPassList
+{
+	public const int MAX_RENDER_PASSES = 4;
+
+	public int PassCount;
+	public StateSnapshot_t[] Snapshot = new StateSnapshot_t[MAX_RENDER_PASSES];
+	public BasePerMaterialContextData[] ContextData = new BasePerMaterialContextData[MAX_RENDER_PASSES];
+}
 public class ShaderRenderState
 {
 	public const int SHADER_OPACITY_ALPHATEST = 0x0010;
@@ -20,6 +29,8 @@ public class ShaderRenderState
 	public int Flags;
 	public VertexFormat VertexFormat;
 	public VertexFormat VertexUsage;
+
+	public List<RenderPassList> Snapshots = [];
 
 	public bool IsTranslucent() => (Flags & SHADER_OPACITY_TRANSLUCENT) != 0;
 	public bool IsAlphaTested() => (Flags & SHADER_OPACITY_ALPHATEST) != 0;
@@ -44,6 +55,7 @@ public class ShaderManager : IShaderSystemInternal
 	ShaderRenderState? RenderState;
 	byte Modulation;
 	byte RenderPass;
+	internal IMaterialSystem materials;
 
 	public void BindTexture(Sampler sampler, ITexture texture) {
 		throw new NotImplementedException();
@@ -226,10 +238,6 @@ public class ShaderManager : IShaderSystemInternal
 		return true;
 	}
 
-	private void CleanupRenderState(ref ShaderRenderState renderState) {
-		throw new NotImplementedException();
-	}
-
 	private void ComputeRenderStateFlagsFromSnapshot(ref ShaderRenderState renderState) {
 		throw new NotImplementedException();
 	}
@@ -239,6 +247,7 @@ public class ShaderManager : IShaderSystemInternal
 	}
 
 	private void InitStateSnapshots(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
+		renderState ??= new();
 		if (IsFlagSet(shaderParams, MaterialVarFlags.Debug)) {
 			Debugger.Break();
 		}
@@ -253,10 +262,71 @@ public class ShaderManager : IShaderSystemInternal
 
 		Span<float> white = [1, 1, 1];
 		Span<float> grey = [.5f, .5f, .5f];
+
+		int snapshotCount = GetModulationSnapshotCount(shaderParams);
+		bool modUsesFlashlight = mat_supportflashlight.GetInt() != 0;
+
+		for (int i = 0; i < snapshotCount; i++) {
+			if ((i & (int)ShaderUsing.Flashlight) != 0 && !modUsesFlashlight) {
+				renderState.Snapshots[i].PassCount = 0;
+				continue;
+			}
+
+			if ((i & (int)ShaderUsing.ColorModulation) != 0)
+				shaderParams[(int)ShaderMaterialVars.Color].SetVecValue(grey);
+			else
+				shaderParams[(int)ShaderMaterialVars.Color].SetVecValue(white);
+
+			if ((i & (int)ShaderUsing.AlphaModulation) != 0)
+				shaderParams[(int)ShaderMaterialVars.Alpha].SetFloatValue(grey[0]);
+			else
+				shaderParams[(int)ShaderMaterialVars.Alpha].SetFloatValue(white[0]);
+
+			if ((i & (int)ShaderUsing.Flashlight) != 0)
+				SetFlags2(shaderParams, MaterialVarFlags2.UseFlashlight);
+			else
+				ClearFlags2(shaderParams, MaterialVarFlags2.UseFlashlight);
+
+			if ((i & (int)ShaderUsing.Editor) != 0)
+				SetFlags2(shaderParams, MaterialVarFlags2.UseEditor);
+			else
+				ClearFlags2(shaderParams, MaterialVarFlags2.UseEditor);
+
+			if ((i & (int)ShaderUsing.FixedFunctionBakedLighting) != 0)
+				SetFlags2(shaderParams, MaterialVarFlags2.UseFixedFunctionBakedLighting);
+			else
+				ClearFlags2(shaderParams, MaterialVarFlags2.UseFixedFunctionBakedLighting);
+
+			PrepForShaderDraw(shader, shaderParams, renderState, i);
+			renderState.Snapshots[i].PassCount = 0;
+			shader.DrawElements(shaderParams, null, i, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
+		}
+
+		shaderParams[(int)ShaderMaterialVars.Color].SetVecValue(color);
+		shaderParams[(int)ShaderMaterialVars.Alpha].SetFloatValue(alpha);
+
+		if (bakedLighting) SetFlags2(shaderParams, MaterialVarFlags2.UseFixedFunctionBakedLighting);
+		else ClearFlags2(shaderParams, MaterialVarFlags2.UseFixedFunctionBakedLighting);
+
+		if (editor) SetFlags2(shaderParams, MaterialVarFlags2.UseEditor);
+		else ClearFlags2(shaderParams, MaterialVarFlags2.UseEditor);
+
+		if (flashlight) SetFlags2(shaderParams, MaterialVarFlags2.UseFlashlight);
+		else ClearFlags2(shaderParams, MaterialVarFlags2.UseFlashlight);
 	}
 
+	public const int SNAPSHOT_COUNT_NORMAL = 16;
+	public const int SNAPSHOT_COUNT_EDITOR = 32;
+	public int SnapshotTypeCount() => materials.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
+
+
 	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {
-		throw new NotImplementedException();
+		int snapshotCount = SnapshotTypeCount();
+		if (!materials.CanUseEditorMaterials()) {
+			if (!IsFlag2Set(shaderParams, MaterialVarFlags2.NeedsBakedLightingSnapshots))
+				snapshotCount /= 2;
+		}
+		return snapshotCount;
 	}
 
 	private static bool IsFlagSet(IMaterialVar[] shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & flag) != 0;
@@ -271,8 +341,26 @@ public class ShaderManager : IShaderSystemInternal
 		=> shaderParams[(int)ShaderMaterialVars.Flags2].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() | flag);
 	private static void SetFlags2(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => SetFlags2(shaderParams, (int)flag);
 
+	private static void ClearFlags(IMaterialVar[] shaderParams, int flag)
+		=> shaderParams[(int)ShaderMaterialVars.Flags].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & ~flag);
+	private static void ClearFlags(IMaterialVar[] shaderParams, MaterialVarFlags flag) => SetFlags(shaderParams, (int)flag);
+	private static void ClearFlags2(IMaterialVar[] shaderParams, int flag)
+		=> shaderParams[(int)ShaderMaterialVars.Flags2].SetIntValue(shaderParams[(int)ShaderMaterialVars.Flags2].GetIntValue() & ~flag);
+	private static void ClearFlags2(IMaterialVar[] shaderParams, MaterialVarFlags2 flag) => SetFlags2(shaderParams, (int)flag);
+
 	private void InitRenderStateFlags(ref ShaderRenderState renderState, IMaterialVar[] shaderParams) {
 		renderState.Flags = 0;
 		renderState.Flags &= ~ShaderRenderState.SHADER_OPACITY_MASK;
+	}
+
+	internal void CleanupRenderState(ref ShaderRenderState renderState) {
+		if (renderState != null) {
+			int snapshotCount = SnapshotTypeCount();
+			for (int i = 0; i < snapshotCount; i++) {
+				for (int j = 0; j < renderState.Snapshots[i].PassCount; j++)
+					renderState.Snapshots[i].ContextData[j] = null;
+				renderState.Snapshots[i].PassCount = 0;
+			}
+		}
 	}
 }

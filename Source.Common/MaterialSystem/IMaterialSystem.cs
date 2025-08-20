@@ -119,6 +119,7 @@ public interface IMaterialSystem
 	void SwapBuffers();
 	bool SetMode(nint v, MaterialSystemConfig config);
 	IMaterial CreateMaterial(string v, KeyValues keyValues);
+	bool CanUseEditorMaterials();
 }
 
 public interface IMatRenderContext

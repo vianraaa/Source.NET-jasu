@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -82,8 +83,9 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
-	public override void GetVecValue(Span<float> color) {
-		throw new NotImplementedException();
+	public override unsafe void GetVecValue(Span<float> val) {
+		fixed(Vector4* v4 = &VecVal)
+			new Span<float>(v4, 4).CopyTo(val);
 	}
 
 	public override bool IsDefined() {
@@ -134,12 +136,14 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
-	public override void SetVecValue(ReadOnlySpan<float> val) {
-		throw new NotImplementedException();
+	public override unsafe void SetVecValue(ReadOnlySpan<float> val) {
+		fixed (Vector4* v4 = &VecVal)
+			val.CopyTo(new Span<float>(v4, 4));
 	}
 
 	public override void SetVecValue(float x, float y) {
-		throw new NotImplementedException();
+		VecVal[0] = x;
+		VecVal[1] = y;
 	}
 
 	public override void SetVecValue(float x, float y, float z) {

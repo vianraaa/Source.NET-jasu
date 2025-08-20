@@ -42,3 +42,12 @@ public enum ShaderParamFlags
 {
 	NotEditable = 0x1
 }
+
+public class BasePerMaterialContextData {
+	public uint VarChangeID;
+	public bool MaterialVarsChanged;
+	public BasePerMaterialContextData() {
+		MaterialVarsChanged = true;
+		VarChangeID = 0xffffffff;
+	}
+}

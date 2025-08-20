@@ -37,7 +37,8 @@ public class MaterialSystem : IMaterialSystem
 		this.services = services;
 		TextureSystem = new();
 		ShaderSystem = new() {
-			Services = services
+			Services = services,
+			materials = this
 		};
 		ShaderSystem.LoadAllShaderDLLs();
 	}
@@ -146,6 +147,10 @@ public class MaterialSystem : IMaterialSystem
 
 	public IMaterial? GetCurrentMaterial() {
 		return GetRenderContext().GetCurrentMaterial();
+	}
+
+	public bool CanUseEditorMaterials() {
+		return false; //todo
 	}
 
 	public IMaterialInternal errorMaterial;

@@ -97,7 +97,9 @@ public class Material : IMaterialInternal
 	}
 
 	private void CleanUpStateSnapshots() {
-		throw new NotImplementedException();
+		if (IsValidRenderState()) {
+			materials.ShaderSystem.CleanupRenderState(ref ShaderRenderState);
+		}
 	}
 
 	private void SetupErrorShader() {
@@ -461,7 +463,7 @@ public class Material : IMaterialInternal
 	KeyValues? keyValues;
 	IMaterialVar[] ShaderParams;
 	// IMaterialProxy
-	ShaderRenderState ShaderRenderState;
+	ShaderRenderState ShaderRenderState = new();
 
 	public void DrawMesh(VertexCompressionType vertexCompression) { }
 	public IShader? GetShader() => Shader;

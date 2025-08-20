@@ -6,6 +6,7 @@ namespace Source.StdShader.Gl46;
 public abstract class BaseShader : IShader
 {
 	static IMaterialVar[]? Params;
+	static int ModulationFlags;
 	static IShaderInit? ShaderInit;
 	static string? TextureGroupName;
 
@@ -85,8 +86,28 @@ public abstract class BaseShader : IShader
 
 	}
 
-	protected virtual void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
+	protected virtual void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
 
+	}
+
+	public void DrawElements(IMaterialVar[] vars, IShaderShadow shadow, int modulationFlags, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+		Assert(Params == null);
+		Params = vars;
+		ModulationFlags = modulationFlags;
+
+		if (IsSnapshotting()) {
+			SetInitialShadowState();
+		}
+
+		OnDrawElements(vars, null, null, vertexCompression, ref contextData);
+	}
+
+	private void SetInitialShadowState() {
+		throw new NotImplementedException();
+	}
+
+	private bool IsSnapshotting() {
+		throw new NotImplementedException();
 	}
 
 	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
