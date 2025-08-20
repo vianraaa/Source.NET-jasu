@@ -350,6 +350,14 @@ public static class Dbg
 
 	[Conditional("DBGFLAG_ASSERT")]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void Assert(object? exp,
+		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
+		[CallerFilePath] string? ____fileP = null,
+		[CallerLineNumber] int ____lineNum = -1
+	) => _AssertMsg(exp != null, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
+
+	[Conditional("DBGFLAG_ASSERT")]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertMsg([DoesNotReturnIf(false)] bool exp, string msg,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
 		[CallerFilePath] string? ____fileP = null,

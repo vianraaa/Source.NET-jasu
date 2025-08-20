@@ -13,4 +13,6 @@ public interface ITextureInternal : ITexture {
 
 		return new(name); // todo.
 	}
+
+	void Precache();
 }

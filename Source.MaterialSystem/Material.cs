@@ -8,7 +8,9 @@ using Steamworks;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -150,12 +152,83 @@ public class Material : IMaterialInternal
 		throw new NotImplementedException();
 	}
 
-	private void FindRepresentativeTexture() {
+			static int complainCount = 0;
+	public IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true) {
+		Span<char> lowercased = stackalloc char[varName.Length];
+		varName.ToLowerInvariant(lowercased);
+		string sym = string.Intern(new(lowercased));
+		foreach(var shaderParam in Vars) {
+			if(string.Intern(new(shaderParam.GetName())) == sym) {
+				found = true;
+				return shaderParam;
+			}
+		}
+		found = false;
+		if (complain) {
+			if(complainCount < 100) {
+				Warning("No such variable \"%s\" for material \"%s\"\n", sym, GetName());
+				complainCount++;
+			}
+		}
+		return GetDummyVariable();
+	}
 
+	static IMaterialVar? dummyVar;
+	private IMaterialVar GetDummyVariable() {
+		dummyVar ??= new MaterialVar(null, "$dummyVar", 0);
+		return dummyVar;
+	}
+
+	// A more C#-style way of doing this
+	public bool TryFindVar(ReadOnlySpan<char> varName, [NotNullWhen(true)] out IMaterialVar? found, bool complain = true) {
+		bool hasFound;
+		found = FindVar(varName, out hasFound, complain);
+		return hasFound;
+	}
+
+	private void FindRepresentativeTexture() {
+		Precache();
+		bool found;
+		IMaterialVar? textureVar = FindVar($"baseTexture", out found, false);
+		if(found && textureVar.GetVarType() == MaterialVarType.Texture) {
+			ITextureInternal? texture = (ITextureInternal?)textureVar.GetTextureValue();
+			// todo
+		}
+		if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
+			textureVar = FindVar("$envmapmask", out found, false);
+			if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
+				textureVar = FindVar("$bumpmap", out found, false);
+				if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
+					textureVar = FindVar("$dudvmap", out found, false);
+					if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
+						textureVar = FindVar("$normalmap", out found, false);
+						if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
+							representativeTexture = materials.TextureSystem.ErrorTexture();
+							return;
+						}
+					}
+				}
+			}
+		}
+
+		representativeTexture = (ITextureInternal?)textureVar.GetTextureValue();
+		if (representativeTexture != null)
+			representativeTexture.Precache();
+		else {
+			representativeTexture = materials.TextureSystem.ErrorTexture();
+			Assert(representativeTexture);
+		}
 	}
 
 	private void PrecacheMappingDimensions() {
-
+		if(representativeTexture == null) {
+			MappingWidth = 64;
+			MappingHeight = 64;
+		}
+		else {
+			MappingWidth = representativeTexture.GetMappingWidth();
+			MappingHeight = representativeTexture.GetMappingHeight();
+		}
 	}
 
 	private bool IsValidRenderState() {
@@ -257,6 +330,7 @@ public class Material : IMaterialInternal
 
 		this.Shader = shader;
 		this.ShaderParams = vars;
+		this.VarCount = varCount;
 
 		return currentFallback;
 	}
@@ -506,6 +580,13 @@ public class Material : IMaterialInternal
 	IShader? Shader;
 	KeyValues? keyValues;
 	IMaterialVar[]? ShaderParams;
+	private int VarCount;
+	ITextureInternal? representativeTexture;
+	Vector3 Reflectivity;
+	uint ChangeID;
+
+	public Span<IMaterialVar> Vars => new Span<IMaterialVar>(ShaderParams)[..VarCount];
+
 	// IMaterialProxy
 	ShaderRenderState ShaderRenderState = new();
 

@@ -34,7 +34,7 @@ public abstract class IMaterialVar
 	protected string Name = "";
 
 	public abstract ITexture? GetTextureValue();
-	public abstract string GetName();
+	public abstract ReadOnlySpan<char> GetName();
 	public abstract void SetFloatValue(float val);
 	public abstract void SetIntValue(int val);
 	public abstract void SetStringValue(ReadOnlySpan<char> val);

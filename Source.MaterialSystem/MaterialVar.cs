@@ -67,8 +67,8 @@ public sealed class MaterialVar : IMaterialVar
 		throw new NotImplementedException();
 	}
 
-	public override string GetName() {
-		return Name;
+	public override ReadOnlySpan<char> GetName() {
+		return Name.ToLowerInvariant();
 	}
 
 	public override IMaterial GetOwningMaterial() {
