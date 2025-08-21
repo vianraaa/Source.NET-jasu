@@ -397,4 +397,40 @@ public class ShaderManager : IShaderSystemInternal
 			}
 		}
 	}
+
+
+	public void TakeSnapshot() {
+		Assert(RenderState);
+		Assert(Modulation < SnapshotTypeCount());
+		if (materials.HardwareConfig.SupportsPixelShaders_2_b()) {
+			materials.ShaderShadow.EnableTexture(Sampler.Sampler15, true);
+			materials.ShaderShadow.EnableSRGBRead(Sampler.Sampler15, true);
+		}
+
+		RenderPassList snapshotList = RenderState!.Snapshots[Modulation];
+		snapshotList.Snapshot[snapshotList.PassCount] = shaderAPI.TakeSnapshot();
+		++snapshotList.PassCount;
+	}
+
+	public StateSnapshot_t CurrentStateSnapshot() {
+		Assert(RenderState);
+		Assert(RenderPass < RenderPassList.MAX_RENDER_PASSES);
+		Assert(RenderPass < RenderState!.Snapshots[Modulation].PassCount);
+		return RenderState.Snapshots[Modulation].Snapshot[RenderPass];
+	}
+
+	public void DrawSnapshot(bool makeActualDrawCall = true) {
+		Assert(RenderState);
+		RenderPassList snapshotList = RenderState!.Snapshots[Modulation];
+
+		int passCount = snapshotList.PassCount;
+		Assert(RenderPass < passCount);
+
+		if (makeActualDrawCall)
+			shaderAPI.RenderPass(RenderPass, passCount);
+
+		shaderAPI.InvalidateDelayedShaderConstraints();
+		if (++RenderPass < passCount)
+			shaderAPI.BeginPass(CurrentStateSnapshot());
+	}
 }

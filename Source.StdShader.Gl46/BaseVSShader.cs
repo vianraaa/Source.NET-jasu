@@ -1,4 +1,8 @@
 ﻿using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
+using Source.Common.ShaderLib;
+
+using static Source.StdShader.Gl46.UnlitGeneric;
 
 namespace Source.StdShader.Gl46;
 
@@ -25,7 +29,274 @@ public abstract class BaseVSShader : BaseShader
 			parms[index].SetIntValue(value);
 	}
 
-	public void InitUnlitGeneric_DX8(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {
+
+	internal void InitParamsUnlitGeneric(int baseTextureVar, int detailScaleVar, int envmapOptionalVar,
+		int envmapVar, int envmapTintVar, int envmapMaskScaleVar, int detailBlendMode) {
+		IMaterialVar[] shaderParams = Params!;
+
+		SetFlags2(shaderParams, MaterialVarFlags2.SupportsHardwareSkinning);
+
+		if (envmapTintVar >= 0 && !shaderParams[envmapTintVar].IsDefined()) {
+			shaderParams[envmapTintVar].SetVecValue(1.0f, 1.0f, 1.0f);
+		}
+
+		if (envmapMaskScaleVar >= 0 && !shaderParams[envmapMaskScaleVar].IsDefined()) {
+			shaderParams[envmapMaskScaleVar].SetFloatValue(1.0f);
+		}
+
+		if (detailScaleVar >= 0 && !shaderParams[detailScaleVar].IsDefined()) {
+			shaderParams[detailScaleVar].SetFloatValue(4.0f);
+		}
+
+		// No texture means no self-illum or env mask in base alpha
+		if (baseTextureVar >= 0 && !shaderParams[baseTextureVar].IsDefined()) {
+			ClearFlags(shaderParams, MaterialVarFlags.BaseAlphaEnvMapMask);
+		}
+
+		// If in decal mode, no debug override...
+		if (IsFlagSet(shaderParams, MaterialVarFlags.Decal)) {
+			SetFlags(shaderParams, MaterialVarFlags.NoDebugOverride);
+		}
+
+		// Get rid of the envmap if it's optional for this dx level.
+		if (envmapOptionalVar >= 0 && shaderParams[envmapOptionalVar].IsDefined() && shaderParams[envmapOptionalVar].GetIntValue() != 0) {
+			if (envmapVar >= 0) {
+				shaderParams[envmapVar].SetUndefined();
+			}
+		}
+
+		// If mat_specular 0, then get rid of envmap
+		// TODO: what to do about the materialsystem_config_t type, which is what the "true" is right now as a placeholder
+		if (envmapVar >= 0 && baseTextureVar >= 0 && true && shaderParams[envmapVar].IsDefined() && shaderParams[baseTextureVar].IsDefined()) {
+			shaderParams[envmapVar].SetUndefined();
+		}
+	}
+
+	public void VertexShaderUnlitGenericPass(int baseTextureVar, int frameVar,
+												  int baseTextureTransformVar,
+												  int detailVar, int detailTransform,
+												  bool bDetailTransformIsScale,
+												  int envmapVar, int envMapFrameVar,
+												  int envmapMaskVar, int envmapMaskFrameVar,
+												  int envmapMaskScaleVar, int envmapTintVar,
+												  int alphaTestReferenceVar,
+												  int nDetailBlendModeVar,
+												  int nOutlineVar,
+												  int nOutlineColorVar,
+												  int nOutlineStartVar,
+												  int nOutlineEndVar,
+												  int nSeparateDetailUVsVar) {
+		IMaterialVar[] shaderParams = Params!;
+
+		bool bBaseAlphaEnvmapMask = IsFlagSet(shaderParams, MaterialVarFlags.BaseAlphaEnvMapMask);
+		bool bEnvmap = (envmapVar >= 0) && shaderParams[envmapVar].IsTexture();
+		bool bMask = false;
+		if (bEnvmap && (envmapMaskVar >= 0)) {
+			bMask = shaderParams[envmapMaskVar].IsTexture();
+		}
+		bool bDetail = (detailVar >= 0) && shaderParams[detailVar].IsTexture();
+		bool bBaseTexture = (baseTextureVar >= 0) && shaderParams[baseTextureVar].IsTexture();
+		bool bVertexColor = IsFlagSet(shaderParams, MaterialVarFlags.VertexColor);
+		bool bEnvmapCameraSpace = IsFlagSet(shaderParams, MaterialVarFlags.EnvMapCameraSpace);
+		bool bEnvmapSphere = IsFlagSet(shaderParams, MaterialVarFlags.EnvMapSphere);
+
+		bool bDetailMultiply = (nDetailBlendModeVar >= 0) && (shaderParams[nDetailBlendModeVar].GetIntValue() == 8);
+		bool bMaskBaseByDetailAlpha = (nDetailBlendModeVar >= 0) && (shaderParams[nDetailBlendModeVar].GetIntValue() == 9);
+		bool bSeparateDetailUVs = (nSeparateDetailUVsVar >= 0) && (shaderParams[nSeparateDetailUVsVar].GetIntValue() != 0);
+
+		if (IsSnapshotting()) {
+			// Alpha test
+			ShaderShadow.EnableAlphaTest(IsFlagSet(shaderParams, MaterialVarFlags.AlphaTest));
+
+			if (alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f) {
+				ShaderShadow.AlphaFunc(ShaderAlphaFunc.GreaterEqual, shaderParams[alphaTestReferenceVar].GetFloatValue());
+			}
+
+			// Base texture on stage 0
+			if (bBaseTexture) {
+				ShaderShadow.EnableTexture(Sampler.Sampler0, true);
+			}
+
+			if (bDetail) {
+				ShaderShadow.EnableTexture(Sampler.Sampler3, true);
+			}
+
+			if (bEnvmap) {
+				// envmap on stage 1
+				ShaderShadow.EnableTexture(Sampler.Sampler1, true);
+
+				// envmapmask on stage 2
+				if (bMask || bBaseAlphaEnvmapMask)
+					ShaderShadow.EnableTexture(Sampler.Sampler2, true);
+			}
+
+			if (bBaseTexture)
+				SetDefaultBlendingShadowState(baseTextureVar, true);
+			else if (bMask)
+				SetDefaultBlendingShadowState(envmapMaskVar, false);
+			else
+				SetDefaultBlendingShadowState();
+
+			uint fmt = (uint)VertexFormat.Position;
+			if (bEnvmap)
+				fmt |= (uint)VertexFormat.Normal;
+			if (bVertexColor)
+				fmt |= (uint)VertexFormat.Color;
+
+			int numTexCoords = 1;
+			if (bSeparateDetailUVs) {
+				numTexCoords = 2;
+			}
+
+			ShaderShadow.VertexShaderVertexFormat(fmt, numTexCoords, null, 0);
+			ReadOnlySpan<char> shName = UnlitGeneric_ComputePixelShaderName(
+				bMask,
+				bEnvmap,
+				bBaseTexture,
+				bBaseAlphaEnvmapMask,
+				bDetail,
+				bDetailMultiply,
+				bMaskBaseByDetailAlpha);
+			ShaderShadow.SetPixelShader(shName);
+
+			// Compute the vertex shader index.
+			unlitgeneric_vs11_Static_Index vshIndex = new();
+			vshIndex.SetDETAIL(bDetail);
+			vshIndex.SetENVMAP(bEnvmap ? 1 : 0);
+			vshIndex.SetENVMAPCAMERASPACE(bEnvmap && bEnvmapCameraSpace);
+			vshIndex.SetENVMAPSPHERE(bEnvmap && bEnvmapSphere);
+			vshIndex.SetVERTEXCOLOR(bVertexColor ? 1 : 0);
+			vshIndex.SetSEPARATEDETAILUVS(bSeparateDetailUVs ? 1 : 0);
+			ShaderShadow.SetVertexShader("unlitgeneric_vs11", vshIndex.GetIndex());
+
+			DefaultFog();
+		}
+		else {
+			if (ShaderAPI!.InFlashlightMode()) // Not snapshotting && flashlight pass
+			{
+				Draw(false);
+				return;
+			}
+
+			if (bBaseTexture) {
+				BindTexture(Sampler.Sampler0, baseTextureVar, frameVar);
+				SetVertexShaderTextureTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, baseTextureTransformVar);
+			}
+
+			if (bDetail) {
+				BindTexture(Sampler.Sampler3, detailVar, frameVar);
+
+				if (bDetailTransformIsScale) {
+					SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, baseTextureTransformVar, detailTransform);
+				}
+				else {
+					SetVertexShaderTextureTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, detailTransform);
+				}
+			}
+
+			if (bEnvmap) {
+				BindTexture(Sampler.Sampler1, envmapVar, envMapFrameVar);
+
+				if (bMask || bBaseAlphaEnvmapMask) {
+					if (bMask)
+						BindTexture(Sampler.Sampler2, envmapMaskVar, envmapMaskFrameVar);
+					else
+						BindTexture(Sampler.Sampler2, baseTextureVar, frameVar);
+
+					SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_2, baseTextureTransformVar, envmapMaskScaleVar);
+				}
+
+				SetEnvMapTintPixelShaderDynamicState(2, envmapTintVar, -1);
+
+				if (bEnvmapSphere || IsFlagSet(shaderParams, MaterialVarFlags.EnvMapCameraSpace)) {
+					LoadViewMatrixIntoVertexShaderConstant(VERTEX_SHADER_VIEWMODEL);
+				}
+			}
+
+			SetModulationVertexShaderDynamicState();
+
+			Span<float> flConsts = [ 0, 0, 0, 1, 				// color
+			0, 0, 0, 0,					// max
+			0, 0, 0, .5f,				// min
+		];
+
+			// set up outline pixel shader constants
+			if (bDetailMultiply && (nOutlineVar != -1) && (shaderParams[nOutlineVar].GetIntValue() != 0)) {
+				if (nOutlineColorVar != -1)
+					shaderParams[nOutlineColorVar].GetVecValue(flConsts[..3]);
+				if (nOutlineEndVar != -1)
+					flConsts[7] = shaderParams[nOutlineEndVar].GetFloatValue();
+				if (nOutlineStartVar != -1)
+					flConsts[11] = shaderParams[nOutlineStartVar].GetFloatValue();
+			}
+
+			ShaderAPI.SetPixelShaderConstant(0, flConsts, 3);
+
+			// Compute the vertex shader index.
+			unlitgeneric_vs11_Dynamic_Index vshIndex = new();
+			vshIndex.SetDOWATERFOG(ShaderAPI.GetSceneFogMode() == MaterialFogMode.LinearBelowFogZ);
+			vshIndex.SetSKINNING(ShaderAPI.GetCurrentNumBones() > 0);
+			
+			ShaderAPI.SetVertexShaderIndex(vshIndex.GetIndex());
+		}
+
+		Draw();
+	}
+
+	private void DefaultFog() {
+		throw new NotImplementedException();
+	}
+
+	private void SetModulationVertexShaderDynamicState() {
+		throw new NotImplementedException();
+	}
+
+	private void LoadViewMatrixIntoVertexShaderConstant(int vERTEX_SHADER_VIEWMODEL) {
+		throw new NotImplementedException();
+	}
+
+	private void SetEnvMapTintPixelShaderDynamicState(int v1, int envmapTintVar, int v2) {
+		throw new NotImplementedException();
+	}
+
+	private void BindTexture(Sampler sampler0, int baseTextureVar, int frameVar) {
+		throw new NotImplementedException();
+	}
+
+	private void SetVertexShaderTextureTransform(int vERTEX_SHADER_SHADER_SPECIFIC_CONST_4, int detailTransform) {
+		throw new NotImplementedException();
+	}
+
+	private void SetVertexShaderTextureScaledTransform(int vERTEX_SHADER_SHADER_SPECIFIC_CONST_4, int baseTextureTransformVar, int detailTransform) {
+		throw new NotImplementedException();
+	}
+
+	private void Draw(bool makeActualDrawCall = true) {
+		if (IsSnapshotting()) {
+			if (false && (Params[(int)MaterialVarFlags.Debug].GetIntValue() & (int)MaterialVarFlags.NoDebugOverride) == 0) {
+				ShaderShadow.EnableDepthWrites(true);
+				ShaderShadow.EnableBlending(true);
+			}
+			ShaderSystem.TakeSnapshot();
+		}
+		else {
+			ShaderSystem.DrawSnapshot(makeActualDrawCall);
+		}
+	}
+
+	private ReadOnlySpan<char> UnlitGeneric_ComputePixelShaderName(bool bMask, bool bEnvmap, bool bBaseTexture, bool bBaseAlphaEnvmapMask, bool bDetail, bool bDetailMultiply, bool bMaskBaseByDetailAlpha) {
+		throw new NotImplementedException();
+	}
+
+	private void SetDefaultBlendingShadowState() {
+		throw new NotImplementedException();
+	}
+
+	private void SetDefaultBlendingShadowState(int baseTextureVar, bool v) {
+		throw new NotImplementedException();
+	}
+
+	public void InitUnlitGeneric(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {
 		IMaterialVar[] shaderParams = Params!;
 		if (baseTextureVar >= 0 && shaderParams[baseTextureVar].IsDefined()) {
 			LoadTexture(baseTextureVar);

@@ -33,6 +33,12 @@ public enum MaterialPrimitiveType {
 	Heterogenous
 }
 
+public enum MaterialFogMode {
+	None,
+	Linear,
+	LinearBelowFogZ
+}
+
 public enum ShaderParamType {
 	Texture,
 	Integer,

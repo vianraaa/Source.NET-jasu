@@ -3,11 +3,14 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Source.StdShader.Gl46;
 
 public abstract class BaseShader : IShader
 {
 	[Imported] internal IMaterialSystemHardwareConfig HardwareConfig;
+	[Imported] internal IShaderSystem ShaderSystem;
 
 	internal static IMaterialVar[]? Params;
 	internal static int ModulationFlags;
@@ -142,7 +145,8 @@ public abstract class BaseShader : IShader
 			ShaderShadow.EnableAlphaToCoverage(true);
 	}
 
-	private bool IsSnapshotting() {
+	[MemberNotNullWhen(true, nameof(ShaderShadow))]
+	internal static bool IsSnapshotting() {
 		return ShaderShadow != null;
 	}
 

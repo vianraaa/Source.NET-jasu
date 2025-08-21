@@ -41,6 +41,11 @@ public enum VertexCompressionType : uint
 	On = 1
 }
 
-public interface IShaderDynamicAPI {
-
+public interface IShaderDynamicAPI
+{
+	int GetCurrentNumBones();
+	MaterialFogMode GetSceneFogMode();
+	bool InFlashlightMode();
+	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
+	void SetVertexShaderIndex(int value);
 }

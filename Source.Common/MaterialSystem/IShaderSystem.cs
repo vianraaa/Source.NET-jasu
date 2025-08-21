@@ -16,6 +16,8 @@ public enum ShaderUsing {
 public interface IShaderSystem
 {
 	void BindTexture(Sampler sampler, ITexture texture);
+	void DrawSnapshot(bool makeActualDrawCall = true);
+	void TakeSnapshot();
 }
 public interface IShaderDLL
 {

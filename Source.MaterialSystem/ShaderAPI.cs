@@ -438,4 +438,36 @@ public class ShaderAPIGl46 : IShaderAPI
 	public StateSnapshot_t TakeSnapshot() {
 		return TransitionTable.TakeSnapshot();
 	}
+
+	public int GetCurrentNumBones() {
+		throw new NotImplementedException();
+	}
+
+	public MaterialFogMode GetSceneFogMode() {
+		throw new NotImplementedException();
+	}
+
+	public bool InFlashlightMode() {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2) {
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderIndex(int value) {
+		throw new NotImplementedException();
+	}
+
+	internal void RenderPass(byte renderPass, int passCount) {
+		throw new NotImplementedException();
+	}
+
+	internal void InvalidateDelayedShaderConstraints() {
+		throw new NotImplementedException();
+	}
+
+	internal void BeginPass(short v) {
+		throw new NotImplementedException();
+	}
 }
