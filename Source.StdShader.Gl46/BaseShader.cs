@@ -4,6 +4,7 @@ using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 
 namespace Source.StdShader.Gl46;
 
@@ -149,7 +150,96 @@ public abstract class BaseShader : IShader
 	internal static bool IsSnapshotting() {
 		return ShaderShadow != null;
 	}
+	public bool TextureIsTranslucent(int textureVar = -1, bool isBaseTexture = true) {
+		if (textureVar < 0)
+			return false;
 
+		IMaterialVar[] shaderParams = Params!;
+		if (shaderParams[textureVar].GetVarType() == MaterialVarType.Texture) {
+			if (!isBaseTexture) {
+				return shaderParams[textureVar].GetTextureValue()!.IsTranslucent();
+			}
+			else {
+				// Override translucency settings if this flag is set.
+				if (IsFlagSet(shaderParams, MaterialVarFlags.OpaqueTexture))
+					return false;
+
+				if ((CurrentMaterialVarFlags() & (int)(MaterialVarFlags.SelfIllum | MaterialVarFlags.BaseAlphaEnvMapMask)) == 0) {
+					if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Translucent) != 0 ||
+						(CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) != 0) {
+						return shaderParams[textureVar].GetTextureValue()!.IsTranslucent();
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+
+	public void SetAdditiveBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
+		// Either we've got a constant modulation
+		bool isTranslucent = IsAlphaModulating();
+
+		// Or we've got a vertex alpha
+		isTranslucent = isTranslucent || ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0);
+
+		// Or we've got a texture alpha
+		isTranslucent = isTranslucent || (TextureIsTranslucent(textureVar, isBaseTexture) &&
+										   (CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0);
+
+		if (isTranslucent) {
+			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.OneMinusSrcAlpha);
+		}
+		else {
+			DisableAlphaBlending();
+		}
+	}
+
+	private void EnableAlphaBlending(ShaderBlendFactor src, ShaderBlendFactor dst) {
+		Assert(IsSnapshotting());
+		ShaderShadow.EnableBlending(true);
+		ShaderShadow.BlendFunc(src, dst);
+		ShaderShadow.EnableDepthWrites(false);
+	}
+
+	private void DisableAlphaBlending() {
+		Assert(IsSnapshotting());
+		ShaderShadow.EnableBlending(false);
+	}
+
+	public bool IsAlphaModulating() => (ModulationFlags & (int)ShaderUsing.AlphaModulation) != 0;
+	public bool IsColorModulating() => (ModulationFlags & (int)ShaderUsing.ColorModulation) != 0;
+
+	public void SetNormalBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
+		Assert(IsSnapshotting());
+
+		// Either we've got a constant modulation
+		bool isTranslucent = IsAlphaModulating();
+
+		// Or we've got a vertex alpha
+		isTranslucent = isTranslucent || ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0);
+
+		// Or we've got a texture alpha
+		isTranslucent = isTranslucent || (TextureIsTranslucent(textureVar, isBaseTexture) &&
+										   (CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0);
+
+		if (isTranslucent) {
+			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.OneMinusSrcAlpha);
+		}
+		else {
+			DisableAlphaBlending();
+		}
+	}
+
+	public void SetDefaultBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
+		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0) {
+			SetAdditiveBlendingShadowState(textureVar, isBaseTexture);
+		}
+		else {
+			SetNormalBlendingShadowState(textureVar, isBaseTexture);
+		}
+	}
 	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		Assert(Params == null);
 		Params = shaderParams;
@@ -164,7 +254,13 @@ public abstract class BaseShader : IShader
 	}
 
 	protected void LoadCubeMap(int envmapVar) {
-		throw new NotImplementedException();
+		if (Params == null || envmapVar == -1)
+			return;
+
+		IMaterialVar nameVar = Params[envmapVar];
+		if (nameVar != null && nameVar.IsDefined()) {
+			// TODO: ShaderInit.LoadCubeMap(Params, nameVar, additionalCreationFlags);
+		}
 	}
 
 	protected void LoadTexture(int textureVar, int additionalCreationFlags = 0) {
@@ -172,7 +268,7 @@ public abstract class BaseShader : IShader
 			return;
 
 		IMaterialVar nameVar = Params[textureVar];
-		if(nameVar != null && nameVar.IsDefined()) {
+		if (nameVar != null && nameVar.IsDefined()) {
 			ShaderInit!.LoadTexture(nameVar, TextureGroupName, additionalCreationFlags);
 		}
 	}

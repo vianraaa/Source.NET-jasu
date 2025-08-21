@@ -288,9 +288,6 @@ public abstract class BaseVSShader : BaseShader
 		throw new NotImplementedException();
 	}
 
-	private void SetDefaultBlendingShadowState() {
-		throw new NotImplementedException();
-	}
 
 	private void SetDefaultBlendingShadowState(int baseTextureVar, bool v) {
 		throw new NotImplementedException();
