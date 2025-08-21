@@ -175,7 +175,38 @@ public abstract class BaseShader : IShader
 
 		return false;
 	}
+	public void DefaultFog() {
+		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0) {
+			FogToBlack();
+		}
+		else {
+			FogToFogColor();
+		}
+	}
 
+	private void DisableFog() {
+		Assert(IsSnapshotting());
+		ShaderShadow.FogMode(ShaderFogMode.Disabled);
+	}
+	private void FogToBlack() {
+		Assert(IsSnapshotting());
+		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.NoFog) == 0) {
+			ShaderShadow.FogMode(ShaderFogMode.Black);
+		}
+		else {
+			ShaderShadow.FogMode(ShaderFogMode.Disabled);
+		}
+	}
+
+	private void FogToFogColor() {
+		Assert(IsSnapshotting());
+		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.NoFog) == 0) {
+			ShaderShadow.FogMode(ShaderFogMode.FogColor);
+		}
+		else {
+			ShaderShadow.FogMode(ShaderFogMode.Disabled);
+		}
+	}
 
 	public void SetAdditiveBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
 		// Either we've got a constant modulation

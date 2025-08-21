@@ -243,10 +243,6 @@ public abstract class BaseVSShader : BaseShader
 		Draw();
 	}
 
-	private void DefaultFog() {
-		throw new NotImplementedException();
-	}
-
 	private void SetModulationVertexShaderDynamicState() {
 		throw new NotImplementedException();
 	}
@@ -284,8 +280,52 @@ public abstract class BaseVSShader : BaseShader
 		}
 	}
 
-	private ReadOnlySpan<char> UnlitGeneric_ComputePixelShaderName(bool bMask, bool bEnvmap, bool bBaseTexture, bool bBaseAlphaEnvmapMask, bool bDetail, bool bDetailMultiply, bool bMaskBaseByDetailAlpha) {
-		throw new NotImplementedException();
+	static string[] staticPixelShaderNames =
+	[
+		"UnlitGeneric_NoTexture",
+		"UnlitGeneric",
+		"UnlitGeneric_EnvMapNoTexture",
+		"UnlitGeneric_EnvMap",
+		"UnlitGeneric_NoTexture",
+		"UnlitGeneric",
+		"UnlitGeneric_EnvMapMaskNoTexture",
+		"UnlitGeneric_EnvMapMask",
+
+		"UnlitGeneric_DetailNoTexture",
+		"UnlitGeneric_Detail",
+		"UnlitGeneric_EnvMapNoTexture", 
+		"UnlitGeneric_DetailEnvMap",
+		"UnlitGeneric_DetailNoTexture",
+		"UnlitGeneric_Detail",
+		"UnlitGeneric_EnvMapMaskNoTexture",
+		"UnlitGeneric_DetailEnvMapMask"
+	];
+
+	public ReadOnlySpan<char> UnlitGeneric_ComputePixelShaderName(bool bMask, bool bEnvmap, bool bBaseTexture, bool bBaseAlphaEnvmapMask, bool bDetail, bool bDetailMultiply, bool bMaskBaseByDetailAlpha) {
+		if (bDetail && bDetailMultiply)
+			return "alphadist_ps11";
+
+		if (bDetail && bMaskBaseByDetailAlpha)
+			return "UnlitGeneric_MaskBaseByDetailAlpha_ps11";
+
+		if (!bMask && bEnvmap && bBaseTexture && bBaseAlphaEnvmapMask) {
+			if (!bDetail)
+				return "UnlitGeneric_BaseAlphaMaskedEnvMap";
+			else
+				return "UnlitGeneric_DetailBaseAlphaMaskedEnvMap";
+		}
+		else {
+			int pshIndex = 0;
+			if (bBaseTexture)
+				pshIndex |= 0x1;
+			if (bEnvmap)
+				pshIndex |= 0x2;
+			if (bMask)
+				pshIndex |= 0x4;
+			if (bDetail)
+				pshIndex |= 0x8;
+			return staticPixelShaderNames[pshIndex];
+		}
 	}
 
 
