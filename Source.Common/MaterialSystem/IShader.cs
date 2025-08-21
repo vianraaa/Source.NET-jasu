@@ -26,7 +26,7 @@ public interface IShader
 	string? GetFallbackShader(IMaterialVar[] vars);
 	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
 	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	void DrawElements(IMaterialVar[] shaderParams, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, int i, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
+	void DrawElements(IMaterialVar[] shaderParams, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
 }
 
 public interface IShaderInit {

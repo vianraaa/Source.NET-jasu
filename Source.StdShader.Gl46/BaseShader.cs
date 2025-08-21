@@ -100,7 +100,7 @@ public abstract class BaseShader : IShader
 
 	}
 
-	public void DrawElements(IMaterialVar[] vars, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, int modulationFlags, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+	public void DrawElements(IMaterialVar[] vars, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
 		Assert(Params == null);
 		Params = vars;
 		ModulationFlags = modulationFlags;
@@ -117,6 +117,7 @@ public abstract class BaseShader : IShader
 		Params = null;
 		ShaderAPI = null;
 		ShaderShadow = null;
+		ModulationFlags = 0;
 		// MeshBuilder = null
 	}
 

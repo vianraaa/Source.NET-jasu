@@ -311,7 +311,8 @@ public class ShaderManager : IShaderSystemInternal
 
 			PrepForShaderDraw(shader, shaderParams, renderState, i);
 			renderState.Snapshots[i].PassCount = 0;
-			shader.DrawElements(shaderParams, materials.ShaderShadow, materials.ShaderAPI, i, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
+			shader.DrawElements(shaderParams, i, materials.ShaderShadow, null, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
+			DoneWithShaderDraw();
 		}
 
 		shaderParams[(int)ShaderMaterialVars.Color].SetVecValue(color);
