@@ -42,6 +42,12 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 		return ref store;
 	}
 
+	public nint AddToTail() {
+		ref T store = ref getBacking(count++);
+		store = new();
+		return count - 1;
+	}
+
 	public ref T Pop() {
 		if (count <= 0) {
 			AssertMsg(false, "stack underflow");

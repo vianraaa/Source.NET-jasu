@@ -247,19 +247,19 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public bool SupportsPixelShaders_1_4() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public bool SupportsPixelShaders_2_0() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public bool SupportsPixelShaders_2_b() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public bool SupportsShaderModel_3_0() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public bool SupportsSpheremapping() {

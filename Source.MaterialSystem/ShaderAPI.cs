@@ -357,7 +357,7 @@ public class ShaderShadowGl46 : IShaderShadow
 
 public class ShaderAPIGl46 : IShaderAPI
 {
-	public TransitionTable TransitionTable = new();
+	public TransitionTable TransitionTable;
 	public StateSnapshot_t CurrentSnapshot;
 	public MeshMgr MeshMgr;
 

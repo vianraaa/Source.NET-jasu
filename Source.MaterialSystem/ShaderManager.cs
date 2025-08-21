@@ -78,7 +78,10 @@ public class ShaderManager : IShaderSystemInternal
 	}
 
 	public IEnumerable<IShader> GetShaders() {
-		throw new NotImplementedException();
+		foreach(var shaderDLL in ShaderDLLs) {
+			foreach (var shader in shaderDLL.GetShaders())
+				yield return shader;
+		}
 	}
 
 	public bool LoadShaderDLL<T>(T shaderAPI) where T : IShaderDLL {

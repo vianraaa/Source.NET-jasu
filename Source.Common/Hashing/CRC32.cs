@@ -2,8 +2,6 @@
 
 using System;
 
-using CRC32_t = uint;
-
 public static class CRC32
 {
 	public const CRC32_t CRC32_INIT_VALUE = 0xFFFFFFFF;

@@ -10,8 +10,8 @@ namespace Source.StdShader.Gl46;
 
 public abstract class BaseShader : IShader
 {
-	[Imported] internal IMaterialSystemHardwareConfig HardwareConfig;
-	[Imported] internal IShaderSystem ShaderSystem;
+	[Imported] public IMaterialSystemHardwareConfig HardwareConfig;
+	[Imported] public IShaderSystem ShaderSystem;
 
 	internal static IMaterialVar[]? Params;
 	internal static int ModulationFlags;
