@@ -28,7 +28,13 @@ public enum ShaderBlendFactor
 	InvDstColor,
 	SrcAlphaSat,
 	BothSrcAlpha,
-	BothInvSrcAlpha
+	BothInvSrcAlpha,
+
+	OneMinusSrcAlpha,
+	OneMinusDstAlpha,
+	SrcAlphaSaturate,
+	OneMinusSrcColor,
+	OneMinusDstColor
 }
 
 public enum ShaderBlendOp
