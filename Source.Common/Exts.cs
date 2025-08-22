@@ -21,12 +21,12 @@ namespace Source;
 /// <summary>
 /// General purpose realm enumeration
 /// </summary>
-public enum Realm {
+public enum Realm
+{
 	Client,
 	Server,
 	Menu
 }
-
 public static class BitVecExts
 {
 	/// <summary>

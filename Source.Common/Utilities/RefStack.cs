@@ -78,6 +78,12 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 		return GetEnumerator();
 	}
 
+	public void EnsureCapacity(int v) {
+		while (backing.Count < ((v / FRAGMENT_SIZE) + 1))
+			backing.Add(new T[FRAGMENT_SIZE]);
+
+	}
+
 	public int Count => count;
 
 	public ref T this[int index] {

@@ -1,5 +1,6 @@
 ﻿using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
+using Source.Common.ShaderLib;
 
 using System;
 using System.Collections.Generic;
@@ -77,10 +78,76 @@ public struct ShadowShaderState
 	public bool ModulateConstantColor;
 }
 
+public struct TextureStageState
+{
+	public int TexCoordIndex;
+	public int TexCoordinate;
+	public float OverbrightVal;
+	public ShaderTexArg[][] Arg;
+	public ShaderTexOp[] Op;
+	public bool TexGenEnable;
+	public bool TextureAlphaEnable;
+}
+
+public struct SamplerState
+{
+	public bool TextureEnable;
+}
+
 public class ShaderShadowGl46 : IShaderShadow
 {
+	public MeshMgr MeshMgr;
+	// Separate alpha control?
+	bool AlphaPipe;
+
+	// Constant color state
+	bool hasConstantColor;
+	bool hasConstantAlpha;
+
+	// Vertex color state
+	bool hasVertexAlpha;
+
+	// funky custom method of specifying shader state
+	bool customTextureStageState;
+
+	// Number of stages used by the custom pipeline
+	int customTextureStages;
+
+	// Number of bones...
+	int numBlendVertices;
+
+	// Draw flags
+	int drawFlags;
+
+	// Alpha blending...
+	ShaderBlendFactor srcBlend;
+	ShaderBlendFactor destBlend;
+	ShaderBlendOp blendOp;
+
+	// GR - Separate alpha blending...
+	ShaderBlendFactor srcBlendAlpha;
+	ShaderBlendFactor destBlendAlpha;
+	ShaderBlendOp blendOpAlpha;
+
+	// Alpha testing
+	ShaderAlphaFunc alphaFunc;
+	int alphaRef;
+
+	// Stencil
+	ShaderStencilFunc stencilFunc;
+	int stencilRef;
+	int stencilMask;
+	ShaderStencilOp stencilFail;
+	ShaderStencilOp stencilZFail;
+	ShaderStencilOp stencilPass;
+	int stencilWriteMask;
+
 	ShadowState ShadowState;
 	ShadowShaderState ShadowShaderState;
+
+	TextureStageState[] TextureStage = new TextureStageState[ShadowState.MAX_TEXTURE_STAGES];
+	SamplerState[] SamplerStage = new SamplerState[ShadowState.MAX_SAMPLERS];
+
 	public HardwareConfig HardwareConfig;
 	public ref ShadowState GetShadowState() {
 		return ref ShadowState;
@@ -89,7 +156,231 @@ public class ShaderShadowGl46 : IShaderShadow
 		return ref ShadowShaderState;
 	}
 	public void ComputeAggregateShadowState() {
+		uint flags = 0;
 
+		// Initialize the texture stage usage; this may get changed later
+		for (int i = 0; i < HardwareConfig.GetSamplerCount(); ++i) {
+			ShadowState.SamplerState[i].TextureEnable = IsUsingTextureCoordinates((Sampler)i);
+
+			// Deal with the alpha pipe
+			if (ShadowState.UsingFixedFunction && AlphaPipe) {
+				if (TextureStage[i].TextureAlphaEnable) {
+					ShadowState.SamplerState[i].TextureEnable = true;
+				}
+			}
+		}
+
+		// Always use the same alpha src + dest if it's disabled
+		// NOTE: This is essential for stateblocks to work
+		if (ShadowState.AlphaBlendEnable) {
+			ShadowState.SrcBlend = (uint)srcBlend;
+			ShadowState.DestBlend = (uint)destBlend;
+			ShadowState.BlendOp = (uint)blendOp;
+		}
+		else {
+			ShadowState.SrcBlend = (uint)ShaderBlendFactor.One;
+			ShadowState.DestBlend = (uint)ShaderBlendFactor.Zero;
+			ShadowState.BlendOp = (uint)ShaderBlendOp.Add;
+		}
+
+		// GR
+		if (ShadowState.SeparateAlphaBlendEnable) {
+			ShadowState.SrcBlendAlpha = (uint)srcBlendAlpha;
+			ShadowState.DestBlendAlpha = (uint)destBlendAlpha;
+			ShadowState.BlendOpAlpha = (uint)blendOpAlpha;
+		}
+		else {
+			ShadowState.SrcBlendAlpha = (uint)ShaderBlendFactor.One;
+			ShadowState.DestBlendAlpha = (uint)ShaderBlendFactor.Zero;
+			ShadowState.BlendOpAlpha = (uint)ShaderBlendOp.Add;
+		}
+
+		// Use the same func if it's disabled
+		if (ShadowState.AlphaTestEnable) {
+			// If alpha test is enabled, just use the values set
+			ShadowState.AlphaFunc = (uint)alphaFunc;
+			ShadowState.AlphaRef = (uint)alphaRef;
+		}
+		else {
+			// A default value
+			ShadowState.AlphaFunc = (uint)ShaderAlphaFunc.GreaterEqual;
+			ShadowState.AlphaRef = 0;
+
+			// If not alpha testing and doing a standard alpha blend, force on alpha testing
+			if (ShadowState.AlphaBlendEnable) {
+				if ((ShadowState.SrcBlend == (uint)ShaderBlendFactor.SrcAlpha) && (ShadowState.DestBlend == (uint)ShaderBlendFactor.InvSrcAlpha)) {
+					ShadowState.AlphaFunc = (uint)ShaderAlphaFunc.GreaterEqual;
+					ShadowState.AlphaRef = 1;
+				}
+			}
+		}
+		if (ShadowState.UsingFixedFunction) {
+			flags = (uint)drawFlags;
+
+			// We need to take this bad boy into account
+			// Or do we TODO REVIEW
+			// if (HasConstantColor())
+				// flags |= SHADER_HAS_CONSTANT_COLOR;
+
+			// We need to take lighting into account..
+			if (ShadowState.Lighting)
+				flags |= (uint)(ShaderDrawBitField.Normal | ShaderDrawBitField.Color);
+
+			// Look for inconsistency in the shadow state (can't have texgen &
+			// SHADER_DRAW_TEXCOORD or SHADER_DRAW_SECONDARY_TEXCOORD0 on the same stage)
+			if ((flags & (uint)(ShaderDrawBitField.TexCoord0 | ShaderDrawBitField.SecondaryTexCoord0)) != 0) {
+				Assert((ShadowState.TextureStage[0].TexCoordIndex & 0xFFFF0000) == 0);
+			}
+			if ((flags & (uint)(ShaderDrawBitField.TexCoord1 | ShaderDrawBitField.SecondaryTexCoord1)) != 0) {
+				Assert((ShadowState.TextureStage[1].TexCoordIndex & 0xFFFF0000) == 0);
+			}
+			if ((flags & (uint)(ShaderDrawBitField.TexCoord2 | ShaderDrawBitField.SecondaryTexCoord2)) != 0) {
+				Assert((ShadowState.TextureStage[2].TexCoordIndex & 0xFFFF0000) == 0);
+			}
+			if ((flags & (uint)(ShaderDrawBitField.TexCoord3 | ShaderDrawBitField.SecondaryTexCoord3)) != 0) {
+				Assert((ShadowState.TextureStage[3].TexCoordIndex & 0xFFFF0000) == 0);
+			}
+
+			// Vertex usage has already been set for pixel + vertex shaders
+			ShadowShaderState.VertexUsage = FlagsToVertexFormat(flags);
+
+			// Configure the texture stages
+			ConfigureFVFVertexShader(flags);
+		}
+		else {
+			// Pixel shaders, disable everything so as to prevent unnecessary state changes....
+			// Removed i don't think it's applicable here
+			ShadowState.Lighting = false;
+			ShadowState.SpecularEnable = false;
+			ShadowState.VertexBlendEnable = false;
+			ShadowShaderState.ModulateConstantColor = false;
+		}
+
+		// Compute texture coordinates
+		ConfigureTextureCoordinates(flags);
+
+		// Alpha to coverage
+		if (ShadowState.EnableAlphaToCoverage) {
+			// Only allow this to be enabled if blending is disabled and testing is enabled
+			if ((ShadowState.AlphaBlendEnable == true) || (ShadowState.AlphaTestEnable == false)) {
+				ShadowState.EnableAlphaToCoverage = false;
+			}
+		}
+	}
+
+	private void ConfigureFVFVertexShader(uint flags) {
+
+	}
+
+	private void ConfigureTextureCoordinates(uint flags) {
+		for (int i = 0; i < HardwareConfig.GetTextureStageCount(); ++i) {
+			TextureCoordinate((Common.MaterialSystem.TextureStage)i, i);
+		}
+
+		if ((flags & (uint)ShaderDrawBitField.TexCoord0) != 0) {
+			Assert((flags & (uint)ShaderDrawBitField.LightmapTexCoord0) == 0);
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage0, 0);
+		}
+		else if ((flags & (uint)ShaderDrawBitField.LightmapTexCoord0) != 0) {
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage0, 1);
+		}
+		else if ((flags & (uint)ShaderDrawBitField.SecondaryTexCoord0) != 0) {
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage0, 2);
+		}
+
+		if ((flags & (uint)ShaderDrawBitField.TexCoord1) != 0) {
+			Assert((flags & (uint)ShaderDrawBitField.LightmapTexCoord1) == 0);
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage0, 0);
+		}
+		else if ((flags & (uint)ShaderDrawBitField.LightmapTexCoord1) != 0) {
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage1, 1);
+		}
+		else if ((flags & (uint)ShaderDrawBitField.SecondaryTexCoord1) != 0) {
+			TextureCoordinate(Common.MaterialSystem.TextureStage.Stage1, 2);
+		}
+	}
+
+	private void TextureCoordinate(TextureStage stage, int useTexCoord) {
+		if ((int)stage < HardwareConfig.GetTextureStageCount()) {
+			TextureStage[(int)stage].TexCoordinate = useTexCoord;
+
+			// Need to recompute the texCoordIndex, since that's affected by this
+			RecomputeTexCoordIndex(stage);
+		}
+	}
+
+	private void RecomputeTexCoordIndex(TextureStage stage) {
+		int texCoordIndex = TextureStage[(int)stage].TexCoordinate;
+		if (TextureStage[(int)stage].TexGenEnable)
+			texCoordIndex |= TextureStage[(int)stage].TexCoordIndex;
+		ShadowState.TextureStage[(int)stage].TexCoordIndex = texCoordIndex;
+	}
+
+	private VertexFormat FlagsToVertexFormat(uint flags) {
+		// Flags -1 occurs when there's an error condition;
+		// we'll just give em the max space and let them fill it in.
+		int formatFlags = 0;
+		Span<int> texCoordSize = [0, 0, 0, 0, 0, 0, 0, 0];
+		int userDataSize = 0;
+		int numBones = 0;
+
+		// Flags -1 occurs when there's an error condition;
+		// we'll just give em the max space and let them fill it in.
+		if (flags == -1) {
+			formatFlags = VertexFormatFlags.VertexFormatPosition | VertexFormatFlags.VertexFormatNormal | VertexFormatFlags.VertexFormatColor |
+				VertexFormatFlags.VertexFormatTangentS | VertexFormatFlags.VertexFormatTangentT;
+			texCoordSize[0] = texCoordSize[1] = texCoordSize[2] = 2;
+		}
+		else {
+			if ((flags & (uint)ShaderDrawBitField.Position) != 0)
+				formatFlags |= VertexFormatFlags.VertexFormatPosition;
+
+			if ((flags & (uint)ShaderDrawBitField.Normal) != 0)
+				formatFlags |= VertexFormatFlags.VertexFormatNormal;
+
+			if ((flags & (uint)ShaderDrawBitField.Color) != 0)
+				formatFlags |= VertexFormatFlags.VertexFormatColor;
+			
+			if ((flags & (uint)ShaderDrawBitField.Specular) != 0)
+				formatFlags |= VertexFormatFlags.VertexFormatSpecular;
+
+			if ((flags & (uint)ShaderDrawBitField.TexCoordMask) != 0) 
+				// normal texture coords into texture 0
+				texCoordSize[0] = 2;
+			
+
+			if ((flags & (uint)ShaderDrawBitField.LightmapTexCoordMask) != 0) 
+				// lightmaps go into texcoord 1
+				texCoordSize[1] = 2;
+			
+
+			if ((flags & (uint)ShaderDrawBitField.SecondaryTexCoordMask) != 0) 
+				// any texgen, or secondary texture coordinate is put into texcoord 2
+				texCoordSize[2] = 2;
+		}
+
+		// Hardware skinning...	always store space for up to 3 bones
+		// and always assume index blend enabled if available
+		if (ShadowState.VertexBlendEnable) {
+			if (HardwareConfig.MaxBlendMatrixIndices() > 0)
+				formatFlags |= VertexFormatFlags.VertexFormatBoneIndex;
+
+			if (HardwareConfig.MaxBlendMatrices() > 2)
+				numBones = 2;   // the third bone weight is implied
+			else
+				numBones = HardwareConfig.MaxBlendMatrices() - 1;
+		}
+
+		return MeshMgr.ComputeVertexFormat(formatFlags, IMesh.VERTEX_MAX_TEXTURE_COORDINATES,
+			texCoordSize, numBones, userDataSize);
+	}
+
+	private bool HasConstantColor() {
+		return hasConstantColor;
+	}
+
+	private bool IsUsingTextureCoordinates(Sampler i) {
+		return SamplerStage[(int)i].TextureEnable;
 	}
 
 	public void DepthFunc(ShaderDepthFunc nearer) {

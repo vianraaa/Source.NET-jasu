@@ -2,6 +2,7 @@
 
 namespace Source.Common.MaterialSystem;
 
+// Flags for GetVertexFormat.
 public readonly struct VertexFormatFlags
 {
 	public const int VertexFormatPosition = 0x0001;

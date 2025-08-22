@@ -57,6 +57,7 @@ public class MaterialSystem : IMaterialSystem
 
 		// Link up
 		ShaderAPI.TransitionTable = new(ShaderShadow);
+		ShaderShadow.MeshMgr = MeshMgr;
 
 		ShaderAPI.MeshMgr = MeshMgr;
 		TextureSystem.MaterialSystem = this;

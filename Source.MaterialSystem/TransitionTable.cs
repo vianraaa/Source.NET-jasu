@@ -2,11 +2,14 @@
 using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
+using System.Runtime.CompilerServices;
+
 namespace Source.MaterialSystem;
 
 
 
-public struct SnapshotShaderState {
+public struct SnapshotShaderState
+{
 	public ShadowShaderState ShaderState;
 	public ShadowStateId_t ShadowStateId;
 	public ushort Reserved;
@@ -32,8 +35,8 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 		ref ShadowState currentState = ref ShaderShadow.GetShadowState();
 		ShadowStateId_t shadowStateId = FindShadowState(ref currentState);
 
-		if(shadowStateId == -1) {
-			shadowStateId = CreateShadowState(currentState);
+		if (shadowStateId == -1) {
+			shadowStateId = CreateShadowState(ref currentState);
 
 			for (short to = 0; to < shadowStateId; to++) {
 				CreateTransitionTableEntry(to, shadowStateId);
@@ -46,7 +49,7 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 
 		ref ShadowShaderState currentShaderState = ref ShaderShadow.GetShadowShaderState();
 		StateSnapshot_t snapshotId = FindStateSnapshot(shadowStateId, ref currentShaderState);
-		if(snapshotId == -1) {
+		if (snapshotId == -1) {
 			snapshotId = CreateStateSnapshot(shadowStateId, ref currentShaderState);
 		}
 		return snapshotId;
@@ -59,41 +62,30 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 		shaderState.ShadowStateId = shadowStateId;
 		shaderState.ShaderState = currentShaderState;
 
-		SnapshotDictEntry_t insert = new();
+		CRC32_t checksum = new();
 		fixed (SnapshotShaderState* pTemp = &shaderState) {
-			CRC32.Init(ref insert.Checksum);
-			CRC32.ProcessBuffer(ref insert.Checksum, pTemp, sizeof(SnapshotShaderState));
-			CRC32.Final(ref insert.Checksum);
+			CRC32.Init(ref checksum);
+			CRC32.ProcessBuffer(ref checksum, pTemp, sizeof(SnapshotShaderState));
+			CRC32.Final(ref checksum);
 		}
 
-		SnapshotDict[insert.Checksum] = snapshotId;
+		SnapshotDict[checksum] = snapshotId;
 		return snapshotId;
 	}
 
-	public struct SnapshotDictEntry_t
-	{
-		public CRC32_t Checksum;
-		public StateSnapshot_t Snapshot;
-	}
-
-	public struct ShadowStateDictEntry_t
-	{
-		public CRC32_t Checksum;
-		public ShadowStateId_t ShadowStateId;
-	}
-
-	Dictionary<CRC32_t, StateSnapshot_t> SnapshotDict = [];
+	SortedList<CRC32_t, ShadowStateId_t> ShadowStateDict = [];
+	SortedList<CRC32_t, ShadowStateId_t> SnapshotDict = [];
 
 	private unsafe StateSnapshot_t FindStateSnapshot(ShadowStateId_t id, ref ShadowShaderState currentShaderState) {
 		SnapshotShaderState* temp = stackalloc SnapshotShaderState[1];
 		temp->ShadowStateId = id;
 		temp->ShaderState = currentShaderState;
-		SnapshotDictEntry_t find = new();
-		CRC32.Init(ref find.Checksum);
-		CRC32.ProcessBuffer(ref find.Checksum, temp, sizeof(SnapshotShaderState));
-		CRC32.Final(ref find.Checksum);
+		CRC32_t checksum = new();
+		CRC32.Init(ref checksum);
+		CRC32.ProcessBuffer(ref checksum, temp, sizeof(SnapshotShaderState));
+		CRC32.Final(ref checksum);
 
-		if (!SnapshotDict.TryGetValue(find.Checksum, out StateSnapshot_t snapshot))
+		if (!SnapshotDict.TryGetValue(checksum, out StateSnapshot_t snapshot))
 			return -1;
 
 		return snapshot;
@@ -103,17 +95,63 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 
 	}
 
-	private ShadowStateId_t CreateShadowState(ShadowState currentState) {
+	struct TransitionList
+	{
+		public uint FirstOperation;
+		public uint NumOperations;
+	}
+
+	const int INVALID_TRANSITION_OP = 0xFFFFFF;
+	List<RefStack<TransitionList>> transitionTable = [];
+
+	private ShadowStateId_t CreateShadowState(ref ShadowState currentState) {
 		nint newShaderState = ShadowStateList.AddToTail();
 		ShadowStateList[(int)newShaderState] = currentState;
 
+		// all existing states must transition to the new state
 		nint i;
-		for (i = 0; i < newShaderState; i++) {
-			nint newElem = TransitionTable.AddToTail();
+		for (i = 0; i < newShaderState; ++i) {
+			// Add a new transition to all existing states
+			nint newElem = transitionTable[(int)i].AddToTail();
+			transitionTable[(int)i][(int)newElem].FirstOperation = INVALID_TRANSITION_OP;
+			transitionTable[(int)i][(int)newElem].NumOperations = 0;
 		}
+
+		// Add a new vector for this transition
+		transitionTable.Add(new());
+		nint newTransitionElem = transitionTable.Count - 1;
+		transitionTable[(int)newTransitionElem].EnsureCapacity(32);
+		Assert(newShaderState == newTransitionElem);
+
+		for (i = 0; i <= newShaderState; ++i) {
+			// Add a new transition from all existing states
+			nint newElem = transitionTable[(int)newShaderState].AddToTail();
+			transitionTable[(int)newShaderState][(int)newElem].FirstOperation = INVALID_TRANSITION_OP;
+			transitionTable[(int)newShaderState][(int)newElem].NumOperations = 0;
+		}
+
+		CRC32_t checksum = new();
+		CRC32.Init(ref checksum);
+		unsafe {
+			CRC32.ProcessBuffer(ref checksum, Unsafe.AsPointer(ref ShadowStateList[(int)newShaderState]), Unsafe.SizeOf<ShadowState>());
+		}
+		CRC32.Final(ref checksum);
+
+		SnapshotDict[checksum] = (ShadowStateId_t)newShaderState;
+
+		return (ShadowStateId_t)newShaderState;
 	}
 
-	private short FindShadowState(ref ShadowState currentState) {
+	private unsafe ShadowStateId_t FindShadowState(ref ShadowState currentState) {
+		CRC32_t checksum = new();
+		CRC32.Init(ref checksum);
+		CRC32.ProcessBuffer(ref checksum, Unsafe.AsPointer(ref currentState), Unsafe.SizeOf<ShadowState>());
+		CRC32.Final(ref checksum);
 
+		int nDictCount = ShadowStateDict.Count;
+		if (ShadowStateDict.TryGetValue(checksum, out ShadowStateId_t v))
+			return v;
+
+		return (ShadowStateId_t)(-1);
 	}
 }
