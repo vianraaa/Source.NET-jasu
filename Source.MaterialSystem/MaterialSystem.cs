@@ -29,7 +29,7 @@ public class MaterialSystem : IMaterialSystem
 		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<ITextureManager, TextureManager>();
-		services.AddSingleton<IShaderSystem, ShaderManager>();
+		services.AddSingleton<IShaderSystem, ShaderSystem>();
 		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
 		services.AddSingleton<MeshMgr>();
 	}
@@ -38,7 +38,7 @@ public class MaterialSystem : IMaterialSystem
 
 	public readonly IFileSystem FileSystem;
 	public readonly TextureManager TextureSystem;
-	public readonly ShaderManager ShaderSystem;
+	public readonly ShaderSystem ShaderSystem;
 	public readonly ShaderAPIGl46 ShaderAPI;
 	public readonly ShaderShadowGl46 ShaderShadow;
 	public readonly MeshMgr MeshMgr;
@@ -53,7 +53,7 @@ public class MaterialSystem : IMaterialSystem
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
 		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
-		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderManager)!;
+		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderSystem)!;
 
 		// Link up
 		ShaderAPI.TransitionTable = new(ShaderShadow);

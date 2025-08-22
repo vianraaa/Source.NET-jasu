@@ -50,7 +50,7 @@ public interface IShaderSystemInternal : IShaderInit, IShaderSystem
 	IEnumerable<IShader> GetShaders();
 }
 
-public class ShaderManager : IShaderSystemInternal
+public class ShaderSystem : IShaderSystemInternal
 {
 	List<IShaderDLL> ShaderDLLs = [];
 	ShaderRenderState? RenderState;
@@ -89,7 +89,7 @@ public class ShaderManager : IShaderSystemInternal
 		return true;
 	}
 
-	public ShaderManager() {
+	public ShaderSystem() {
 
 	}
 	public IServiceProvider Services;

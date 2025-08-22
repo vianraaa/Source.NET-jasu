@@ -33,4 +33,8 @@ public class MeshMgr
 
 		return fmt;
 	}
+
+	internal void RenderPassWithVertexAndIndexBuffers() {
+		throw new NotImplementedException();
+	}
 }

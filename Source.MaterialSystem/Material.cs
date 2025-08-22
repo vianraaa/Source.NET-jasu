@@ -31,7 +31,7 @@ public enum MaterialFlags : ushort
 public class EditorRenderStateList : List<RenderPassList>
 {
 	public EditorRenderStateList() : base() {
-		for (int i = 0; i < ShaderManager.SNAPSHOT_COUNT_EDITOR; i++) {
+		for (int i = 0; i < ShaderSystem.SNAPSHOT_COUNT_EDITOR; i++) {
 			Add(new() {
 
 			});
@@ -42,7 +42,7 @@ public class EditorRenderStateList : List<RenderPassList>
 public class StandardRenderStateList : List<RenderPassList>
 {
 	public StandardRenderStateList() : base() {
-		for (int i = 0; i < ShaderManager.SNAPSHOT_COUNT_NORMAL; i++) {
+		for (int i = 0; i < ShaderSystem.SNAPSHOT_COUNT_NORMAL; i++) {
 			Add(new() {
 
 			});

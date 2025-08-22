@@ -52,6 +52,7 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 		if (snapshotId == -1) {
 			snapshotId = CreateStateSnapshot(shadowStateId, ref currentShaderState);
 		}
+
 		return snapshotId;
 	}
 
@@ -90,6 +91,39 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 
 		return snapshot;
 	}
+
+	public void UseSnapshot(StateSnapshot_t snapshotId) {
+		ShadowStateId_t id = SnapshotList[snapshotId].ShadowStateId;
+		if (CurrentSnapshotId != snapshotId) {
+			// First apply things that are in the transition table
+			if (CurrentShadowId != id) {
+				TransitionList transition = transitionTable[id][CurrentShadowId];
+				ApplyTransition(transition, id);
+			}
+
+			// NOTE: There is an opportunity here to set non-dynamic state that we don't
+			// store in the transition list if we ever need it.
+
+			CurrentSnapshotId = snapshotId;
+		}
+
+		// NOTE: This occurs regardless of whether the snapshot changed because it depends
+		// on dynamic state (namely, the dynamic vertex + pixel shader index)
+		// Followed by things that are not
+		ApplyShaderState(ShadowStateList[id], SnapshotList[snapshotId].ShaderState);
+	}
+
+	private void ApplyShaderState(ShadowState shadowState, ShadowShaderState shaderState) {
+		throw new NotImplementedException();
+	}
+
+	private void ApplyTransition(TransitionList transition, short id) {
+		throw new NotImplementedException();
+	}
+
+	StateSnapshot_t CurrentSnapshotId;
+	ShadowStateId_t CurrentShadowId;
+	public int CurrentSnapshot() => (int)CurrentSnapshotId;
 
 	private void CreateTransitionTableEntry(StateSnapshot_t shadowStateId, StateSnapshot_t from) {
 

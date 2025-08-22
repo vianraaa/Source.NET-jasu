@@ -67,7 +67,6 @@ public unsafe struct ShadowState
 		}
 	}
 
-
 	public ShaderFogMode FogMode;
 	public bool ZWriteEnable;
 	public byte ZBias;
@@ -766,8 +765,22 @@ public class ShaderAPIGl46 : IShaderAPI
 		throw new NotImplementedException();
 	}
 
-	internal void RenderPass(byte renderPass, int passCount) {
-		throw new NotImplementedException();
+	MeshBase? RenderMesh;
+	IMaterialInternal? Material;
+
+	internal void RenderPass(byte pass, int passCount) {
+		if (IsDeactivated())
+			return;
+
+		TransitionTable.UseSnapshot(CurrentSnapshot);
+		if (RenderMesh != null)
+			RenderMesh.RenderPass();
+		else
+			MeshMgr.RenderPassWithVertexAndIndexBuffers();
+	}
+
+	private bool IsDeactivated() {
+		return false;
 	}
 
 	internal void InvalidateDelayedShaderConstraints() {
