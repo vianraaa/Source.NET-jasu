@@ -63,12 +63,21 @@ public class MeshMgr(IEngineAPI engineAPI)
 		throw new NotImplementedException();
 	}
 
+	// We can't rely on imported engineAPI.New<>() calls here because it makes the dependency injection
+	// system crash and burn
+	private TMesh InitMesh<TMesh>() where TMesh : BaseMeshGl46, new() {
+		TMesh ret = new TMesh();
+		ret.ShaderAPI = Materials.ShaderAPI;
+		ret.ShaderUtil = Materials;
+		return ret;
+	}
+
 	internal void Init() {
-		BufferedMesh = engineAPI.New<BufferedMeshGl46>();
-		DynamicMesh = engineAPI.New<DynamicMeshGl46>();
-		DynamicFlexMesh = engineAPI.New<DynamicMeshGl46>();
-		DynamicVertexBuffer = engineAPI.New<VertexBufferGl46>();
-		DynamicIndexBuffer = engineAPI.New<IndexBufferGl46>();
-		DynamicTempMesh = engineAPI.New<TempMeshGl46>();
+		BufferedMesh = InitMesh<BufferedMeshGl46>();
+		DynamicMesh = InitMesh<DynamicMeshGl46>();
+		DynamicFlexMesh = InitMesh<DynamicMeshGl46>();
+		DynamicVertexBuffer = new VertexBufferGl46();
+		DynamicIndexBuffer = new IndexBufferGl46();
+		DynamicTempMesh = InitMesh<TempMeshGl46>();
 	}
 }
