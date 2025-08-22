@@ -21,6 +21,15 @@ using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
 
+public struct GfxViewport {
+	public int X;
+	public int Y;
+	public int Width;
+	public int Height;
+	public float MinZ;
+	public float MaxZ;
+}
+
 public struct TextureStageShadowState
 {
 	public uint ColorOp;
@@ -126,7 +135,8 @@ public unsafe struct DynamicState
 	internal ShadeMode ShadeMode;
 }
 
-public enum CommitFuncType {
+public enum CommitFuncType
+{
 	PerDraw,
 	PerPass
 }
@@ -140,6 +150,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	[Imported] public IShaderSystem ShaderManager;
 
 	DynamicState DynamicState;
+	DynamicState DesiredState;
 
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
@@ -197,6 +208,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		TransitionTable.TakeDefaultStateSnapshot();
 		if (!IsDeactivated())
 			ResetRenderState();
+	}
+
+	public void SetPresentParameters(in ShaderDeviceInfo info) {
+		PresentParameters = info;
 	}
 
 	private void ResetRenderState(bool fullReset = true) {
@@ -467,8 +482,25 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		// I'm so tired of looking at this stuff
 	}
 
+	bool UsingTextureRenderTarget;
+
 	public void SetViewports(ReadOnlySpan<ShaderViewport> viewports) {
-		throw new NotImplementedException();
+		Assert(viewports.Length == 1);
+		if (viewports.Length != 1)
+			return;
+
+		GfxViewport viewport = new();
+		viewport.X = viewports[0].TopLeftX;
+		viewport.Y = viewports[0].TopLeftY;
+		viewport.Width = viewports[0].Width;
+		viewport.Height = viewports[0].Height;
+		viewport.MinZ = viewports[0].MinZ;
+		viewport.MaxZ = viewports[0].MaxZ;
+
+		if (UsingTextureRenderTarget) {
+			int maxWidth = 0, maxHeight = 0;
+			GetBackBufferDimensions(out maxWidth, out maxHeight);
+		}
 	}
 
 	public void GetViewports(Span<ShaderViewport> viewports) {
@@ -476,9 +508,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void GetBackBufferDimensions(out int width, out int height) {
-		throw new NotImplementedException();
+		width = PresentParameters.DisplayMode.Width;
+		height = PresentParameters.DisplayMode.Height;
 	}
 
+	ShaderDeviceInfo PresentParameters;
 	bool ResetRenderStateNeeded = false;
 	ulong CurrentFrame;
 	nint TextureMemoryUsedLastFrame;
@@ -516,19 +550,27 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	internal IServiceProvider services;
 	internal IGraphicsContext? Device;
 
-	public bool InitDevice(nint window, in ShaderDeviceInfo actualInfo) {
-		Device = services.GetRequiredService<IGraphicsProvider>().CreateContext(actualInfo.Driver, window);
-		return Device != null;
+	public bool InitDevice(nint window, in ShaderDeviceInfo deviceInfo) {
+		IGraphicsProvider graphics = services.GetRequiredService<IGraphicsProvider>();
+		Device = graphics.CreateContext(in deviceInfo, window);
+		if (Device == null)
+			return false;
+
+		unsafe {
+			if (deviceInfo.Driver.HasFlag(GraphicsAPIVersion.OpenGL))
+				GL_LoadExtensions(graphics.GL_LoadExtensionsPtr());
+		}
+
+		return true;
 	}
 
-	internal unsafe delegate* unmanaged[Cdecl]<byte*, void*> loadExts;
-	internal unsafe void SetExtensionLoader(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
-		this.loadExts = loadExts;
+	internal unsafe void GL_LoadExtensions(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
+		Gl46.Import((name) => (nint)loadExts((byte*)new Utf8Buffer(name).AsPointer()));
 	}
 
-	public bool IsUsingGraphics() {
-		throw new NotImplementedException();
-	}
+	public bool IsActive() => Device != null;
+	public bool IsUsingGraphics() => IsActive();
+
 
 	public void Present() {
 		throw new NotImplementedException();

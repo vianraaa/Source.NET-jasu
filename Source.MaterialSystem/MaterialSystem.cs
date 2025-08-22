@@ -118,11 +118,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		}, "raylib", 1, new Color(255, 255, 255), message + "\n");*/
 	}
 
-	public unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height) {
-		this.graphics = graphics;
-		ShaderAPI.SetExtensionLoader(loadExts);
-		return ShaderAPI.OnDeviceInit();
-	}
 	public static ConVar mat_fullbright = new("0", FCvar.Cheat);
 	public static ConVar mat_normalmaps = new("0", FCvar.Cheat);
 

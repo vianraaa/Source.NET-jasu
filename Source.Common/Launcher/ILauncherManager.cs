@@ -17,7 +17,9 @@ public interface IGraphicsContext {
 	void SwapBuffers();
 }
 public interface IGraphicsProvider {
-	IGraphicsContext? CreateContext(GraphicsAPIVersion driver, nint window = -1);
+	IGraphicsContext? CreateContext(in ShaderDeviceInfo driver, nint window = -1);
+
+	unsafe delegate* unmanaged[Cdecl]<byte*, void*> GL_LoadExtensionsPtr();
 }
 public interface ILauncherManager
 {

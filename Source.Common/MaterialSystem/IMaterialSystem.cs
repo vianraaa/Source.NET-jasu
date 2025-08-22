@@ -130,7 +130,6 @@ public struct MaterialVideoMode
 public interface IMaterialSystem
 {
 	IMatRenderContext GetRenderContext();
-	unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height);
 	void ModInit();
 	void ModShutdown();
 	void BeginFrame(double frameTime);

@@ -30,12 +30,6 @@ public unsafe class SDL3_OpenGL46_Context(nint window, nint ctx) : IGraphicsCont
 public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherManager, IGraphicsProvider
 {
 	SDL3_Window window;
-	public nint CreateExtraContext() {
-		return 0;
-	}
-	public void Swap() {
-		SDL3.SDL_GL_SwapWindow(window.HardwareHandle);
-	}
 	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
 		IMaterialSystem materials = services.GetRequiredService<IMaterialSystem>();
 		SDL_WindowFlags flags = 0;
@@ -43,10 +37,6 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		window = new SDL3_Window(services).Create(title, width, height, flags);
 
 		return true;
-	}
-
-	public void DeleteContext(nint context) {
-
 	}
 
 	[UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
@@ -120,16 +110,18 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 	}
 
-	public IGraphicsContext? CreateContext(GraphicsAPIVersion driver, nint window) {
+	public IGraphicsContext? CreateContext(in ShaderDeviceInfo deviceInfo, nint window = -1) {
+		IGraphicsContext? gfx = null;
+
 		window = window < 0 ? (nint)this.window.HardwareHandle : window;
-		if (driver.HasFlag(GraphicsAPIVersion.OpenGL)) {
+		if (deviceInfo.Driver.HasFlag(GraphicsAPIVersion.OpenGL)) {
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_RED_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_GREEN_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
-			switch ((driver & ~GraphicsAPIVersion.OpenGL)) {
+			switch ((deviceInfo.Driver & ~GraphicsAPIVersion.OpenGL)) {
 				default: 
 					Warning("Cannot support this OpenGL version");
 					return null;
@@ -138,14 +130,18 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
 						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
 						nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)window);
-						return new SDL3_OpenGL46_Context(window, ctx);
+						gfx = new SDL3_OpenGL46_Context(window, ctx);
+						break;
 					}
 			}
-
-
 		}
+
+		if (gfx != null)
+			return gfx;
 
 		Warning("Cannot support this graphics API\n");
 		return null;
 	}
+
+	public delegate* unmanaged[Cdecl]<byte*, void*> GL_LoadExtensionsPtr() => &GL_ProcAddress;
 }

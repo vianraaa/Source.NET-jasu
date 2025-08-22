@@ -10,7 +10,7 @@ public enum GraphicsAPIVersion : ulong {
 	Vulkan = 1 << 60,
 	Metal = 1 << 59,
 
-	OpenGL46 = OpenGL & 460
+	OpenGL46 = OpenGL | 460
 }
 public interface IShaderDevice
 {
