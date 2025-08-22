@@ -42,10 +42,6 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 
 	}
 
-#if WIN32
-	[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-	private static extern void OutputDebugString(string message);
-#endif
 
 	ThreadLocal<bool> inSpew = new();
 	ThreadLocal<string> groupWrite = new();
@@ -55,7 +51,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 
 		Span<char> buffer = stackalloc char[256];
 		int bufferIdx = 0;
-		void writeTxt(ReadOnlySpan<char> sub, in Color color) {
+		unsafe void writeTxt(ReadOnlySpan<char> sub, in Color color) {
 			Console.Write(sub.Pastel(color));
 		}
 		void flushTxt(Span<char> buffer, in Color color) {
@@ -71,7 +67,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 			writeTxt("] ", in color);
 		}
 		void writeNewLine() {
-			Console.WriteLine();
+			writeTxt(Environment.NewLine, new(255, 255, 255));
 		}
 		void writeBuffer(Span<char> buffer, in Color color, char c) {
 			if (bufferIdx >= buffer.Length)
