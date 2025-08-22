@@ -42,6 +42,28 @@ public enum VertexCompressionType : uint
 	On = 1
 }
 
+public struct ShaderViewport {
+	public int TopLeftX;
+	public int TopLeftY;
+	public int Width;
+	public int Height;
+	public float MinZ;
+	public float MaxZ;
+
+	public ShaderViewport() {
+
+	}
+
+	public ShaderViewport(int x, int y, int width, int height, float minZ = 0.0f, float maxZ = 1.0f) {
+		TopLeftX = x;
+		TopLeftY = y;
+		Width = width;
+		Height = height;
+		MinZ = minZ;
+		MaxZ = maxZ;
+	}
+}
+
 public interface IShaderDynamicAPI
 {
 	int GetCurrentNumBones();

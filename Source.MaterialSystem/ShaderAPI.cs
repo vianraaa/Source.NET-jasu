@@ -2,12 +2,14 @@
 
 using Raylib_cs;
 
+using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -121,13 +123,82 @@ public unsafe struct DynamicState
 	internal ShadeMode ShadeMode;
 }
 
+public enum CommitFuncType {
+	PerDraw,
+	PerPass
+}
+
 public class ShaderAPIGl46 : IShaderAPI
 {
 	public TransitionTable TransitionTable;
+	public ShaderShadowGl46 ShaderShadow;
 	public StateSnapshot_t CurrentSnapshot;
 	public MeshMgr MeshMgr;
+	[Imported] public IShaderSystem ShaderManager;
 
 	DynamicState DynamicState;
+
+	public bool OnDeviceInit() {
+		AcquireInternalRenderTargets();
+
+		CreateMatrixStacks();
+
+		ShaderManager.Init();
+		ShaderShadow.Init();
+		MeshMgr.Init();
+		TransitionTable.Init();
+
+		InitRenderState();
+
+		ClearColor4ub(0, 0, 0, 1);
+		ClearBuffers(true, true, true, -1, -1);
+
+		return true;
+	}
+
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil, int renderTargetWidth = -1, int renderTargetHeight = -1) {
+		FlushBufferedPrimitives();
+		uint flags = 0;
+
+		if (clearColor)
+			flags |= Gl46.GL_COLOR_BUFFER_BIT;
+		if (clearDepth)
+			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
+		if (clearStencil)
+			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
+
+		Gl46.glClear(flags);
+	}
+
+	public void ClearColor3ub(byte r, byte g, byte b) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
+
+	public void BindVertexShader(in VertexShaderHandle vertexShader) => throw new NotImplementedException();
+	public void BindGeometryShader(in GeometryShaderHandle geometryShader) => throw new NotImplementedException();
+	public void BindPixelShader(in PixelShaderHandle pixelShader) => throw new NotImplementedException();
+
+	public void CallCommitFuncs(CommitFuncType func, bool usingFixedFunction, bool force = false) {
+
+	}
+
+	private void CreateMatrixStacks() {
+
+	}
+
+	private void AcquireInternalRenderTargets() {
+
+	}
+
+	public void InitRenderState() {
+		ShaderShadow.SetDefaultState();
+		TransitionTable.TakeDefaultStateSnapshot();
+		if (!IsDeactivated())
+			ResetRenderState();
+	}
+
+	private void ResetRenderState(bool fullReset = true) {
+		// todo
+	}
 
 	public VertexFormat ComputeVertexFormat(Span<StateSnapshot_t> snapshots) {
 		return ComputeVertexUsage(snapshots);
@@ -391,5 +462,47 @@ public class ShaderAPIGl46 : IShaderAPI
 
 	private void SetVertexShaderConstantInternal(int var, Span<float> vec) {
 		// I'm so tired of looking at this stuff
+	}
+
+	public void SetViewports(ReadOnlySpan<ShaderViewport> viewports) {
+		throw new NotImplementedException();
+	}
+
+	public void GetViewports(Span<ShaderViewport> viewports) {
+		throw new NotImplementedException();
+	}
+
+	public void GetBackBufferDimensions(out int width, out int height) {
+		throw new NotImplementedException();
+	}
+
+	bool ResetRenderStateNeeded = false;
+	ulong CurrentFrame;
+	nint TextureMemoryUsedLastFrame;
+
+	public void BeginFrame() {
+		if (ResetRenderStateNeeded) {
+			ResetRenderState(false);
+			ResetRenderStateNeeded = false;
+		}
+
+		++CurrentFrame;
+		TextureMemoryUsedLastFrame = 0;
+	}
+
+	public void EndFrame() {
+		ExportTextureList();
+	}
+
+	private void ExportTextureList() {
+
+	}
+
+	internal bool SetMode(nint window, in ShaderDeviceInfo info) {
+		throw new NotImplementedException();
+	}
+	internal unsafe delegate* unmanaged[Cdecl]<byte*, void*> loadExts;
+	internal unsafe void SetExtensionLoader(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
+		this.loadExts = loadExts;
 	}
 }

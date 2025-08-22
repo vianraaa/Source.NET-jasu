@@ -17,12 +17,14 @@ public enum MaterialIndexFormat
 	x32,
 }
 
-public enum MaterialBufferTypes {
+public enum MaterialBufferTypes
+{
 	Front,
 	Back
 }
 
-public enum MaterialPrimitiveType {
+public enum MaterialPrimitiveType
+{
 	Points,
 	Lines,
 	Triangles,
@@ -35,13 +37,15 @@ public enum MaterialPrimitiveType {
 	Heterogenous
 }
 
-public enum MaterialFogMode {
+public enum MaterialFogMode
+{
 	None,
 	Linear,
 	LinearBelowFogZ
 }
 
-public enum ShaderParamType {
+public enum ShaderParamType
+{
 	Texture,
 	Integer,
 	Color,
@@ -58,7 +62,8 @@ public enum ShaderParamType {
 	Matrix4x2
 }
 
-public enum MaterialMatrixMode {
+public enum MaterialMatrixMode
+{
 	View,
 	Projection,
 	Texture0,
@@ -73,7 +78,8 @@ public enum MaterialMatrixMode {
 	Count
 }
 
-public enum MaterialFindContext {
+public enum MaterialFindContext
+{
 	None,
 	IsOnAModel
 }
@@ -206,13 +212,8 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 		ctx.GetViewport(out x, out y, out width, out height);
 	}
 
-	public void ClearColor3ub(byte r, byte g, byte b) {
-		ctx.ClearColor3ub(r, g, b);
-	}
-
-	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
-		ctx.ClearColor4ub(r, g, b, a);
-	}
+	public void ClearColor3ub(byte r, byte g, byte b) => ctx.ClearColor3ub(r, g, b);
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) => ctx.ClearColor4ub(r, g, b, a);
 
 	public void DepthRange(double near, double far) {
 		ctx.DepthRange(near, far);

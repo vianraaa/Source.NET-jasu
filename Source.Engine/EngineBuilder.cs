@@ -90,6 +90,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 	/// <param name="dedicated"></param>
 	/// <returns></returns>
 	public EngineAPI Build(bool dedicated) {
+		SetMainThread(); // Setup ThreadUtils
 		// We got the ICommandLine from EngineBuilder, insert it into the app system
 		this.AddSingleton(cmdLine);
 		// temp

@@ -1,4 +1,4 @@
-using OpenGL;
+/*using OpenGL;
 
 using System.Drawing;
 using System.Numerics;
@@ -443,24 +443,6 @@ public static unsafe partial class Rlgl
     [DllImport(NativeLibName, EntryPoint = "rlIsStereoRenderEnabled", CallingConvention = CallingConvention.Cdecl)]
     public static extern CBool IsStereoRenderEnabled();
 
-    /// <summary>Clear color buffer with color</summary>
-    [DllImport(NativeLibName, EntryPoint = "rlClearColor", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void ClearColor(byte r, byte g, byte b, byte a);
-
-	// Our own binding
-    public static void ClearScreenBuffers(bool color = true, bool depth = true, bool stencil = false) {
-		uint flags = 0;
-
-		if (color)
-			flags |= Gl46.GL_COLOR_BUFFER_BIT;
-		if (depth)
-			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
-		if (stencil)
-			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
-
-		Gl46.glClear(flags);
-	}
-
 	public static void DepthRange(double min, double max) {
 		Gl46.glDepthRange(min, max);
 	}
@@ -864,3 +846,4 @@ public static unsafe partial class Rlgl
     [DllImport(NativeLibName, EntryPoint = "rlLoadDrawQuad", CallingConvention = CallingConvention.Cdecl)]
     public static extern void LoadDrawQuad();
 }
+*/

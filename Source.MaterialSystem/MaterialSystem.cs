@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Raylib_cs;
 
 using Source.Common;
+using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -26,6 +27,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
+		services.AddSingleton<IShaderDevice, ShaderDeviceGl46>();
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<IShaderUtil>(x => x.GetRequiredService<MaterialSystem>());
 		services.AddSingleton<ITextureManager, TextureManager>();
@@ -41,6 +43,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly TextureManager TextureSystem;
 	public readonly ShaderSystem ShaderSystem;
 	public readonly ShaderAPIGl46 ShaderAPI;
+	public readonly ShaderDeviceGl46 ShaderDevice;
 	public readonly ShaderShadowGl46 ShaderShadow;
 	public readonly MeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
@@ -51,6 +54,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		FileSystem = services.GetRequiredService<IFileSystem>();
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
+		ShaderDevice = (services.GetRequiredService<IShaderDevice>() as ShaderDeviceGl46)!;
 		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
@@ -59,20 +63,29 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		Config = services.GetRequiredService<MaterialSystem_Config>()!;
 
 		// Link up
-		ShaderAPI.TransitionTable = new(ShaderShadow);
-		ShaderShadow.MeshMgr = MeshMgr;
+		MeshMgr.MaterialSystem = this;
+		MeshMgr.ShaderAPI = ShaderAPI;
 
 		ShaderAPI.MeshMgr = MeshMgr;
+		ShaderAPI.ShaderManager = ShaderSystem;
+		ShaderAPI.TransitionTable = new(ShaderShadow);
+		ShaderAPI.TransitionTable.HardwareConfig = HardwareConfig;
+		ShaderAPI.TransitionTable.ShaderManager = ShaderSystem;
+
 		TextureSystem.MaterialSystem = this;
-		MeshMgr.MaterialSystem = this;
-		ShaderSystem.Services = services;
-		ShaderSystem.MaterialSystem = this;
-		ShaderSystem.ShaderAPI = ShaderAPI;
-		ShaderSystem.Config = Config;
-		ShaderShadow.HardwareConfig = HardwareConfig;
-		MeshMgr.ShaderAPI = ShaderAPI;
+
+		ShaderAPI.ShaderShadow = ShaderShadow;
 		ShaderAPI.ShaderUtil = this;
-		MeshMgr.Init();
+
+		ShaderDevice.ShaderAPI = ShaderAPI;
+
+		ShaderShadow.HardwareConfig = HardwareConfig;
+		ShaderShadow.MeshMgr = MeshMgr;
+
+		ShaderSystem.Config = Config;
+		ShaderSystem.MaterialSystem = this;
+		ShaderSystem.Services = services;
+		ShaderSystem.ShaderAPI = ShaderAPI;
 
 		ShaderSystem.LoadAllShaderDLLs();
 	}
@@ -105,46 +118,63 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	public unsafe bool InitializeGraphics(nint graphics, delegate* unmanaged[Cdecl]<byte*, void*> loadExts, int width, int height) {
 		this.graphics = graphics;
-
-		// Making a spew group just for Raylib.
-		Dbg.SpewActivate("raylib", 1);
-		Raylib.SetTraceLogCallback(&raylibSpew);
-
-		Rlgl.LoadExtensions(loadExts);
-		Rlgl.GlInit(width, height);
-
-		Rlgl.Viewport(0, 0, width, height);
-		Rlgl.MatrixMode(MatrixMode.Projection);
-		Rlgl.LoadIdentity();
-		Rlgl.Ortho(0, width, height, 0, 0, 1);
-		Rlgl.MatrixMode(MatrixMode.ModelView);
-		Rlgl.LoadIdentity();
-		Rlgl.ClearColor(0, 0, 0, 1);
-		Rlgl.ClearScreenBuffers();
-		Rlgl.EnableDepthTest();
-
-		Rlgl.ClearScreenBuffers();
-		return true;
+		ShaderAPI.SetExtensionLoader(loadExts);
+		return ShaderAPI.OnDeviceInit();
 	}
+	public static ConVar mat_fullbright = new("0", FCvar.Cheat);
+	public static ConVar mat_normalmaps = new("0", FCvar.Cheat);
+
+
+	public static ConVar mat_specular = new("1", 0, "Enable/Disable specularity for perf testing.  Will cause a material reload upon change.");
+	public static ConVar mat_bumpmap = new("1", 0);
+	public static ConVar mat_phong = new("1", 0);
+	public static ConVar mat_parallaxmap = new("1", FCvar.Hidden);
+	public static ConVar mat_reducefillrate = new("0", 0);
+
+	public uint DebugVarsSignature;
 
 	public unsafe void BeginFrame(double frameTime) {
-		Rlgl.LoadIdentity();
-		var mfx = Raymath.MatrixToFloatV(GetScreenMatrix());
-		Rlgl.MultMatrixf(mfx.v);
+		if (!ThreadInMainThread() || IsInFrame())
+			return;
+
+
+		DebugVarsSignature = (uint)(
+			((mat_specular.GetInt() != 0) ? 1 : 0)
+			+ (mat_normalmaps.GetInt() << 1)
+			+ (mat_fullbright.GetInt() << 2)
+		);
+
+		var renderContext = GetRenderContextInternal();
+
+		renderContext.MarkRenderDataUnused(true);
+		renderContext.BeginFrame();
+		renderContext.SetFrameTime(frameTime);
+
+		Assert(!InFrame);
+		InFrame = true;
 	}
+
+	bool InFrame = false;
+
 
 	private Matrix4x4 GetScreenMatrix() {
 		launcherMgr.DisplayedSize(out int screenWidth, out _);
 		int renderWidth = 0, renderHeight = 0;
 		launcherMgr.RenderedSize(false, ref renderWidth, ref renderHeight);
 		float scaleRatio = (float)renderWidth / (float)screenWidth;
-		return Raymath.MatrixScale(scaleRatio, scaleRatio, 1);
+		return Matrix4x4.CreateScale(scaleRatio, scaleRatio, 1);
 	}
 
-	public void EndFrame() {
-		Rlgl.DrawRenderBatchActive();
+	public bool IsInFrame() => InFrame;
 
-		SwapBuffers();
+	public void EndFrame() {
+		if (!ThreadInMainThread() || !IsInFrame())
+			return;
+
+		GetRenderContextInternal().EndFrame();
+
+		Assert(InFrame);
+		InFrame = false;
 	}
 
 	public void SwapBuffers() {
@@ -157,8 +187,37 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public bool SetMode(nint window, MaterialSystem_Config config) {
 		int width = config.VideoMode.Width;
 		int height = config.VideoMode.Height;
+
+		bool previouslyUsingGraphics = ShaderDevice.IsUsingGraphics();
+		ConvertModeStruct(config, out ShaderDeviceInfo info);
+		if (!ShaderAPI.SetMode(window, in info))
+			return false;
+
 		launcherMgr.RenderedSize(true, ref width, ref height);
 		return true;
+	}
+
+	private void ConvertModeStruct(MaterialSystem_Config config, out ShaderDeviceInfo mode) {
+		mode = new ShaderDeviceInfo();
+		mode.DisplayMode.Width = config.VideoMode.Width;
+		mode.DisplayMode.Height = config.VideoMode.Height;
+		mode.DisplayMode.Format = config.VideoMode.Format;
+		mode.DisplayMode.RefreshRateNumerator = config.VideoMode.RefreshRate;
+		mode.DisplayMode.RefreshRateDenominator = config.VideoMode.RefreshRate >= 0 ? 1 : 0;
+		mode.BackBufferCount = 1;
+		mode.AASamples = config.AASamples;
+		mode.AAQuality = config.AAQuality;
+		mode.Driver = config.Driver;
+		mode.WindowedSizeLimitWidth = (int)config.WindowedSizeLimitWidth;
+		mode.WindowedSizeLimitHeight = (int)config.WindowedSizeLimitHeight;
+
+		mode.Windowed = config.Windowed();
+		mode.Resizing = config.Resizing();
+		mode.UseStencil = config.Stencil();
+		mode.LimitWindowedSize = config.LimitWindowedSize();
+		mode.WaitForVSync = config.WaitForVSync();
+		mode.ScaleToOutputResolution = config.ScaleToOutputResolution();
+		mode.UsingMultipleWindows = config.UsingMultipleWindows();
 	}
 
 	public IMaterial CreateMaterial(string materialName, KeyValues keyValues) {

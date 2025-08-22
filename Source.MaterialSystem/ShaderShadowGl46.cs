@@ -553,4 +553,8 @@ public class ShaderShadowGl46 : IShaderShadow
 	public void BlendOpSeparateAlpha(ShaderBlendOp blendOp) {
 
 	}
+
+	public void Init() {
+
+	}
 }

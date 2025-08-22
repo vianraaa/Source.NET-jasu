@@ -95,7 +95,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	public void DrawQuad(in SurfaceVertex ul, in SurfaceVertex lr, in Color color) {
-		Rlgl.Begin(DrawMode.Quads);
+		/*Rlgl.Begin(DrawMode.Quads);
 
 		Rlgl.Normal3f(0, 0, 1);
 		Rlgl.Color4ub(color);
@@ -112,7 +112,8 @@ public class MatSystemSurface : ISurface
 		Rlgl.TexCoord2f(lr.TexCoord.X, ul.TexCoord.Y);
 		Rlgl.Vertex3f(lr.Position.X, ul.Position.Y, zPos);
 
-		Rlgl.End();
+		Rlgl.End();*/
+		// TODO!!!! ^^ FIX AND USE CMESHBUILDER ETC
 	}
 
 	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {

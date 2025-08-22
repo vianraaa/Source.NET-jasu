@@ -2,6 +2,7 @@
 
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using Steamworks;
@@ -73,6 +74,8 @@ public class Material : IMaterialInternal
 	public bool IsUsingVertexID() {
 		return (GetMaterialVarFlags2() & MaterialVarFlags2.UsesVertexID) != 0;
 	}
+
+	IShaderAPI ShaderAPI => materials.ShaderAPI;
 
 	public Material(MaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
 		this.materials = materials;
@@ -147,7 +150,7 @@ public class Material : IMaterialInternal
 	private bool InitializeStateSnapshots() {
 		if (IsPrecached()) {
 			if (materials.GetCurrentMaterial() == this) {
-				Rlgl.DrawRenderBatchActive();
+				ShaderAPI.FlushBufferedPrimitives();
 			}
 
 			CleanUpStateSnapshots();

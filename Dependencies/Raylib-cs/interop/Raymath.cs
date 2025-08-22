@@ -1,4 +1,4 @@
-using System.Numerics;
+/*using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -591,3 +591,4 @@ public static unsafe partial class Raymath
         Vector3* scale
     );
 }
+*/

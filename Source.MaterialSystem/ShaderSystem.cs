@@ -474,4 +474,16 @@ public class ShaderSystem : IShaderSystemInternal
 		if (++RenderPass < passCount)
 			ShaderAPI.BeginPass(CurrentStateSnapshot());
 	}
+
+	internal void SetVertexShader(in VertexShaderHandle vertexShader) {
+		throw new NotImplementedException();
+	}
+
+	internal void SetPixelShader(in PixelShaderHandle pixelShader) {
+		throw new NotImplementedException();
+	}
+
+	public void Init() {
+
+	}
 }

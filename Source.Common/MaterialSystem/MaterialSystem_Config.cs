@@ -1,4 +1,6 @@
-﻿namespace Source.Common.MaterialSystem;
+﻿using Source.Common.ShaderAPI;
+
+namespace Source.Common.MaterialSystem;
 
 public enum MaterialSystem_Config_Flags
 {
@@ -29,6 +31,8 @@ public class MaterialSystem_Config
 	public float GammaTVRangeMax;
 	public float GammaTVExponent;
 	public bool GammaTVEnabled;
+
+	public GraphicsAPIVersion Driver = GraphicsAPIVersion.OpenGL46; // todo; get this some other way?
 
 	public int AASamples;
 	public int ForceAnisotropicLevel;
@@ -86,6 +90,24 @@ public class MaterialSystem_Config
 			Flags &= ~(uint)flag;
 		}
 	}
+
+	public bool Windowed() => (Flags & (int)MaterialSystem_Config_Flags.Windowed) != 0;
+	public bool Resizing() => (Flags & (int)MaterialSystem_Config_Flags.Resizing) != 0;
+	public bool WaitForVSync() => (Flags & (int)MaterialSystem_Config_Flags.NoWaitForVSync) == 0;
+	public bool Stencil() => (Flags & (int)MaterialSystem_Config_Flags.Stencil) != 0;
+	public bool ForceTrilinear() => (Flags & (int)MaterialSystem_Config_Flags.ForceTrilinear) != 0;
+	public bool ForceHardwareSync() => (Flags & (int)MaterialSystem_Config_Flags.ForceHardwareSync) != 0;
+	public bool DisableSpecular() => (Flags & (int)MaterialSystem_Config_Flags.DisableSpecular) != 0;
+	public bool DisableBumpmap() => (Flags & (int)MaterialSystem_Config_Flags.DisableBumpmap) != 0;
+	public bool EnableParallaxMapping() => (Flags & (int)MaterialSystem_Config_Flags.EnableParallaxMapping) != 0;
+	public bool UseZPrefill() => (Flags & (int)MaterialSystem_Config_Flags.UseZPrefill) != 0;
+	public bool ReduceFillrate() => (Flags & (int)MaterialSystem_Config_Flags.ReduceFillrate) != 0;
+	public bool LimitWindowedSize() => (Flags & (int)MaterialSystem_Config_Flags.LimitedWindowSize) != 0;
+	public bool ScaleToOutputResolution() => (Flags & (int)MaterialSystem_Config_Flags.ScaleToOutputResolution) != 0;
+	public bool UsingMultipleWindows() => (Flags & (int)MaterialSystem_Config_Flags.UsingMultipleWindows) != 0;
+	public bool DisablePhong() => (Flags & (int)MaterialSystem_Config_Flags.DisablePhong) != 0;
+	public bool VRMode() => (Flags & (int)MaterialSystem_Config_Flags.VRMode) != 0;
+
 	public MaterialSystem_Config() {
 		SetFlag(MaterialSystem_Config_Flags.Windowed, false);
 		SetFlag(MaterialSystem_Config_Flags.Resizing, false);

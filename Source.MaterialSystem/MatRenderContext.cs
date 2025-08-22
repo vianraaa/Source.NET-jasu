@@ -38,6 +38,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	RefStack<RenderTargetStackElement> RenderTargetStack;
 	RefStack<MatrixStackItem>[] MatrixStacks;
 	MaterialMatrixMode matrixMode;
+	ShaderViewport viewport = new(0, 0, 0, 0, 0, 1);
 	bool dirtyViewState;
 	bool dirtyViewProjState;
 	public ref MatrixStackItem CurMatrixItem => ref MatrixStacks[(int)matrixMode].Peek();
@@ -47,17 +48,25 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	}
 
-	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) => Rlgl.ClearScreenBuffers(clearColor, clearDepth, clearStencil);
-	public void ClearColor3ub(byte r, byte g, byte b) {
-		Rlgl.ClearColor(r, g, b, 255);
+	public void ClearColor3ub(byte r, byte g, byte b) => shaderAPI.ClearColor3ub(r, g, b);
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) => shaderAPI.ClearColor4ub(r, g, b, a);
+
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) {
+		int width, height;
+		GetRenderTargetDimensions(out width, out height);
+		shaderAPI.ClearBuffers(clearColor, clearDepth, clearStencil, width, height);
 	}
 
-	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
-		Rlgl.ClearColor(r, g, b, a);
+	public void GetRenderTargetDimensions(out int width, out int height) {
+		// todo
+		shaderAPI.GetBackBufferDimensions(out width, out height);
 	}
 
-	public void DepthRange(double near, double far) {
-		Rlgl.DepthRange(near, far);
+	public unsafe void DepthRange(double near, double far) {
+		viewport.MinZ = (float)near;
+		viewport.MaxZ = (float)far;
+		fixed (ShaderViewport* pVp = &viewport) 
+			shaderAPI.SetViewports(new(pVp, 1));
 	}
 
 	public void EndRender() {
@@ -116,7 +125,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	IMaterialInternal? currentMaterial;
 
 	public void Bind(IMaterial iMaterial, object? proxyData) {
-		if(iMaterial == null) {
+		if (iMaterial == null) {
 			if (materials.errorMaterial == null)
 				return;
 			Warning("Programming error: MatRenderContext.Bind: NULL material\n");
@@ -174,7 +183,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) {
-		if(autoBind != null) {
+		if (autoBind != null) {
 			Bind(autoBind, null);
 		}
 
@@ -203,5 +212,16 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	public bool InFlashlightMode() {
 		return FlashlightEnable;
+	}
+
+	public void BeginFrame() => shaderAPI.BeginFrame();
+	public void EndFrame() => shaderAPI.EndFrame();
+
+	public void MarkRenderDataUnused(bool v) {
+
+	}
+
+	public void SetFrameTime(double frameTime) {
+
 	}
 }
