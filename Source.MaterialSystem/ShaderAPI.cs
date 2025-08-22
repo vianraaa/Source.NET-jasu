@@ -19,6 +19,8 @@ public struct TextureStageShadowState
 	public int AlphaArg1;
 	public int AlphaArg2;
 	public int TexCoordIndex;
+
+	public const int SIZEOF = 4 * 7;
 }
 public struct SamplerShadowState
 {
@@ -26,6 +28,7 @@ public struct SamplerShadowState
 	public bool SRGBReadEnable;
 	public bool Fetch4Enable;
 	public bool ShadowFilterEnable;
+	public const byte SIZEOF = 4;
 }
 
 public unsafe struct ShadowState
@@ -45,8 +48,26 @@ public unsafe struct ShadowState
 	public uint BlendOpAlpha;
 	public uint AlphaFunc;
 	public uint AlphaRef;
-	public TextureStageShadowState[] TextureStage;
-	public SamplerShadowState[] SamplerState;
+	// Wow! That's bad!
+	// But I don't think there's another "good way" to do it because the constructor
+	// won't get called...
+	fixed byte __textureStage[MAX_TEXTURE_STAGES * TextureStageShadowState.SIZEOF];
+	fixed byte __samplerState[MAX_SAMPLERS * SamplerShadowState.SIZEOF];
+
+	public Span<TextureStageShadowState> TextureStage {
+		get {
+			fixed (byte* bPtr = __textureStage)
+				return new(bPtr, MAX_TEXTURE_STAGES);
+		}
+	}
+	public Span<SamplerShadowState> SamplerState {
+		get {
+			fixed (byte* bPtr = __samplerState)
+				return new(bPtr, MAX_SAMPLERS);
+		}
+	}
+
+
 	public ShaderFogMode FogMode;
 	public bool ZWriteEnable;
 	public byte ZBias;
@@ -62,11 +83,6 @@ public unsafe struct ShadowState
 	public bool StencilEnable;
 	public bool DisableFogGammaCorrection;
 	public bool EnableAlphaToCoverage;
-
-	public ShadowState() {
-		TextureStage = new TextureStageShadowState[MAX_TEXTURE_STAGES];
-		SamplerState = new SamplerShadowState[MAX_SAMPLERS];
-	}
 }
 
 public struct ShadowShaderState
@@ -220,7 +236,7 @@ public class ShaderShadowGl46 : IShaderShadow
 			// We need to take this bad boy into account
 			// Or do we TODO REVIEW
 			// if (HasConstantColor())
-				// flags |= SHADER_HAS_CONSTANT_COLOR;
+			// flags |= SHADER_HAS_CONSTANT_COLOR;
 
 			// We need to take lighting into account..
 			if (ShadowState.Lighting)
@@ -340,21 +356,21 @@ public class ShaderShadowGl46 : IShaderShadow
 
 			if ((flags & (uint)ShaderDrawBitField.Color) != 0)
 				formatFlags |= VertexFormatFlags.VertexFormatColor;
-			
+
 			if ((flags & (uint)ShaderDrawBitField.Specular) != 0)
 				formatFlags |= VertexFormatFlags.VertexFormatSpecular;
 
-			if ((flags & (uint)ShaderDrawBitField.TexCoordMask) != 0) 
+			if ((flags & (uint)ShaderDrawBitField.TexCoordMask) != 0)
 				// normal texture coords into texture 0
 				texCoordSize[0] = 2;
-			
 
-			if ((flags & (uint)ShaderDrawBitField.LightmapTexCoordMask) != 0) 
+
+			if ((flags & (uint)ShaderDrawBitField.LightmapTexCoordMask) != 0)
 				// lightmaps go into texcoord 1
 				texCoordSize[1] = 2;
-			
 
-			if ((flags & (uint)ShaderDrawBitField.SecondaryTexCoordMask) != 0) 
+
+			if ((flags & (uint)ShaderDrawBitField.SecondaryTexCoordMask) != 0)
 				// any texgen, or secondary texture coordinate is put into texcoord 2
 				texCoordSize[2] = 2;
 		}

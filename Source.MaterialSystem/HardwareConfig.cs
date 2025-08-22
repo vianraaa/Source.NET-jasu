@@ -53,9 +53,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public unsafe int GetSamplerCount() {
-		int r;
-		Gl46.glGetIntegerv(Gl46.GL_MAX_TEXTURE_IMAGE_UNITS, &r);
-		return r;
+		return 2;
 	}
 
 	public ReadOnlySpan<char> GetShaderDLLName() {
