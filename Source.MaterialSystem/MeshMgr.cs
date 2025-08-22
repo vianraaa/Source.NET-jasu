@@ -35,8 +35,28 @@ public class MeshMgr
 	}
 
 	internal void Flush() {
-
+		if (IsPC()) {
+			BufferedMesh.HandleLateCreation();
+			BufferedMesh.Flush();
+		}
 	}
+
+	BufferedMeshGl46 BufferedMesh = new();
+	DynamicMeshGl46 DynamicMesh = new();
+	DynamicMeshGl46 DynamicFlexMesh = new();
+	VertexBufferGl46 DynamicVertexBuffer = new();
+	IndexBufferGl46 DynamicIndexBuffer = new();
+	TempMeshGl46 DynamicTempMesh = new();
+	bool BufferedMode;
+	bool UsingFatVertices;
+
+	VertexBufferGl46? CurrentVertexBuffer;
+	VertexFormat CurrentVertexFormat;
+	IndexBufferBase? CurrentIndexBuffer;
+	int IndexBufferOffset;
+	MaterialPrimitiveType PrimitiveTYpe;
+	int FirstIndex;
+	int NumIndices;
 
 	internal void RenderPassWithVertexAndIndexBuffers() {
 		throw new NotImplementedException();

@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
-public class MaterialSystem : IMaterialSystem
+public class MaterialSystem : IMaterialSystem, IShaderUtil
 {
 	MaterialDict Dict = [];
 	nint graphics;
@@ -66,6 +66,8 @@ public class MaterialSystem : IMaterialSystem
 		ShaderSystem.materials = this;
 		ShaderSystem.shaderAPI = ShaderAPI;
 		ShaderShadow.HardwareConfig = HardwareConfig;
+
+		g_ShaderUtil = this;
 
 		ShaderSystem.LoadAllShaderDLLs();
 	}
@@ -180,6 +182,17 @@ public class MaterialSystem : IMaterialSystem
 		return false; //todo
 	}
 
+	public bool IsInStubMode() => false;
+
+	public bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount) {
+		if (IsInStubMode())
+			return false;
+
+		return GetRenderContextInternal().OnDrawMesh(mesh, firstIndex, indexCount);
+	}
+
+	public IMatRenderContextInternal GetRenderContextInternal() => matContext!.Value!;
+
 	public IMaterialInternal errorMaterial;
 }
 
@@ -205,7 +218,7 @@ public struct RenderTargetStackElement
 	public int ViewH;
 }
 
-public class MatRenderContext : IMatRenderContext
+public class MatRenderContext : IMatRenderContextInternal
 {
 	readonly MaterialSystem materials;
 	readonly IShaderDynamicAPI shaderAPI;
@@ -347,5 +360,10 @@ public class MatRenderContext : IMatRenderContext
 
 	public IShaderAPI GetShaderAPI() {
 		return materials.ShaderAPI;
+	}
+
+	public bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount) {
+		// SyncMatrices();
+		return true;
 	}
 }

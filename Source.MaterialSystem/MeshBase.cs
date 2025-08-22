@@ -8,93 +8,93 @@ using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
 
-public class MeshBase : IMesh
+public abstract class MeshBase : IMesh
 {
-	public void BeginCastBuffer(VertexFormat format) {
+	public virtual void BeginCastBuffer(VertexFormat format) {
 		throw new NotImplementedException();
 	}
 
-	public void BeginCastBuffer(MaterialIndexFormat format) {
+	public virtual void BeginCastBuffer(MaterialIndexFormat format) {
 		throw new NotImplementedException();
 	}
 
-	public void Draw(int firstIndex = -1, int indexCount = 0) {
+	public virtual void Draw(int firstIndex = -1, int indexCount = 0) {
 		throw new NotImplementedException();
 	}
 
-	public void EndCastBuffer() {
+	public virtual void EndCastBuffer() {
 		throw new NotImplementedException();
 	}
 
-	public int GetRoomRemaining() {
+	public virtual int GetRoomRemaining() {
 		throw new NotImplementedException();
 	}
 
-	public VertexFormat GetVertexFormat() {
+	public virtual VertexFormat GetVertexFormat() {
 		throw new NotImplementedException();
 	}
 
-	public int IndexCount() {
+	public virtual int IndexCount() {
 		throw new NotImplementedException();
 	}
 
-	public MaterialIndexFormat IndexFormat() {
+	public virtual MaterialIndexFormat IndexFormat() {
 		throw new NotImplementedException();
 	}
 
-	public bool IsDynamic() {
+	public virtual bool IsDynamic() {
 		throw new NotImplementedException();
 	}
 
-	public bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
+	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
+	public virtual bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public void MarkAsDrawn() {
+	public virtual void MarkAsDrawn() {
 		throw new NotImplementedException();
 	}
 
-	public void ModifyBegin(int firstVertex, int vertexCount, int firstIndex, int indexCount, ref MeshDesc desc) {
+	public virtual void ModifyBegin(int firstVertex, int vertexCount, int firstIndex, int indexCount, ref MeshDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public void ModifyEnd(ref MeshDesc desc) {
+	public virtual void ModifyEnd(ref MeshDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public void SetColorMesh(IMesh colorMesh, int vertexOffset) {
+	public virtual void SetColorMesh(IMesh colorMesh, int vertexOffset) {
 		throw new NotImplementedException();
 	}
 
-	public void SetPrimitiveType(MaterialPrimitiveType type) {
+	public virtual void SetPrimitiveType(MaterialPrimitiveType type) {
 		throw new NotImplementedException();
 	}
 
-	public bool Unlock(int vertexCount, ref VertexDesc desc) {
+	public virtual bool Unlock(int vertexCount, ref VertexDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public bool Unlock(int writtenIndexCount, ref IndexDesc desc) {
+	public virtual bool Unlock(int writtenIndexCount, ref IndexDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+	public virtual void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
 		throw new NotImplementedException();
 	}
 
-	public int VertexCount() {
+	public virtual int VertexCount() {
 		throw new NotImplementedException();
 	}
 
-	internal void RenderPass() {
+	public virtual void RenderPass() {
 		throw new NotImplementedException();
 	}
 }
