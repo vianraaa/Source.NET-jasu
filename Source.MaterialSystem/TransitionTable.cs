@@ -188,4 +188,12 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 
 		return (ShadowStateId_t)(-1);
 	}
+
+	public unsafe ref ShadowState CurrentShadowState() {
+		if(CurrentShadowId == -1)
+			return ref Unsafe.NullRef<ShadowState>();
+
+		Assert(CurrentShadowId >= 0 && (CurrentShadowId < ShadowStateList.Count));
+		return ref ShadowStateList[CurrentShadowId];
+	}
 }

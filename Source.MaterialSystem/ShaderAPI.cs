@@ -1,5 +1,7 @@
 ﻿using OpenGL;
 
+using Raylib_cs;
+
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
@@ -7,6 +9,8 @@ using Source.Common.ShaderLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -109,6 +113,10 @@ public struct TextureStageState
 public struct SamplerState
 {
 	public bool TextureEnable;
+}
+
+public unsafe struct DynamicState {
+	public int NumBones;
 }
 
 public class ShaderShadowGl46 : IShaderShadow
@@ -669,6 +677,8 @@ public class ShaderAPIGl46 : IShaderAPI
 	public StateSnapshot_t CurrentSnapshot;
 	public MeshMgr MeshMgr;
 
+	DynamicState DynamicState;
+
 	public VertexFormat ComputeVertexFormat(Span<StateSnapshot_t> snapshots) {
 		return ComputeVertexUsage(snapshots);
 	}
@@ -748,7 +758,27 @@ public class ShaderAPIGl46 : IShaderAPI
 	}
 
 	public int GetCurrentNumBones() {
-		throw new NotImplementedException();
+		return DynamicState.NumBones;
+	}
+
+	public void SetNumBoneWeights(int bones) {
+		if(DynamicState.NumBones != bones) {
+			FlushBufferedPrimitives();
+			DynamicState.NumBones = GetCurrentNumBones();
+			if (!Unsafe.IsNullRef(ref TransitionTable.CurrentShadowState())) {
+				SetVertexBlendState(TransitionTable.CurrentShadowState().VertexBlendEnable ? -1 : 0);
+			}
+		}
+	}
+
+	private void SetVertexBlendState(int numBones) {
+		if (numBones < 0)
+			numBones = DynamicState.NumBones;
+
+		if (numBones > 0)
+			--numBones;
+
+		// TODO: rest of this 
 	}
 
 	public MaterialFogMode GetSceneFogMode() {
