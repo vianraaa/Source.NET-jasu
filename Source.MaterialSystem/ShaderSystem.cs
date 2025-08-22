@@ -261,7 +261,9 @@ public class ShaderSystem : IShaderSystemInternal
 	private void InitStateSnapshots(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState) {
 		renderState ??= new();
 		if (IsFlagSet(shaderParams, MaterialVarFlags.Debug)) {
-			Debugger.Break();
+#pragma warning disable CS0168
+			int x; // Debugging breakpoint.
+#pragma warning restore CS0168
 		}
 
 		float alpha;

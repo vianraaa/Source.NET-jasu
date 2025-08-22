@@ -53,8 +53,16 @@ public class StandardRenderStateList : List<RenderPassList>
 public class Material : IMaterialInternal
 {
 	public readonly MaterialSystem materials;
+	public MaterialVarFlags GetMaterialVarFlags() {
+		if (ShaderParams != null && VarCount > (int)ShaderMaterialVars.Flags) {
+			IMaterialVar var = ShaderParams[(int)ShaderMaterialVars.Flags];
+			return (MaterialVarFlags)var.GetIntValue();
+		}
+
+		return 0;
+	}
 	public MaterialVarFlags2 GetMaterialVarFlags2() {
-		if(ShaderParams != null && VarCount > (int)ShaderMaterialVars.Flags2) {
+		if (ShaderParams != null && VarCount > (int)ShaderMaterialVars.Flags2) {
 			IMaterialVar var = ShaderParams[(int)ShaderMaterialVars.Flags2];
 			return (MaterialVarFlags2)var.GetIntValue();
 		}
@@ -602,8 +610,25 @@ public class Material : IMaterialInternal
 
 	// IMaterialProxy
 	ShaderRenderState ShaderRenderState = new();
+	static uint DebugVarsSignature = 0;
 
-	public void DrawMesh(VertexCompressionType vertexCompression) { }
+	public void DrawMesh(VertexCompressionType vertexCompression) { 
+		if(Shader != null) {
+			if ((GetMaterialVarFlags() & MaterialVarFlags.Debug) == 0) {
+#pragma warning disable CS0168
+				int x; // Debugging breakpoint.
+#pragma warning restore CS0168
+			}
+
+			if ((GetMaterialVarFlags() & MaterialVarFlags.NoDraw) == 0) {
+				ReadOnlySpan<char> name = Shader.GetName();
+				materials.ShaderSystem.DrawElements(Shader, ShaderParams, in ShaderRenderState, vertexCompression, ChangeID ^ DebugVarsSignature);
+			}
+		}
+		else {
+			Warning("Material.DrawMesh: No bound shader\n");
+		}
+	}
 	public IShader? GetShader() => Shader;
 	public string? GetShaderName() => Shader?.GetName();
 	public void SetShader(ReadOnlySpan<char> shaderName) {

@@ -15,6 +15,7 @@ public class MaterialDict : Dictionary<IMaterialInternal, MaterialLookup> {
 
 public interface IMaterialInternal : IMaterial
 {
+	void DrawMesh(VertexCompressionType vertexCompressionType);
 	string GetName();
 	bool IsManuallyCreated();
 	bool IsPrecached();

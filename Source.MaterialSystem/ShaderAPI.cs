@@ -832,6 +832,20 @@ public class ShaderAPIGl46 : IShaderAPI
 		RenderMesh = mesh;
 		VertexFormat vertexFormat = RenderMesh.GetVertexFormat();
 		SetVertexDecl(vertexFormat, RenderMesh.HasColorMesh(), RenderMesh.HasFlexMesh(), Material!.IsUsingVertexID());
+		CommitStateChanges();
+		Material!.DrawMesh(CompressionType(vertexFormat));
+		RenderMesh = null;
+	}
+
+	private VertexCompressionType CompressionType(VertexFormat vertexFormat) {
+		if ((vertexFormat & VertexFormat.Compressed) > 0)
+			return VertexCompressionType.On;
+		else
+			return VertexCompressionType.None;
+	}
+
+	private void CommitStateChanges() {
+		throw new NotImplementedException();
 	}
 
 	private void SetVertexDecl(VertexFormat vertexFormat, bool hasColorMesh, bool hasFleshMesh, bool usingMorph) {
