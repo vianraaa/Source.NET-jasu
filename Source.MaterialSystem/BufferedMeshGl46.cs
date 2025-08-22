@@ -34,9 +34,11 @@ public class BufferedMeshGl46 : BaseMeshGl46 {
 	}
 
 	public void Flush() {
-		IsFlushing = true;
-		((IMesh)Mesh!)!.Draw();
-		IsFlushing = false;
-		FlushNeeded = false;
+		if (Mesh != null && !IsFlushing && FlushNeeded) {
+			IsFlushing = true;
+			((IMesh)Mesh!)!.Draw();
+			IsFlushing = false;
+			FlushNeeded = false;
+		}
 	}
 }

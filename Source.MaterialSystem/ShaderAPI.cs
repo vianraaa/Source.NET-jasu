@@ -818,6 +818,7 @@ public class ShaderAPIGl46 : IShaderAPI
 	}
 	public void FlushBufferedPrimitives() => FlushBufferedPrimitivesInternal();
 	private void FlushBufferedPrimitivesInternal() {
+		Assert(RenderMesh == null);
 		MeshMgr.Flush();
 	}
 
