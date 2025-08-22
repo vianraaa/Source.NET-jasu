@@ -104,6 +104,92 @@ public unsafe struct ShadowState
 	public bool EnableAlphaToCoverage;
 }
 
+
+public struct CurrentTextureStageState
+{
+	public uint ColorOp;
+	public int ColorArg1;
+	public int ColorArg2;
+	public uint AlphaOp;
+	public int AlphaArg1;
+	public int AlphaArg2;
+
+	public const int SIZEOF = 6 * 4;
+};
+public struct CurrentSamplerState
+{
+	public bool SRGBReadEnable;
+	public bool Fetch4Enable;
+	public bool ShadowFilterEnable;
+
+	public const int SIZEOF = 3;
+};
+public unsafe struct CurrentState
+{
+	public bool AlphaBlendEnable;
+	public uint SrcBlend;
+	public uint DestBlend;
+	public uint BlendOp;
+
+	public bool SeparateAlphaBlendEnable;
+	public uint SrcBlendAlpha;
+	public uint DestBlendAlpha;
+	public uint BlendOpAlpha;
+
+	public bool ZEnable;
+	public byte ZFunc;
+	public PolygonOffsetMode ZBias;
+
+	public bool AlphaTestEnable;
+	public uint AlphaFunc;
+	public uint AlphaRef;
+
+	public bool ForceDepthFuncEquals;
+	public bool OverrideDepthEnable;
+	public bool OverrideZWriteEnable;
+
+	public bool OverrideAlphaWriteEnable;
+	public bool OverriddenAlphaWriteValue;
+	public bool OverrideColorWriteEnable;
+	public bool OverriddenColorWriteValue;
+	public uint m_ColorWriteEnable;
+
+	public bool OverrideBlendEnable;
+	public bool OverriddenBlendWriteValue;
+	public bool OverrideBlendSeperateAlphaEnable;
+	public bool OverriddenBlendSeperateAlphaWriteValue;
+
+	public bool LinearColorSpaceFrameBufferEnable;
+
+	public bool StencilEnable;
+	public uint StencilFunc;
+	public int StencilRef;
+	public int StencilMask;
+	public uint StencilFail;
+	public uint StencilZFail;
+	public uint StencilPass;
+	public int StencilWriteMask;
+
+	fixed byte __textureStage[ShadowState.MAX_TEXTURE_STAGES * CurrentTextureStageState.SIZEOF];
+	fixed byte __samplerState[ShadowState.MAX_SAMPLERS * CurrentSamplerState.SIZEOF];
+
+	public Span<CurrentTextureStageState> TextureStage {
+		get {
+			fixed (byte* bPtr = __textureStage)
+				return new(bPtr, ShadowState.MAX_TEXTURE_STAGES);
+		}
+	}
+
+	public Span<CurrentSamplerState> SamplerState {
+		get {
+			fixed (byte* bPtr = __samplerState)
+				return new(bPtr, ShadowState.MAX_SAMPLERS);
+		}
+	}
+}
+
+
+
 public struct ShadowShaderState
 {
 	public VertexShaderHandle VertexShader;
@@ -215,7 +301,14 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	private void ResetRenderState(bool fullReset = true) {
-		// todo
+		if (fullReset) {
+			InitVertexAndPixelShaders();
+		}
+	}
+
+	private void InitVertexAndPixelShaders() {
+		// TODO; everything before this call
+		ShaderManager.ResetShaderState();
 	}
 
 	public VertexFormat ComputeVertexFormat(Span<StateSnapshot_t> snapshots) {

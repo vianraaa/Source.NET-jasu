@@ -82,6 +82,8 @@ public record struct TransitionOp
 	}
 }
 
+
+
 public class TransitionTable
 {
 	public const int TEXTURE_STAGE_BIT_COUNT = 4;
@@ -307,8 +309,23 @@ public class TransitionTable
 		}
 	}
 
+	CurrentState CurrentState;
 	StateSnapshot_t DefaultStateSnapshot = -1;
 	TransitionList DefaultTransition;
+
+	public void UseDefaultState() {
+		CurrentState.OverrideDepthEnable = false;
+		CurrentState.OverrideAlphaWriteEnable = false;
+		CurrentState.OverrideColorWriteEnable = false;
+		CurrentState.ForceDepthFuncEquals = false;
+		CurrentState.LinearColorSpaceFrameBufferEnable = false;
+		ApplyTransition(DefaultTransition, DefaultStateSnapshot);
+
+		ShaderManager.SetVertexShader(VertexShaderHandle.INVALID);
+		ShaderManager.SetPixelShader(PixelShaderHandle.INVALID);
+
+		CurrentSnapshotId = -1;
+	}
 
 	public void TakeDefaultStateSnapshot() {
 		if (DefaultStateSnapshot == -1) {

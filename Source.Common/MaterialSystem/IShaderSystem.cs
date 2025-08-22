@@ -18,6 +18,7 @@ public interface IShaderSystem
 	void BindTexture(Sampler sampler, ITexture texture);
 	void DrawSnapshot(bool makeActualDrawCall = true);
 	void Init();
+	void ResetShaderState();
 	void TakeSnapshot();
 }
 public interface IShaderDLL

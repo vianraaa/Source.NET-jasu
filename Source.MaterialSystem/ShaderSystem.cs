@@ -64,6 +64,12 @@ public class ShaderSystem : IShaderSystemInternal
 		throw new NotImplementedException();
 	}
 
+	public void ResetShaderState() {
+
+		SetVertexShader(VertexShaderHandle.INVALID);
+		SetPixelShader(PixelShaderHandle.INVALID);
+	}
+
 	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
 		ShaderAPI.InvalidateDelayedShaderConstraints();
 		int mod = shader.ComputeModulationFlags(parms, ShaderAPI);
@@ -475,12 +481,39 @@ public class ShaderSystem : IShaderSystemInternal
 			ShaderAPI.BeginPass(CurrentStateSnapshot());
 	}
 
+	internal void BindVertexShader(in VertexShaderHandle vertexShader) {
+
+	}
+
+	internal void BindPixelShader(in PixelShaderHandle pixelShader) {
+
+	}
+
+	internal void SetVertexShaderState(int index) {
+
+	}
+
+	internal void SetPixelShaderState(int index) {
+
+	}
+
+	int vertexShaderIndex;
+	int pixelShaderIndex;
+
 	internal void SetVertexShader(in VertexShaderHandle vertexShader) {
-		throw new NotImplementedException();
+		if(vertexShader == VertexShaderHandle.INVALID) {
+			SetVertexShaderState(0);
+			return;
+		}
+
+		int vshIndex = vertexShaderIndex;
+		Assert(vshIndex >= 0);
+		if (vshIndex < 0)
+			vshIndex = 0;
 	}
 
 	internal void SetPixelShader(in PixelShaderHandle pixelShader) {
-		throw new NotImplementedException();
+
 	}
 
 	public void Init() {
