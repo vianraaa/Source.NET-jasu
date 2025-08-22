@@ -304,6 +304,9 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (fullReset) {
 			InitVertexAndPixelShaders();
 		}
+
+		TransitionTable.UseDefaultState();
+		SetDefaultState();
 	}
 
 	private void InitVertexAndPixelShaders() {
@@ -554,7 +557,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void SetDefaultState() {
-		Warning("todo");
 	}
 
 	internal void ShadeMode(ShadeMode shadeMode) {
