@@ -816,15 +816,19 @@ public class ShaderAPIGl46 : IShaderAPI
 
 		return true;
 	}
-
+	public void FlushBufferedPrimitives() => FlushBufferedPrimitivesInternal();
 	private void FlushBufferedPrimitivesInternal() {
 		MeshMgr.Flush();
 	}
 
 	public void PopMatrix() {
 		if (MatrixIsChanging()) {
-
+			UpdateMatrixTransform();
 		}
+	}
+
+	private void UpdateMatrixTransform() {
+
 	}
 
 	public void DrawMesh(IMesh imesh) {
@@ -833,15 +837,8 @@ public class ShaderAPIGl46 : IShaderAPI
 		VertexFormat vertexFormat = RenderMesh.GetVertexFormat();
 		SetVertexDecl(vertexFormat, RenderMesh.HasColorMesh(), RenderMesh.HasFlexMesh(), Material!.IsUsingVertexID());
 		CommitStateChanges();
-		Material!.DrawMesh(CompressionType(vertexFormat));
+		Material!.DrawMesh(vertexFormat.CompressionType());
 		RenderMesh = null;
-	}
-
-	private VertexCompressionType CompressionType(VertexFormat vertexFormat) {
-		if ((vertexFormat & VertexFormat.Compressed) > 0)
-			return VertexCompressionType.On;
-		else
-			return VertexCompressionType.None;
 	}
 
 	private void CommitStateChanges() {
@@ -850,5 +847,16 @@ public class ShaderAPIGl46 : IShaderAPI
 
 	private void SetVertexDecl(VertexFormat vertexFormat, bool hasColorMesh, bool hasFleshMesh, bool usingMorph) {
 		// Gl46.glVertexAttribPointer() i think we need here
+	}
+
+	bool InSelectionMode;
+
+	public bool IsInSelectionMode() {
+		return InSelectionMode;
+	}
+
+	public IMesh GetDynamicMesh(IMaterial material, int hwSkinBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride) {
+		Assert(material == null || material.IsRealTimeVersion());
+		return MeshMgr.GetDynamicMesh(material, 0, hwSkinBoneCount, buffered, vertexOverride, indexOverride);
 	}
 }

@@ -50,4 +50,5 @@ public interface IShaderDynamicAPI
 	void PopMatrix();
 	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
 	void SetVertexShaderIndex(int value);
+	IMesh GetDynamicMesh(IMaterial material, int nCurrentBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride);
 }

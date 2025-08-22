@@ -17,8 +17,10 @@ public interface IMaterialInternal : IMaterial
 {
 	void DrawMesh(VertexCompressionType vertexCompressionType);
 	string GetName();
+	VertexFormat GetVertexFormat();
 	bool IsManuallyCreated();
 	bool IsPrecached();
+	bool IsRealTimeVersion();
 	bool IsUsingVertexID();
 	void Precache();
 }

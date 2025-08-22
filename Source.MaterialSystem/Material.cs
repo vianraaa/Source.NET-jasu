@@ -634,4 +634,12 @@ public class Material : IMaterialInternal
 	public void SetShader(ReadOnlySpan<char> shaderName) {
 
 	}
+
+	public bool IsRealTimeVersion() {
+		return true;
+	}
+
+	public VertexFormat GetVertexFormat() {
+		throw new NotImplementedException();
+	}
 }

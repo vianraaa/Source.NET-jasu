@@ -1,4 +1,6 @@
-﻿namespace Source.MaterialSystem;
+﻿using Source.Common.MaterialSystem;
+
+namespace Source.MaterialSystem;
 
 public struct PrimList
 {
@@ -32,5 +34,13 @@ public unsafe class DynamicMeshGl46 : MeshGl46
 		DrawMesh();
 
 		s_pPrims = null;
+	}
+
+	internal void OverrideVertexBuffer(IVertexBuffer vertexBuffer) {
+		throw new NotImplementedException();
+	}
+
+	internal void OverrideIndexBuffer(IIndexBuffer indexBuffer) {
+		throw new NotImplementedException();
 	}
 }

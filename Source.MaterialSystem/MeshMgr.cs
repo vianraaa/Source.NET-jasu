@@ -1,5 +1,6 @@
 ﻿using Source.Common.Engine;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 
 namespace Source.MaterialSystem;
 
@@ -41,6 +42,73 @@ public class MeshMgr
 			BufferedMesh.Flush();
 		}
 	}
+
+	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh vertexOverride, IMesh indexOverride) {
+		Assert(material == null || ((IMaterialInternal)material).IsRealTimeVersion());
+
+		if(BufferedMode != buffered && BufferedMode) {
+			BufferedMesh.SetMesh(null);
+		}
+		BufferedMode = buffered;
+
+		IMaterialInternal matInternal = (IMaterialInternal)material!;
+		bool needTempMesh = ShaderAPI.IsInSelectionMode();
+
+		BaseMeshGl46 mesh;
+		if (needTempMesh) {
+			Assert(vertexOverride == null);
+
+			if(indexOverride  != null) {
+				// not doing all that right now
+				AssertMsg(false, "TODO");
+			}
+			mesh = DynamicTempMesh;
+		}
+		else {
+			mesh = DynamicMesh;
+		}
+
+		if (BufferedMode) {
+			Assert(!BufferedMesh.WasNotRendered());
+			BufferedMesh.SetMesh(mesh);
+			mesh = BufferedMesh;
+		}
+
+		if(vertexOverride == null) {
+			VertexFormat materialFormat = matInternal.GetVertexFormat() & ~VertexFormat.Compressed;
+			VertexFormat fmt = (vertexFormat != 0) ? vertexFormat : materialFormat;
+			if(vertexFormat != 0) {
+				int nVertexFormatBoneWeights = vertexFormat.NumBoneWeights();
+				if (hwSkinBoneCount < nVertexFormatBoneWeights) {
+					hwSkinBoneCount = nVertexFormatBoneWeights;
+				}
+			}
+
+			fmt &= (VertexFormat)~VertexFormatFlags.VertexBoneWeightMask;
+			if(hwSkinBoneCount > 0) {
+				fmt |= VERTEX_BONEWEIGHT(2);
+				fmt |= (VertexFormat)VertexFormatFlags.VertexFormatBoneIndex;
+			}
+
+			mesh.SetVertexFormat(fmt);
+		}
+		else {
+			BaseMeshGl46 gl46Mesh = (BaseMeshGl46)vertexOverride;
+			mesh.SetVertexFormat(gl46Mesh.GetVertexFormat());
+		}
+
+		mesh.SetMaterial(matInternal);
+		if(mesh == DynamicMesh) {
+			BaseMeshGl46? baseVertex = (BaseMeshGl46?)vertexOverride;
+			if (baseVertex != null) DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
+			BaseMeshGl46? baseIndex = (BaseMeshGl46?)vertexOverride;
+			if (baseIndex != null) DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
+		}
+
+		return mesh;
+	}
+
+	internal IShaderAPI ShaderAPI;
 
 	BufferedMeshGl46 BufferedMesh;
 	DynamicMeshGl46 DynamicMesh;

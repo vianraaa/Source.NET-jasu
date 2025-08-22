@@ -15,4 +15,6 @@ public interface IShaderAPI : IShaderDynamicAPI
 	public bool UsesVertexAndPixelShaders(StateSnapshot_t id);
 	public StateSnapshot_t TakeSnapshot();
 	void DrawMesh(IMesh mesh);
+	void FlushBufferedPrimitives();
+	bool IsInSelectionMode();
 }

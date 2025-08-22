@@ -13,6 +13,7 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
+using System.Diagnostics;
 using System.Numerics;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -67,6 +68,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderSystem.materials = this;
 		ShaderSystem.shaderAPI = ShaderAPI;
 		ShaderShadow.HardwareConfig = HardwareConfig;
+		MeshMgr.ShaderAPI = ShaderAPI;
 
 		MeshMgr.Init();
 
@@ -366,5 +368,28 @@ public class MatRenderContext : IMatRenderContextInternal
 	public bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount) {
 		// SyncMatrices();
 		return true;
+	}
+
+	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) {
+		if(autoBind != null) {
+			Bind(autoBind, null);
+		}
+
+		if (vertexOverride != null) {
+			if (vertexOverride.GetVertexFormat().CompressionType() != VertexCompressionType.None) {
+				// UNDONE: support compressed dynamic meshes if needed (pro: less VB memory, con: time spent compressing)
+				Debugger.Break();
+				return null;
+			}
+		}
+
+		// For anything more than 1 bone, imply the last weight from the 1 - the sum of the others.
+		int nCurrentBoneCount = shaderAPI.GetCurrentNumBones();
+		Assert(nCurrentBoneCount <= 4);
+		if (nCurrentBoneCount > 1) {
+			--nCurrentBoneCount;
+		}
+
+		return shaderAPI.GetDynamicMesh(GetCurrentMaterialInternal()!, nCurrentBoneCount, buffered, vertexOverride, indexOverride);
 	}
 }

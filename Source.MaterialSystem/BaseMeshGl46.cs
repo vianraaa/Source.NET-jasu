@@ -20,4 +20,20 @@ public class BaseMeshGl46 : MeshBase {
 	public virtual void HandleLateCreation() {
 
 	}
+
+	public IVertexBuffer GetVertexBuffer() {
+		throw new NotImplementedException();
+	}
+
+	public IIndexBuffer GetIndexBuffer() {
+		throw new NotImplementedException();
+	}
+
+	internal void SetMaterial(IMaterial material) {
+		throw new NotImplementedException();
+	}
+
+	internal void SetVertexFormat(VertexFormat fmt) {
+		throw new NotImplementedException();
+	}
 }

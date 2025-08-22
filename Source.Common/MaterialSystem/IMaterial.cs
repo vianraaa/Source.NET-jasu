@@ -28,7 +28,7 @@ public readonly struct VertexFormatFlags
 	public const int VertexBoneWeightBit = (VertexLastBit + 1);
 	public const int UserDataSizeBit = (VertexLastBit + 4);
 	public const int TexCoordSizeBit = (VertexLastBit + 7);
-	public const int VertexBoneWeightMask = (0x7 << VertexBoneWeightBit);
+	public const uint VertexBoneWeightMask = (0x7 << VertexBoneWeightBit);
 	public const int UserDataSizeMask = (0x7 << UserDataSizeBit);
 	public const int FieldMask = 0x0FF;
 	// If everything is off, it's an unknown vertex format
@@ -202,7 +202,7 @@ public enum MaterialVarFlags2
 
 public interface IMaterial
 {
-	
+	bool IsRealTimeVersion();
 }
 public static class IMaterialExts {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
