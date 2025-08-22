@@ -48,6 +48,17 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		return this;
 	}
 
+	public EngineBuilder WithResolvedComponent<I, T>(Func<IServiceProvider, T> resolver) where T : class, I where I : class {
+		this.AddSingleton<I, T>(resolver);
+		return this;
+	}
+
+	public EngineBuilder WithComponent<T>() where T : class {
+		PreInject<T>(this);
+		this.AddSingleton<T>();
+		return this;
+	}
+
 	HashSet<Type> injectedTypelist = [];
 	void PreInject<T>(IServiceCollection services) {
 		if (injectedTypelist.Add(typeof(T))) {

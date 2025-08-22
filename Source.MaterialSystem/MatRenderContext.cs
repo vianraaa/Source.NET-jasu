@@ -224,4 +224,8 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void SetFrameTime(double frameTime) {
 
 	}
+
+	public void SwapBuffers() {
+		materials.ShaderDevice.Present();
+	}
 }

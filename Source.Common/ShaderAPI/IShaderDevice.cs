@@ -15,6 +15,7 @@ public enum GraphicsAPIVersion : ulong {
 public interface IShaderDevice
 {
 	bool IsUsingGraphics();
+	void Present();
 }
 public struct ShaderDisplayMode {
 	public int Width;

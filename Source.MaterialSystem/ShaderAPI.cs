@@ -1,8 +1,11 @@
-﻿using OpenGL;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using OpenGL;
 
 using Raylib_cs;
 
 using Source.Common.Engine;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
@@ -128,7 +131,7 @@ public enum CommitFuncType {
 	PerPass
 }
 
-public class ShaderAPIGl46 : IShaderAPI
+public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 {
 	public TransitionTable TransitionTable;
 	public ShaderShadowGl46 ShaderShadow;
@@ -499,10 +502,35 @@ public class ShaderAPIGl46 : IShaderAPI
 	}
 
 	internal bool SetMode(nint window, in ShaderDeviceInfo info) {
-		throw new NotImplementedException();
+		ShaderDeviceInfo actualInfo = info;
+		if (!InitDevice(window, in actualInfo)) {
+			return false;
+		}
+
+		if (!OnDeviceInit())
+			return false;
+
+		return true;
 	}
+
+	internal IServiceProvider services;
+	internal IGraphicsContext? Device;
+
+	public bool InitDevice(nint window, in ShaderDeviceInfo actualInfo) {
+		Device = services.GetRequiredService<IGraphicsProvider>().CreateContext(actualInfo.Driver, window);
+		return Device != null;
+	}
+
 	internal unsafe delegate* unmanaged[Cdecl]<byte*, void*> loadExts;
 	internal unsafe void SetExtensionLoader(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
 		this.loadExts = loadExts;
+	}
+
+	public bool IsUsingGraphics() {
+		throw new NotImplementedException();
+	}
+
+	public void Present() {
+		throw new NotImplementedException();
 	}
 }

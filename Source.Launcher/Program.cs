@@ -21,6 +21,7 @@ using Source.Common.MaterialSystem;
 using Source;
 using Game.UI;
 using Source.StdShader.Gl46;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Source.Launcher;
 
@@ -46,7 +47,11 @@ public class Bootloader : IDisposable
 			engineAPI = new EngineBuilder(commandLine)
 				.WithAssembly("Source.VTF")
 				.WithComponent<IFileSystem, BaseFileSystem>()
-				.WithComponent<ILauncherManager, SDL3_LauncherManager>()
+
+				.WithComponent<SDL3_LauncherManager>()
+				.WithResolvedComponent<ILauncherManager, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
+				.WithResolvedComponent<IGraphicsProvider, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
+
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
 				.WithComponent<IMaterialSystem, MaterialSystem.MaterialSystem>()
 

@@ -26,8 +26,9 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<ISurface, MatSystemSurface>();
-		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
-		services.AddSingleton<IShaderDevice, ShaderDeviceGl46>();
+		services.AddSingleton<ShaderAPIGl46>();
+		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
+		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<IShaderUtil>(x => x.GetRequiredService<MaterialSystem>());
 		services.AddSingleton<ITextureManager, TextureManager>();
@@ -42,8 +43,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly IFileSystem FileSystem;
 	public readonly TextureManager TextureSystem;
 	public readonly ShaderSystem ShaderSystem;
+	public readonly IShaderDevice ShaderDevice;
 	public readonly ShaderAPIGl46 ShaderAPI;
-	public readonly ShaderDeviceGl46 ShaderDevice;
 	public readonly ShaderShadowGl46 ShaderShadow;
 	public readonly MeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
@@ -54,7 +55,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		FileSystem = services.GetRequiredService<IFileSystem>();
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
-		ShaderDevice = (services.GetRequiredService<IShaderDevice>() as ShaderDeviceGl46)!;
+		ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
@@ -72,12 +73,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderAPI.TransitionTable.HardwareConfig = HardwareConfig;
 		ShaderAPI.TransitionTable.ShaderManager = ShaderSystem;
 
+		ShaderAPI.services = services;
+
 		TextureSystem.MaterialSystem = this;
 
 		ShaderAPI.ShaderShadow = ShaderShadow;
 		ShaderAPI.ShaderUtil = this;
-
-		ShaderDevice.ShaderAPI = ShaderAPI;
 
 		ShaderShadow.HardwareConfig = HardwareConfig;
 		ShaderShadow.MeshMgr = MeshMgr;
@@ -91,6 +92,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	ILauncherManager launcherMgr;
+	
 
 	public void ModInit() {
 		launcherMgr = services.GetRequiredService<ILauncherManager>();
@@ -177,8 +179,11 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		InFrame = false;
 	}
 
+	ulong FrameNum;
+
 	public void SwapBuffers() {
-		launcherMgr.Swap();
+		GetRenderContextInternal().SwapBuffers();
+		FrameNum++;
 	}
 
 	ThreadLocal<MatRenderContext> matContext;

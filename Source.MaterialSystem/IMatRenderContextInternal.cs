@@ -9,4 +9,5 @@ public interface IMatRenderContextInternal : IMatRenderContext
 	void MarkRenderDataUnused(bool v);
 	bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount);
 	void SetFrameTime(double frameTime);
+	void SwapBuffers();
 }
