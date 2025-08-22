@@ -46,6 +46,8 @@ public interface IShaderDynamicAPI
 	int GetCurrentNumBones();
 	MaterialFogMode GetSceneFogMode();
 	bool InFlashlightMode();
+	void PushMatrix();
+	void PopMatrix();
 	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
 	void SetVertexShaderIndex(int value);
 }

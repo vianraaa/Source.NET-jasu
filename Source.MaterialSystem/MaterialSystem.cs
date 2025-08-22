@@ -208,6 +208,7 @@ public struct RenderTargetStackElement
 public class MatRenderContext : IMatRenderContext
 {
 	readonly MaterialSystem materials;
+	readonly IShaderDynamicAPI shaderAPI;
 
 	public MatRenderContext(MaterialSystem materials) {
 		this.materials = materials;
@@ -228,6 +229,7 @@ public class MatRenderContext : IMatRenderContext
 			ViewH = -1
 		};
 		RenderTargetStack.Push(initialElement);
+		shaderAPI = materials.ShaderAPI;
 	}
 	RefStack<RenderTargetStackElement> RenderTargetStack;
 	RefStack<MatrixStackItem>[] MatrixStacks;
@@ -281,6 +283,7 @@ public class MatRenderContext : IMatRenderContext
 		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
 		curStack.Push(CurMatrixItem);
 		CurrentMatrixChanged();
+		shaderAPI.PushMatrix();
 	}
 
 	private void CurrentMatrixChanged() {
@@ -336,7 +339,10 @@ public class MatRenderContext : IMatRenderContext
 	}
 
 	public void PopMatrix() {
-
+		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
+		curStack.Pop();
+		CurrentMatrixChanged();
+		shaderAPI.PopMatrix();
 	}
 
 	public IShaderAPI GetShaderAPI() {

@@ -787,7 +787,41 @@ public class ShaderAPIGl46 : IShaderAPI
 		throw new NotImplementedException();
 	}
 
+	public enum TransformType {
+		IsIdentity = 0,
+		IsCameraToWorld,
+		IsGeneral
+	}
+
 	internal void BeginPass(short v) {
 		throw new NotImplementedException();
+	}
+
+	public void PushMatrix() {
+		if (MatrixIsChanging()) {
+
+		}
+	}
+
+	private bool MatrixIsChanging(TransformType type = TransformType.IsGeneral) {
+		if (IsDeactivated())
+			return false;
+
+		if (type != TransformType.IsGeneral)
+			return false;
+
+		FlushBufferedPrimitivesInternal();
+
+		return true;
+	}
+
+	private void FlushBufferedPrimitivesInternal() {
+		MeshMgr.Flush();
+	}
+
+	public void PopMatrix() {
+		if (MatrixIsChanging()) {
+
+		}
 	}
 }
