@@ -244,7 +244,23 @@ public abstract class BaseVSShader : BaseShader
 	}
 
 	private void SetModulationVertexShaderDynamicState() {
-		throw new NotImplementedException();
+		Span<float> color = [1, 1, 1, 1];
+		ComputeModulationColor(color);
+		ShaderAPI!.SetVertexShaderConstant(VERTEX_SHADER_MODULATION_COLOR, color);
+	}
+
+	private void ComputeModulationColor(Span<float> color) {
+		Assert(IsSnapshotting());
+		if (Params == null) return;
+
+		IMaterialVar colorVar = Params[(int)ShaderMaterialVars.Color];
+		if (colorVar.GetVarType() == MaterialVarType.Vector)
+			colorVar.GetVecValue(color[..3]);
+		else {
+			color[0] = color[1] = color[2] = colorVar.GetFloatValue();
+		}
+
+		// todo: the rest of this
 	}
 
 	private void LoadViewMatrixIntoVertexShaderConstant(int vERTEX_SHADER_VIEWMODEL) {

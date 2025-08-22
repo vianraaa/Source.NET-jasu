@@ -195,4 +195,13 @@ public class MatRenderContext : IMatRenderContextInternal
 
 		return shaderAPI.GetDynamicMesh(GetCurrentMaterialInternal()!, nCurrentBoneCount, buffered, vertexOverride, indexOverride);
 	}
+
+	bool FlashlightEnable;
+	bool DirtyViewState;
+	bool DirtyViewProjState;
+	bool EnableClipping;
+
+	public bool InFlashlightMode() {
+		return FlashlightEnable;
+	}
 }

@@ -4,5 +4,6 @@ namespace Source.Common.ShaderAPI;
 
 public interface IShaderUtil
 {
+	bool InFlashlightMode();
 	bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount);
 }

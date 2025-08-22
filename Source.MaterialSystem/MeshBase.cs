@@ -105,4 +105,8 @@ public abstract class MeshBase : IMesh
 	internal bool HasFlexMesh() {
 		return false;
 	}
+
+	internal void BeginPass() {
+
+	}
 }

@@ -52,4 +52,6 @@ public interface IShaderDynamicAPI
 	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
 	void SetVertexShaderIndex(int value);
 	IMesh GetDynamicMesh(IMaterial material, int nCurrentBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride);
+	bool InEditorMode();
+	void SetVertexShaderConstant(int vERTEX_SHADER_MODULATION_COLOR, Span<float> color);
 }

@@ -232,19 +232,25 @@ public class ShaderAPIGl46 : IShaderAPI
 	}
 
 	public MaterialFogMode GetSceneFogMode() {
-		throw new NotImplementedException();
+		return SceneFogMode;
 	}
+	MaterialFogMode SceneFogMode = MaterialFogMode.None;
+
+	internal IShaderUtil ShaderUtil;
 
 	public bool InFlashlightMode() {
-		throw new NotImplementedException();
+		return ShaderUtil.InFlashlightMode();
 	}
 
 	public void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2) {
-		throw new NotImplementedException();
+		// todo
 	}
 
 	public void SetVertexShaderIndex(int value) {
-		throw new NotImplementedException();
+		// ShaderManager()->SetVertexShaderIndex( vshIndex );
+	}
+	public void SetPixelShaderIndex(int value) {
+		// ShaderManager()->SetPixelShaderIndex( vshIndex );
 	}
 
 	MeshBase? RenderMesh;
@@ -266,7 +272,7 @@ public class ShaderAPIGl46 : IShaderAPI
 	}
 
 	internal void InvalidateDelayedShaderConstraints() {
-		throw new NotImplementedException();
+		// TODO FIXME
 	}
 
 	public enum TransformType
@@ -276,8 +282,10 @@ public class ShaderAPIGl46 : IShaderAPI
 		IsGeneral
 	}
 
-	internal void BeginPass(StateSnapshot_t v) {
-		throw new NotImplementedException();
+	internal void BeginPass(StateSnapshot_t snapshot) {
+		CurrentSnapshot = snapshot;
+		if (RenderMesh != null)
+			RenderMesh.BeginPass();
 	}
 
 	public void PushMatrix() {
@@ -371,5 +379,17 @@ public class ShaderAPIGl46 : IShaderAPI
 		if (DynamicState.ShadeMode != shadeMode) {
 			DynamicState.ShadeMode = shadeMode;
 		}
+	}
+
+	public bool InEditorMode() {
+		return false; // todo...?
+	}
+
+	public void SetVertexShaderConstant(int var, Span<float> vec) {
+		SetVertexShaderConstantInternal(var, vec);
+	}
+
+	private void SetVertexShaderConstantInternal(int var, Span<float> vec) {
+		// I'm so tired of looking at this stuff
 	}
 }

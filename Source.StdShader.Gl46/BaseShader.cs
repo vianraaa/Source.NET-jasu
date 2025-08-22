@@ -4,6 +4,7 @@ using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Security.Cryptography;
 
 namespace Source.StdShader.Gl46;
@@ -306,6 +307,88 @@ public abstract class BaseShader : IShader
 	}
 
 	public int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI) {
-		throw new NotImplementedException();
+		ShaderAPI = shaderAPI;
+
+		int mod = 0;
+		if (GetAlpha (parms) < 1.0f) {
+			mod |= (int)ShaderUsing.AlphaModulation;
+		}
+
+		Span<float> color = stackalloc float[3];
+		GetColorParameter (parms, color);
+
+		if ((color[0] != 1.0) || (color[1] != 1.0) || (color[2] != 1.0)) {
+			mod |= (int)ShaderUsing.ColorModulation;
+		}
+
+		if (UsingFlashlight (parms) ) {
+			mod |= (int)ShaderUsing.Flashlight;
+		}
+
+		if (UsingEditor (parms) ) {
+			mod |= (int)ShaderUsing.Editor;
+		}
+
+		if (IsFlag2Set(parms, MaterialVarFlags2.UseFixedFunctionBakedLighting)) {
+			Assert(IsFlag2Set(parms, MaterialVarFlags2.NeedsBakedLightingSnapshots));
+			if (IsFlag2Set(parms, MaterialVarFlags2.NeedsBakedLightingSnapshots)) {
+				mod |= (int)ShaderUsing.FixedFunctionBakedLighting;
+			}
+		}
+
+		ShaderAPI = null;
+		return mod;
+	}
+
+	private bool UsingEditor(Span<IMaterialVar> parms) {
+		if (IsSnapshotting()) {
+			return IsFlag2Set(parms, MaterialVarFlags2.UseEditor);
+		}
+		else {
+			return ShaderAPI!.InEditorMode();
+		}
+	}
+
+	private bool UsingFlashlight(Span<IMaterialVar> parms) {
+		if (IsSnapshotting()) {
+			return IsFlag2Set(parms, MaterialVarFlags2.UseFlashlight);
+		}
+		else {
+			return ShaderAPI!.InFlashlightMode();
+		}
+	}
+
+	private void GetColorParameter(Span<IMaterialVar> parms, Span<float> colorOut) {
+		Span<float> color2 = stackalloc float[3];
+		parms[(int)ShaderMaterialVars.Color].GetVecValue(colorOut[..3]);
+		parms[(int)ShaderMaterialVars.Color2].GetVecValue(color2[..3]);
+
+		colorOut[0] *= color2[0];
+		colorOut[1] *= color2[1];
+		colorOut[2] *= color2[2];
+
+		if (HardwareConfig.UsesSRGBCorrectBlending()) {
+			Span<float> SRGBTint = stackalloc float[3];
+			parms[(int)ShaderMaterialVars.SRGBTint].GetVecValue(SRGBTint[..3]);
+
+			colorOut[0] *= SRGBTint[0];
+			colorOut[1] *= SRGBTint[1];
+			colorOut[2] *= SRGBTint[2];
+		}
+
+	}
+
+	private float GetAlpha(Span<IMaterialVar> parms) {
+		if (parms == null)
+			parms = Params;
+
+		if (parms == null)
+			return 1.0f;
+
+		if ((parms[(int)ShaderMaterialVars.Flags].GetIntValue() & (int)MaterialVarFlags.NoAlphaMod) != 0)
+			return 1.0f;
+
+		float alpha = parms[(int)ShaderMaterialVars.Alpha].GetFloatValue();
+		return Math.Clamp(alpha, 0, 1);
 	}
 }

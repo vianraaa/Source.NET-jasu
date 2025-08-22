@@ -157,6 +157,7 @@ public interface IMatRenderContext
 	void Bind(IMaterial material, object? proxyData);
 	IMaterial? GetCurrentMaterial();
 	IShaderAPI GetShaderAPI();
+	bool InFlashlightMode();
 	IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null);
 }
 
@@ -247,5 +248,9 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) {
 		return ctx.GetDynamicMesh(buffered, vertexOverride, indexOverride, autoBind);
+	}
+
+	public bool InFlashlightMode() {
+		return ctx.InFlashlightMode();
 	}
 }

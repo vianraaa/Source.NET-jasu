@@ -113,8 +113,13 @@ public class TransitionTable(ShaderShadowGl46 ShaderShadow)
 		ApplyShaderState(ShadowStateList[id], SnapshotList[snapshotId].ShaderState);
 	}
 
-	private void ApplyShaderState(ShadowState shadowState, ShadowShaderState shaderState) {
-		throw new NotImplementedException();
+	private void ApplyShaderState(in ShadowState shadowState, in ShadowShaderState shaderState) {
+		if (!shadowState.UsingFixedFunction) {
+
+		}
+		else {
+			
+		}
 	}
 
 	private void ApplyTransition(TransitionList transition, short id) {

@@ -71,7 +71,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderSystem.Config = Config;
 		ShaderShadow.HardwareConfig = HardwareConfig;
 		MeshMgr.ShaderAPI = ShaderAPI;
-
+		ShaderAPI.ShaderUtil = this;
 		MeshMgr.Init();
 
 		ShaderSystem.LoadAllShaderDLLs();
@@ -197,6 +197,10 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	public IMatRenderContextInternal GetRenderContextInternal() => matContext!.Value!;
+
+	public bool InFlashlightMode() {
+		return GetRenderContextInternal().InFlashlightMode();
+	}
 
 	public IMaterialInternal errorMaterial;
 }

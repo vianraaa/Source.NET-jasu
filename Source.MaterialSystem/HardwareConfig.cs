@@ -296,6 +296,6 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public bool UsesSRGBCorrectBlending() {
-		throw new NotImplementedException();
+		return false; // todo
 	}
 }
