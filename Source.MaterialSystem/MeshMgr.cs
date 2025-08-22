@@ -3,7 +3,7 @@ using Source.Common.MaterialSystem;
 
 namespace Source.MaterialSystem;
 
-public class MeshMgr(IEngineAPI engineAPI)
+public class MeshMgr
 {
 	internal MaterialSystem Materials;
 
