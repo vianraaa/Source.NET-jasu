@@ -207,9 +207,9 @@ public struct RenderTargetStackElement
 
 public class MatRenderContext : IMatRenderContext
 {
-	readonly IMaterialSystem materials;
+	readonly MaterialSystem materials;
 
-	public MatRenderContext(IMaterialSystem materials) {
+	public MatRenderContext(MaterialSystem materials) {
 		this.materials = materials;
 		RenderTargetStack = new RefStack<RenderTargetStackElement>();
 		MatrixStacks = new RefStack<MatrixStackItem>[(int)MaterialMatrixMode.Count];
@@ -333,5 +333,13 @@ public class MatRenderContext : IMatRenderContext
 
 	public IMaterial? GetCurrentMaterial() {
 		return currentMaterial;
+	}
+
+	public void PopMatrix() {
+
+	}
+
+	public IShaderAPI GetShaderAPI() {
+		return materials.ShaderAPI;
 	}
 }

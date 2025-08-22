@@ -35,5 +35,11 @@ public class RenderUtils(IMaterialSystem materials)
 
 		int xSegments = Math.Max(xDice, 1);
 		int ySegments = Math.Max(yDice, 1);
+
+		renderContext.MatrixMode(MaterialMatrixMode.View);
+		renderContext.PopMatrix();
+
+		renderContext.MatrixMode(MaterialMatrixMode.Projection);
+		renderContext.PopMatrix();
 	}
 }

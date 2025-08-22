@@ -1,4 +1,5 @@
 ﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.ShaderAPI;
 
 using System;
 using System.Collections.Generic;
@@ -148,22 +149,27 @@ public interface IMatRenderContext
 
 	void MatrixMode(MaterialMatrixMode mode);
 	void PushMatrix();
+	void PopMatrix();
 	void LoadIdentity();
 	void Bind(IMaterial material, object? proxyData);
 	IMaterial? GetCurrentMaterial();
+	IShaderAPI GetShaderAPI();
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 {
 	readonly IMatRenderContext ctx;
+	readonly IShaderAPI shaderAPI;
 	public readonly IMatRenderContext Context => ctx;
 
 	public MatRenderContextPtr(IMatRenderContext init) {
 		ctx = init;
+		shaderAPI = init.GetShaderAPI();
 		init.BeginRender();
 	}
 	public MatRenderContextPtr(IMaterialSystem from) {
 		ctx = from.GetRenderContext();
+		shaderAPI = ctx.GetShaderAPI();
 		ctx.BeginRender();
 	}
 
@@ -225,5 +231,13 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public IMaterial? GetCurrentMaterial() {
 		return ctx.GetCurrentMaterial();
+	}
+
+	public void PopMatrix() {
+		ctx.PopMatrix();
+	}
+
+	public IShaderAPI GetShaderAPI() {
+		return ctx.GetShaderAPI();
 	}
 }
