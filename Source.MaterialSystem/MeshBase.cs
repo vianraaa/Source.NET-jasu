@@ -97,4 +97,12 @@ public abstract class MeshBase : IMesh
 	public virtual void RenderPass() {
 		throw new NotImplementedException();
 	}
+
+	internal bool HasColorMesh() {
+		return false;
+	}
+
+	internal bool HasFlexMesh() {
+		return false;
+	}
 }

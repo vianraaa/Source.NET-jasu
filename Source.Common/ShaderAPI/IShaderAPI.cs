@@ -14,4 +14,5 @@ public interface IShaderAPI : IShaderDynamicAPI
 	public bool IsDepthWriteEnabled(StateSnapshot_t id);
 	public bool UsesVertexAndPixelShaders(StateSnapshot_t id);
 	public StateSnapshot_t TakeSnapshot();
+	void DrawMesh(IMesh mesh);
 }

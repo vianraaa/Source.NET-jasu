@@ -1,4 +1,6 @@
-﻿using Source.Common.MaterialSystem;
+﻿using OpenGL;
+
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
@@ -823,5 +825,16 @@ public class ShaderAPIGl46 : IShaderAPI
 		if (MatrixIsChanging()) {
 
 		}
+	}
+
+	public void DrawMesh(IMesh imesh) {
+		MeshBase mesh = (MeshBase)imesh!;
+		RenderMesh = mesh;
+		VertexFormat vertexFormat = RenderMesh.GetVertexFormat();
+		SetVertexDecl(vertexFormat, RenderMesh.HasColorMesh(), RenderMesh.HasFlexMesh(), Material!.IsUsingVertexID());
+	}
+
+	private void SetVertexDecl(VertexFormat vertexFormat, bool hasColorMesh, bool hasFleshMesh, bool usingMorph) {
+		// Gl46.glVertexAttribPointer() i think we need here
 	}
 }

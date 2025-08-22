@@ -8,8 +8,6 @@ public struct PrimList
 
 public unsafe class DynamicMeshGl46 : MeshGl46
 {
-	static PrimList* s_pPrims;
-	static nint s_nPrims;
 	bool HasDrawn = false;
 
 	public override void MarkAsDrawn() {

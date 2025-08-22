@@ -18,5 +18,6 @@ public interface IMaterialInternal : IMaterial
 	string GetName();
 	bool IsManuallyCreated();
 	bool IsPrecached();
+	bool IsUsingVertexID();
 	void Precache();
 }

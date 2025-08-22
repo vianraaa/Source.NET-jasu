@@ -53,6 +53,19 @@ public class StandardRenderStateList : List<RenderPassList>
 public class Material : IMaterialInternal
 {
 	public readonly MaterialSystem materials;
+	public MaterialVarFlags2 GetMaterialVarFlags2() {
+		if(ShaderParams != null && VarCount > (int)ShaderMaterialVars.Flags2) {
+			IMaterialVar var = ShaderParams[(int)ShaderMaterialVars.Flags2];
+			return (MaterialVarFlags2)var.GetIntValue();
+		}
+
+		return 0;
+	}
+
+	public bool IsUsingVertexID() {
+		return (GetMaterialVarFlags2() & MaterialVarFlags2.UsesVertexID) != 0;
+	}
+
 	public Material(MaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
 		this.materials = materials;
 		name = new(materialName);
