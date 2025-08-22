@@ -7,6 +7,7 @@ using Source.Engine.Server;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Source.Engine;
 public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
@@ -40,6 +41,12 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 	public void ShutdownGame() {
 
 	}
+
+#if WIN32
+	[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+	private static extern void OutputDebugString(string message);
+#endif
+
 	ThreadLocal<bool> inSpew = new();
 	ThreadLocal<string> groupWrite = new();
 	private void Write(string group, ReadOnlySpan<char> str, in Color color) {
@@ -48,36 +55,47 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 
 		Span<char> buffer = stackalloc char[256];
 		int bufferIdx = 0;
+		void writeTxt(ReadOnlySpan<char> sub, in Color color) {
+			Console.Write(sub.Pastel(color));
+		}
+		void flushTxt(Span<char> buffer, in Color color) {
+			if (bufferIdx > 0) {
+				ReadOnlySpan<char> sub = buffer[..bufferIdx];
+				writeTxt(sub, in color);
+			}
+			bufferIdx = 0;
+		}
+		void writeGroup(ReadOnlySpan<char> group, in Color color) {
+			writeTxt("[", in color);
+			writeTxt(group, in color);
+			writeTxt("] ", in color);
+		}
+		void writeNewLine() {
+			Console.WriteLine();
+		}
+		void writeBuffer(Span<char> buffer, in Color color, char c) {
+			if (bufferIdx >= buffer.Length)
+				flushTxt(buffer, in color);
+			buffer[bufferIdx++] = c;
+		}
 		for (int i = 0; i < str.Length; i++) {
 			char c = str[i];
 			if (c == '\n') {
 				groupWrite.Value = "";
 
-				if (bufferIdx > 0)
-					Console.Write(((ReadOnlySpan<char>)buffer[..bufferIdx]).Pastel(color));
-				bufferIdx = 0;
-
-				Console.WriteLine();
+				flushTxt(buffer, in color);
+				writeNewLine();
 			}
 			else {
 				if (groupWrite.Value != group) {
-					if (bufferIdx > 0)
-						Console.Write(((ReadOnlySpan<char>)buffer[..bufferIdx]).Pastel(color));
-					bufferIdx = 0;
-
-					Console.Write($"[{group}] ".Pastel(color));
+					flushTxt(buffer, in color);
+					writeGroup(group, in color);
 					groupWrite.Value = group;
 				}
-				if (bufferIdx >= buffer.Length) {
-					Console.Write(((ReadOnlySpan<char>)buffer).Pastel(color));
-					bufferIdx = 0;
-				}
-				buffer[bufferIdx++] = c;
+				writeBuffer(buffer, in color, c);
 			}
 		}
-
-		if (bufferIdx > 0)
-			Console.Write(((ReadOnlySpan<char>)buffer[..bufferIdx]).Pastel(color));
+		flushTxt(buffer, in color);
 	}
 	public SpewRetval SpewFunc(SpewType spewType, ReadOnlySpan<char> msg) {
 		if (!inSpew.IsValueCreated)

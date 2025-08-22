@@ -73,8 +73,9 @@ public static class Dbg
 	public static SpewOutputFunc GetSpewOutputFunc() => _SpewOutputFunc != null ? _SpewOutputFunc : DefaultSpewFunc;
 
 	public static SpewRetval DefaultSpewFunc(SpewType type, ReadOnlySpan<char> message) {
-		foreach(char c in message) 
+		foreach(char c in message) {
 			System.Console.Write(c);
+		}
 #if DEBUG
 		if (type == SpewType.Assert) {
 			return SpewRetval.Debugger;
