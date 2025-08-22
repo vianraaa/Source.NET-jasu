@@ -72,6 +72,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderAPI.TransitionTable = new(ShaderShadow);
 		ShaderAPI.TransitionTable.HardwareConfig = HardwareConfig;
 		ShaderAPI.TransitionTable.ShaderManager = ShaderSystem;
+		ShaderAPI.TransitionTable.ShaderDevice = ShaderDevice;
 
 		ShaderAPI.services = services;
 

@@ -104,29 +104,43 @@ public class TransitionTable
 		ShaderShadow = shaderShadow;
 		RenderFunctionTable = [
 			ApplyDepthTest,
-			// ApplyZWriteEnable,
-			// ApplyColorWriteEnable,
-			// ApplyAlphaTest,
-			// ApplyFillMode,
-			// ApplyLighting,
-			// ApplySpecularEnable,
-			// ApplySRGBWriteEnable,
-			// ApplyAlphaBlend,
-			// ApplySeparateAlphaBlend,
-			// ApplyCullEnable,
-			// ApplyVertexBlendEnable,
-			// ApplyFogMode,
-			// ApplyActivateFixedFunction,
-			// ApplyTextureEnable,			// Enables textures on *all* stages
-			// ApplyDiffuseMaterialSource,
-			// ApplyDisableFogGammaCorrection,
-			// ApplyAlphaToCoverage,
+			ApplyZWriteEnable,
+			ApplyColorWriteEnable,
+			ApplyAlphaTest,
+			ApplyFillMode,
+			ApplyLighting,
+			ApplySpecularEnable,
+			ApplySRGBWriteEnable,
+			ApplyAlphaBlend,
+			ApplySeparateAlphaBlend,
+			ApplyCullEnable,
+			ApplyVertexBlendEnable,
+			ApplyFogMode,
+			ApplyActivateFixedFunction,
+			ApplyTextureEnable,			// Enables textures on *all* stages
+			ApplyDiffuseMaterialSource,
+			ApplyDisableFogGammaCorrection,
+			ApplyAlphaToCoverage,
 		];
 	}
-	public void ApplyDepthTest(in ShadowState state, int arg) {
-
-	}
-
+	public void ApplyDepthTest(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyZWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyColorWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyAlphaTest(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyFillMode(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyLighting(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplySpecularEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplySRGBWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyAlphaBlend(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplySeparateAlphaBlend(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyCullEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyVertexBlendEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyFogMode(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyActivateFixedFunction(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyTextureEnable(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyDiffuseMaterialSource(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyDisableFogGammaCorrection(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyAlphaToCoverage(in ShadowState state, int arg) => throw new NotImplementedException();
 
 	List<TransitionOp> TransitionOps = [];
 
@@ -280,8 +294,8 @@ public class TransitionTable
 		if (CurrentSnapshotId != snapshotId) {
 			// First apply things that are in the transition table
 			if (CurrentShadowId != id) {
-				TransitionList transition = transitionTable[id][CurrentShadowId];
-				ApplyTransition(transition, id);
+				ref TransitionList transition = ref transitionTable[id][CurrentShadowId];
+				ApplyTransition(in transition, id);
 			}
 
 			// NOTE: There is an opportunity here to set non-dynamic state that we don't
@@ -310,6 +324,8 @@ public class TransitionTable
 	}
 
 	CurrentState CurrentState;
+	ShadowState BoardState;
+	ShadowShaderState BoardShaderState;
 	StateSnapshot_t DefaultStateSnapshot = -1;
 	TransitionList DefaultTransition;
 
@@ -319,7 +335,7 @@ public class TransitionTable
 		CurrentState.OverrideColorWriteEnable = false;
 		CurrentState.ForceDepthFuncEquals = false;
 		CurrentState.LinearColorSpaceFrameBufferEnable = false;
-		ApplyTransition(DefaultTransition, DefaultStateSnapshot);
+		ApplyTransition(in DefaultTransition, DefaultStateSnapshot);
 
 		ShaderManager.SetVertexShader(VertexShaderHandle.INVALID);
 		ShaderManager.SetPixelShader(PixelShaderHandle.INVALID);
@@ -334,12 +350,45 @@ public class TransitionTable
 		}
 	}
 
-	private void ApplyTransition(TransitionList transition, short id) {
-		throw new NotImplementedException();
+	internal IShaderDevice ShaderDevice;
+
+	private void ApplyTransition(in TransitionList list, int snapshot) {
+		if (ShaderDevice.IsDeactivated())
+			return;
+
+		int firstOp = (int)list.FirstOperation;
+		int opCount = (int)list.NumOperations;
+
+		ApplyTransitionList(snapshot, firstOp, opCount);
+		PerformShadowStateOverrides();
+
+		CurrentShadowId = (StateSnapshot_t)snapshot;
+	}
+
+	private void PerformShadowStateOverrides() {
+
+	}
+
+	private void ApplyTransitionList(int snapshot, int firstOp, int opCount) {
+		if(opCount > 0) {
+			ref ShadowState shadowState = ref ShadowStateList[snapshot];
+			ref TransitionOp transitionOp = ref TransitionOps.AsSpan()[firstOp];
+
+			for (int i = 0; i < opCount; ++i) {
+				if (transitionOp.IsTextureCode) {
+					GetTextureOp(transitionOp.OpCode, out TextureStateFunc code, out int stage);
+					TextureFunctionTable[(int)code](in shadowState, stage);
+				}
+				else {
+					RenderFunctionTable[transitionOp.OpCode](in shadowState, 0);
+				}
+			}
+		}
 	}
 
 	StateSnapshot_t CurrentSnapshotId;
 	ShadowStateId_t CurrentShadowId;
+
 	public int CurrentSnapshot() => (int)CurrentSnapshotId;
 	public uint FindIdenticalTransitionList(uint firstElem, ushort numOps, uint firstTest) {
 		Span<TransitionOp> transitions = TransitionOps.AsSpan();

@@ -14,6 +14,7 @@ public enum GraphicsAPIVersion : ulong {
 }
 public interface IShaderDevice
 {
+	bool IsDeactivated();
 	bool IsUsingGraphics();
 	void Present();
 }
