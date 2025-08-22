@@ -21,6 +21,10 @@ public class BaseMeshGl46 : MeshBase {
 
 	}
 
+	public override VertexFormat GetVertexFormat() {
+		return VertexFormat;
+	}
+
 	public IVertexBuffer GetVertexBuffer() {
 		throw new NotImplementedException();
 	}
@@ -30,10 +34,10 @@ public class BaseMeshGl46 : MeshBase {
 	}
 
 	internal void SetMaterial(IMaterial material) {
-		throw new NotImplementedException();
+		Material = (IMaterialInternal)material!;
 	}
 
 	internal void SetVertexFormat(VertexFormat fmt) {
-		throw new NotImplementedException();
+		VertexFormat = fmt;
 	}
 }

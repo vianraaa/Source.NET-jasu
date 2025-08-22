@@ -304,4 +304,8 @@ public abstract class BaseShader : IShader
 			ShaderInit!.LoadTexture(nameVar, TextureGroupName, additionalCreationFlags);
 		}
 	}
+
+	public int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI) {
+		throw new NotImplementedException();
+	}
 }

@@ -37,6 +37,10 @@ public class RenderUtils(IMaterialSystem materials)
 		int ySegments = Math.Max(yDice, 1);
 
 		IMesh mesh = renderContext.GetDynamicMesh(true);
+		{
+
+		}
+		mesh.Draw();
 
 		renderContext.MatrixMode(MaterialMatrixMode.View);
 		renderContext.PopMatrix();

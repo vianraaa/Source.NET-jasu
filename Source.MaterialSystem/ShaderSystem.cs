@@ -46,7 +46,7 @@ public interface IShaderSystemInternal : IShaderInit, IShaderSystem
 	void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
 	bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState shaderRenderState, ReadOnlySpan<char> materialName);
 	// void CleanupRenderState(ref ShaderRenderState renderState);
-	void DrawElements(IShader shader, Span<IMaterialVar> parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
+	void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
 	IEnumerable<IShader> GetShaders();
 }
 
@@ -56,14 +56,49 @@ public class ShaderSystem : IShaderSystemInternal
 	ShaderRenderState? RenderState;
 	byte Modulation;
 	byte RenderPass;
-	internal MaterialSystem materials;
-	internal ShaderAPIGl46 shaderAPI;
+	internal MaterialSystem MaterialSystem;
+	internal ShaderAPIGl46 ShaderAPI;
+	internal MaterialSystem_Config Config;
 
 	public void BindTexture(Sampler sampler, ITexture texture) {
 		throw new NotImplementedException();
 	}
 
-	public void DrawElements(IShader shader, Span<IMaterialVar> parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
+	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
+		ShaderAPI.InvalidateDelayedShaderConstraints();
+		int mod = shader.ComputeModulationFlags(parms, ShaderAPI);
+		if (renderState.Snapshots[mod].PassCount == 0)
+			return;
+
+		int materialVarFlags = parms[(int)ShaderMaterialVars.Flags].GetIntValue();
+		if (((materialVarFlags & (int)MaterialVarFlags.Model) != 0) || (IsFlag2Set(parms, MaterialVarFlags2.SupportsHardwareSkinning) && (ShaderAPI.GetCurrentNumBones() > 0))) {
+			ShaderAPI.SetSkinningMatrices();
+		}
+
+		if ((Config.ShowNormalMap || Config.ShowMipLevels == 2) && (IsFlag2Set(parms, MaterialVarFlags2.LightingBumpedLightmap) || IsFlag2Set(parms, MaterialVarFlags2.DiffuseBumpmappedModel))) {
+			DrawNormalMap(shader, parms, vertexCompression);
+		}
+		else {
+			ShaderAPI.SetDefaultState();
+
+			if ((materialVarFlags & (uint)MaterialVarFlags.Flat) > 0)
+				ShaderAPI.ShadeMode(ShadeMode.Flat);
+
+			PrepForShaderDraw(shader, parms, renderState, mod);
+			ShaderAPI.BeginPass(CurrentStateSnapshot());
+
+			ref BasePerMaterialContextData contextDataPtr = ref renderState.Snapshots[Modulation].ContextData[RenderPass];
+			if(contextDataPtr != null && (contextDataPtr.VarChangeID != materialVarTimeStamp)) {
+				contextDataPtr.MaterialVarsChanged = true;
+				contextDataPtr.VarChangeID = materialVarTimeStamp;
+			}
+
+			shader.DrawElements(parms, mod, null, ShaderAPI, vertexCompression, ref renderState.Snapshots[Modulation].ContextData[RenderPass]);
+			DoneWithShaderDraw();
+		}
+	}
+
+	private void DrawNormalMap(IShader shader, Span<IMaterialVar> parms, VertexCompressionType vertexCompression) {
 		throw new NotImplementedException();
 	}
 
@@ -78,7 +113,7 @@ public class ShaderSystem : IShaderSystemInternal
 	}
 
 	public IEnumerable<IShader> GetShaders() {
-		foreach(var shaderDLL in ShaderDLLs) {
+		foreach (var shaderDLL in ShaderDLLs) {
 			foreach (var shader in shaderDLL.GetShaders())
 				yield return shader;
 		}
@@ -207,7 +242,7 @@ public class ShaderSystem : IShaderSystemInternal
 		RenderState = null;
 	}
 
-	private void PrepForShaderDraw(IShader shader, IMaterialVar[] vars, ShaderRenderState? renderState, int modulation) {
+	private void PrepForShaderDraw(IShader shader, Span<IMaterialVar> vars, ShaderRenderState? renderState, int modulation) {
 		Assert(RenderState == null);
 		// LATER; plug into spew?
 		RenderState = renderState;
@@ -245,11 +280,11 @@ public class ShaderSystem : IShaderSystemInternal
 
 	private void ComputeRenderStateFlagsFromSnapshot(ref ShaderRenderState renderState) {
 		StateSnapshot_t snapshot = renderState.Snapshots[0].Snapshot[0];
-		if (shaderAPI.IsTranslucent(snapshot)) {
+		if (ShaderAPI.IsTranslucent(snapshot)) {
 
 		}
 		else {
-			if (shaderAPI.IsAlphaTested(snapshot)) {
+			if (ShaderAPI.IsAlphaTested(snapshot)) {
 
 			}
 			else {
@@ -313,7 +348,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 			PrepForShaderDraw(shader, shaderParams, renderState, i);
 			renderState.Snapshots[i].PassCount = 0;
-			shader.DrawElements(shaderParams, i, materials.ShaderShadow, null, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
+			shader.DrawElements(shaderParams, i, MaterialSystem.ShaderShadow, null, VertexCompressionType.None, ref renderState.Snapshots[i].ContextData[0]);
 			DoneWithShaderDraw();
 		}
 
@@ -332,7 +367,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	public const int SNAPSHOT_COUNT_NORMAL = 16;
 	public const int SNAPSHOT_COUNT_EDITOR = 32;
-	public int SnapshotTypeCount() => materials.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
+	public int SnapshotTypeCount() => MaterialSystem.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
 
 	static void AddSnapshotsToList(RenderPassList passList, ref int snapshotID, Span<StateSnapshot_t> snapshots) {
 		int numPassSnapshots = passList.PassCount;
@@ -347,7 +382,7 @@ public class ShaderSystem : IShaderSystemInternal
 		int numSnapshots = renderState.Snapshots[0].PassCount;
 		if (modulationSnapshotCount >= (int)ShaderUsing.Flashlight)
 			numSnapshots += renderState.Snapshots[(int)ShaderUsing.Flashlight].PassCount;
-		if (materials.CanUseEditorMaterials())
+		if (MaterialSystem.CanUseEditorMaterials())
 			numSnapshots += renderState.Snapshots[(int)ShaderUsing.Editor].PassCount;
 
 		Span<StateSnapshot_t> snapshots = stackalloc StateSnapshot_t[numSnapshots];
@@ -355,7 +390,7 @@ public class ShaderSystem : IShaderSystemInternal
 		AddSnapshotsToList(renderState.Snapshots[0], ref snapshotID, snapshots);
 		if (modulationSnapshotCount >= (int)ShaderUsing.Flashlight)
 			AddSnapshotsToList(renderState.Snapshots[(int)ShaderUsing.Flashlight], ref snapshotID, snapshots);
-		if (materials.CanUseEditorMaterials())
+		if (MaterialSystem.CanUseEditorMaterials())
 			AddSnapshotsToList(renderState.Snapshots[(int)ShaderUsing.Editor], ref snapshotID, snapshots);
 
 		Assert(snapshotID == numSnapshots);
@@ -366,11 +401,11 @@ public class ShaderSystem : IShaderSystemInternal
 			for (int i = 0; i < numSnapshotsTest; i++) {
 				snapshotsTest[i] = renderState.Snapshots[mod].Snapshot[i];
 			}
-			VertexFormat usageTest = shaderAPI.ComputeVertexUsage(snapshotsTest);
+			VertexFormat usageTest = ShaderAPI.ComputeVertexUsage(snapshotsTest);
 		}
 
 		if (IsPC()) {
-			renderState.VertexUsage = shaderAPI.ComputeVertexUsage(snapshots);
+			renderState.VertexUsage = ShaderAPI.ComputeVertexUsage(snapshots);
 		}
 		else {
 			renderState.VertexFormat = renderState.VertexUsage;
@@ -381,7 +416,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	private int GetModulationSnapshotCount(IMaterialVar[] shaderParams) {
 		int snapshotCount = SnapshotTypeCount();
-		if (!materials.CanUseEditorMaterials()) {
+		if (!MaterialSystem.CanUseEditorMaterials()) {
 			if (!IsFlag2Set(shaderParams, MaterialVarFlags2.NeedsBakedLightingSnapshots))
 				snapshotCount /= 2;
 		}
@@ -408,13 +443,13 @@ public class ShaderSystem : IShaderSystemInternal
 	public void TakeSnapshot() {
 		Assert(RenderState);
 		Assert(Modulation < SnapshotTypeCount());
-		if (materials.HardwareConfig.SupportsPixelShaders_2_b()) {
-			materials.ShaderShadow.EnableTexture(Sampler.Sampler15, true);
-			materials.ShaderShadow.EnableSRGBRead(Sampler.Sampler15, true);
+		if (MaterialSystem.HardwareConfig.SupportsPixelShaders_2_b()) {
+			MaterialSystem.ShaderShadow.EnableTexture(Sampler.Sampler15, true);
+			MaterialSystem.ShaderShadow.EnableSRGBRead(Sampler.Sampler15, true);
 		}
 
 		RenderPassList snapshotList = RenderState!.Snapshots[Modulation];
-		snapshotList.Snapshot[snapshotList.PassCount] = shaderAPI.TakeSnapshot();
+		snapshotList.Snapshot[snapshotList.PassCount] = ShaderAPI.TakeSnapshot();
 		++snapshotList.PassCount;
 	}
 
@@ -433,10 +468,10 @@ public class ShaderSystem : IShaderSystemInternal
 		Assert(RenderPass < passCount);
 
 		if (makeActualDrawCall)
-			shaderAPI.RenderPass(RenderPass, passCount);
+			ShaderAPI.RenderPass(RenderPass, passCount);
 
-		shaderAPI.InvalidateDelayedShaderConstraints();
+		ShaderAPI.InvalidateDelayedShaderConstraints();
 		if (++RenderPass < passCount)
-			shaderAPI.BeginPass(CurrentStateSnapshot());
+			ShaderAPI.BeginPass(CurrentStateSnapshot());
 	}
 }

@@ -1,4 +1,5 @@
-﻿using Source.Common.Formats.Keyvalues;
+﻿using Source.Common.Bitmap;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.ShaderAPI;
 
 using System;
@@ -112,11 +113,13 @@ public record struct PixelShaderHandle
 	public static implicit operator nint(PixelShaderHandle handle) => handle.Handle;
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
 }
-public class MaterialSystemConfig {
-	public int Width;
-	public int Height;
-	public int RefreshRate;
-}
+public struct MaterialVideoMode
+{
+	public int Width;            // if width and height are 0 and you select 
+	public int Height;           // windowed mode, it'll use the window size
+	public ImageFormat Format;   // use ImageFormats (ignored for windowed mode)
+	public int RefreshRate;      // 0 == default (ignored for windowed mode)
+};
 
 public interface IMaterialSystem
 {
@@ -127,7 +130,7 @@ public interface IMaterialSystem
 	void BeginFrame(double frameTime);
 	void EndFrame();
 	void SwapBuffers();
-	bool SetMode(nint v, MaterialSystemConfig config);
+	bool SetMode(nint v, MaterialSystem_Config config);
 	IMaterial CreateMaterial(string v, KeyValues keyValues);
 	bool CanUseEditorMaterials();
 }

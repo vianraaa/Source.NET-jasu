@@ -168,10 +168,10 @@ public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, ISe
 	bool SetModeOnce;
 	public override bool SetMode(int width, int height, bool windowed) {
 		ref VMode mode = ref RequestedWindowVideoMode();
-		MaterialSystemConfig config = services.GetRequiredService<MaterialSystemConfig>();
-		config.Width = mode.Width;
-		config.Height = mode.Height;
-		config.RefreshRate = mode.RefreshRate;
+		MaterialSystem_Config config = services.GetRequiredService<MaterialSystem_Config>();
+		config.VideoMode.Width = mode.Width;
+		config.VideoMode.Height = mode.Height;
+		config.VideoMode.RefreshRate = mode.RefreshRate;
 
 		if (!SetModeOnce) {
 			if (!materials.SetMode(game.GetMainDeviceWindow(), config)) {

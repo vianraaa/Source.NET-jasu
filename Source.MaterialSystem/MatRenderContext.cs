@@ -1,0 +1,198 @@
+﻿using Raylib_cs;
+
+using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
+using Source.Common.Utilities;
+
+using System.Diagnostics;
+using System.Numerics;
+
+namespace Source.MaterialSystem;
+
+public class MatRenderContext : IMatRenderContextInternal
+{
+	readonly MaterialSystem materials;
+	readonly IShaderAPI shaderAPI;
+
+	public MatRenderContext(MaterialSystem materials) {
+		this.materials = materials;
+		RenderTargetStack = new RefStack<RenderTargetStackElement>();
+		MatrixStacks = new RefStack<MatrixStackItem>[(int)MaterialMatrixMode.Count];
+		for (int i = 0; i < MatrixStacks.Length; i++) {
+			MatrixStacks[i] = new();
+			ref MatrixStackItem item = ref MatrixStacks[i].Push();
+			item.Matrix = Matrix4x4.Identity;
+			item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
+		}
+		RenderTargetStackElement initialElement = new() {
+			RenderTargets = [null, null, null, null],
+			DepthTexture = null,
+			ViewX = 0,
+			ViewY = 0,
+			ViewW = -1,
+			ViewH = -1
+		};
+		RenderTargetStack.Push(initialElement);
+		shaderAPI = materials.ShaderAPI;
+	}
+	RefStack<RenderTargetStackElement> RenderTargetStack;
+	RefStack<MatrixStackItem>[] MatrixStacks;
+	MaterialMatrixMode matrixMode;
+	bool dirtyViewState;
+	bool dirtyViewProjState;
+	public ref MatrixStackItem CurMatrixItem => ref MatrixStacks[(int)matrixMode].Peek();
+	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Peek();
+
+	public void BeginRender() {
+
+	}
+
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) => Rlgl.ClearScreenBuffers(clearColor, clearDepth, clearStencil);
+	public void ClearColor3ub(byte r, byte g, byte b) {
+		Rlgl.ClearColor(r, g, b, 255);
+	}
+
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) {
+		Rlgl.ClearColor(r, g, b, a);
+	}
+
+	public void DepthRange(double near, double far) {
+		Rlgl.DepthRange(near, far);
+	}
+
+	public void EndRender() {
+
+	}
+
+	public void Flush(bool flushHardware) {
+
+	}
+
+	public void GetViewport(out int x, out int y, out int width, out int height) {
+		x = y = width = height = 0;
+	}
+
+	public void LoadIdentity() {
+		ref MatrixStackItem item = ref CurMatrixItem;
+		item.Matrix = Matrix4x4.Identity;
+		item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
+		CurrentMatrixChanged();
+	}
+
+	public void MatrixMode(MaterialMatrixMode mode) {
+		matrixMode = mode;
+	}
+
+	public void PushMatrix() {
+		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
+		curStack.Push(CurMatrixItem);
+		CurrentMatrixChanged();
+		shaderAPI.PushMatrix();
+	}
+
+	private void CurrentMatrixChanged() {
+		if (matrixMode == MaterialMatrixMode.View) {
+			dirtyViewState = true;
+			dirtyViewProjState = true;
+		}
+		else if (matrixMode == MaterialMatrixMode.Projection) {
+			dirtyViewProjState = true;
+		}
+	}
+
+	public void Viewport(int x, int y, int width, int height) {
+		Dbg.Assert(RenderTargetStack.Count > 0);
+
+		RenderTargetStackElement newTOS = new();
+		newTOS = CurRenderTargetStack; // copy
+		newTOS.ViewX = x;
+		newTOS.ViewY = y;
+		newTOS.ViewW = width;
+		newTOS.ViewH = height;
+		RenderTargetStack.Pop();
+		RenderTargetStack.Push(newTOS);
+	}
+
+	IMaterialInternal? currentMaterial;
+
+	public void Bind(IMaterial iMaterial, object? proxyData) {
+		if(iMaterial == null) {
+			if (materials.errorMaterial == null)
+				return;
+			Warning("Programming error: MatRenderContext.Bind: NULL material\n");
+			iMaterial = materials.errorMaterial;
+		}
+		else {
+			// Proxy replacements?
+		}
+
+		IMaterialInternal material = (IMaterialInternal)iMaterial;
+		material = material.GetRealTimeVersion(); // TODO: figure out how to do this.
+
+		// SyncMatrices();
+
+		if (material == null) {
+			Dbg.Warning("Programming error: MatRenderContext.Bind NULL material\n");
+			material = ((MaterialSystem)materials).errorMaterial;
+		}
+
+		if (GetCurrentMaterialInternal() != material) {
+			if (!material.IsPrecached()) {
+				material.Precache();
+			}
+			SetCurrentMaterialInternal(material);
+		}
+
+		shaderAPI.Bind(GetCurrentMaterialInternal());
+	}
+
+	private IMaterialInternal? GetCurrentMaterialInternal() {
+		return currentMaterial;
+	}
+	private void SetCurrentMaterialInternal(IMaterialInternal? mat) {
+		currentMaterial = mat;
+	}
+
+	public IMaterial? GetCurrentMaterial() {
+		return currentMaterial;
+	}
+
+	public void PopMatrix() {
+		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
+		curStack.Pop();
+		CurrentMatrixChanged();
+		shaderAPI.PopMatrix();
+	}
+
+	public IShaderAPI GetShaderAPI() {
+		return materials.ShaderAPI;
+	}
+
+	public bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount) {
+		// SyncMatrices();
+		return true;
+	}
+
+	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) {
+		if(autoBind != null) {
+			Bind(autoBind, null);
+		}
+
+		if (vertexOverride != null) {
+			if (vertexOverride.GetVertexFormat().CompressionType() != VertexCompressionType.None) {
+				// UNDONE: support compressed dynamic meshes if needed (pro: less VB memory, con: time spent compressing)
+				Debugger.Break();
+				return null;
+			}
+		}
+
+		// For anything more than 1 bone, imply the last weight from the 1 - the sum of the others.
+		int nCurrentBoneCount = shaderAPI.GetCurrentNumBones();
+		Assert(nCurrentBoneCount <= 4);
+		if (nCurrentBoneCount > 1) {
+			--nCurrentBoneCount;
+		}
+
+		return shaderAPI.GetDynamicMesh(GetCurrentMaterialInternal()!, nCurrentBoneCount, buffered, vertexOverride, indexOverride);
+	}
+}

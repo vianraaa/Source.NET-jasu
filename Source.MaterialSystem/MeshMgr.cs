@@ -6,7 +6,7 @@ namespace Source.MaterialSystem;
 
 public class MeshMgr
 {
-	internal MaterialSystem Materials;
+	internal MaterialSystem MaterialSystem;
 
 	public VertexFormat ComputeVertexFormat(int flags, int texCoordArraySize, Span<int> texCoordDimensions, int numBonesWeights, int userDataSize) {
 		VertexFormat fmt = (VertexFormat)(flags & ~VertexFormatFlags.VertexFormatUseExactFormat);
@@ -135,8 +135,8 @@ public class MeshMgr
 	// system crash and burn
 	private TMesh InitMesh<TMesh>() where TMesh : BaseMeshGl46, new() {
 		TMesh ret = new TMesh();
-		ret.ShaderAPI = Materials.ShaderAPI;
-		ret.ShaderUtil = Materials;
+		ret.ShaderAPI = MaterialSystem.ShaderAPI;
+		ret.ShaderUtil = MaterialSystem;
 		return ret;
 	}
 

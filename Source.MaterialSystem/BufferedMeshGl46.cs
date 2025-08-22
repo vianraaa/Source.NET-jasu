@@ -22,6 +22,20 @@ public class BufferedMeshGl46 : BaseMeshGl46 {
 	public virtual void SetVertexFormat(VertexFormat format) {
 
 	}
+	bool WasRendered;
+	public override void Draw(int firstIndex = -1, int indexCount = 0) {
+		if(!ShaderUtil.OnDrawMesh(this, firstIndex, indexCount)) {
+			WasRendered = true;
+			MarkAsDrawn();
+			return;
+		}
+		Assert(!IsFlushing && !WasRendered);
+		Assert(firstIndex == -1 && indexCount == 0);
+		WasRendered = true;
+		FlushNeeded = true;
+		if (Mesh!.HasFlexMesh())
+			ShaderAPI.FlushBufferedPrimitives();
+	}
 	public override VertexFormat GetVertexFormat() {
 		throw new NotImplementedException();
 	}

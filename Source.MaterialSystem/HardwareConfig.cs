@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
-
 public class HardwareConfig : IMaterialSystemHardwareConfig
 {
 	public bool ActuallySupportsPixelShaders_2_b() {

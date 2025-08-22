@@ -84,7 +84,7 @@ public class Material : IMaterialInternal
 		}
 		ShaderParams = null;
 		MappingWidth = MappingHeight = 0;
-		if(keyValues != null) {
+		if (keyValues != null) {
 			flags |= MaterialFlags.IsManuallyCreated;
 		}
 
@@ -95,11 +95,11 @@ public class Material : IMaterialInternal
 
 	private List<RenderPassList> CreateRenderPassList() {
 		List<RenderPassList> renderPassList;
-		if (!materials.CanUseEditorMaterials()) 
+		if (!materials.CanUseEditorMaterials())
 			renderPassList = new StandardRenderStateList();
-		else 
+		else
 			renderPassList = new EditorRenderStateList();
-		
+
 		return renderPassList;
 	}
 
@@ -129,7 +129,7 @@ public class Material : IMaterialInternal
 			return;
 
 		flags |= MaterialFlags.IsPrecached;
-		if(Shader != null) 
+		if (Shader != null)
 			materials.ShaderSystem.InitShaderInstance(Shader, ShaderParams, GetName(), GetTextureGroupName());
 
 		RecomputeStateSnapshots();
@@ -146,7 +146,7 @@ public class Material : IMaterialInternal
 
 	private bool InitializeStateSnapshots() {
 		if (IsPrecached()) {
-			if(materials.GetCurrentMaterial() == this) {
+			if (materials.GetCurrentMaterial() == this) {
 				Rlgl.DrawRenderBatchActive();
 			}
 
@@ -173,20 +173,20 @@ public class Material : IMaterialInternal
 		throw new NotImplementedException();
 	}
 
-			static int complainCount = 0;
+	static int complainCount = 0;
 	public IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true) {
 		Span<char> lowercased = stackalloc char[varName.Length];
 		varName.ToLowerInvariant(lowercased);
 		string sym = string.Intern(new(lowercased));
-		foreach(var shaderParam in Vars) {
-			if(string.Intern(new(shaderParam.GetName())) == sym) {
+		foreach (var shaderParam in Vars) {
+			if (string.Intern(new(shaderParam.GetName())) == sym) {
 				found = true;
 				return shaderParam;
 			}
 		}
 		found = false;
 		if (complain) {
-			if(complainCount < 100) {
+			if (complainCount < 100) {
 				Warning("No such variable \"%s\" for material \"%s\"\n", sym, GetName());
 				complainCount++;
 			}
@@ -211,7 +211,7 @@ public class Material : IMaterialInternal
 		Precache();
 		bool found;
 		IMaterialVar? textureVar = FindVar($"baseTexture", out found, false);
-		if(found && textureVar.GetVarType() == MaterialVarType.Texture) {
+		if (found && textureVar.GetVarType() == MaterialVarType.Texture) {
 			ITextureInternal? texture = (ITextureInternal?)textureVar.GetTextureValue();
 			// todo
 		}
@@ -242,7 +242,7 @@ public class Material : IMaterialInternal
 	}
 
 	private void PrecacheMappingDimensions() {
-		if(representativeTexture == null) {
+		if (representativeTexture == null) {
 			MappingWidth = 64;
 			MappingHeight = 64;
 		}
@@ -612,8 +612,8 @@ public class Material : IMaterialInternal
 	ShaderRenderState ShaderRenderState = new();
 	static uint DebugVarsSignature = 0;
 
-	public void DrawMesh(VertexCompressionType vertexCompression) { 
-		if(Shader != null) {
+	public void DrawMesh(VertexCompressionType vertexCompression) {
+		if (Shader != null) {
 			if ((GetMaterialVarFlags() & MaterialVarFlags.Debug) == 0) {
 #pragma warning disable CS0168
 				int x; // Debugging breakpoint.
@@ -640,6 +640,14 @@ public class Material : IMaterialInternal
 	}
 
 	public VertexFormat GetVertexFormat() {
-		throw new NotImplementedException();
+		return ShaderRenderState.VertexFormat;
 	}
+
+	// This is not well understood. It relates to multithreading, and that's all I know right now.
+	public IMaterialInternal GetRealTimeVersion() {
+		return this;
+	}
+
+	public bool InMaterialPage() => false;
+	public IMaterial GetMaterialPage() => null;
 }

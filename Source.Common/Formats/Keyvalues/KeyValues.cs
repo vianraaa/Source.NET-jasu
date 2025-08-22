@@ -3,15 +3,18 @@ using Source.Common.Filesystem;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common.Formats.Keyvalues;
 
 
+[DebuggerDisplay("Type = {Type}, Count = {Count}, Value = {Value}")]
 public class KeyValues : LinkedList<KeyValues>
 {
 	public enum Types
@@ -29,7 +32,7 @@ public class KeyValues : LinkedList<KeyValues>
 	public Types Type;
 	public object? Value;
 	public string StringValue;
-	
+
 	bool useEscapeSequences;
 
 	public KeyValues() {
@@ -49,12 +52,16 @@ public class KeyValues : LinkedList<KeyValues>
 	private void SkipWhitespace(StreamReader reader) {
 		while (true) {
 			int c = reader.Peek();
-			if (c == -1) 
+			if (c == -1)
 				return;
 			if (!char.IsWhiteSpace((char)c))
 				return;
 			reader.Read();
 		}
+	}
+
+	public override string ToString() {
+		return $"{Type}<{Value}> #{Count}";
 	}
 
 	private bool ReadKV(StreamReader reader) {
@@ -219,9 +226,9 @@ public class KeyValues : LinkedList<KeyValues>
 		return ok;
 	}
 
-	
+
 	public KeyValues? FindKey(string searchStr, bool create = false) {
-		foreach(var child in this) {
+		foreach (var child in this) {
 			if (child.Name == searchStr)
 				return child;
 		}

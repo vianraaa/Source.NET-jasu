@@ -203,6 +203,8 @@ public enum MaterialVarFlags2
 public interface IMaterial
 {
 	bool IsRealTimeVersion();
+	bool InMaterialPage();
+	IMaterial GetMaterialPage();
 }
 public static class IMaterialExts {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

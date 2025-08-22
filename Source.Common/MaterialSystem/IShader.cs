@@ -27,6 +27,7 @@ public interface IShader
 	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
 	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
 	void DrawElements(IMaterialVar[] shaderParams, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
+	int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI);
 }
 
 public interface IShaderInit {
