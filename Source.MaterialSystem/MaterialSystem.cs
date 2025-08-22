@@ -28,6 +28,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		services.AddSingleton<ISurface, MatSystemSurface>();
 		services.AddSingleton<IShaderAPI, ShaderAPIGl46>();
 		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
+		services.AddSingleton<IShaderUtil>(x => x.GetRequiredService<MaterialSystem>());
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderSystem>();
 		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
@@ -67,7 +68,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderSystem.shaderAPI = ShaderAPI;
 		ShaderShadow.HardwareConfig = HardwareConfig;
 
-		g_ShaderUtil = this;
+		MeshMgr.Init();
 
 		ShaderSystem.LoadAllShaderDLLs();
 	}

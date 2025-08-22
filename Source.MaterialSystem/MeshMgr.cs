@@ -1,8 +1,9 @@
-﻿using Source.Common.MaterialSystem;
+﻿using Source.Common.Engine;
+using Source.Common.MaterialSystem;
 
 namespace Source.MaterialSystem;
 
-public class MeshMgr
+public class MeshMgr(IEngineAPI engineAPI)
 {
 	internal MaterialSystem Materials;
 
@@ -41,12 +42,12 @@ public class MeshMgr
 		}
 	}
 
-	BufferedMeshGl46 BufferedMesh = new();
-	DynamicMeshGl46 DynamicMesh = new();
-	DynamicMeshGl46 DynamicFlexMesh = new();
-	VertexBufferGl46 DynamicVertexBuffer = new();
-	IndexBufferGl46 DynamicIndexBuffer = new();
-	TempMeshGl46 DynamicTempMesh = new();
+	BufferedMeshGl46 BufferedMesh;
+	DynamicMeshGl46 DynamicMesh;
+	DynamicMeshGl46 DynamicFlexMesh;
+	VertexBufferGl46 DynamicVertexBuffer;
+	IndexBufferGl46 DynamicIndexBuffer;
+	TempMeshGl46 DynamicTempMesh;
 	bool BufferedMode;
 	bool UsingFatVertices;
 
@@ -60,5 +61,14 @@ public class MeshMgr
 
 	internal void RenderPassWithVertexAndIndexBuffers() {
 		throw new NotImplementedException();
+	}
+
+	internal void Init() {
+		BufferedMesh = engineAPI.New<BufferedMeshGl46>();
+		DynamicMesh = engineAPI.New<DynamicMeshGl46>();
+		DynamicFlexMesh = engineAPI.New<DynamicMeshGl46>();
+		DynamicVertexBuffer = engineAPI.New<VertexBufferGl46>();
+		DynamicIndexBuffer = engineAPI.New<IndexBufferGl46>();
+		DynamicTempMesh = engineAPI.New<TempMeshGl46>();
 	}
 }
