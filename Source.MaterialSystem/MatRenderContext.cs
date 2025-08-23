@@ -141,7 +141,7 @@ public class MatRenderContext : IMatRenderContextInternal
 		SyncMatrices();
 
 		if (material == null) {
-			Dbg.Warning("Programming error: MatRenderContext.Bind NULL material\n");
+			Warning("Programming error: MatRenderContext.Bind NULL material\n");
 			material = ((MaterialSystem)materials).errorMaterial;
 		}
 

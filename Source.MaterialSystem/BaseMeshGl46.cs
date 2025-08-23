@@ -4,10 +4,10 @@ using Source.Common.ShaderAPI;
 
 namespace Source.MaterialSystem;
 public class BaseMeshGl46 : MeshBase {
-	[Imported] public IShaderAPI ShaderAPI;
-	[Imported] public IShaderUtil ShaderUtil;
-	[Imported] public MeshMgr MeshMgr;
-	[Imported] public IShaderDevice ShaderDevice;
+	public IShaderAPI ShaderAPI;
+	public IShaderUtil ShaderUtil;
+	public MeshMgr MeshMgr;
+	public IShaderDevice ShaderDevice;
 
 	protected VertexFormat VertexFormat;
 	protected IMaterialInternal Material;

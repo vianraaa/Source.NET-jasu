@@ -52,21 +52,7 @@ public class MeshMgr
 		BufferedMode = buffered;
 
 		IMaterialInternal matInternal = (IMaterialInternal)material!;
-		bool needTempMesh = ShaderAPI.IsInSelectionMode();
-
-		BaseMeshGl46 mesh;
-		if (needTempMesh) {
-			Assert(vertexOverride == null);
-
-			if(indexOverride  != null) {
-				// not doing all that right now
-				AssertMsg(false, "TODO");
-			}
-			mesh = DynamicTempMesh;
-		}
-		else {
-			mesh = DynamicMesh;
-		}
+		BaseMeshGl46 mesh = DynamicMesh; 
 
 		if (BufferedMode) {
 			Assert(!BufferedMesh.WasNotRendered());
@@ -100,9 +86,11 @@ public class MeshMgr
 		mesh.SetMaterial(matInternal);
 		if(mesh == DynamicMesh) {
 			BaseMeshGl46? baseVertex = (BaseMeshGl46?)vertexOverride;
-			if (baseVertex != null) DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
+			if (baseVertex != null) 
+				DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
 			BaseMeshGl46? baseIndex = (BaseMeshGl46?)vertexOverride;
-			if (baseIndex != null) DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
+			if (baseIndex != null) 
+				DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
 		}
 
 		return mesh;
@@ -110,18 +98,10 @@ public class MeshMgr
 
 	internal IShaderAPI ShaderAPI;
 
-	BufferedMeshGl46 BufferedMesh;
-	DynamicMeshGl46 DynamicMesh;
-	DynamicMeshGl46 DynamicFlexMesh;
-	VertexBufferGl46 DynamicVertexBuffer;
-	IndexBufferGl46 DynamicIndexBuffer;
-	TempMeshGl46 DynamicTempMesh;
 	bool BufferedMode;
 	bool UsingFatVertices;
 
-	VertexBufferGl46? CurrentVertexBuffer;
 	VertexFormat CurrentVertexFormat;
-	IndexBufferBase? CurrentIndexBuffer;
 	int IndexBufferOffset;
 	MaterialPrimitiveType PrimitiveTYpe;
 	int FirstIndex;
@@ -137,23 +117,16 @@ public class MeshMgr
 		TMesh ret = new TMesh();
 		ret.ShaderAPI = MaterialSystem.ShaderAPI;
 		ret.ShaderUtil = MaterialSystem;
+		ret.MeshMgr = MaterialSystem.MeshMgr;
+		ret.ShaderDevice = MaterialSystem.ShaderDevice;
 		return ret;
 	}
+
+	BufferedMeshGl46 BufferedMesh;
+	DynamicMeshGl46 DynamicMesh;
 
 	internal void Init() {
 		BufferedMesh = InitMesh<BufferedMeshGl46>();
 		DynamicMesh = InitMesh<DynamicMeshGl46>();
-		DynamicFlexMesh = InitMesh<DynamicMeshGl46>();
-		DynamicVertexBuffer = new VertexBufferGl46();
-		DynamicIndexBuffer = new IndexBufferGl46();
-		DynamicTempMesh = InitMesh<TempMeshGl46>();
-	}
-
-	internal int VertexFormatSize(VertexFormat vertexFormat) {
-		throw new NotImplementedException();
-	}
-
-	internal IndexBufferGl46 GetDynamicIndexBuffer() {
-		throw new NotImplementedException();
 	}
 }

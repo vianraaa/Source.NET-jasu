@@ -135,49 +135,49 @@ public unsafe struct VertexBuilder
 	public const ulong INVALID_BUFFER_OFFSET = 0xFFFFFFFFUL;
 
 	public VertexDesc Desc;
-	IVertexBuffer VertexBuffer;
+	public IVertexBuffer VertexBuffer;
 
 	// Used to make sure Begin/End calls and BeginModify/EndModify calls match.
-	bool Modify;
+	public bool Modify;
 
 	// Max number of indices and vertices
-	int MaxVertexCount;
+	public int MaxVertexCount;
 
 	// Number of indices and vertices
-	int VertexCount;
+	public int VertexCount;
 
 	// The current vertex and index
-	int CurrentVertex;
+	public int CurrentVertex;
 
 	// Optimization: Pointer to the current pos, norm, texcoord, and color
-	float* CurrPosition;
-	float* CurrNormal;
-	float* CurrTexCoord0;
-	float* CurrTexCoord1;
-	float* CurrTexCoord2;
-	float* CurrTexCoord3;
-	float* CurrTexCoord4;
-	float* CurrTexCoord5;
-	float* CurrTexCoord6;
-	float* CurrTexCoord7;
-	float** CurrTexCoord {
+	public float* CurrPosition;
+	public float* CurrNormal;
+	public float* CurrTexCoord0;
+	public float* CurrTexCoord1;
+	public float* CurrTexCoord2;
+	public float* CurrTexCoord3;
+	public float* CurrTexCoord4;
+	public float* CurrTexCoord5;
+	public float* CurrTexCoord6;
+	public float* CurrTexCoord7;
+	public float** CurrTexCoord {
 		get {
 			fixed (float** ctxcPtr = &CurrTexCoord0)
 				return ctxcPtr;
 		}
 	}
-	byte* CurrColor;
+	public byte* CurrColor;
 
 	// Total number of vertices appended
-	int TotalVertexCount;
+	public int TotalVertexCount;
 
 	// First vertex buffer offset + index
-	uint BufferOffset;
-	uint BufferFirstVertex;
+	public uint BufferOffset;
+	public uint BufferFirstVertex;
 
 	// Debug checks to make sure we write userdata4/tangents AFTER normals
-	bool WrittenNormal;
-	bool WrittenUserData;
+	public bool WrittenNormal;
+	public bool WrittenUserData;
 
 	public void AttachBegin(IMesh mesh, int maxVertexCount, ref VertexDesc desc) {
 		VertexCompressionType compressionType = Desc.CompressionType;
@@ -220,29 +220,29 @@ public unsafe struct VertexBuilder
 public struct IndexBuilder
 {
 	public IndexDesc Desc;
-	IIndexBuffer IndexBuffer;
+	public IIndexBuffer IndexBuffer;
 
 	// Max number of indices
-	int MaxIndexCount;
+	public int MaxIndexCount;
 
 	// Number of indices
-	int IndexCount;
+	public int IndexCount;
 
 	// Offset to add to each index as it's written into the buffer
-	int IndexOffset;
+	public int IndexOffset;
 
 	// The current index
-	int CurrentIndex;
+	public int CurrentIndex;
 
 	// Total number of indices appended
-	int TotalIndexCount;
+	public int TotalIndexCount;
 
 	// First index buffer offset + first index
-	uint BufferOffset;
-	uint BufferFirstIndex;
+	public uint BufferOffset;
+	public uint BufferFirstIndex;
 
 	// Used to make sure Begin/End calls and BeginModify/EndModify calls match.
-	bool Modify;
+	public bool Modify;
 
 	public unsafe void AttachBegin(IMesh mesh, int maxIndexCount, ref IndexDesc desc) {
 		IndexBuffer = mesh;
@@ -262,7 +262,7 @@ public struct IndexBuilder
 	}
 }
 
-public struct MeshBuilder : IDisposable
+public unsafe struct MeshBuilder : IDisposable
 {
 	public MeshDesc Desc;
 
@@ -378,8 +378,21 @@ public struct MeshBuilder : IDisposable
 	public ReadOnlySpan<ushort> Index() => throw new NotImplementedException();
 
 	// position setting
-	public void Position3f(float x, float y, float z) => throw new NotImplementedException();
-	public void Position3fv(ReadOnlySpan<float> v) => throw new NotImplementedException();
+	public void Position3f(float x, float y, float z) {
+		float* pDst = VertexBuilder.CurrPosition;
+		*pDst++ = x;
+		*pDst++ = y;
+		*pDst = z;
+	}
+	public void Position3fv(ReadOnlySpan<float> v) {
+		fixed(float* vptr = v) {
+			float* vp = vptr;
+			float* pDst = VertexBuilder.CurrPosition;
+			*pDst++ = *vp++;
+			*pDst++ = *vp++;
+			*pDst = *vp;
+		}
+	}
 
 	// normal setting
 	public void Normal3f(float nx, float ny, float nz) => throw new NotImplementedException();

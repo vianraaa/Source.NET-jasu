@@ -9,6 +9,9 @@ public unsafe class MeshGl46 : BaseMeshGl46 {
 	protected static nint s_nPrims;
 	public static Span<PrimList> Primitives => new(s_pPrims, (int)s_nPrims);
 
+	protected VertexBuffer VertexBuffer;
+	protected IndexBuffer IndexBuffer;
+
 	public override void RenderPass() {
 		Warning("Cannot renderpass\n");
 	}

@@ -23,7 +23,6 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void FlushBufferedPrimitives();
 	bool OnDeviceInit();
 	void InitRenderState();
-	bool IsInSelectionMode();
 	void ClearBuffers(bool bClearColor, bool bClearDepth, bool bClearStencil, int renderTargetWidth, int renderTargetHeight);
 	void ClearColor3ub(byte r, byte g, byte b);
 	void ClearColor4ub(byte r, byte g, byte b, byte a);

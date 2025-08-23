@@ -532,12 +532,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		// Gl46.glVertexAttribPointer() i think we need here
 	}
 
-	bool InSelectionMode;
-
-	public bool IsInSelectionMode() {
-		return InSelectionMode;
-	}
-
 	public IMesh GetDynamicMesh(IMaterial material, int hwSkinBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride) {
 		Assert(material == null || material.IsRealTimeVersion());
 		return MeshMgr.GetDynamicMesh(material, 0, hwSkinBoneCount, buffered, vertexOverride, indexOverride);
