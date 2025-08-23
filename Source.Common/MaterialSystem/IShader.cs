@@ -28,8 +28,7 @@ public interface IShader
 	string? GetFallbackShader(IMaterialVar[] vars);
 	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
 	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	void DrawElements(IMaterialVar[] shaderParams, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
-	int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI);
+	void DrawElements(IMaterialVar[] shaderParams, IShaderDynamicAPI shaderAPI, VertexCompressionType none);
 }
 
 public interface IShaderInit {
@@ -68,18 +67,28 @@ public struct ShaderViewport {
 
 public interface IShaderDynamicAPI
 {
-	int GetCurrentNumBones();
 	MaterialFogMode GetSceneFogMode();
 	bool InFlashlightMode();
 	void PushMatrix();
 	void PopMatrix();
-	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
-	void SetVertexShaderIndex(int value);
 	IMesh GetDynamicMesh(IMaterial material, int nCurrentBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride);
 	bool InEditorMode();
-	void SetVertexShaderConstant(int vERTEX_SHADER_MODULATION_COLOR, Span<float> color);
+
+
+	void BindVertexShader(in VertexShaderHandle vertexShader);
+	void BindGeometryShader(in GeometryShaderHandle geometryShader);
+	void BindPixelShader(in PixelShaderHandle pixelShader);
+
+	void SetVertexShaderConstant(int constant, int integer);
+	void SetVertexShaderConstant(int constant, float fl);
+	void SetVertexShaderConstant(int constant, ReadOnlySpan<float> flConsts);
+	void SetPixelShaderConstant(int constant, int integer);
+	void SetPixelShaderConstant(int constant, float fl);
+	void SetPixelShaderConstant(int constant, ReadOnlySpan<float> flConsts);
 
 	void MatrixMode(MaterialMatrixMode i);
 	void LoadMatrix(in Matrix4x4 transposeTop);
 	void LoadIdentity();
+	int GetCurrentNumBones();
+	GraphicsDriver GetDriver();
 }

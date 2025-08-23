@@ -32,197 +32,6 @@ public struct GfxViewport {
 	public float MaxZ;
 }
 
-public struct TextureStageShadowState
-{
-	public uint ColorOp;
-	public int ColorArg1;
-	public int ColorArg2;
-	public uint AlphaOp;
-	public int AlphaArg1;
-	public int AlphaArg2;
-	public int TexCoordIndex;
-
-	public const int SIZEOF = 4 * 7;
-}
-public struct SamplerShadowState
-{
-	public bool TextureEnable;
-	public bool SRGBReadEnable;
-	public bool Fetch4Enable;
-	public bool ShadowFilterEnable;
-	public const byte SIZEOF = 4;
-}
-
-public unsafe struct ShadowState
-{
-	public const int MAX_SAMPLERS = 16;
-	public const int MAX_TEXTURE_STAGES = 16;
-
-	public uint ZFunc;
-	public uint ZEnable;
-	public uint ColorWriteEnable;
-	public uint FillMode;
-	public uint SrcBlend;
-	public uint DestBlend;
-	public uint BlendOp;
-	public uint SrcBlendAlpha;
-	public uint DestBlendAlpha;
-	public uint BlendOpAlpha;
-	public uint AlphaFunc;
-	public uint AlphaRef;
-	// Wow! That's bad!
-	// But I don't think there's another "good way" to do it because the constructor
-	// won't get called...
-	fixed byte __textureStage[MAX_TEXTURE_STAGES * TextureStageShadowState.SIZEOF];
-	fixed byte __samplerState[MAX_SAMPLERS * SamplerShadowState.SIZEOF];
-
-	public Span<TextureStageShadowState> TextureStage {
-		get {
-			fixed (byte* bPtr = __textureStage)
-				return new(bPtr, MAX_TEXTURE_STAGES);
-		}
-	}
-	public Span<SamplerShadowState> SamplerState {
-		get {
-			fixed (byte* bPtr = __samplerState)
-				return new(bPtr, MAX_SAMPLERS);
-		}
-	}
-
-	public ShaderFogMode FogMode;
-	public bool ZWriteEnable;
-	public byte ZBias;
-	public bool CullEnable;
-	public bool Lighting;
-	public bool SpecularEnable;
-	public bool AlphaBlendEnable;
-	public bool AlphaTestEnable;
-	public bool UsingFixedFunction;
-	public bool VertexBlendEnable;
-	public bool SRGBWriteEnable;
-	public bool SeparateAlphaBlendEnable;
-	public bool StencilEnable;
-	public bool DisableFogGammaCorrection;
-	public bool EnableAlphaToCoverage;
-}
-
-
-public struct CurrentTextureStageState
-{
-	public uint ColorOp;
-	public int ColorArg1;
-	public int ColorArg2;
-	public uint AlphaOp;
-	public int AlphaArg1;
-	public int AlphaArg2;
-
-	public const int SIZEOF = 6 * 4;
-};
-public struct CurrentSamplerState
-{
-	public bool SRGBReadEnable;
-	public bool Fetch4Enable;
-	public bool ShadowFilterEnable;
-
-	public const int SIZEOF = 3;
-};
-public unsafe struct CurrentState
-{
-	public bool AlphaBlendEnable;
-	public uint SrcBlend;
-	public uint DestBlend;
-	public uint BlendOp;
-
-	public bool SeparateAlphaBlendEnable;
-	public uint SrcBlendAlpha;
-	public uint DestBlendAlpha;
-	public uint BlendOpAlpha;
-
-	public bool ZEnable;
-	public uint ZFunc;
-	public PolygonOffsetMode ZBias;
-
-	public bool AlphaTestEnable;
-	public uint AlphaFunc;
-	public uint AlphaRef;
-
-	public bool ForceDepthFuncEquals;
-	public bool OverrideDepthEnable;
-	public bool OverrideZWriteEnable;
-
-	public bool OverrideAlphaWriteEnable;
-	public bool OverriddenAlphaWriteValue;
-	public bool OverrideColorWriteEnable;
-	public bool OverriddenColorWriteValue;
-	public uint m_ColorWriteEnable;
-
-	public bool OverrideBlendEnable;
-	public bool OverriddenBlendWriteValue;
-	public bool OverrideBlendSeperateAlphaEnable;
-	public bool OverriddenBlendSeperateAlphaWriteValue;
-
-	public bool LinearColorSpaceFrameBufferEnable;
-
-	public bool StencilEnable;
-	public uint StencilFunc;
-	public int StencilRef;
-	public int StencilMask;
-	public uint StencilFail;
-	public uint StencilZFail;
-	public uint StencilPass;
-	public int StencilWriteMask;
-
-	fixed byte __textureStage[ShadowState.MAX_TEXTURE_STAGES * CurrentTextureStageState.SIZEOF];
-	fixed byte __samplerState[ShadowState.MAX_SAMPLERS * CurrentSamplerState.SIZEOF];
-
-	public Span<CurrentTextureStageState> TextureStage {
-		get {
-			fixed (byte* bPtr = __textureStage)
-				return new(bPtr, ShadowState.MAX_TEXTURE_STAGES);
-		}
-	}
-
-	public Span<CurrentSamplerState> SamplerState {
-		get {
-			fixed (byte* bPtr = __samplerState)
-				return new(bPtr, ShadowState.MAX_SAMPLERS);
-		}
-	}
-}
-
-
-
-public struct ShadowShaderState
-{
-	public VertexShaderHandle VertexShader;
-	public PixelShaderHandle PixelShader;
-
-	public VertexFormat VertexUsage;
-	public bool ModulateConstantColor;
-}
-
-public struct TextureStageState
-{
-	public int TexCoordIndex;
-	public int TexCoordinate;
-	public float OverbrightVal;
-	public ShaderTexArg[][] Arg;
-	public ShaderTexOp[] Op;
-	public bool TexGenEnable;
-	public bool TextureAlphaEnable;
-}
-
-public struct SamplerState
-{
-	public bool TextureEnable;
-}
-
-public unsafe struct DynamicState
-{
-	public int NumBones;
-	internal ShadeMode ShadeMode;
-}
-
 public enum CommitFuncType
 {
 	PerDraw,
@@ -231,14 +40,10 @@ public enum CommitFuncType
 
 public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 {
-	public TransitionTable TransitionTable;
-	public ShaderShadowGl46 ShaderShadow;
-	public StateSnapshot_t CurrentSnapshot;
 	public MeshMgr MeshMgr;
 	[Imported] public IShaderSystem ShaderManager;
 
-	DynamicState DynamicState;
-	DynamicState DesiredState;
+	public GraphicsDriver GetDriver() => Driver;
 
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
@@ -246,9 +51,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		CreateMatrixStacks();
 
 		ShaderManager.Init();
-		ShaderShadow.Init();
 		MeshMgr.Init();
-		TransitionTable.Init();
 
 		InitRenderState();
 
@@ -292,8 +95,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void InitRenderState() {
-		ShaderShadow.SetDefaultState();
-		TransitionTable.TakeDefaultStateSnapshot();
 		if (!IsDeactivated())
 			ResetRenderState();
 	}
@@ -307,7 +108,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			InitVertexAndPixelShaders();
 		}
 
-		TransitionTable.UseDefaultState();
 		SetDefaultState();
 	}
 
@@ -316,25 +116,23 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ShaderManager.ResetShaderState();
 	}
 
-	public VertexFormat ComputeVertexFormat(Span<StateSnapshot_t> snapshots) {
-		return ComputeVertexUsage(snapshots);
+	public VertexFormat ComputeVertexFormat(Span<VertexFormat> formats) {
+		return ComputeVertexUsage(formats);
 	}
 
-	public VertexFormat ComputeVertexUsage(Span<StateSnapshot_t> snapshots) {
-		if (snapshots.Length == 0)
+	public VertexFormat ComputeVertexUsage(Span<VertexFormat> formats) {
+		if (formats.Length == 0)
 			return 0;
 
-		if (snapshots.Length == 1) {
-			ref ShadowShaderState state = ref TransitionTable.GetSnapshotShader(snapshots[0]);
-			return state.VertexUsage;
+		if (formats.Length == 1) {
+			return formats[0];
 		}
 
 		VertexCompressionType compression = VertexCompressionType.None;
 		int userDataSize = 0, numBones = 0, flags = 0;
 		Span<int> texCoordSize = [0, 0, 0, 0, 0, 0, 0, 0];
-		for (int i = snapshots.Length; --i >= 0;) {
-			ref ShadowShaderState state = ref TransitionTable.GetSnapshotShader(snapshots[i]);
-			VertexFormat fmt = state.VertexUsage;
+		for (int i = formats.Length; --i >= 0;) {
+			VertexFormat fmt = formats[i];
 			flags |= fmt.VertexFlags();
 
 			VertexCompressionType newCompression = fmt.CompressionType();
@@ -375,52 +173,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return MeshMgr.ComputeVertexFormat(flags, IMesh.VERTEX_MAX_TEXTURE_COORDINATES, texCoordSize, numBones, userDataSize);
 	}
 
-	public bool IsAlphaTested(StateSnapshot_t id) {
-		return TransitionTable.GetSnapshot(id).AlphaBlendEnable;
-	}
-
-	public bool IsTranslucent(StateSnapshot_t id) {
-		return TransitionTable.GetSnapshot(id).AlphaTestEnable;
-	}
-	public bool IsDepthWriteEnabled(StateSnapshot_t id) {
-		return TransitionTable.GetSnapshot(id).ZWriteEnable;
-	}
-
-	public bool UsesVertexAndPixelShaders(StateSnapshot_t id) {
-		return TransitionTable.GetSnapshotShader(id).VertexShader != VertexShaderHandle.INVALID;
-	}
-
-	public StateSnapshot_t TakeSnapshot() {
-		return TransitionTable.TakeSnapshot();
-	}
-
-	public int GetCurrentNumBones() {
-		return DynamicState.NumBones;
-	}
-
-	public void SetNumBoneWeights(int bones) {
-		if (DynamicState.NumBones != bones) {
-			FlushBufferedPrimitives();
-			DynamicState.NumBones = GetCurrentNumBones();
-			if (!Unsafe.IsNullRef(ref TransitionTable.CurrentShadowState())) {
-				SetVertexBlendState(TransitionTable.CurrentShadowState().VertexBlendEnable ? -1 : 0);
-			}
-		}
-	}
-
-	private void SetVertexBlendState(int numBones) {
-		if (numBones < 0)
-			numBones = DynamicState.NumBones;
-
-		if (numBones > 0)
-			--numBones;
-
-		// TODO: rest of this 
-	}
-
 	public MaterialFogMode GetSceneFogMode() {
 		return SceneFogMode;
 	}
+
 	MaterialFogMode SceneFogMode = MaterialFogMode.None;
 
 	internal IShaderUtil ShaderUtil;
@@ -443,21 +199,14 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	MeshBase? RenderMesh;
 	IMaterialInternal? Material;
 
-	internal void RenderPass(byte pass, int passCount) {
+	internal void RenderPass() {
 		if (IsDeactivated())
 			return;
 
-		Assert(CurrentSnapshot != -1);
-		TransitionTable.UseSnapshot(CurrentSnapshot);
-		CommitPerPassStateChanges(CurrentSnapshot);
 		if (RenderMesh != null)
 			RenderMesh.RenderPass();
 		else
 			MeshMgr.RenderPassWithVertexAndIndexBuffers();
-	}
-
-	private void CommitPerPassStateChanges(short currentSnapshot) {
-
 	}
 
 	private bool IsDeactivated() {
@@ -475,11 +224,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		IsGeneral
 	}
 
-	internal void BeginPass(StateSnapshot_t snapshot) {
-		CurrentSnapshot = snapshot;
-		if (RenderMesh != null)
-			RenderMesh.BeginPass();
-	}
 
 	public void PushMatrix() {
 		if (MatrixIsChanging()) {
@@ -562,9 +306,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal void ShadeMode(ShadeMode shadeMode) {
-		if (DynamicState.ShadeMode != shadeMode) {
-			DynamicState.ShadeMode = shadeMode;
-		}
+		throw new NotImplementedException();
 	}
 
 	public bool InEditorMode() {
@@ -646,6 +388,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	internal IServiceProvider services;
 	internal IGraphicsContext? Device;
+	internal GraphicsDriver Driver;
 
 	public bool InitDevice(nint window, in ShaderDeviceInfo deviceInfo) {
 		IGraphicsProvider graphics = services.GetRequiredService<IGraphicsProvider>();
@@ -653,8 +396,9 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (Device == null)
 			return false;
 
+		Driver = deviceInfo.Driver;
 		unsafe {
-			if (deviceInfo.Driver.HasFlag(GraphicsAPIVersion.OpenGL))
+			if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL))
 				GL_LoadExtensions(graphics.GL_LoadExtensionsPtr());
 		}
 
@@ -681,31 +425,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		glFlush();
 	}
 
-	internal void ApplyZBias(in ShadowState state) {
-
-	}
-
 	bool IShaderDevice.IsDeactivated() => IsDeactivated();
 
-	internal void ApplyTextureEnable(in ShadowState state, int i) {
-		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyTextureEnable, not implemented!!!\n");
-	}
-
-	internal void ApplyAlphaToCoverage(bool enableAlphaToCoverage) {
-		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyAlphaToCoverage, not implemented!!!\n");
-	}
-
-	internal void ApplyCullEnable(bool cullEnable) {
-		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyCullEnable, not implemented!!!\n");
-	}
-
-	internal void ApplyVertexBlendEnable(bool vertexBlendEnable) {
-		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyVertexBlendEnable, not implemented!!!\n");
-	}
-
-	internal void ApplyFogMode(ShaderFogMode fogMode) {
-		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyFogMode, not implemented!!!\n");
-	}
 
 	public void MatrixMode(MaterialMatrixMode i) {
 
@@ -722,5 +443,33 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public void LoadIdentity() {
 
+	}
+
+	public void SetVertexShaderConstant(int constant, int integer) {
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderConstant(int constant, float fl) {
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderConstant(int constant, ReadOnlySpan<float> flConsts) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderConstant(int constant, int integer) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderConstant(int constant, float fl) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderConstant(int constant, ReadOnlySpan<float> flConsts) {
+		throw new NotImplementedException();
+	}
+
+	public int GetCurrentNumBones() {
+		return 0;
 	}
 }

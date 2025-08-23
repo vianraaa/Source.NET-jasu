@@ -29,10 +29,12 @@ public abstract class BaseVSShader : BaseShader
 			parms[index].SetIntValue(value);
 	}
 
-
 	internal void InitParamsUnlitGeneric(int baseTextureVar, int detailScaleVar, int envmapOptionalVar,
 		int envmapVar, int envmapTintVar, int envmapMaskScaleVar, int detailBlendMode) {
 		IMaterialVar[] shaderParams = Params!;
+
+		// Load unlit generic
+		vsh = ShaderSystem.GetOrCreateVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
 
 		SetFlags2(shaderParams, MaterialVarFlags2.SupportsHardwareSkinning);
 
@@ -72,6 +74,9 @@ public abstract class BaseVSShader : BaseShader
 		}
 	}
 
+	VertexShaderHandle vsh;
+	PixelShaderHandle psh;
+
 	public void VertexShaderUnlitGenericPass(int baseTextureVar, int frameVar,
 												  int baseTextureTransformVar,
 												  int detailVar, int detailTransform,
@@ -104,249 +109,76 @@ public abstract class BaseVSShader : BaseShader
 		bool bMaskBaseByDetailAlpha = (nDetailBlendModeVar >= 0) && (shaderParams[nDetailBlendModeVar].GetIntValue() == 9);
 		bool bSeparateDetailUVs = (nSeparateDetailUVsVar >= 0) && (shaderParams[nSeparateDetailUVsVar].GetIntValue() != 0);
 
-		if (IsSnapshotting()) {
-			// Alpha test
-			ShaderShadow.EnableAlphaTest(IsFlagSet(shaderParams, MaterialVarFlags.AlphaTest));
+		ShaderAPI!.BindVertexShader(in vsh);
+		ShaderAPI!.BindPixelShader(in psh);
 
-			if (alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f) {
-				ShaderShadow.AlphaFunc(ShaderAlphaFunc.GreaterEqual, shaderParams[alphaTestReferenceVar].GetFloatValue());
-			}
-
-			// Base texture on stage 0
-			if (bBaseTexture) {
-				ShaderShadow.EnableTexture(Sampler.Sampler0, true);
-			}
-
-			if (bDetail) {
-				ShaderShadow.EnableTexture(Sampler.Sampler3, true);
-			}
-
-			if (bEnvmap) {
-				// envmap on stage 1
-				ShaderShadow.EnableTexture(Sampler.Sampler1, true);
-
-				// envmapmask on stage 2
-				if (bMask || bBaseAlphaEnvmapMask)
-					ShaderShadow.EnableTexture(Sampler.Sampler2, true);
-			}
-
-			if (bBaseTexture)
-				SetDefaultBlendingShadowState(baseTextureVar, true);
-			else if (bMask)
-				SetDefaultBlendingShadowState(envmapMaskVar, false);
-			else
-				SetDefaultBlendingShadowState();
-
-			uint fmt = (uint)VertexFormat.Position;
-			if (bEnvmap)
-				fmt |= (uint)VertexFormat.Normal;
-			if (bVertexColor)
-				fmt |= (uint)VertexFormat.Color;
-
-			int numTexCoords = 1;
-			if (bSeparateDetailUVs) {
-				numTexCoords = 2;
-			}
-
-			ShaderShadow.VertexShaderVertexFormat(fmt, numTexCoords, null, 0);
-			ReadOnlySpan<char> shName = UnlitGeneric_ComputePixelShaderName(
-				bMask,
-				bEnvmap,
-				bBaseTexture,
-				bBaseAlphaEnvmapMask,
-				bDetail,
-				bDetailMultiply,
-				bMaskBaseByDetailAlpha);
-			ShaderShadow.SetPixelShader(shName);
-
-			// Compute the vertex shader index.
-			unlitgeneric_vs11_Static_Index vshIndex = new();
-			vshIndex.SetDETAIL(bDetail);
-			vshIndex.SetENVMAP(bEnvmap ? 1 : 0);
-			vshIndex.SetENVMAPCAMERASPACE(bEnvmap && bEnvmapCameraSpace);
-			vshIndex.SetENVMAPSPHERE(bEnvmap && bEnvmapSphere);
-			vshIndex.SetVERTEXCOLOR(bVertexColor ? 1 : 0);
-			vshIndex.SetSEPARATEDETAILUVS(bSeparateDetailUVs ? 1 : 0);
-			ShaderShadow.SetVertexShader("unlitgeneric_vs11", vshIndex.GetIndex());
-
-			DefaultFog();
+		if (ShaderAPI!.InFlashlightMode()) {
+			Draw(false);
+			return;
 		}
-		else {
-			if (ShaderAPI!.InFlashlightMode()) // Not snapshotting && flashlight pass
-			{
-				Draw(false);
-				return;
+
+		if (bBaseTexture) {
+			BindTexture(Sampler.Sampler0, baseTextureVar, frameVar);
+			//SetVertexShaderTextureTransform(baseTextureTransformVar);
+		}
+
+		if (bDetail) {
+			BindTexture(Sampler.Sampler3, detailVar, frameVar);
+
+			if (bDetailTransformIsScale) {
+				//SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, baseTextureTransformVar, detailTransform);
+			}
+			else {
+				//SetVertexShaderTextureTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, detailTransform);
+			}
+		}
+
+		if (bEnvmap) {
+			BindTexture(Sampler.Sampler1, envmapVar, envMapFrameVar);
+
+			if (bMask || bBaseAlphaEnvmapMask) {
+				if (bMask)
+					BindTexture(Sampler.Sampler2, envmapMaskVar, envmapMaskFrameVar);
+				else
+					BindTexture(Sampler.Sampler2, baseTextureVar, frameVar);
+
+				//SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_2, baseTextureTransformVar, envmapMaskScaleVar);
 			}
 
-			if (bBaseTexture) {
-				BindTexture(Sampler.Sampler0, baseTextureVar, frameVar);
-				SetVertexShaderTextureTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, baseTextureTransformVar);
+			//SetEnvMapTintPixelShaderDynamicState(2, envmapTintVar, -1);
+
+			if (bEnvmapSphere || IsFlagSet(shaderParams, MaterialVarFlags.EnvMapCameraSpace)) {
+				//LoadViewMatrixIntoVertexShaderConstant(VERTEX_SHADER_VIEWMODEL);
 			}
+		}
 
-			if (bDetail) {
-				BindTexture(Sampler.Sampler3, detailVar, frameVar);
+		//SetModulationVertexShaderDynamicState();
 
-				if (bDetailTransformIsScale) {
-					SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, baseTextureTransformVar, detailTransform);
-				}
-				else {
-					SetVertexShaderTextureTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, detailTransform);
-				}
-			}
-
-			if (bEnvmap) {
-				BindTexture(Sampler.Sampler1, envmapVar, envMapFrameVar);
-
-				if (bMask || bBaseAlphaEnvmapMask) {
-					if (bMask)
-						BindTexture(Sampler.Sampler2, envmapMaskVar, envmapMaskFrameVar);
-					else
-						BindTexture(Sampler.Sampler2, baseTextureVar, frameVar);
-
-					SetVertexShaderTextureScaledTransform(VERTEX_SHADER_SHADER_SPECIFIC_CONST_2, baseTextureTransformVar, envmapMaskScaleVar);
-				}
-
-				SetEnvMapTintPixelShaderDynamicState(2, envmapTintVar, -1);
-
-				if (bEnvmapSphere || IsFlagSet(shaderParams, MaterialVarFlags.EnvMapCameraSpace)) {
-					LoadViewMatrixIntoVertexShaderConstant(VERTEX_SHADER_VIEWMODEL);
-				}
-			}
-
-			SetModulationVertexShaderDynamicState();
-
-			Span<float> flConsts = [ 0, 0, 0, 1, 				// color
+		Span<float> flConsts = [ 0, 0, 0, 1, 				// color
 			0, 0, 0, 0,					// max
 			0, 0, 0, .5f,				// min
 		];
 
-			// set up outline pixel shader constants
-			if (bDetailMultiply && (nOutlineVar != -1) && (shaderParams[nOutlineVar].GetIntValue() != 0)) {
-				if (nOutlineColorVar != -1)
-					shaderParams[nOutlineColorVar].GetVecValue(flConsts[..3]);
-				if (nOutlineEndVar != -1)
-					flConsts[7] = shaderParams[nOutlineEndVar].GetFloatValue();
-				if (nOutlineStartVar != -1)
-					flConsts[11] = shaderParams[nOutlineStartVar].GetFloatValue();
-			}
-
-			ShaderAPI.SetPixelShaderConstant(0, flConsts, 3);
-
-			// Compute the vertex shader index.
-			unlitgeneric_vs11_Dynamic_Index vshIndex = new();
-			vshIndex.SetDOWATERFOG(ShaderAPI.GetSceneFogMode() == MaterialFogMode.LinearBelowFogZ);
-			vshIndex.SetSKINNING(ShaderAPI.GetCurrentNumBones() > 0);
-			
-			ShaderAPI.SetVertexShaderIndex(vshIndex.GetIndex());
+		// set up outline pixel shader constants
+		if (bDetailMultiply && (nOutlineVar != -1) && (shaderParams[nOutlineVar].GetIntValue() != 0)) {
+			if (nOutlineColorVar != -1)
+				shaderParams[nOutlineColorVar].GetVecValue(flConsts[..3]);
+			if (nOutlineEndVar != -1)
+				flConsts[7] = shaderParams[nOutlineEndVar].GetFloatValue();
+			if (nOutlineStartVar != -1)
+				flConsts[11] = shaderParams[nOutlineStartVar].GetFloatValue();
 		}
+
+		// ShaderAPI.SetPixelShaderConstant("", flConsts[..3]);
 
 		Draw();
 	}
 
-	private void SetModulationVertexShaderDynamicState() {
-		Span<float> color = [1, 1, 1, 1];
-		ComputeModulationColor(color);
-		ShaderAPI!.SetVertexShaderConstant(VERTEX_SHADER_MODULATION_COLOR, color);
-	}
-
-	private void ComputeModulationColor(Span<float> color) {
-		Assert(IsSnapshotting());
-		if (Params == null) return;
-
-		IMaterialVar colorVar = Params[(int)ShaderMaterialVars.Color];
-		if (colorVar.GetVarType() == MaterialVarType.Vector)
-			colorVar.GetVecValue(color[..3]);
-		else {
-			color[0] = color[1] = color[2] = colorVar.GetFloatValue();
-		}
-
-		// todo: the rest of this
-	}
-
-	private void LoadViewMatrixIntoVertexShaderConstant(int vERTEX_SHADER_VIEWMODEL) {
-		throw new NotImplementedException();
-	}
-
-	private void SetEnvMapTintPixelShaderDynamicState(int v1, int envmapTintVar, int v2) {
-		throw new NotImplementedException();
-	}
-
-	private void BindTexture(Sampler sampler0, int baseTextureVar, int frameVar) {
-		throw new NotImplementedException();
-	}
-
-	private void SetVertexShaderTextureTransform(int vERTEX_SHADER_SHADER_SPECIFIC_CONST_4, int detailTransform) {
-		throw new NotImplementedException();
-	}
-
-	private void SetVertexShaderTextureScaledTransform(int vERTEX_SHADER_SHADER_SPECIFIC_CONST_4, int baseTextureTransformVar, int detailTransform) {
-		throw new NotImplementedException();
+	private void BindTexture(Sampler sampler, int baseTextureVar, int frameVar) {
 	}
 
 	private void Draw(bool makeActualDrawCall = true) {
-		if (IsSnapshotting()) {
-			if (false && (Params[(int)MaterialVarFlags.Debug].GetIntValue() & (int)MaterialVarFlags.NoDebugOverride) == 0) {
-				ShaderShadow.EnableDepthWrites(true);
-				ShaderShadow.EnableBlending(true);
-			}
-			ShaderSystem.TakeSnapshot();
-		}
-		else {
-			ShaderSystem.DrawSnapshot(makeActualDrawCall);
-		}
-	}
-
-	static string[] staticPixelShaderNames =
-	[
-		"UnlitGeneric_NoTexture",
-		"UnlitGeneric",
-		"UnlitGeneric_EnvMapNoTexture",
-		"UnlitGeneric_EnvMap",
-		"UnlitGeneric_NoTexture",
-		"UnlitGeneric",
-		"UnlitGeneric_EnvMapMaskNoTexture",
-		"UnlitGeneric_EnvMapMask",
-
-		"UnlitGeneric_DetailNoTexture",
-		"UnlitGeneric_Detail",
-		"UnlitGeneric_EnvMapNoTexture", 
-		"UnlitGeneric_DetailEnvMap",
-		"UnlitGeneric_DetailNoTexture",
-		"UnlitGeneric_Detail",
-		"UnlitGeneric_EnvMapMaskNoTexture",
-		"UnlitGeneric_DetailEnvMapMask"
-	];
-
-	public ReadOnlySpan<char> UnlitGeneric_ComputePixelShaderName(bool bMask, bool bEnvmap, bool bBaseTexture, bool bBaseAlphaEnvmapMask, bool bDetail, bool bDetailMultiply, bool bMaskBaseByDetailAlpha) {
-		if (bDetail && bDetailMultiply)
-			return "alphadist_ps11";
-
-		if (bDetail && bMaskBaseByDetailAlpha)
-			return "UnlitGeneric_MaskBaseByDetailAlpha_ps11";
-
-		if (!bMask && bEnvmap && bBaseTexture && bBaseAlphaEnvmapMask) {
-			if (!bDetail)
-				return "UnlitGeneric_BaseAlphaMaskedEnvMap";
-			else
-				return "UnlitGeneric_DetailBaseAlphaMaskedEnvMap";
-		}
-		else {
-			int pshIndex = 0;
-			if (bBaseTexture)
-				pshIndex |= 0x1;
-			if (bEnvmap)
-				pshIndex |= 0x2;
-			if (bMask)
-				pshIndex |= 0x4;
-			if (bDetail)
-				pshIndex |= 0x8;
-			return staticPixelShaderNames[pshIndex];
-		}
-	}
-
-
-	private void SetDefaultBlendingShadowState(int baseTextureVar, bool v) {
-		throw new NotImplementedException();
+		ShaderSystem.Draw();
 	}
 
 	public void InitUnlitGeneric(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {

@@ -47,11 +47,11 @@ public abstract class MeshBase : IMesh
 	}
 
 	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
-
+		throw new NotImplementedException();
 	}
 
 	public virtual bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
-
+		throw new NotImplementedException();
 	}
 
 	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
@@ -108,9 +108,5 @@ public abstract class MeshBase : IMesh
 
 	internal bool HasFlexMesh() {
 		return false;
-	}
-
-	internal void BeginPass() {
-
 	}
 }

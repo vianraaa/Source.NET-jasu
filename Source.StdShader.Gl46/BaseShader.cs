@@ -15,10 +15,8 @@ public abstract class BaseShader : IShader
 	[Imported] public IShaderSystem ShaderSystem;
 
 	internal static IMaterialVar[]? Params;
-	internal static int ModulationFlags;
 	internal static IShaderInit? ShaderInit;
 	internal static IShaderDynamicAPI? ShaderAPI;
-	internal static IShaderShadow? ShaderShadow;
 	internal static string? TextureGroupName;
 
 	static ShaderParamInfo[] StandardParams = [
@@ -85,8 +83,15 @@ public abstract class BaseShader : IShader
 	public void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 		Assert(Params == null);
 		Params = vars;
+		ComputeShaderUniforms();
 		OnInitShaderParams(vars, materialName);
 		Params = null;
+	}
+
+	private void ComputeShaderUniforms() {
+		for (int i = 0; i < Params!.Length; i++) {
+			throw new Exception("Yay! We need to do this part next");
+		}
 	}
 
 	protected virtual void OnInitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
@@ -97,61 +102,23 @@ public abstract class BaseShader : IShader
 
 	}
 
-	protected virtual void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+	protected virtual void OnDrawElements(IMaterialVar[] vars, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
 
 	}
 
-	public void DrawElements(IMaterialVar[] vars, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+	public void DrawElements(IMaterialVar[] vars, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
 		Assert(Params == null);
 		Params = vars;
-		ModulationFlags = modulationFlags;
 		ShaderAPI = shaderAPI;
-		ShaderShadow = shadow;
 
-		if (IsSnapshotting()) {
-			SetInitialShadowState();
-		}
+		OnDrawElements(vars, shaderAPI, vertexCompression);
 
-		OnDrawElements(vars, shadow, shaderAPI, vertexCompression, ref contextData);
-
-		ModulationFlags = 0;
 		Params = null;
 		ShaderAPI = null;
-		ShaderShadow = null;
-		ModulationFlags = 0;
 		// MeshBuilder = null
 	}
 
-	private void SetInitialShadowState() {
-		ShaderShadow!.SetDefaultState();
-		int flags = Params![(int)ShaderMaterialVars.Flags].GetIntValue();
-		if ((flags & (int)MaterialVarFlags.IgnoreZ) != 0) {
-			ShaderShadow.EnableDepthTest(false);
-			ShaderShadow.EnableDepthWrites(false);
-		}
 
-		if ((flags & (int)MaterialVarFlags.Decal) != 0) {
-			ShaderShadow.EnablePolyOffset(PolygonOffsetMode.Decal);
-			ShaderShadow.EnableDepthWrites(false);
-		}
-
-		if ((flags & (int)MaterialVarFlags.NoCull) != 0)
-			ShaderShadow.EnableCulling(false);
-
-		if ((flags & (int)MaterialVarFlags.ZNearer) != 0)
-			ShaderShadow.DepthFunc(ShaderDepthFunc.Nearer);
-
-		if ((flags & (int)MaterialVarFlags.Wireframe) != 0)
-			ShaderShadow.PolyMode(ShaderPolyModeFace.FrontAndBack, ShaderPolyMode.Line);
-
-		if ((flags & (int)MaterialVarFlags.AllowAlphaToCoverage) != 0)
-			ShaderShadow.EnableAlphaToCoverage(true);
-	}
-
-	[MemberNotNullWhen(true, nameof(ShaderShadow))]
-	internal static bool IsSnapshotting() {
-		return ShaderShadow != null;
-	}
 	public bool TextureIsTranslucent(int textureVar = -1, bool isBaseTexture = true) {
 		if (textureVar < 0)
 			return false;
@@ -177,102 +144,7 @@ public abstract class BaseShader : IShader
 
 		return false;
 	}
-	public void DefaultFog() {
-		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0) {
-			FogToBlack();
-		}
-		else {
-			FogToFogColor();
-		}
-	}
 
-	private void DisableFog() {
-		Assert(IsSnapshotting());
-		ShaderShadow.FogMode(ShaderFogMode.Disabled);
-	}
-	private void FogToBlack() {
-		Assert(IsSnapshotting());
-		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.NoFog) == 0) {
-			ShaderShadow.FogMode(ShaderFogMode.Black);
-		}
-		else {
-			ShaderShadow.FogMode(ShaderFogMode.Disabled);
-		}
-	}
-
-	private void FogToFogColor() {
-		Assert(IsSnapshotting());
-		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.NoFog) == 0) {
-			ShaderShadow.FogMode(ShaderFogMode.FogColor);
-		}
-		else {
-			ShaderShadow.FogMode(ShaderFogMode.Disabled);
-		}
-	}
-
-	public void SetAdditiveBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
-		// Either we've got a constant modulation
-		bool isTranslucent = IsAlphaModulating();
-
-		// Or we've got a vertex alpha
-		isTranslucent = isTranslucent || ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0);
-
-		// Or we've got a texture alpha
-		isTranslucent = isTranslucent || (TextureIsTranslucent(textureVar, isBaseTexture) &&
-										   (CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0);
-
-		if (isTranslucent) {
-			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.OneMinusSrcAlpha);
-		}
-		else {
-			DisableAlphaBlending();
-		}
-	}
-
-	private void EnableAlphaBlending(ShaderBlendFactor src, ShaderBlendFactor dst) {
-		Assert(IsSnapshotting());
-		ShaderShadow.EnableBlending(true);
-		ShaderShadow.BlendFunc(src, dst);
-		ShaderShadow.EnableDepthWrites(false);
-	}
-
-	private void DisableAlphaBlending() {
-		Assert(IsSnapshotting());
-		ShaderShadow.EnableBlending(false);
-	}
-
-	public bool IsAlphaModulating() => (ModulationFlags & (int)ShaderUsing.AlphaModulation) != 0;
-	public bool IsColorModulating() => (ModulationFlags & (int)ShaderUsing.ColorModulation) != 0;
-
-	public void SetNormalBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
-		Assert(IsSnapshotting());
-
-		// Either we've got a constant modulation
-		bool isTranslucent = IsAlphaModulating();
-
-		// Or we've got a vertex alpha
-		isTranslucent = isTranslucent || ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0);
-
-		// Or we've got a texture alpha
-		isTranslucent = isTranslucent || (TextureIsTranslucent(textureVar, isBaseTexture) &&
-										   (CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0);
-
-		if (isTranslucent) {
-			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.OneMinusSrcAlpha);
-		}
-		else {
-			DisableAlphaBlending();
-		}
-	}
-
-	public void SetDefaultBlendingShadowState(int textureVar = -1, bool isBaseTexture = true) {
-		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0) {
-			SetAdditiveBlendingShadowState(textureVar, isBaseTexture);
-		}
-		else {
-			SetNormalBlendingShadowState(textureVar, isBaseTexture);
-		}
-	}
 	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		Assert(Params == null);
 		Params = shaderParams;
@@ -303,58 +175,6 @@ public abstract class BaseShader : IShader
 		IMaterialVar nameVar = Params[textureVar];
 		if (nameVar != null && nameVar.IsDefined()) {
 			ShaderInit!.LoadTexture(nameVar, TextureGroupName, additionalCreationFlags);
-		}
-	}
-
-	public int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI) {
-		ShaderAPI = shaderAPI;
-
-		int mod = 0;
-		if (GetAlpha (parms) < 1.0f) {
-			mod |= (int)ShaderUsing.AlphaModulation;
-		}
-
-		Span<float> color = stackalloc float[3];
-		GetColorParameter (parms, color);
-
-		if ((color[0] != 1.0) || (color[1] != 1.0) || (color[2] != 1.0)) {
-			mod |= (int)ShaderUsing.ColorModulation;
-		}
-
-		if (UsingFlashlight (parms) ) {
-			mod |= (int)ShaderUsing.Flashlight;
-		}
-
-		if (UsingEditor (parms) ) {
-			mod |= (int)ShaderUsing.Editor;
-		}
-
-		if (IsFlag2Set(parms, MaterialVarFlags2.UseFixedFunctionBakedLighting)) {
-			Assert(IsFlag2Set(parms, MaterialVarFlags2.NeedsBakedLightingSnapshots));
-			if (IsFlag2Set(parms, MaterialVarFlags2.NeedsBakedLightingSnapshots)) {
-				mod |= (int)ShaderUsing.FixedFunctionBakedLighting;
-			}
-		}
-
-		ShaderAPI = null;
-		return mod;
-	}
-
-	private bool UsingEditor(Span<IMaterialVar> parms) {
-		if (IsSnapshotting()) {
-			return IsFlag2Set(parms, MaterialVarFlags2.UseEditor);
-		}
-		else {
-			return ShaderAPI!.InEditorMode();
-		}
-	}
-
-	private bool UsingFlashlight(Span<IMaterialVar> parms) {
-		if (IsSnapshotting()) {
-			return IsFlag2Set(parms, MaterialVarFlags2.UseFlashlight);
-		}
-		else {
-			return ShaderAPI!.InFlashlightMode();
 		}
 	}
 

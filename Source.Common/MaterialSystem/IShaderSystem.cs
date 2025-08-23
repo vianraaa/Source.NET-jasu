@@ -6,20 +6,15 @@ using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 
-public enum ShaderUsing {
-	ColorModulation = 0x1,
-	AlphaModulation = 0x2,
-	Flashlight = 0x4,
-	FixedFunctionBakedLighting = 0x8,
-	Editor = 0x10
-}
 public interface IShaderSystem
 {
 	void BindTexture(Sampler sampler, ITexture texture);
-	void DrawSnapshot(bool makeActualDrawCall = true);
+	void Draw(bool makeActualDrawCall = true);
 	void Init();
 	void ResetShaderState();
-	void TakeSnapshot();
+
+	VertexShaderHandle GetOrCreateVertexShader(ReadOnlySpan<char> name);
+	PixelShaderHandle GetOrCreatePixelShader(ReadOnlySpan<char> name);
 }
 public interface IShaderDLL
 {
