@@ -447,11 +447,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (IsDeactivated())
 			return;
 
+		Assert(CurrentSnapshot != -1);
 		TransitionTable.UseSnapshot(CurrentSnapshot);
+		CommitPerPassStateChanges(CurrentSnapshot);
 		if (RenderMesh != null)
 			RenderMesh.RenderPass();
 		else
 			MeshMgr.RenderPassWithVertexAndIndexBuffers();
+	}
+
+	private void CommitPerPassStateChanges(short currentSnapshot) {
+
 	}
 
 	private bool IsDeactivated() {
