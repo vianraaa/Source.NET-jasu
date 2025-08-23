@@ -18,6 +18,10 @@ public unsafe class MeshGl46 : BaseMeshGl46 {
 		return Type;
 	}
 
+	public override void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		ShaderUtil.SyncMatrices();
+	}
+
 	public override void SetPrimitiveType(MaterialPrimitiveType type) {
 		if (!ShaderUtil.OnSetPrimitiveType(this, type))
 			return;

@@ -138,7 +138,7 @@ public class MatRenderContext : IMatRenderContextInternal
 		IMaterialInternal material = (IMaterialInternal)iMaterial;
 		material = material.GetRealTimeVersion(); // TODO: figure out how to do this.
 
-		// SyncMatrices();
+		SyncMatrices();
 
 		if (material == null) {
 			Dbg.Warning("Programming error: MatRenderContext.Bind NULL material\n");
@@ -178,7 +178,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount) {
-		// SyncMatrices();
+		SyncMatrices();
 		return true;
 	}
 
@@ -231,5 +231,55 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	public bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type) {
 		return true;
+	}
+
+	public static bool ShouldValidateMatrices() => false;
+	public static bool AllowLazyMatrixSync() => false;
+
+	public void ForceSyncMatrix(MaterialMatrixMode mode) {
+		ref MatrixStackItem top = ref MatrixStacks[(int)mode].Top();
+		if((top.Flags & MatrixStackFlags.Dirty) > 0) {
+			bool setMode = matrixMode != mode;
+			if (setMode)
+				shaderAPI.MatrixMode(mode);
+
+			if ((top.Flags & MatrixStackFlags.Identity) == 0) {
+				Matrix4x4 transposeTop = Matrix4x4.Transpose(top.Matrix);
+				shaderAPI.LoadMatrix(in transposeTop);
+			}
+			else {
+				shaderAPI.LoadIdentity();
+			}
+
+			if (setMode)
+				shaderAPI.MatrixMode(mode);
+
+			top.Flags &= ~MatrixStackFlags.Dirty;
+		}
+	}
+
+	public void SyncMatrices() {
+		if(!ShouldValidateMatrices() && AllowLazyMatrixSync()) {
+			for (int i = 0; i < (int)MaterialMatrixMode.Count; i++) {
+				ref MatrixStackItem top = ref MatrixStacks[i].Top();
+				if((top.Flags & MatrixStackFlags.Dirty) > 0) {
+					shaderAPI.MatrixMode((MaterialMatrixMode)i);
+					if((top.Flags & MatrixStackFlags.Identity) == 0) {
+						Matrix4x4 transposeTop = Matrix4x4.Transpose(top.Matrix);
+						shaderAPI.LoadMatrix(in transposeTop);
+					}
+					else {
+						shaderAPI.LoadIdentity();
+					}
+
+					top.Flags &= ~MatrixStackFlags.Dirty;
+				}
+			}
+		}
+	}
+
+	public void SyncMatrix(MaterialMatrixMode mode) {
+		if (!ShouldValidateMatrices() && AllowLazyMatrixSync())
+			ForceSyncMatrix(mode);
 	}
 }

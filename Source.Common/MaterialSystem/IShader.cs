@@ -1,6 +1,8 @@
 ﻿using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
+using System.Numerics;
+
 namespace Source.Common.MaterialSystem;
 
 
@@ -76,4 +78,8 @@ public interface IShaderDynamicAPI
 	IMesh GetDynamicMesh(IMaterial material, int nCurrentBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride);
 	bool InEditorMode();
 	void SetVertexShaderConstant(int vERTEX_SHADER_MODULATION_COLOR, Span<float> color);
+
+	void MatrixMode(MaterialMatrixMode i);
+	void LoadMatrix(in Matrix4x4 transposeTop);
+	void LoadIdentity();
 }

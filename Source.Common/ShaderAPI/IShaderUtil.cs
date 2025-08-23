@@ -8,4 +8,6 @@ public interface IShaderUtil
 	bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount);
 	bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type);
 	bool OnFlushBufferedPrimitives();
+	void SyncMatrices();
+	void SyncMatrix(MaterialMatrixMode mode);
 }

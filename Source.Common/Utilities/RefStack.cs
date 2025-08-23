@@ -84,6 +84,11 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 
 	}
 
+	public ref T Top() {
+		Assert(Count > 0);
+		return ref getBacking(count - 1);
+	}
+
 	public int Count => count;
 
 	public ref T this[int index] {

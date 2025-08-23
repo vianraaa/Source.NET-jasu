@@ -712,4 +712,21 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	internal void ApplyFogMode(ShaderFogMode fogMode) {
 		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyFogMode, not implemented!!!\n");
 	}
+
+	public void MatrixMode(MaterialMatrixMode i) {
+
+	}
+
+	public void LoadMatrix(in Matrix4x4 transposeTop) {
+
+	}
+
+	public int GetMatrixStack(MaterialMatrixMode mode) {
+		Assert(mode >= 0 && mode < MaterialMatrixMode.Count);
+		return (int)mode;
+	}
+
+	public void LoadIdentity() {
+
+	}
 }

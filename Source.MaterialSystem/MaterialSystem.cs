@@ -271,6 +271,9 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		throw new NotImplementedException();
 	}
 
+	public void SyncMatrices() => GetRenderContextInternal().SyncMatrices();
+	public void SyncMatrix(MaterialMatrixMode mode) => GetRenderContextInternal().SyncMatrix(mode);
+
 	public IMaterialInternal errorMaterial;
 }
 

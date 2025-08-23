@@ -11,4 +11,6 @@ public interface IMatRenderContextInternal : IMatRenderContext
 	bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type);
 	void SetFrameTime(double frameTime);
 	void SwapBuffers();
+	void SyncMatrices();
+	void SyncMatrix(MaterialMatrixMode mode);
 }
