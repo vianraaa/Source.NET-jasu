@@ -521,4 +521,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, ReadOnlySpan<float> flConsts) {
 		throw new NotImplementedException();
 	}
+
+	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, nint v) {
+		throw new NotImplementedException();
+	}
 }

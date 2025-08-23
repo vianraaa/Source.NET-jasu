@@ -50,8 +50,10 @@ public class ShaderSystem : IShaderSystemInternal
 	internal ShaderAPIGl46 ShaderAPI;
 	internal MaterialSystem_Config Config;
 
-	public void BindTexture(Sampler sampler, ITexture texture) {
-		throw new NotImplementedException();
+	public void BindTexture(in MaterialVarGPU hardwareTarget, ITexture texture, int frame) {
+		if (texture == null) return;
+
+		((ITextureInternal)texture).Bind(in hardwareTarget, frame);
 	}
 
 	public void ResetShaderState() {

@@ -8,7 +8,7 @@ namespace Source.Common.MaterialSystem;
 
 public interface IShaderSystem
 {
-	void BindTexture(Sampler sampler, ITexture texture);
+	void BindTexture(in MaterialVarGPU hardwareTarget, ITexture texture, int frame = 0);
 	void Draw(bool makeActualDrawCall = true);
 	void Init();
 	void ResetShaderState();

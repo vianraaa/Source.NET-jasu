@@ -217,9 +217,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		Flags = (uint)CompiledVtfFlags.NoMip;
 		SetErrorTexture(true);
 		FrameCount = 1;
-		if (TextureHandles == null) 
+		if (TextureHandles == null)
 			AllocateTextureHandles();
-		
+
 	}
 
 	/// <summary>
@@ -233,11 +233,11 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			Assert(FrameCount >= 2);
 
 		TextureHandles = new ShaderAPITextureHandle_t[FrameCount];
-		for (int i = 0; i < FrameCount; i++) 
+		for (int i = 0; i < FrameCount; i++)
 			TextureHandles[i] = INVALID_SHADERAPI_TEXTURE_HANDLE;
 	}
 	private void ReleaseTextureHandles() {
-		if(TextureHandles != null) {
+		if (TextureHandles != null) {
 			TextureHandles = null;
 		}
 	}
@@ -248,6 +248,15 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 	private bool HasBeenAllocated() {
 		return (InternalFlags & (int)InternalTextureFlags.Allocated) != 0;
+	}
+
+	public void Bind(in MaterialVarGPU hardwareTarget, int frame) {
+		if (HasBeenAllocated()) {
+			materials.ShaderAPI.BindTexture(in hardwareTarget, frame, TextureHandles![frame]);
+		}
+		else {
+			Warning($"Tried to bind texture {GetName()}, but texture handles are not valid.\n");
+		}
 	}
 
 	Vector3 Reflectivity;

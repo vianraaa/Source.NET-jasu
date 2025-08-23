@@ -14,5 +14,6 @@ public interface ITextureInternal : ITexture {
 		return new(name); // todo.
 	}
 
+	void Bind(in MaterialVarGPU hardwareTarget, int frame);
 	void Precache();
 }
