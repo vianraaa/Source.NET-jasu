@@ -8,7 +8,9 @@ using Source.Common.ShaderLib;
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Text;
 
 namespace Source.MaterialSystem;
 
@@ -286,7 +288,7 @@ public class ShaderSystem : IShaderSystemInternal
 	int pixelShaderIndex;
 
 	internal void SetVertexShader(in VertexShaderHandle vertexShader) {
-		if(vertexShader == VertexShaderHandle.INVALID) {
+		if (vertexShader == VertexShaderHandle.INVALID) {
 			SetVertexShaderState(0);
 			return;
 		}
@@ -308,10 +310,29 @@ public class ShaderSystem : IShaderSystemInternal
 	Dictionary<ulong, VertexShaderHandle> vshs = [];
 	Dictionary<ulong, PixelShaderHandle> pshs = [];
 
+	internal static unsafe bool IsValidShader(uint program, [NotNullWhen(false)] out string? error) {
+		int status = 0;
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
+		if (status != GL_TRUE) {
+			int logLength = 0;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+			if (logLength > 0) {
+				byte[] infoLog = new byte[logLength];
+				fixed (byte* infoPtr = infoLog) {
+					glGetProgramInfoLog(program, logLength, null, infoPtr);
+				}
+				glDeleteProgram(program);
+				error = Encoding.ASCII.GetString(infoLog);
+				return false;
+			}
+		}
 
+		error = null;
+		return true;
+	}
 	public unsafe VertexShaderHandle LoadVertexShader(ReadOnlySpan<char> name) {
 		ulong symbol = name.Hash();
-		if(vshs.TryGetValue(symbol, out VertexShaderHandle value))
+		if (vshs.TryGetValue(symbol, out VertexShaderHandle value))
 			return value;
 
 		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
@@ -323,6 +344,12 @@ public class ShaderSystem : IShaderSystemInternal
 		uint pShader = 0;
 		fixed (byte* pSrc = source)
 			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+
+		if (!IsValidShader(pShader, out string? error)) {
+			Warning("WARNING: Vertex shader compilation error.\n");
+			Warning(error);
+			return VertexShaderHandle.INVALID;
+		}
 
 		VertexShaderHandle vsh = new((nint)pShader);
 		vshs[symbol] = vsh;
@@ -343,6 +370,12 @@ public class ShaderSystem : IShaderSystemInternal
 		uint pShader = 0;
 		fixed (byte* pSrc = source)
 			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+
+		if (!IsValidShader(pShader, out string? error)) {
+			Warning("WARNING: Pixel shader compilation error.\n");
+			Warning(error);
+			return PixelShaderHandle.INVALID;
+		}
 
 		PixelShaderHandle psh = new((nint)pShader);
 		pshs[symbol] = psh;

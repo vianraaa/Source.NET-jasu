@@ -96,16 +96,18 @@ public abstract class BaseShader : IShader
 			if (var == null) continue;
 			ref MaterialVarGPU GPU = ref var.GPU;
 
-			GPU.Location = ShaderAPI!.LocateVertexShaderUniform(in vsh, var.GetName());
+			ReadOnlySpan<char> name = var.GetName()[1..];
+
+			GPU.Location = ShaderAPI!.LocateVertexShaderUniform(in vsh, name);
 			if (GPU.Location > 0)
 				GPU.Shader = ShaderType.Vertex;
 			else {
-				GPU.Location = ShaderAPI!.LocatePixelShaderUniform(in psh, var.GetName());
+				GPU.Location = ShaderAPI!.LocatePixelShaderUniform(in psh, name);
 				if (GPU.Location > 0)
 					GPU.Shader = ShaderType.Pixel;
 				else {
 					// Cannot find the shader location :(
-					return;
+					continue;
 				}
 			}
 		}

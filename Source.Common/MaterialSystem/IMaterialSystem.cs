@@ -66,14 +66,6 @@ public enum MaterialMatrixMode
 {
 	View,
 	Projection,
-	Texture0,
-	Texture1,
-	Texture2,
-	Texture3,
-	Texture4,
-	Texture5,
-	Texture6,
-	Texture7,
 	Model,
 	Count
 }

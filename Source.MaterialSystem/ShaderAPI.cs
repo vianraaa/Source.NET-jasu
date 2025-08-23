@@ -477,8 +477,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			Warning("WARNING: Attempted to locate uniform on an invalid vertex shader!\n");
 			return -1;
 		}
-		Span<byte> bytes = stackalloc byte[name.Length * 4];
-		int byteLen = Encoding.UTF8.GetBytes(name, bytes);
+		Span<byte> bytes = stackalloc byte[name.Length * 2];
+		int byteLen = Encoding.ASCII.GetBytes(name, bytes);
 		int loc;
 		fixed (byte* uniformName = bytes)
 			loc = glGetUniformLocation((uint)vertexShader.Handle, uniformName);
@@ -490,8 +490,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			Warning("WARNING: Attempted to locate uniform on an invalid pixel shader!\n");
 			return -1;
 		}
-		Span<byte> bytes = stackalloc byte[name.Length * 4];
-		int byteLen = Encoding.UTF8.GetBytes(name, bytes);
+		Span<byte> bytes = stackalloc byte[name.Length * 2];
+		int byteLen = Encoding.ASCII.GetBytes(name, bytes);
 		int loc;
 		fixed (byte* uniformName = bytes)
 			loc = glGetUniformLocation((uint)pixelShader.Handle, uniformName);
