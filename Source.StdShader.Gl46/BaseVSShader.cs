@@ -181,8 +181,17 @@ public abstract class BaseVSShader : BaseShader
 	public void InitUnlitGeneric(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {
 		IMaterialVar[] shaderParams = Params!;
 
-		vsh = ShaderSystem.GetOrCreateVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
-		psh = ShaderSystem.GetOrCreatePixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
+		vsh = ShaderInit!.LoadVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
+		psh = ShaderInit!.LoadPixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
+
+		if (!vsh.IsValid() || !psh.IsValid()) {
+			Warning("Invalid shaders, skipping InitUnlitGeneric as it would be pointless to continue.\n");
+			Warning($"   Vertex: {(vsh.IsValid() ? "valid" : "invalid")}, pixel: {(vsh.IsValid() ? "valid" : "invalid")}\n");
+			return;
+		}
+
+		ShaderAPI.BindVertexShader(in vsh);
+		ShaderAPI.BindPixelShader(in psh);
 
 
 		RecomputeShaderUniforms();

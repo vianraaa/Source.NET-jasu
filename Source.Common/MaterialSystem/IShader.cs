@@ -27,12 +27,14 @@ public interface IShader
     ReadOnlySpan<char> GetParamDefault(int paramIndex);
 	string? GetFallbackShader(IMaterialVar[] vars);
 	void InitShaderParams(IMaterialVar[] vars, IShaderAPI shaderAPI, ReadOnlySpan<char> materialName);
-	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
+	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderAPI shaderAPI, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
 	void DrawElements(IMaterialVar[] shaderParams, IShaderDynamicAPI shaderAPI, VertexCompressionType none);
 }
 
 public interface IShaderInit {
 	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0);
+	VertexShaderHandle LoadVertexShader(ReadOnlySpan<char> name);
+	PixelShaderHandle LoadPixelShader(ReadOnlySpan<char> name);
 }
 
 
@@ -76,15 +78,19 @@ public interface IShaderDynamicAPI
 
 
 	void BindVertexShader(in VertexShaderHandle vertexShader);
-	void BindGeometryShader(in GeometryShaderHandle geometryShader);
 	void BindPixelShader(in PixelShaderHandle pixelShader);
+	void BindGeometryShader(in GeometryShaderHandle geometryShader);
 
-	void SetVertexShaderConstant(int constant, int integer);
-	void SetVertexShaderConstant(int constant, float fl);
-	void SetVertexShaderConstant(int constant, ReadOnlySpan<float> flConsts);
-	void SetPixelShaderConstant(int constant, int integer);
-	void SetPixelShaderConstant(int constant, float fl);
-	void SetPixelShaderConstant(int constant, ReadOnlySpan<float> flConsts);
+	int GetVertexShaderUniform(in VertexShaderHandle vertexShader);
+	int GetPixelShaderUniform(in PixelShaderHandle pixelShader);
+	int GetGeometryShaderUniform(in GeometryShaderHandle geometryShader);
+
+	void SetVertexShaderUniform(int constant, int integer);
+	void SetVertexShaderUniform(int constant, float fl);
+	void SetVertexShaderUniform(int constant, ReadOnlySpan<float> flConsts);
+	void SetPixelShaderUniform(int constant, int integer);
+	void SetPixelShaderUniform(int constant, float fl);
+	void SetPixelShaderUniform(int constant, ReadOnlySpan<float> flConsts);
 
 	void MatrixMode(MaterialMatrixMode i);
 	void LoadMatrix(in Matrix4x4 transposeTop);

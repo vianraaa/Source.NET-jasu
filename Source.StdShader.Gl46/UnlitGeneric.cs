@@ -113,7 +113,7 @@ public class UnlitGeneric : BaseVSShader
 		else
 			return ShaderParams[paramIndex - baseClassParamCount].GetDefaultValue();
 	}
-	protected override void OnInitShaderInstance(IMaterialVar[] vars, IShaderInit shaderInit, ReadOnlySpan<char> materialName) {
+	protected override void OnInitShaderInstance(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 		InitUnlitGeneric((int)ShaderMaterialVars.BaseTexture, DETAIL, ENVMAP, ENVMAPMASK);
 	}
 	protected override void OnDrawElements(IMaterialVar[] vars, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {

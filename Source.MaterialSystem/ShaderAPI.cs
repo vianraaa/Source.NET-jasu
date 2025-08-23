@@ -23,7 +23,8 @@ using static Source.Common.Engine.IEngine;
 
 namespace Source.MaterialSystem;
 
-public struct GfxViewport {
+public struct GfxViewport
+{
 	public int X;
 	public int Y;
 	public int Width;
@@ -45,6 +46,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public GraphicsDriver GetDriver() => Driver;
 
+	uint glPipeline;
+
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
 
@@ -58,7 +61,15 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ClearColor4ub(0, 0, 0, 1);
 		ClearBuffers(true, true, true, -1, -1);
 
+		CreateShaderPipeline();
+
 		return true;
+	}
+
+	private unsafe void CreateShaderPipeline() {
+		fixed (uint* pipelinePtr = &glPipeline)
+			glGenProgramPipelines(1, pipelinePtr);
+		glBindProgramPipeline(glPipeline);
 	}
 
 	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil, int renderTargetWidth = -1, int renderTargetHeight = -1) {
@@ -78,9 +89,21 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void ClearColor3ub(byte r, byte g, byte b) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
 	public void ClearColor4ub(byte r, byte g, byte b, byte a) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
 
-	public void BindVertexShader(in VertexShaderHandle vertexShader) => throw new NotImplementedException();
-	public void BindGeometryShader(in GeometryShaderHandle geometryShader) => throw new NotImplementedException();
-	public void BindPixelShader(in PixelShaderHandle pixelShader) => throw new NotImplementedException();
+	public void BindVertexShader(in VertexShaderHandle vertexShader) {
+		if (!vertexShader.IsValid()) {
+			Warning("WARNING: Attempted to bind an invalid vertex shader!\n");
+			return;
+		}
+		glUseProgramStages(glPipeline, GL_VERTEX_SHADER_BIT, (uint)vertexShader.Handle);
+	}
+
+	public void BindPixelShader(in PixelShaderHandle pixelShader) {
+		if (!pixelShader.IsValid()) {
+			Warning("WARNING: Attempted to bind an invalid pixel shader!\n");
+			return;
+		}
+		glUseProgramStages(glPipeline, GL_FRAGMENT_SHADER_BIT, (uint)pixelShader.Handle);
+	}
 
 	public void CallCommitFuncs(CommitFuncType func, bool usingFixedFunction, bool force = false) {
 
@@ -445,31 +468,50 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	}
 
-	public void SetVertexShaderConstant(int constant, int integer) {
-		throw new NotImplementedException();
-	}
-
-	public void SetVertexShaderConstant(int constant, float fl) {
-		throw new NotImplementedException();
-	}
-
-	public void SetVertexShaderConstant(int constant, ReadOnlySpan<float> flConsts) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderConstant(int constant, int integer) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderConstant(int constant, float fl) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderConstant(int constant, ReadOnlySpan<float> flConsts) {
-		throw new NotImplementedException();
-	}
-
 	public int GetCurrentNumBones() {
 		return 0;
+	}
+
+	public unsafe int LocateVertexShaderUniform(in VertexShaderHandle vertexShader, ReadOnlySpan<char> name) {
+		if (!vertexShader.IsValid()) {
+			Warning("WARNING: Attempted to locate uniform on an invalid vertex shader!\n");
+			return -1;
+		}
+		Span<byte> bytes = stackalloc byte[name.Length * 4];
+		int byteLen = Encoding.UTF8.GetBytes(name, bytes);
+		fixed (byte* uniformName = bytes)
+			int loc = glGetUniformLocation((uint)vertexShader.Handle, uniformName)
+	}
+
+	public unsafe int LocatePixelShaderUniform(in PixelShaderHandle pixelShader, ReadOnlySpan<char> name) {
+		if (!pixelShader.IsValid()) {
+			Warning("WARNING: Attempted to locate uniform on an invalid pixel shader!\n");
+			return -1;
+		}
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, int integer) {
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, float fl) {
+		throw new NotImplementedException();
+	}
+
+	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, ReadOnlySpan<float> flConsts) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, int integer) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, float fl) {
+		throw new NotImplementedException();
+	}
+
+	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, ReadOnlySpan<float> flConsts) {
+		throw new NotImplementedException();
 	}
 }

@@ -234,7 +234,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	public void InitShaderInstance(IShader shader, IMaterialVar[] shaderParams, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		PrepForShaderDraw(shader, shaderParams, null);
-		shader.InitShaderInstance(shaderParams, this, materialName, textureGroupName);
+		shader.InitShaderInstance(shaderParams, ShaderAPI, this, materialName, textureGroupName);
 		DoneWithShaderDraw();
 	}
 
@@ -309,7 +309,7 @@ public class ShaderSystem : IShaderSystemInternal
 	Dictionary<ulong, PixelShaderHandle> pshs = [];
 
 
-	public unsafe VertexShaderHandle GetOrCreateVertexShader(ReadOnlySpan<char> name) {
+	public unsafe VertexShaderHandle LoadVertexShader(ReadOnlySpan<char> name) {
 		ulong symbol = name.Hash();
 		if(vshs.TryGetValue(symbol, out VertexShaderHandle value))
 			return value;
@@ -329,7 +329,7 @@ public class ShaderSystem : IShaderSystemInternal
 		return vsh;
 	}
 
-	public unsafe PixelShaderHandle GetOrCreatePixelShader(ReadOnlySpan<char> name) {
+	public unsafe PixelShaderHandle LoadPixelShader(ReadOnlySpan<char> name) {
 		ulong symbol = name.Hash();
 		if (pshs.TryGetValue(symbol, out PixelShaderHandle value))
 			return value;

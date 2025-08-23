@@ -12,9 +12,6 @@ public interface IShaderSystem
 	void Draw(bool makeActualDrawCall = true);
 	void Init();
 	void ResetShaderState();
-
-	VertexShaderHandle GetOrCreateVertexShader(ReadOnlySpan<char> name);
-	PixelShaderHandle GetOrCreatePixelShader(ReadOnlySpan<char> name);
 }
 public interface IShaderDLL
 {

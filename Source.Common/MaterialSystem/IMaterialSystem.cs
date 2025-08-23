@@ -94,6 +94,8 @@ public record struct VertexShaderHandle
 	public nint Handle;
 	public static implicit operator nint(VertexShaderHandle handle) => handle.Handle;
 	public static implicit operator VertexShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 
 public record struct GeometryShaderHandle
@@ -106,6 +108,8 @@ public record struct GeometryShaderHandle
 	public nint Handle;
 	public static implicit operator nint(GeometryShaderHandle handle) => handle.Handle;
 	public static implicit operator GeometryShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 
 public record struct PixelShaderHandle
@@ -118,6 +122,8 @@ public record struct PixelShaderHandle
 	public nint Handle;
 	public static implicit operator nint(PixelShaderHandle handle) => handle.Handle;
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 public struct MaterialVideoMode
 {

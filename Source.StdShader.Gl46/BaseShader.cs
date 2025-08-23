@@ -100,7 +100,7 @@ public abstract class BaseShader : IShader
 
 	}
 
-	protected virtual void OnInitShaderInstance(IMaterialVar[] vars, IShaderInit shaderInit, ReadOnlySpan<char> materialName) {
+	protected virtual void OnInitShaderInstance(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 
 	}
 
@@ -147,17 +147,20 @@ public abstract class BaseShader : IShader
 		return false;
 	}
 
-	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
+	public virtual void InitShaderInstance(IMaterialVar[] shaderParams, IShaderAPI shaderAPI, IShaderInit shaderInit, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		Assert(Params == null);
+
 		Params = shaderParams;
+		ShaderAPI = shaderAPI;
 		ShaderInit = shaderInit;
 		TextureGroupName = new(textureGroupName);
 
-		OnInitShaderInstance(shaderParams, shaderInit, materialName);
+		OnInitShaderInstance(shaderParams, materialName);
 
-		TextureGroupName = null;
 		Params = null;
+		ShaderAPI = null;
 		ShaderInit = null;
+		TextureGroupName = null;
 	}
 
 	protected void LoadCubeMap(int envmapVar) {
