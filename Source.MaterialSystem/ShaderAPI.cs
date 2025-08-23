@@ -676,7 +676,15 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 
 	public void Present() {
-		throw new NotImplementedException();
+		FlushBufferedPrimitives();
+		bool validPresent = true;
+		bool inMainThread = ThreadInMainThread();
+
+		if (!inMainThread) {
+			throw new Exception();
+		}
+
+		glFlush();
 	}
 
 	internal void ApplyZBias(in ShadowState state) {
