@@ -74,6 +74,10 @@ public abstract class MeshBase : IMesh
 		throw new NotImplementedException();
 	}
 
+	public virtual MaterialPrimitiveType GetPrimitiveType() {
+		throw new NotImplementedException();
+	}
+
 	public virtual void SetPrimitiveType(MaterialPrimitiveType type) {
 		throw new NotImplementedException();
 	}

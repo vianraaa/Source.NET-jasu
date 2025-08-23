@@ -493,7 +493,7 @@ public struct MeshBuilder : IDisposable
 			default:
 				maxVertices = 0;
 				maxIndices = 0;
-				Assert(0);
+				Assert(false);
 				break;
 		}
 

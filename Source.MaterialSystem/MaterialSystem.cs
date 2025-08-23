@@ -263,6 +263,14 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		return GetRenderContextInternal().InFlashlightMode();
 	}
 
+	public bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type) {
+		throw new NotImplementedException();
+	}
+
+	public bool OnFlushBufferedPrimitives() {
+		throw new NotImplementedException();
+	}
+
 	public IMaterialInternal errorMaterial;
 }
 

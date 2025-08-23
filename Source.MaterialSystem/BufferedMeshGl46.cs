@@ -39,8 +39,17 @@ public class BufferedMeshGl46 : BaseMeshGl46 {
 	public override VertexFormat GetVertexFormat() {
 		throw new NotImplementedException();
 	}
-	public void SetMaterial(IMaterial material) {
+	public override MaterialPrimitiveType GetPrimitiveType() {
+		return Mesh!.GetPrimitiveType();
+	}
+	public override void SetPrimitiveType(MaterialPrimitiveType type) {
+		Assert(type != MaterialPrimitiveType.InstancedQuads);
+		Assert(type != MaterialPrimitiveType.Heterogenous);
 
+		if(type != GetPrimitiveType()) {
+			ShaderAPI.FlushBufferedPrimitives();
+			Mesh!.SetPrimitiveType(type);
+		}
 	}
 
 	public override void HandleLateCreation() {

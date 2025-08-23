@@ -6,4 +6,6 @@ public interface IShaderUtil
 {
 	bool InFlashlightMode();
 	bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount);
+	bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type);
+	bool OnFlushBufferedPrimitives();
 }
