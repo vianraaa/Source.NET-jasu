@@ -11,7 +11,14 @@ public enum GraphicsDriver : ulong
 	Vulkan = 1 << 60,
 	Metal = 1 << 59,
 
-	DriverMask = 0x0000_0000_0000_ffff,
+	/// <summary>
+	/// Extracts the version
+	/// </summary>
+	VersionMask = ~DriverMask,
+	/// <summary>
+	/// Extracts the driver type
+	/// </summary>
+	DriverMask = 0xffff_ffff_ffff_0000,
 
 	OpenGL46 = OpenGL | 460
 }

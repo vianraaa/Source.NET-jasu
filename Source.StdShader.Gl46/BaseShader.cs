@@ -80,10 +80,12 @@ public abstract class BaseShader : IShader
 
 	public virtual string? GetFallbackShader(IMaterialVar[] vars) => null;
 
-	public void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
+	public void InitShaderParams(IMaterialVar[] vars, IShaderAPI shaderAPI, ReadOnlySpan<char> materialName) {
 		Assert(Params == null);
 		Params = vars;
+		ShaderAPI = shaderAPI;
 		OnInitShaderParams(vars, materialName);
+		ShaderAPI = null;
 		Params = null;
 	}
 

@@ -159,7 +159,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	public void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		PrepForShaderDraw(shader, vars, null);
-		shader.InitShaderParams(vars, materialName);
+		shader.InitShaderParams(vars, ShaderAPI, materialName);
 		DoneWithShaderDraw();
 
 		if (!vars[(int)ShaderMaterialVars.Color].IsDefined())
@@ -314,7 +314,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if(vshs.TryGetValue(symbol, out VertexShaderHandle value))
 			return value;
 
-		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read);
+		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
 		if (handle == null)
 			return VertexShaderHandle.INVALID;
 
@@ -334,7 +334,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if (pshs.TryGetValue(symbol, out PixelShaderHandle value))
 			return value;
 
-		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read);
+		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
 		if (handle == null)
 			return PixelShaderHandle.INVALID;
 

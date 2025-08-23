@@ -33,11 +33,6 @@ public abstract class BaseVSShader : BaseShader
 		int envmapVar, int envmapTintVar, int envmapMaskScaleVar, int detailBlendMode) {
 		IMaterialVar[] shaderParams = Params!;
 
-		// Load unlit generic shader
-		vsh = ShaderSystem.GetOrCreateVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
-		psh = ShaderSystem.GetOrCreatePixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
-		RecomputeShaderUniforms();
-
 		SetFlags2(shaderParams, MaterialVarFlags2.SupportsHardwareSkinning);
 
 		if (envmapTintVar >= 0 && !shaderParams[envmapTintVar].IsDefined()) {
@@ -185,6 +180,13 @@ public abstract class BaseVSShader : BaseShader
 
 	public void InitUnlitGeneric(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {
 		IMaterialVar[] shaderParams = Params!;
+
+		vsh = ShaderSystem.GetOrCreateVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
+		psh = ShaderSystem.GetOrCreatePixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
+
+
+		RecomputeShaderUniforms();
+
 		if (baseTextureVar >= 0 && shaderParams[baseTextureVar].IsDefined()) {
 			LoadTexture(baseTextureVar);
 
