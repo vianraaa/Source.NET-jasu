@@ -3,9 +3,14 @@
 namespace Source.MaterialSystem;
 
 public unsafe class MeshGl46 : BaseMeshGl46 {
+	protected static nint s_FirstVertex;
+	protected static nint s_NumVertices;
 	protected static PrimList* s_pPrims;
 	protected static nint s_nPrims;
 	public static Span<PrimList> Primitives => new(s_pPrims, (int)s_nPrims);
+
+	protected VertexBufferGl46 VertexBuffer;
+	protected IndexBufferGl46 IndexBuffer;
 
 	public override void RenderPass() {
 		Warning("Cannot renderpass\n");
@@ -42,5 +47,22 @@ public unsafe class MeshGl46 : BaseMeshGl46 {
 			case MaterialPrimitiveType.InstancedQuads: return GL_QUADS; // instancing handled elsewhere
 			default: Assert(false); return GL_TRIANGLES;
 		}
+	}
+
+	public static VertexFormat LastVertexFormat;
+
+	public static void ResetMeshRenderState() {
+
+	}
+
+	protected virtual bool SetRenderState(int vertexOffsetInBytes, int actualFirstVertex, VertexFormat fmt) {
+		if (ShaderDevice.IsDeactivated()) {
+			ResetMeshRenderState();
+			return false;
+		}
+
+		LastVertexFormat = fmt;
+
+		return true;
 	}
 }

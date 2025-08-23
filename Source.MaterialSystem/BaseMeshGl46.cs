@@ -6,6 +6,8 @@ namespace Source.MaterialSystem;
 public class BaseMeshGl46 : MeshBase {
 	[Imported] public IShaderAPI ShaderAPI;
 	[Imported] public IShaderUtil ShaderUtil;
+	[Imported] public MeshMgr MeshMgr;
+	[Imported] public IShaderDevice ShaderDevice;
 
 	protected VertexFormat VertexFormat;
 	protected IMaterialInternal Material;
@@ -39,5 +41,13 @@ public class BaseMeshGl46 : MeshBase {
 
 	internal void SetVertexFormat(VertexFormat fmt) {
 		VertexFormat = fmt;
+	}
+
+	public virtual void PreLock() {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool HasEnoughRoom(int vertexCount, int indexCount) {
+		throw new NotImplementedException();
 	}
 }

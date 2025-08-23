@@ -50,4 +50,6 @@ public static unsafe class MemUtils
 	public static void memcpy<T>(ref T dest, ref T src) where T : unmanaged {
 		dest = src;
 	}
+
+	public static void sprintf(Span<char> target, ReadOnlySpan<char> format, params object?[] args) => Formatting.Print(target, format, args);
 }

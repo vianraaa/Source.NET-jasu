@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,4 +26,16 @@ public static class Platform
 	});
 
 	public static double Time => __timer.Value.Elapsed.TotalSeconds;
+
+#if WIN32
+	[DllImport("kernel32.dll")]
+	unsafe static extern void OutputDebugStringW(char* lpOutputString);
+#endif
+
+	public static unsafe void DebugString(ReadOnlySpan<char> buf) {
+#if WIN32
+		fixed (char* cbuf = buf)
+			OutputDebugStringW(cbuf);
+#endif
+	}
 }

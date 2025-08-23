@@ -102,6 +102,8 @@ public enum VertexFormat : ulong
 	TangentSpace = TangentS | TangentT,
 	UseExactFormat = VertexFormatFlags.VertexFormatUseExactFormat,
 	Compressed = VertexFormatFlags.VertexFormatCompressed,
+
+	Invalid = 0xFFFFFFFFFFFFFFFFul
 }
 
 public enum StencilOperation

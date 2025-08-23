@@ -148,4 +148,12 @@ public class MeshMgr
 		DynamicIndexBuffer = new IndexBufferGl46();
 		DynamicTempMesh = InitMesh<TempMeshGl46>();
 	}
+
+	internal int VertexFormatSize(VertexFormat vertexFormat) {
+		throw new NotImplementedException();
+	}
+
+	internal IndexBufferGl46 GetDynamicIndexBuffer() {
+		throw new NotImplementedException();
+	}
 }
