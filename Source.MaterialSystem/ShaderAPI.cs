@@ -19,6 +19,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
+using static Source.Common.Engine.IEngine;
+
 namespace Source.MaterialSystem;
 
 public struct GfxViewport {
@@ -137,7 +139,7 @@ public unsafe struct CurrentState
 	public uint BlendOpAlpha;
 
 	public bool ZEnable;
-	public byte ZFunc;
+	public uint ZFunc;
 	public PolygonOffsetMode ZBias;
 
 	public bool AlphaTestEnable;
@@ -669,5 +671,31 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public void Present() {
 		throw new NotImplementedException();
+	}
+
+	internal void ApplyZBias(in ShadowState state) {
+
+	}
+
+	bool IShaderDevice.IsDeactivated() => IsDeactivated();
+
+	internal void ApplyTextureEnable(in ShadowState state, int i) {
+		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyTextureEnable, not implemented!!!\n");
+	}
+
+	internal void ApplyAlphaToCoverage(bool enableAlphaToCoverage) {
+		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyAlphaToCoverage, not implemented!!!\n");
+	}
+
+	internal void ApplyCullEnable(bool cullEnable) {
+		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyCullEnable, not implemented!!!\n");
+	}
+
+	internal void ApplyVertexBlendEnable(bool vertexBlendEnable) {
+		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyVertexBlendEnable, not implemented!!!\n");
+	}
+
+	internal void ApplyFogMode(ShaderFogMode fogMode) {
+		Warning("WARNING: Tried to call ShaderAPIGl46.ApplyFogMode, not implemented!!!\n");
 	}
 }

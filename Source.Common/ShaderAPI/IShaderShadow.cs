@@ -58,6 +58,18 @@ public enum ShaderAlphaFunc
 	Always
 }
 
+public enum ShaderCompareFunc
+{
+	Never,
+	Less,
+	Equal,
+	LessEqual,
+	Greater,
+	NotEqual,
+	GreaterEqual,
+	Always
+}
+
 public enum ShaderStencilFunc
 {
 	Never = 0,

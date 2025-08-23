@@ -81,6 +81,7 @@ using GLchar = System.Byte;
 
 using GLuint64 = System.UInt64;
 using GLint64 = System.Int64;
+using System.Runtime.CompilerServices;
 
 #endif
 
@@ -706,6 +707,14 @@ public unsafe static class Gl46
     /// </summary>
     /// <param name="cap">Specifies a symbolic constant indicating a GL capability to be enabled. Refer to <see href="https://docs.gl/gl4/glEnable" /> for a list of possible values.</param>
     public static void glEnable(GLenum cap) => _glEnable(cap);
+
+	/// <summary>
+	/// Enable/disable GL capabilities based on a boolean.
+	/// </summary>
+	/// <param name="cap">Specifies a symbolic constant indicating a GL capability to be enabled. Refer to <see href="https://docs.gl/gl4/glEnable" /> for a list of possible values.</param>
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void glToggle(GLenum cap, bool state) { if (state) _glEnable(cap); else _glDisable(cap); }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLFINISHPROC();

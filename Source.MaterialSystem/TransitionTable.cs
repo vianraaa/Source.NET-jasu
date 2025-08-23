@@ -7,6 +7,7 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -123,24 +124,152 @@ public class TransitionTable
 			ApplyAlphaToCoverage,
 		];
 	}
-	public void ApplyDepthTest(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyZWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyColorWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyAlphaTest(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyFillMode(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyLighting(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplySpecularEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplySRGBWriteEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyAlphaBlend(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplySeparateAlphaBlend(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyCullEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyVertexBlendEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyFogMode(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyActivateFixedFunction(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyTextureEnable(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyDiffuseMaterialSource(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyDisableFogGammaCorrection(in ShadowState state, int arg) => throw new NotImplementedException();
-	public void ApplyAlphaToCoverage(in ShadowState state, int arg) => throw new NotImplementedException();
+	public void ApplyDepthTest(in ShadowState state, int arg) {
+		SetZEnable(state.ZEnable > 0);
+		if (state.ZEnable != GL_FALSE)
+			SetZFunc(state.ZFunc);
+
+		if(CurrentState.ZBias != (PolygonOffsetMode)state.ZBias) {
+			ShaderAPI.ApplyZBias(in state);
+			CurrentState.ZBias = (PolygonOffsetMode)state.ZBias;
+		}
+
+	}
+
+	private void SetZEnable(bool enable) {
+		if(CurrentState.ZEnable != enable) {
+			glToggle(GL_DEPTH_TEST, enable);
+			CurrentState.ZEnable = enable;
+		}
+	}
+
+	private void SetZFunc(uint zFunc) {
+		if(CurrentState.ZFunc != zFunc) {
+			glDepthFunc((ShaderCompareFunc)zFunc switch {
+				ShaderCompareFunc.Never => GL_NEVER,
+				ShaderCompareFunc.Less => GL_LESS,
+				ShaderCompareFunc.Equal => GL_EQUAL,
+				ShaderCompareFunc.LessEqual => GL_LEQUAL,
+				ShaderCompareFunc.Greater => GL_GREATER,
+				ShaderCompareFunc.NotEqual => GL_NOTEQUAL,
+				ShaderCompareFunc.GreaterEqual => GL_GEQUAL,
+				ShaderCompareFunc.Always => GL_ALWAYS,
+				_ => throw new NotImplementedException()
+			});
+			CurrentState.ZFunc = zFunc;
+		}
+	}
+
+	public void ApplyZWriteEnable(in ShadowState state, int arg) {
+		Warning("WARNING: Tried to send ZWriteEnable to GPU, not implemented!!!\n");
+		BoardState.ZWriteEnable = state.ZWriteEnable;
+	}
+	public void ApplyColorWriteEnable(in ShadowState state, int arg) {
+		Warning("WARNING: Tried to send ColorWriteEnable to GPU, not implemented!!!\n");
+		BoardState.ColorWriteEnable = state.ColorWriteEnable;
+	}
+	public void ApplyAlphaTest(in ShadowState state, int arg) {
+		if (CurrentState.AlphaTestEnable != state.AlphaTestEnable) {
+			Warning("WARNING: Tried to send AlphaTest to GPU, not implemented!!!\n");
+			CurrentState.AlphaTestEnable = state.AlphaTestEnable;
+		}
+
+		if (state.AlphaTestEnable) {
+			// Set the blend state here...
+			if (CurrentState.AlphaFunc != state.AlphaFunc) {
+				Warning("WARNING: Tried to send AlphaFunc to GPU, not implemented!!!\n");
+				CurrentState.AlphaFunc = state.AlphaFunc;
+			}
+
+			if (CurrentState.AlphaRef != state.AlphaRef) {
+				Warning("WARNING: Tried to send AlphaRef to GPU, not implemented!!!\n");
+				CurrentState.AlphaRef = state.AlphaRef;
+			}
+		}
+	}
+	public void ApplyFillMode(in ShadowState state, int arg) {
+	}
+	public void ApplyLighting(in ShadowState state, int arg) {
+	}
+	public void ApplySpecularEnable(in ShadowState state, int arg) { 
+	}
+	public void ApplySRGBWriteEnable(in ShadowState state, int arg) {
+	}
+	public void ApplyAlphaBlend(in ShadowState state, int arg) {
+		if (CurrentState.AlphaBlendEnable != state.AlphaBlendEnable) {
+			Warning("WARNING: Tried to send AlphaBlendEnable to GPU, not implemented!!!\n");
+			CurrentState.AlphaBlendEnable = state.AlphaBlendEnable;
+		}
+
+		if (state.AlphaBlendEnable) {
+			// Set the blend state here...
+			if (CurrentState.SrcBlend != state.SrcBlend) {
+				Warning("WARNING: Tried to send SrcBlend to GPU, not implemented!!!\n");
+				CurrentState.SrcBlend = state.SrcBlend;
+			}
+
+			if (CurrentState.DestBlend != state.DestBlend) {
+				Warning("WARNING: Tried to send AlphaRef to GPU, not implemented!!!\n");
+				CurrentState.DestBlend = state.DestBlend;
+			}
+
+			if (CurrentState.BlendOp != state.BlendOp) {
+				Warning("WARNING: Tried to send BlendOp to GPU, not implemented!!!\n");
+				CurrentState.BlendOp = state.BlendOp;
+			}
+		}
+	}
+	public void ApplySeparateAlphaBlend(in ShadowState state, int arg) {
+		if (CurrentState.SeparateAlphaBlendEnable != state.SeparateAlphaBlendEnable) {
+			Warning("WARNING: Tried to send SeparateAlphaBlendEnable to GPU, not implemented!!!\n");
+			CurrentState.SeparateAlphaBlendEnable = state.SeparateAlphaBlendEnable;
+		}
+
+		if (state.SeparateAlphaBlendEnable) {
+			// Set the blend state here...
+			if (CurrentState.SrcBlendAlpha != state.SrcBlendAlpha) {
+				Warning("WARNING: Tried to send SrcBlendAlpha to GPU, not implemented!!!\n");
+				CurrentState.SrcBlendAlpha = state.SrcBlendAlpha;
+			}
+
+			if (CurrentState.DestBlendAlpha != state.DestBlendAlpha) {
+				Warning("WARNING: Tried to send DestBlendAlpha to GPU, not implemented!!!\n");
+				CurrentState.DestBlendAlpha = state.DestBlendAlpha;
+			}
+
+			if (CurrentState.BlendOpAlpha != state.BlendOpAlpha) {
+				Warning("WARNING: Tried to send BlendOpAlpha to GPU, not implemented!!!\n");
+				CurrentState.BlendOpAlpha = state.BlendOpAlpha;
+			}
+		}
+	}
+	public void ApplyCullEnable(in ShadowState state, int arg) {
+		ShaderAPI.ApplyCullEnable(state.CullEnable);
+	}
+	public void ApplyVertexBlendEnable(in ShadowState state, int arg) {
+		ShaderAPI.ApplyVertexBlendEnable(state.VertexBlendEnable);
+	}
+	public void ApplyFogMode(in ShadowState state, int arg) {
+		ShaderAPI.ApplyFogMode(state.FogMode);
+	}
+	public void ApplyActivateFixedFunction(in ShadowState state, int arg) {
+		ShaderAPI.ApplyCullEnable(state.CullEnable);
+	}
+	public void ApplyTextureEnable(in ShadowState state, int arg) {
+		int i;
+		int nSamplerCount = HardwareConfig.GetSamplerCount();
+		for (i = 0; i < nSamplerCount; ++i) {
+			ShaderAPI.ApplyTextureEnable(in state, i);
+		}
+	}
+	public void ApplyDiffuseMaterialSource(in ShadowState state, int arg) {
+
+	}
+	public void ApplyDisableFogGammaCorrection(in ShadowState state, int arg) {
+	}
+	public void ApplyAlphaToCoverage(in ShadowState state, int arg) {
+		ShaderAPI.ApplyAlphaToCoverage(state.EnableAlphaToCoverage);
+	}
 
 	List<TransitionOp> TransitionOps = [];
 
@@ -350,6 +479,7 @@ public class TransitionTable
 		}
 	}
 
+	internal ShaderAPIGl46 ShaderAPI;
 	internal IShaderDevice ShaderDevice;
 
 	private void ApplyTransition(in TransitionList list, int snapshot) {
