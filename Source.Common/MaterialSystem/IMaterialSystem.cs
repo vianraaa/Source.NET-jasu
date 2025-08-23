@@ -164,6 +164,7 @@ public interface IMatRenderContext
 	IShaderAPI GetShaderAPI();
 	bool InFlashlightMode();
 	IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null);
+	void GetRenderTargetDimensions(out int screenWidth, out int screenHeight);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -252,5 +253,9 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public bool InFlashlightMode() {
 		return ctx.InFlashlightMode();
+	}
+
+	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) {
+		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);	
 	}
 }
