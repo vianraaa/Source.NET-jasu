@@ -24,6 +24,11 @@ public unsafe class DynamicMeshGl46 : MeshGl46
 		HasDrawn = true;
 	}
 
+	public override void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		Lock(vertexCount, false, ref desc.Vertex);
+		Lock(vertexCount, false, ref desc.Index);
+	}
+
 	public override void PreLock() {
 		if (HasDrawn) {
 			ResetVertexAndIndexCounts();
