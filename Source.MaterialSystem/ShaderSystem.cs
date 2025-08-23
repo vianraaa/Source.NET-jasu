@@ -2,6 +2,7 @@
 
 using Source.Common;
 using Source.Common.Engine;
+using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
 
@@ -304,11 +305,47 @@ public class ShaderSystem : IShaderSystemInternal
 
 	}
 
-	public VertexShaderHandle GetOrCreateVertexShader(ReadOnlySpan<char> name) {
-		throw new NotImplementedException();
+	Dictionary<ulong, VertexShaderHandle> vshs = [];
+	Dictionary<ulong, PixelShaderHandle> pshs = [];
+
+
+	public unsafe VertexShaderHandle GetOrCreateVertexShader(ReadOnlySpan<char> name) {
+		ulong symbol = name.Hash();
+		if(vshs.TryGetValue(symbol, out VertexShaderHandle value))
+			return value;
+
+		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read);
+		if (handle == null)
+			return VertexShaderHandle.INVALID;
+
+		Span<byte> source = stackalloc byte[(int)handle.Stream.Length];
+		int read = handle.Stream.Read(source);
+		uint pShader = 0;
+		fixed (byte* pSrc = source)
+			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+
+		VertexShaderHandle vsh = new((nint)pShader);
+		vshs[symbol] = vsh;
+		return vsh;
 	}
 
-	public PixelShaderHandle GetOrCreatePixelShader(ReadOnlySpan<char> name) {
-		throw new NotImplementedException();
+	public unsafe PixelShaderHandle GetOrCreatePixelShader(ReadOnlySpan<char> name) {
+		ulong symbol = name.Hash();
+		if (pshs.TryGetValue(symbol, out PixelShaderHandle value))
+			return value;
+
+		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read);
+		if (handle == null)
+			return PixelShaderHandle.INVALID;
+
+		Span<byte> source = stackalloc byte[(int)handle.Stream.Length];
+		int read = handle.Stream.Read(source);
+		uint pShader = 0;
+		fixed (byte* pSrc = source)
+			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+
+		PixelShaderHandle psh = new((nint)pShader);
+		pshs[symbol] = psh;
+		return psh;
 	}
 }

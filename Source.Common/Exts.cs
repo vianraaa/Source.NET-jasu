@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Enumerables;
 
+using K4os.Hash.xxHash;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Commands;
@@ -9,12 +11,14 @@ using Source.Common.Engine;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Source;
 
@@ -158,6 +162,15 @@ public static class UnmanagedUtils
 		while (list.Count < ensureTo) {
 			list.Add(new T());
 		}
+	}
+
+	public static ulong Hash(this ReadOnlySpan<char> str) {
+		if (str == null || str.Length == 0)
+			return 0;
+
+		Span<byte> utf8 = stackalloc byte[str.Length * 4]; // worst case UTF-8 size
+		int written = Encoding.UTF8.GetBytes(str, utf8);
+		return XXH64.DigestOf(utf8[0..written]);
 	}
 
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {

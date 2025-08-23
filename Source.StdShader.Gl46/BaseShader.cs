@@ -83,14 +83,14 @@ public abstract class BaseShader : IShader
 	public void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 		Assert(Params == null);
 		Params = vars;
-		ComputeShaderUniforms();
 		OnInitShaderParams(vars, materialName);
 		Params = null;
 	}
 
-	private void ComputeShaderUniforms() {
+	protected virtual void RecomputeShaderUniforms() {
 		for (int i = 0; i < Params!.Length; i++) {
-			throw new Exception("Yay! We need to do this part next");
+			IMaterialVar? var = Params[i];
+			if (var == null) continue;
 		}
 	}
 

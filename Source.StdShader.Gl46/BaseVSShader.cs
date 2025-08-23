@@ -33,8 +33,10 @@ public abstract class BaseVSShader : BaseShader
 		int envmapVar, int envmapTintVar, int envmapMaskScaleVar, int detailBlendMode) {
 		IMaterialVar[] shaderParams = Params!;
 
-		// Load unlit generic
+		// Load unlit generic shader
 		vsh = ShaderSystem.GetOrCreateVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
+		psh = ShaderSystem.GetOrCreatePixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
+		RecomputeShaderUniforms();
 
 		SetFlags2(shaderParams, MaterialVarFlags2.SupportsHardwareSkinning);
 
