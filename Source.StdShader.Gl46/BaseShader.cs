@@ -89,10 +89,25 @@ public abstract class BaseShader : IShader
 		Params = null;
 	}
 
-	protected virtual void RecomputeShaderUniforms() {
+	protected virtual void RecomputeShaderUniforms(in VertexShaderHandle vsh, in PixelShaderHandle psh) {
+		Assert(ShaderAPI!);
 		for (int i = 0; i < Params!.Length; i++) {
 			IMaterialVar? var = Params[i];
 			if (var == null) continue;
+			ref MaterialVarGPU GPU = ref var.GPU;
+
+			GPU.Location = ShaderAPI!.LocateVertexShaderUniform(in vsh, var.GetName());
+			if (GPU.Location > 0)
+				GPU.Shader = ShaderType.Vertex;
+			else {
+				GPU.Location = ShaderAPI!.LocatePixelShaderUniform(in psh, var.GetName());
+				if (GPU.Location > 0)
+					GPU.Shader = ShaderType.Pixel;
+				else {
+					// Cannot find the shader location :(
+					return;
+				}
+			}
 		}
 	}
 

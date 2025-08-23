@@ -24,6 +24,8 @@ public enum GraphicsDriver : ulong
 }
 public enum ShaderType
 {
+	Unknown,
+
 	Vertex,
 	Pixel,
 	Geometry

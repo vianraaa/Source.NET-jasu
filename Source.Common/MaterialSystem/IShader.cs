@@ -79,18 +79,17 @@ public interface IShaderDynamicAPI
 
 	void BindVertexShader(in VertexShaderHandle vertexShader);
 	void BindPixelShader(in PixelShaderHandle pixelShader);
-	void BindGeometryShader(in GeometryShaderHandle geometryShader);
 
-	int GetVertexShaderUniform(in VertexShaderHandle vertexShader);
-	int GetPixelShaderUniform(in PixelShaderHandle pixelShader);
-	int GetGeometryShaderUniform(in GeometryShaderHandle geometryShader);
+	int LocateVertexShaderUniform(in VertexShaderHandle vertexShader, ReadOnlySpan<char> name);
+	int LocatePixelShaderUniform(in PixelShaderHandle pixelShader, ReadOnlySpan<char> name);
 
-	void SetVertexShaderUniform(int constant, int integer);
-	void SetVertexShaderUniform(int constant, float fl);
-	void SetVertexShaderUniform(int constant, ReadOnlySpan<float> flConsts);
-	void SetPixelShaderUniform(int constant, int integer);
-	void SetPixelShaderUniform(int constant, float fl);
-	void SetPixelShaderUniform(int constant, ReadOnlySpan<float> flConsts);
+	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, int integer);
+	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, float fl);
+	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, ReadOnlySpan<float> flConsts);
+
+	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, int integer);
+	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, float fl);
+	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, ReadOnlySpan<float> flConsts);
 
 	void MatrixMode(MaterialMatrixMode i);
 	void LoadMatrix(in Matrix4x4 transposeTop);

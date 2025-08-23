@@ -190,11 +190,7 @@ public abstract class BaseVSShader : BaseShader
 			return;
 		}
 
-		ShaderAPI.BindVertexShader(in vsh);
-		ShaderAPI.BindPixelShader(in psh);
-
-
-		RecomputeShaderUniforms();
+		RecomputeShaderUniforms(in vsh, in psh);
 
 		if (baseTextureVar >= 0 && shaderParams[baseTextureVar].IsDefined()) {
 			LoadTexture(baseTextureVar);

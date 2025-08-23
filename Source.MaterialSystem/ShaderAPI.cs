@@ -479,8 +479,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		}
 		Span<byte> bytes = stackalloc byte[name.Length * 4];
 		int byteLen = Encoding.UTF8.GetBytes(name, bytes);
+		int loc;
 		fixed (byte* uniformName = bytes)
-			int loc = glGetUniformLocation((uint)vertexShader.Handle, uniformName)
+			loc = glGetUniformLocation((uint)vertexShader.Handle, uniformName);
+		return loc;
 	}
 
 	public unsafe int LocatePixelShaderUniform(in PixelShaderHandle pixelShader, ReadOnlySpan<char> name) {
@@ -488,7 +490,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			Warning("WARNING: Attempted to locate uniform on an invalid pixel shader!\n");
 			return -1;
 		}
-		throw new NotImplementedException();
+		Span<byte> bytes = stackalloc byte[name.Length * 4];
+		int byteLen = Encoding.UTF8.GetBytes(name, bytes);
+		int loc;
+		fixed (byte* uniformName = bytes)
+			loc = glGetUniformLocation((uint)pixelShader.Handle, uniformName);
+		return loc;
 	}
 
 	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, int integer) {
