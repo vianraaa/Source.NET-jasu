@@ -522,7 +522,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		throw new NotImplementedException();
 	}
 
-	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, nint v) {
+	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t v) {
 		throw new NotImplementedException();
 	}
 }

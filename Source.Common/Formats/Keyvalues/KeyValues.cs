@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Source.Common.Formats.Keyvalues;
 
 
-[DebuggerDisplay("Type = {Type}, Count = {Count}, Value = {Value}")]
+[DebuggerDisplay("Name = {Name}, Type = {Type}, Count = {Count}, Value = {Value}")]
 public class KeyValues : LinkedList<KeyValues>
 {
 	public enum Types
@@ -256,7 +256,7 @@ public class KeyValues : LinkedList<KeyValues>
 			if (value == null)
 				value = "";
 			dat.Value = new string(value);
-
+			dat.Type = Types.String;
 		}
 	}
 	public void SetInt(string keyName, int value) {
