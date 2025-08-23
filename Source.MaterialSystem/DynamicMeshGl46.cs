@@ -116,4 +116,17 @@ public unsafe class DynamicMeshGl46 : MeshGl46
 	internal void OverrideIndexBuffer(IIndexBuffer indexBuffer) {
 		throw new NotImplementedException();
 	}
+
+	public override int IndexCount() {
+		return TotalIndices;
+	}
+
+	public override bool HasEnoughRoom(int vertexCount, int indexCount) {
+		if (ShaderDevice.IsDeactivated())
+			return false;
+
+		Assert(VertexBuffer != null);
+
+		return VertexBuffer.HasEnoughRoom(vertexCount) && IndexBuffer.HasEnoughRoom(indexCount);
+	}
 }
