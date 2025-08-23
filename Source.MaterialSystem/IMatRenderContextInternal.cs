@@ -8,6 +8,7 @@ public interface IMatRenderContextInternal : IMatRenderContext
 	void EndFrame();
 	void MarkRenderDataUnused(bool v);
 	bool OnDrawMesh(IMesh mesh, int firstIndex, int indexCount);
+	bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type);
 	void SetFrameTime(double frameTime);
 	void SwapBuffers();
 }

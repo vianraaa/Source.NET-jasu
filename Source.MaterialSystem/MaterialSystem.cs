@@ -264,7 +264,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	public bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type) {
-		throw new NotImplementedException();
+		return GetRenderContextInternal().OnSetPrimitiveType(mesh, type);
 	}
 
 	public bool OnFlushBufferedPrimitives() {

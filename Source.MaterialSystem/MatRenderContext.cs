@@ -228,4 +228,8 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void SwapBuffers() {
 		materials.ShaderDevice.Present();
 	}
+
+	public bool OnSetPrimitiveType(IMesh mesh, MaterialPrimitiveType type) {
+		return true;
+	}
 }
