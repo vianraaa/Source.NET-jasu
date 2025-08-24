@@ -35,7 +35,7 @@ public interface ITexture : IDisposable
 	void SetTextureGenerator(ITextureRegenerator textureRegen);
 
 	// todo: enum for additionalCreationFlags, if applicable?
-	void Download(out Rectangle rect, int additionalCreationFlags = 0);
+	void Download(Rectangle rect = default, int additionalCreationFlags = 0);
 
 	nint GetApproximateVidMemBytes();
 

@@ -243,7 +243,25 @@ public class ShaderSystem : IShaderSystemInternal
 	}
 
 	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0) {
-		throw new NotImplementedException();
+		if (textureVar.GetVarType() != MaterialVarType.String) {
+			if (textureVar.GetVarType() != MaterialVarType.Texture) 
+				textureVar.SetTextureValue(MaterialSystem.TextureSystem.ErrorTexture());
+			return;
+		}
+
+		ReadOnlySpan<char> name = textureVar.GetStringValue();
+		if (name[0] == Path.PathSeparator || name[1] == Path.PathSeparator)
+			name = name[1..];
+
+		ITextureInternal texture = (ITextureInternal)MaterialSystem.FindTexture(name, textureGroupName, false, additionalCreationFlags);
+
+		if (texture == null) {
+			if (!MaterialSystem.ShaderDevice.IsUsingGraphics()) 
+				Warning("Shader_t::LoadTexture: texture \"{name}.vtf\" doesn't exist\n");
+			texture = MaterialSystem.TextureSystem.ErrorTexture();
+		}
+
+		textureVar.SetTextureValue(texture);
 	}
 
 	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState, ReadOnlySpan<char> materialName) {

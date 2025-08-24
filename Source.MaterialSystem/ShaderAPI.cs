@@ -4,6 +4,7 @@ using OpenGL;
 
 using Raylib_cs;
 
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
@@ -523,6 +524,21 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t v) {
+		throw new NotImplementedException();
+	}
+
+	public bool CanDownloadTextures() {
+		if (IsDeactivated())
+			return false;
+
+		return IsActive();
+	}
+
+	internal void ModifyTexture(uint v) {
+		throw new NotImplementedException();
+	}
+
+	internal void TexImageFromVTF(IVTFTexture? vtfTexture, int i) {
 		throw new NotImplementedException();
 	}
 }

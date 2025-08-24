@@ -57,11 +57,11 @@ public sealed class VTFTexture : IVTFTexture
 		height = Height >> level;
 		depth = Depth >> level;
 
-		if (width < 1) 
+		if (width < 1)
 			width = 1;
-		if (height < 1) 
+		if (height < 1)
 			height = 1;
-		if (depth < 1) 
+		if (depth < 1)
 			depth = 1;
 	}
 
@@ -481,4 +481,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	int IVTFTexture.Width() => Width;
+
+	public uint GetResourceTypes(Span<ResourceEntryType> arrRsrcTypes) {
+		if (arrRsrcTypes != null) 
+			for (int i = 0; i < Math.Min(arrRsrcTypes.Length, Resources.Count); i++) 
+				arrRsrcTypes[i] = Resources[i].Tag;
+
+		return (uint)Resources.Count;
+	}
 }

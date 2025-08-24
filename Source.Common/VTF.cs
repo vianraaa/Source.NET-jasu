@@ -56,9 +56,9 @@ public enum CompiledVtfFlags : uint
 	// Clamp to border color on all texture coordinates
 	Border = 0x20000000,
 
-	StreamableCourse = 0x40000000,
+	StreamableCoarse = 0x40000000,
 	StreamableFine = 0x80000000,
-	Streamable = (StreamableCourse | StreamableFine)
+	Streamable = (StreamableCoarse | StreamableFine)
 }
 
 public enum VersionedVtfFlags : ulong
@@ -180,6 +180,8 @@ public interface IVTFTexture : IDisposable
 			throw new NotImplementedException("No VTF factory available");
 		return OnRequestSize.Invoke(majorVersion, minorVersion);
 	}
+
+	uint GetResourceTypes(Span<ResourceEntryType> arrRsrcTypes);
 }
 // Factory methods
 public delegate IVTFTexture CreateVTFTextureDelegate();
@@ -271,7 +273,7 @@ public struct ResourceEntryInfo
 	}
 }
 
-public enum ResourceEntryType
+public enum ResourceEntryType : uint
 {
 	/// <summary>
 	/// Equiv of VTF_LEGACY_RSRC_LOW_RES_IMAGE

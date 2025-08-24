@@ -262,6 +262,21 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public void SyncMatrices() => GetRenderContextInternal().SyncMatrices();
 	public void SyncMatrix(MaterialMatrixMode mode) => GetRenderContextInternal().SyncMatrix(mode);
 
+	public ITexture FindTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroupName, bool complain, int additionalCreationFlags) {
+		ITextureInternal texture = TextureSystem.FindOrLoadTexture(textureName, textureGroupName, additionalCreationFlags);
+		Assert(texture);
+		if(texture != null && texture.IsError()) {
+			if (complain) {
+				DevWarning($"Texture '{textureName}' not found.\n");
+			}
+		}
+		return texture;
+	}
+
+	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
+		return "GAME";
+	}
+
 	public IMaterialInternal errorMaterial;
 }
 

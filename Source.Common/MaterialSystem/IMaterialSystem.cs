@@ -124,6 +124,19 @@ public struct MaterialVideoMode
 	public ImageFormat Format;   // use ImageFormats (ignored for windowed mode)
 	public int RefreshRate;      // 0 == default (ignored for windowed mode)
 };
+public enum RenderTargetSizeMode
+{
+	NoChange = 0,
+	Default = 1,
+	Picmip = 2,
+	HDR = 3,
+	FullFrameBuffer = 4,
+	Offscreen = 5,
+	FullFrameBufferRoundedUp = 6,
+	ReplayScreenshot = 7,
+	Literal = 8,
+	LiteralPicmip = 9
+}
 
 public interface IMaterialSystem
 {
@@ -254,6 +267,6 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	}
 
 	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) {
-		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);	
+		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);
 	}
 }

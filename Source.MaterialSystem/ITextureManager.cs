@@ -1,4 +1,6 @@
-﻿namespace Source.Common.MaterialSystem;
+﻿using Source.MaterialSystem;
+
+namespace Source.Common.MaterialSystem;
 
 public interface ITextureManager {
 	void Init();

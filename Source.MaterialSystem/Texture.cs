@@ -1,5 +1,6 @@
 ﻿using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
 
 using System;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -168,7 +170,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		int nAdditionalFlags = 0;
 		if ((Flags & (uint)CompiledVtfFlags.Streamable) != 0) {
 			// If we were previously streamed in, make sure we still do this time around.
-			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCourse;
+			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCoarse;
 			Assert((Flags & (long)CompiledVtfFlags.StreamableFine) == 0);
 		}
 
@@ -259,6 +261,248 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		}
 	}
 
+	public void Download() {
+
+	}
+
+
+	public void Download(Rectangle rect, int additionalCreationFlags) {
+		if (materials.ShaderAPI.CanDownloadTextures()) {
+			Flags |= (uint)additionalCreationFlags;
+			DownloadTexture(rect);
+		}
+	}
+
+	private void DownloadTexture(Rectangle rect, bool copyFromCurrent = false) {
+		if (!materials.ShaderDevice.IsUsingGraphics())
+			return;
+
+		if (rect == default) {
+			ReconstructTexture(copyFromCurrent);
+		}
+		else {
+			Assert(!copyFromCurrent);
+			ReconstructPartialTexture(rect);
+		}
+
+		SetFilteringAndClampingMode();
+
+		if (((InternalTextureFlags)InternalFlags & InternalTextureFlags.ShouldExclude) > 0)
+			InternalFlags |= (uint)InternalTextureFlags.Excluded;
+		else
+			InternalFlags &= ~(uint)InternalTextureFlags.Excluded;
+
+		ActualDimensionLimit = DesiredDimensionLimit;
+	}
+
+	private void SetFilteringAndClampingMode() {
+
+	}
+
+	private void ReconstructTexture(bool copyFromCurrent) {
+		int oldWidth = DimsAllocated.Width;
+		int oldHeight = DimsAllocated.Height;
+		int oldDepth = DimsAllocated.Depth;
+		int oldMipCount = DimsAllocated.MipCount;
+		int oldFrameCount = FrameCount;
+
+		string? resolvedFilename = null;
+		IVTFTexture? vtfTexture = null;
+
+		{
+			if (IsProcedural()) {
+				// This will call the installed texture bit regeneration interface
+				vtfTexture = ReconstructProceduralBits();
+			}
+			else if (IsRenderTarget()) {
+				// Compute the actual size + format based on the current mode
+				bool ignorePicmip = RenderTargetSizeMode != RenderTargetSizeMode.LiteralPicmip;
+				ComputeActualSize(ignorePicmip);
+			}
+			else if (copyFromCurrent) {
+				ComputeActualSize(false, null, true);
+			}
+			else {
+				NotifyUnloadedFile();
+
+				Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
+				GetCacheFilename(cacheFileName);
+
+				// Get the data from disk...
+				// NOTE: Reloading the texture bits can cause the texture size, frames, format, pretty much *anything* can change.
+				vtfTexture = LoadTextureBitsFromFile(cacheFileName, out resolvedFilename);
+			}
+		}
+
+		if (!HasBeenAllocated() ||
+			DimsAllocated.Width != oldWidth || DimsAllocated.Height != oldHeight ||
+			DimsAllocated.Depth != oldDepth || DimsAllocated.MipCount != oldMipCount ||
+			FrameCount != oldFrameCount) {
+
+			const bool canStretchRectTextures = true;
+			bool shouldMigrateTextures = ((Flags & (uint)CompiledVtfFlags.StreamableFine) != 0) && FrameCount == oldFrameCount;
+
+			// If we're just streaming in more data--or demoting ourselves, do a migration instead. 
+			if (copyFromCurrent || (canStretchRectTextures && shouldMigrateTextures)) {
+				MigrateShaderAPITextures();
+
+				// Ahh--I feel terrible about this, but we genuinely don't need anything else if we're streaming.
+				if (copyFromCurrent)
+					return;
+			}
+			else {
+				// If we're doing a wholesale copy, we need to restore these values that will be cleared by FreeShaderAPITextures.
+				// Record them here, restore them below.
+				uint restoreStreamingFlag = (Flags & (uint)CompiledVtfFlags.Streamable);
+				ResidencyType restoreResidenceCurrent = ResidenceCurrent;
+				ResidencyType restoreResidenceTarget = ResidenceTarget;
+
+				if (HasBeenAllocated()) {
+					FreeShaderAPITextures();
+				}
+
+				// Create the shader api textures
+				if (!AllocateShaderAPITextures())
+					return;
+
+				// Restored once we successfully allocate the shader api textures, but only if we're 
+				// 
+				if (!canStretchRectTextures && shouldMigrateTextures) {
+					Flags |= restoreStreamingFlag;
+					ResidenceCurrent = restoreResidenceCurrent;
+					ResidenceTarget = restoreResidenceTarget;
+				}
+			}
+		}
+		else if (copyFromCurrent) {
+			AssertMsg(false, "We're about to crash, last chance to examine this texture.");
+		}
+
+
+		// Render Targets just need to be cleared, they have no upload
+		if (IsRenderTarget()) {
+			throw new NotImplementedException();
+		}
+
+		// Blit down the texture faces, frames, and mips into the board memory
+		int firstFace, faceCount;
+		GetDownloadFaceCount(out firstFace, out faceCount);
+
+		WriteDataToShaderAPITexture(FrameCount, faceCount, firstFace, DimsActual.MipCount, vtfTexture, ImageFormat);
+
+		ReleaseScratchVTFTexture(vtfTexture);
+		vtfTexture = null;
+	}
+
+	private void WriteDataToShaderAPITexture(ushort frameCount, int faceCount, int firstFace, ushort mipCount, IVTFTexture? vtfTexture, ImageFormat imageFormat) {
+		if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+			return;
+
+		for (int i = 0; i < FrameCount; i++) {
+			Modify(i);
+			materials.ShaderAPI.TexImageFromVTF(vtfTexture, i);
+		}
+	}
+
+	private void Modify(int frame) {
+		Assert(frame >= 0 && frame < FrameCount);
+		Assert(HasBeenAllocated());
+		materials.ShaderAPI.ModifyTexture(TextureHandles![frame]);
+	}
+
+	private void GetDownloadFaceCount(out int firstFace, out int faceCount) {
+		faceCount = 1;
+		firstFace = 0;
+		if (IsCubeMap()) {
+			if (materials.HardwareConfig.SupportsCubeMaps()) {
+				faceCount = (int)CubeMapFaceIndex.Count - 1;
+			}
+			else {
+				// This will cause us to use the spheremap instead of the cube faces
+				// in the case where we don't support cubemaps
+				firstFace = (int)CubeMapFaceIndex.Spheremap;
+			}
+		}
+	}
+
+	private bool AllocateShaderAPITextures() {
+		throw new NotImplementedException();
+	}
+
+	private void FreeShaderAPITextures() {
+		throw new NotImplementedException();
+	}
+
+	private void MigrateShaderAPITextures() {
+		throw new NotImplementedException();
+	}
+
+	TextureLODControlSettings CachedFileLodSettings;
+
+	private IVTFTexture? LoadTextureBitsFromFile(Span<char> cacheFileName, out string? resolvedFilename) {
+		resolvedFilename = null;
+
+		IVTFTexture? vtfTexture = StreamingVTF;
+		if (vtfTexture == null) {
+			vtfTexture = GetScratchVTFTexture();
+
+			IFileHandle? fileHandle = null;
+
+			if (!GetFileHandle(out fileHandle, cacheFileName, out resolvedFilename))
+				return HandleFileLoadFailedTexture(vtfTexture);
+
+			TextureLODControlSettings settings = CachedFileLodSettings;
+
+			fileHandle?.Dispose();
+		}
+
+		// TODO: How does Source stream textures?
+
+		return vtfTexture;
+	}
+
+	private IVTFTexture? HandleFileLoadFailedTexture(IVTFTexture? vtfTexture) {
+		throw new Exception("File load failed (time to implement HandleFileLoadFailedTexture, or something went horribly wrong)");
+	}
+
+	private bool GetFileHandle(out IFileHandle? fileHandle, Span<char> cacheFileName, out string? resolvedFilename) {
+		fileHandle = null;
+		resolvedFilename = null; // Requires OpenEx; do later
+		while (fileHandle == null) {
+			fileHandle = materials.FileSystem.Open(cacheFileName, FileOpenOptions.Read | FileOpenOptions.Binary, materials.GetForcedTextureLoadPathID());
+			if (fileHandle == null) {
+				break; // TODO; fallbacks
+			}
+		}
+
+		if (fileHandle == null) {
+			DevWarning($"\"{cacheFileName}\": can't be found on disk\n");
+			return false;
+		}
+
+		return true;
+	}
+
+	private void GetCacheFilename(Span<char> pCacheFileName) {
+
+	}
+
+	private void NotifyUnloadedFile() {
+
+	}
+
+	private void ComputeActualSize(bool ignorePicmip = false, IVTFTexture? vtfTexture = null, bool textureMigration = false) {
+
+	}
+
+	private IVTFTexture? ReconstructProceduralBits() {
+		throw new NotImplementedException();
+	}
+
+	private void ReconstructPartialTexture(Rectangle rect) {
+
+	}
+
 	Vector3 Reflectivity;
 	string Name;
 	string TextureGroupName;
@@ -272,13 +516,19 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	TexDimensions DimsAllocated;
 
 	ushort FrameCount;
+	ushort StreamingMips;
 	ushort OriginalRTWidth;
 	ushort OriginalRTHeight;
 	byte LowResImageWidth;
 	byte LowResImageHeight;
 	ushort DesiredDimensionLimit;
 	ushort ActualDimensionLimit;
+
+	IVTFTexture? StreamingVTF;
+	ResidencyType ResidenceTarget;
+	ResidencyType ResidenceCurrent;
+
 	ShaderAPITextureHandle_t[]? TextureHandles;
-
-
+	RenderTargetType OriginalRenderTargetType;
+	RenderTargetSizeMode RenderTargetSizeMode;
 }
