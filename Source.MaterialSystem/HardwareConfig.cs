@@ -40,7 +40,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public HDRType GetHDRType() {
-		throw new NotImplementedException();
+		return HDRType.None;
 	}
 
 	public int GetMaxDXSupportLevel() {
@@ -200,7 +200,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public bool SupportsCompressedTextures() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public VertexCompressionType SupportsCompressedVertices() {

@@ -1,6 +1,7 @@
 ﻿// TODO: Remove unused flags that aren't applicable in our use cases.
 // (although this goal applies to the entire project, frankly)
 
+using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Filesystem;
@@ -163,9 +164,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	static readonly ThreadLocal<IVTFTexture> VTFTextures = new();
 
 	private IVTFTexture GetScratchVTFTexture() {
-		if (!VTFTextures.IsValueCreated) 
+		if (!VTFTextures.IsValueCreated)
 			VTFTextures.Value = IVTFTexture.Create();
-		
+
 		return VTFTextures.Value!;
 	}
 
@@ -557,7 +558,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			fileHandle?.Dispose();
 		}
 
-		if((Flags & (uint)CompiledVtfFlags.StreamableFine) == 0) {
+		if ((Flags & (uint)CompiledVtfFlags.StreamableFine) == 0) {
 			TexDimensions actual = DimsActual, allocated = DimsAllocated;
 
 			Init(DimsMapping.Width, DimsMapping.Height, DimsMapping.Depth, vtfTexture.Format(), vtfTexture.Flags(), vtfTexture.FrameCount());
@@ -567,8 +568,73 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		}
 
 		// TODO: How does Source stream textures?
+		if (ConvertToActualFormat(vtfTexture)) {
+
+		}
 
 		return vtfTexture;
+	}
+
+	private bool ConvertToActualFormat(IVTFTexture vtfTexture) {
+		if (!materials.ShaderDevice.IsUsingGraphics())
+			return false;
+
+		bool converted = false;
+
+		ImageFormat fmt = ImageFormat;
+
+		ImageFormat dstFormat = ComputeActualFormat(vtfTexture.Format());
+		if (fmt != dstFormat) {
+			vtfTexture.ConvertImageFormat(dstFormat, false);
+
+			ImageFormat = dstFormat;
+			converted = true;
+		}
+		else if (materials.HardwareConfig.GetHDRType() == HDRType.Integer &&
+					dstFormat == ImageFormat.RGBA16161616F) {
+			// This is to force at most the precision of int16 for fp16 texture when running the integer path.
+			vtfTexture.ConvertImageFormat(ImageFormat.RGBA16161616, false);
+			vtfTexture.ConvertImageFormat(ImageFormat.RGBA16161616F, false);
+			converted = true;
+		}
+
+		return converted;
+	}
+
+	private ImageFormat ComputeActualFormat(ImageFormat srcFormat) {
+		ImageFormat dstFormat;
+		bool bIsCompressed = srcFormat.IsCompressed();
+		if (materials.HardwareConfig.SupportsCompressedTextures() && bIsCompressed) {
+			// for the runtime compressed formats the srcFormat won't equal the dstFormat, and we need to return srcFormat here
+			if (srcFormat.IsRuntimeCompressed()) {
+				return srcFormat;
+			}
+
+			// don't do anything since we are already in a compressed format.
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat);
+			Assert(dstFormat == srcFormat);
+			return dstFormat;
+		}
+
+		// NOTE: Below this piece of code is only called when compressed textures are
+		// turned off, or if the source texture is not compressed.
+
+		if ((srcFormat == ImageFormat.UVWQ8888) || (srcFormat == ImageFormat.UV88) || (srcFormat == ImageFormat.UVLX8888)) {
+			Assert(0);
+		}
+
+		if ((srcFormat == ImageFormat.UVWQ8888) || (srcFormat == ImageFormat.UV88) ||
+			(srcFormat == ImageFormat.UVLX8888) || (srcFormat == ImageFormat.RGBA16161616) ||
+			(srcFormat == ImageFormat.RGBA16161616F)) 
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat, false);  
+		else if ((Flags & (uint)(CompiledVtfFlags.EightBitAlpha | CompiledVtfFlags.OneBitAlpha)) != 0) 
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGRA8888);
+		else if (srcFormat == ImageFormat.I8) 
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.I8);
+		else 
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGR888);
+		
+		return dstFormat;
 	}
 
 	private IVTFTexture? HandleFileLoadFailedTexture(IVTFTexture? vtfTexture) {

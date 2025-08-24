@@ -70,6 +70,9 @@ public static class ImageLoader
 	public static bool IsCompressed(this ImageFormat fmt) {
 		return ImageFormatInfo(fmt).IsCompressed;
 	}
+	public static bool IsRuntimeCompressed(this ImageFormat fmt) {
+		return fmt == ImageFormat.DXT1_Runtime || fmt == ImageFormat.DXT5_Runtime;
+	}
 	public static int GetMemRequired(int width, int height, int depth, ImageFormat format, bool mipmap) {
 		if (depth <= 0)
 			depth = 1;

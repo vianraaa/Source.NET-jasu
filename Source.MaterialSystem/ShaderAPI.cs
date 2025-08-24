@@ -4,6 +4,7 @@ using OpenGL;
 
 using Raylib_cs;
 
+using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Engine;
@@ -11,6 +12,8 @@ using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
+
+using Steamworks;
 
 using System;
 using System.Collections.Generic;
@@ -595,9 +598,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ImageFormat.BGRX5551 => GL_RGBA8,     
 		ImageFormat.BGRA4444 => GL_RGBA4,     
 		ImageFormat.BGRA5551 => GL_RGB5_A1,   
-		ImageFormat.UV88 => GL_RG8,
-		ImageFormat.UVLX8888 => GL_RGBA8,
-		ImageFormat.UVWQ8888 => GL_RGBA8,
 		ImageFormat.RGBA16161616 => GL_RGBA16,
 		ImageFormat.RGBA16161616F => GL_RGBA16F,
 		ImageFormat.R32F => GL_R32F,
@@ -638,5 +638,13 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	internal void DeleteTexture(ShaderAPITextureHandle_t handle) {
 		// TODO
+	}
+
+	public ImageFormat GetNearestSupportedFormat(ImageFormat fmt, bool filteringRequired = true) {
+		return FindNearestSupportedFormat(fmt, false, false, filteringRequired);
+	}
+
+	public ImageFormat FindNearestSupportedFormat(ImageFormat format, bool isVertexTexture, bool isRenderTarget, bool filterableRequired) {
+		throw new NotImplementedException();
 	}
 }
