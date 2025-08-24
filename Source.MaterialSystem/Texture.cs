@@ -147,13 +147,14 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		}
 	}
 
+	static ThreadLocal<IVTFTexture> VTFTextures = new(() => IVTFTexture.Create());
 
 	private IVTFTexture? GetScratchVTFTexture() {
-		throw new NotImplementedException();
+		return VTFTextures.Value;
 	}
 
 	private void ReleaseScratchVTFTexture(IVTFTexture scratchVTF) {
-		throw new NotImplementedException();
+
 	}
 
 
@@ -484,7 +485,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private void GetCacheFilename(Span<char> pCacheFileName) {
-
+		sprintf(pCacheFileName, "materials/");
+		sprintf(pCacheFileName, pCacheFileName);
+		sprintf(pCacheFileName, ".vtf");
 	}
 
 	private void NotifyUnloadedFile() {
