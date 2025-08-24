@@ -182,7 +182,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		// It's assumed to have already been set by this point	
 		// Compute the cache name
 		Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
-		cacheFileName.Print("materials/%s.vtf", Name);
+		sprintf(cacheFileName, "materials/%s.vtf", Name);
 
 		ushort nHeaderSize = IVTFTexture.FileHeaderSize(IVTFTexture.VTF_MAJOR_VERSION);
 		Span<byte> mem = stackalloc byte[nHeaderSize];
@@ -485,9 +485,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private void GetCacheFilename(Span<char> pCacheFileName) {
-		sprintf(pCacheFileName, "materials/");
-		sprintf(pCacheFileName, pCacheFileName);
-		sprintf(pCacheFileName, ".vtf");
+		sprintf(pCacheFileName, "materials/%s.vtf", Name);
 	}
 
 	private void NotifyUnloadedFile() {

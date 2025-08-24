@@ -73,7 +73,7 @@ public static class Dbg
 	public static SpewOutputFunc GetSpewOutputFunc() => _SpewOutputFunc != null ? _SpewOutputFunc : DefaultSpewFunc;
 
 	public static SpewRetval DefaultSpewFunc(SpewType type, ReadOnlySpan<char> message) {
-		foreach(char c in message) {
+		foreach (char c in message) {
 			System.Console.Write(c);
 		}
 #if DEBUG
@@ -116,6 +116,7 @@ public static class Dbg
 	public static unsafe SpewRetval _SpewMessage(SpewType spewType, string groupName, int level, in Color color, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {
 		char* piece = stackalloc char[2048];
 		int writer = 0;
+		SpewRetval ret = SpewRetval.Continue;
 
 		SpewInfo info = new() {
 			SpewOutputColor = color,
@@ -147,18 +148,17 @@ public static class Dbg
 			return true;
 		}
 
-		// This is safe enough because the stack-allocated memory never leaves the stack frame. Formatting.Print does nothing outside with the span
-		Formatting.Print(msgFormat, (ros) => {
-			if (2048 - writer <= 0) {
-				handleOnePiece(writeOnePiece());
-			}
-			ros.CopyTo(new Span<char>((char*)((nint)piece + (writer * sizeof(char))), 2048 - writer));
-			writer += ros.Length;
-		}, args);
-
-		SpewRetval ret = writeOnePiece();
-		SpewInfo.Value = null;
-		handleOnePiece(ret);
+		CFormatReader reader = new(msgFormat);
+		while (!reader.Overflowed()) {
+			Span<char> target = new(piece, 2048);
+			writer = sprintf(target, ref reader, args);
+			
+			ret = writeOnePiece();
+			SpewInfo.Value = null;
+			if (!handleOnePiece(ret))
+				return ret;
+		}
+		
 		return ret;
 	}
 	public static bool FindSpewGroup(string groupName, [NotNullWhen(true)] out SpewGroup? group) {
