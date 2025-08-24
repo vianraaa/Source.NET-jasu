@@ -122,6 +122,35 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new NotImplementedException();
 	}
 
+	public void Init(int w, int h, int d, ImageFormat fmt, int flags, int frameCount) {
+		FreeShaderAPITextures();
+		ReleaseTextureHandles();
+
+		DimsMapping.Width = (ushort)w;
+		DimsMapping.Height = (ushort)h;
+		DimsMapping.Depth = (ushort)d;
+		ImageFormat = fmt;
+		FrameCount = (ushort)frameCount;
+
+		DimsActual.Width = DimsActual.Height = 0;
+		DimsActual.Depth = 1;
+		DimsActual.MipCount = 0;
+
+		DimsAllocated.Width = 0;
+		DimsAllocated.Height = 0;
+		DimsAllocated.Depth = 0;
+		DimsAllocated.MipCount = 0;
+		StreamingMips = 0;
+
+		Flags &= ~(uint)CompiledVtfFlags.DepthRenderTarget;
+		Flags |= (uint)flags;
+
+		ResidenceTarget = ResidencyType.None;
+		ResidenceCurrent = ResidencyType.None;
+
+		AllocateTextureHandles();
+	}
+
 	internal void InitFileTexture(ReadOnlySpan<char> fileName, ReadOnlySpan<char> textureGroupName) {
 		SetName(fileName);
 		TextureGroupName = new(textureGroupName);
@@ -131,36 +160,17 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		Name = ITextureInternal.NormalizeTextureName(fileName);
 	}
 
-	public ref struct ScratchVTF
-	{
-		readonly Texture _parent;
-		IVTFTexture? scratchVTF;
+	static readonly ThreadLocal<IVTFTexture> VTFTextures = new();
 
-		public ScratchVTF(Texture tex) {
-			_parent = tex;
-			scratchVTF = tex.GetScratchVTFTexture();
-		}
-
-		public readonly IVTFTexture? Get() => scratchVTF;
-		public void TakeOwnership() {
-			scratchVTF = null;
-		}
-
-		public void Dispose() {
-			if (scratchVTF != null)
-				_parent.ReleaseScratchVTFTexture(scratchVTF);
-			scratchVTF = null;
-		}
-	}
-
-	static ThreadLocal<IVTFTexture> VTFTextures = new(() => IVTFTexture.Create());
-
-	private IVTFTexture? GetScratchVTFTexture() {
-		return VTFTextures.Value;
+	private IVTFTexture GetScratchVTFTexture() {
+		if (!VTFTextures.IsValueCreated) 
+			VTFTextures.Value = IVTFTexture.Create();
+		
+		return VTFTextures.Value!;
 	}
 
 	private void ReleaseScratchVTFTexture(IVTFTexture scratchVTF) {
-
+		VTFTextures.Value!.Dispose();
 	}
 
 
@@ -181,8 +191,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			Assert((Flags & (long)CompiledVtfFlags.StreamableFine) == 0);
 		}
 
-		using ScratchVTF scratch = new(this);
-		IVTFTexture vtfTexture = scratch.Get()!;
+		IVTFTexture vtfTexture = GetScratchVTFTexture();
 
 		// The texture name doubles as the relative file name
 		// It's assumed to have already been set by this point	
@@ -267,11 +276,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			Warning($"Tried to bind texture {GetName()}, but texture handles are not valid.\n");
 		}
 	}
-
-	public void Download() {
-
-	}
-
 
 	public void Download(Rectangle rect, int additionalCreationFlags) {
 		if (materials.ShaderAPI.CanDownloadTextures()) {
@@ -551,6 +555,15 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			vtfTexture!.Unserialize(fileHandle.Stream, false);
 
 			fileHandle?.Dispose();
+		}
+
+		if((Flags & (uint)CompiledVtfFlags.StreamableFine) == 0) {
+			TexDimensions actual = DimsActual, allocated = DimsAllocated;
+
+			Init(DimsMapping.Width, DimsMapping.Height, DimsMapping.Depth, vtfTexture.Format(), vtfTexture.Flags(), vtfTexture.FrameCount());
+
+			DimsActual = actual;
+			DimsAllocated = allocated;
 		}
 
 		// TODO: How does Source stream textures?
