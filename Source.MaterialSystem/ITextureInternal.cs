@@ -6,7 +6,7 @@ public interface ITextureInternal : ITexture
 {
 	public static string NormalizeTextureName(ReadOnlySpan<char> name) {
 
-		return new(name); // todo.
+		return Path.ChangeExtension(new(name), null); // todo.
 	}
 
 	void Bind(in MaterialVarGPU hardwareTarget, int frame);
