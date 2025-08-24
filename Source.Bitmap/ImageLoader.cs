@@ -1,6 +1,8 @@
 ﻿
 using Source.Common.Bitmap;
 
+using System;
+
 namespace Source.Bitmap;
 
 
@@ -200,4 +202,77 @@ public static class ImageLoader
 
 		return mipLevels;
 	}
+
+	const int GL_RGBA32F = 0x8814;
+	const int GL_RGB32F = 0x8815;
+	const int GL_RGBA16F = 0x881A;
+	const int GL_COMPRESSED_RED_RGTC1 = 0x8DBB;
+	const int GL_COMPRESSED_RG_RGTC2 = 0x8DBD;
+	const int GL_R8 = 0x8229;
+	const int GL_RG8 = 0x822B;
+	const int GL_R32F = 0x822E;
+	const int GL_RGB565 = 0x8D62;
+	const int GL_COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1;
+	const int GL_COMPRESSED_RGBA_S3TC_DXT3_EXT = 0x83F2;
+	const int GL_COMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3;
+	const int GL_RGB8 = 0x8051;
+	const int GL_RGBA4 = 0x8056;
+	const int GL_RGB5_A1 = 0x8057;
+	const int GL_RGBA8 = 0x8058;
+	const int GL_BGRA8_EXT = 0x93A1;
+	const int GL_RGBA16 = 0x805B;
+	const int GL_DEPTH_COMPONENT16 = 0x81A5;
+	const int GL_DEPTH_COMPONENT24 = 0x81A6;
+	const int GL_DEPTH_COMPONENT32 = 0x81A7;
+
+	// An uncomfortable amount of this is guessing...
+	// The various forms of RGBA rearranged needs transmutating - we'll figure that out later as well.
+	public static int GetGLImageFormat(ImageFormat format) => format switch {
+		// Uncompressed color formats
+		ImageFormat.RGBA8888 => GL_RGBA8,
+		ImageFormat.ABGR8888 => GL_RGBA8,
+		ImageFormat.RGB888 => GL_RGBA8,
+		ImageFormat.BGR888 => GL_RGBA8,
+		ImageFormat.RGB565 => GL_RGB565,
+		ImageFormat.BGR565 => GL_RGB565,
+		ImageFormat.I8 => GL_R8,
+		ImageFormat.IA88 => GL_RG8,
+		ImageFormat.A8 => GL_RGBA8,
+		ImageFormat.RGB888_Bluescreen => GL_RGB8,
+		ImageFormat.BGR888_Bluescreen => GL_RGB8,
+		ImageFormat.ARGB8888 => GL_RGBA8,
+		ImageFormat.BGRA8888 => GL_BGRA8_EXT,
+		ImageFormat.BGRX8888 => GL_RGBA8,
+		ImageFormat.BGRX5551 => GL_RGBA8,
+		ImageFormat.BGRA4444 => GL_RGBA4,
+		ImageFormat.BGRA5551 => GL_RGB5_A1,
+		ImageFormat.RGBA16161616 => GL_RGBA16,
+		ImageFormat.RGBA16161616F => GL_RGBA16F,
+		ImageFormat.R32F => GL_R32F,
+		ImageFormat.RGB323232F => GL_RGB32F,
+		ImageFormat.RGBA32323232F => GL_RGBA32F,
+
+		// Compressed DXT formats
+		ImageFormat.DXT1 => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+		ImageFormat.DXT3 => GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+		ImageFormat.DXT5 => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+		ImageFormat.DXT1_OneBitAlpha => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+		ImageFormat.DXT1_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+		ImageFormat.DXT5_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+
+		// ATI compressed normal maps
+		ImageFormat.ATI2N => GL_COMPRESSED_RG_RGTC2,
+		ImageFormat.ATI1N => GL_COMPRESSED_RED_RGTC1,
+
+		// Depth-stencil
+		ImageFormat.NV_DST16 => GL_DEPTH_COMPONENT16,
+		ImageFormat.NV_DST24 => GL_DEPTH_COMPONENT24,
+		ImageFormat.NV_IntZ => GL_DEPTH_COMPONENT24,
+		ImageFormat.NV_RawZ => GL_DEPTH_COMPONENT32,
+		ImageFormat.ATI_DST16 => GL_DEPTH_COMPONENT16,
+		ImageFormat.ATI_DST24 => GL_DEPTH_COMPONENT24,
+		ImageFormat.NV_NULL => 0,      // dummy, no storage
+
+		_ => throw new NotSupportedException($"GetGLImageFormat: unexpected format '{format}'"),
+	};
 }

@@ -17,6 +17,7 @@ using Steamworks;
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -25,6 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using static Source.Common.Engine.IEngine;
+using static Source.MaterialSystem.ShaderAPIGl46;
 
 namespace Source.MaterialSystem;
 
@@ -538,12 +540,54 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return IsActive();
 	}
 
-	internal void ModifyTexture(uint v) {
-		throw new NotImplementedException();
+	ShaderAPITextureHandle_t textureModifyTarget;
+
+	public void ModifyTexture(ShaderAPITextureHandle_t textureHandle) {
+		textureModifyTarget = textureHandle;
 	}
 
-	internal void TexImageFromVTF(IVTFTexture? vtfTexture, int i) {
-		throw new NotImplementedException();
+	public struct TextureLoadInfo {
+		public ShaderAPITextureHandle_t Handle;
+		public int Width;
+		public int Height;
+		public int ZOffset;
+		public int Level;
+		public ImageFormat SrcFormat;
+	}
+
+	public void TexImageFromVTF(IVTFTexture? vtf, int vtfFrame) {
+		Assert(vtf != null);
+		Assert(textureModifyTarget != INVALID_SHADERAPI_TEXTURE_HANDLE);
+
+		ref TextureLoadInfo info = ref (stackalloc TextureLoadInfo[1])[0];
+		info.Handle = textureModifyTarget;
+		info.Width = 0;
+		info.Height = 0;
+		info.ZOffset = 0;
+		info.Level = 0;
+		info.SrcFormat = vtf.Format();
+
+		if (vtf.Depth() > 1) {
+			throw new NotImplementedException("Multidepth textures not supported yet");
+		}
+		else if (vtf.IsCubeMap()) {
+			throw new NotImplementedException("Cubemap textures not supported yet");
+		}
+		else {
+			LoadTextureFromVTF(in info, vtf, vtfFrame);
+		}
+	}
+
+	private unsafe void LoadTextureFromVTF(in TextureLoadInfo info, IVTFTexture vtf, int vtfFrame) {
+		if (info.SrcFormat.IsCompressed()) {
+			// TODO: a scratch buffer of some kind would be better, but I am lazy
+			using UnmanagedHeapMemory memory = new(vtf.ComputeMipSize(info.Level));
+			glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), (int)memory.Handle, (void*)memory.Handle);
+		}
+		else {
+			using UnmanagedHeapMemory memory = new(vtf.ComputeMipSize(info.Level));
+			glTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), (int)memory.Handle, (void*)memory.Handle);
+		}
 	}
 
 	public unsafe void CreateTextures(
@@ -569,65 +613,13 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		bool isSRGB = (creationFlags & CreateTextureFlags.SRGB) != 0;
 
 		fixed (ShaderAPITextureHandle_t* handles = textureHandles)
-			glCreateTextures(GL_TEXTURE_2D, textureHandles.Length, handles);
+			glCreateTextures(GL_TEXTURE_2D, textureHandles.Length, (uint*)handles);
 
 		for (int i = 0; i < count; i++) {
 			ShaderAPITextureHandle_t handle = textureHandles[i];
-			glTextureStorage2D(handle, mipCount, GetGLImageFormat(imageFormat), width, height);
+			glTextureStorage2D((uint)handle, mipCount, ImageLoader.GetGLImageFormat(imageFormat), width, height);
 		}
 	}
-
-	// An uncomfortable amount of this is guessing...
-	// The various forms of RGBA rearranged needs transmutating - we'll figure that out later as well.
-	public static int GetGLImageFormat(ImageFormat format) => format switch {
-		// Uncompressed color formats
-		ImageFormat.RGBA8888 => GL_RGBA8,
-		ImageFormat.ABGR8888 => GL_RGBA8,
-		ImageFormat.RGB888 => GL_RGBA8, 
-		ImageFormat.BGR888 => GL_RGBA8, 
-		ImageFormat.RGB565 => GL_RGB565, 
-		ImageFormat.BGR565 => GL_RGB565, 
-		ImageFormat.I8 => GL_R8, 
-		ImageFormat.IA88 => GL_RG8, 
-		ImageFormat.A8 => GL_RGBA8, 
-		ImageFormat.RGB888_Bluescreen => GL_RGB8,
-		ImageFormat.BGR888_Bluescreen => GL_RGB8,
-		ImageFormat.ARGB8888 => GL_RGBA8,     
-		ImageFormat.BGRA8888 => GL_BGRA8_EXT, 
-		ImageFormat.BGRX8888 => GL_RGBA8,     
-		ImageFormat.BGRX5551 => GL_RGBA8,     
-		ImageFormat.BGRA4444 => GL_RGBA4,     
-		ImageFormat.BGRA5551 => GL_RGB5_A1,   
-		ImageFormat.RGBA16161616 => GL_RGBA16,
-		ImageFormat.RGBA16161616F => GL_RGBA16F,
-		ImageFormat.R32F => GL_R32F,
-		ImageFormat.RGB323232F => GL_RGB32F,
-		ImageFormat.RGBA32323232F => GL_RGBA32F, 
-
-		// Compressed DXT formats
-		ImageFormat.DXT1 => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 
-		ImageFormat.DXT3 => GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, 
-		ImageFormat.DXT5 => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, 
-		ImageFormat.DXT1_OneBitAlpha => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-		ImageFormat.DXT1_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-		ImageFormat.DXT5_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
-
-		// ATI compressed normal maps
-		ImageFormat.ATI2N => GL_COMPRESSED_RG_RGTC2, 
-		ImageFormat.ATI1N => GL_COMPRESSED_RED_RGTC1,
-
-		// Depth-stencil
-		ImageFormat.NV_DST16 => GL_DEPTH_COMPONENT16, 
-		ImageFormat.NV_DST24 => GL_DEPTH_COMPONENT24, 
-		ImageFormat.NV_IntZ => GL_DEPTH_COMPONENT24, 
-		ImageFormat.NV_RawZ => GL_DEPTH_COMPONENT32, 
-		ImageFormat.ATI_DST16 => GL_DEPTH_COMPONENT16, 
-		ImageFormat.ATI_DST24 => GL_DEPTH_COMPONENT24, 
-		ImageFormat.NV_NULL => 0,      // dummy, no storage
-
-		_ => throw new NotSupportedException($"GetGLImageFormat: unexpected format '{format}'"),
-	};
-
 	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool v) {
 		throw new NotImplementedException();
 	}
@@ -645,6 +637,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public ImageFormat FindNearestSupportedFormat(ImageFormat format, bool isVertexTexture, bool isRenderTarget, bool filterableRequired) {
-		throw new NotImplementedException();
+		return format;
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,4 +51,33 @@ public static unsafe class MemUtils
 	public static void memcpy<T>(ref T dest, ref T src) where T : unmanaged {
 		dest = src;
 	}
+}
+
+public unsafe ref struct UnmanagedHeapMemory {
+	byte* Pointer;
+	nuint Len;
+
+	public UnmanagedHeapMemory(nuint bytes) {
+		Pointer = (byte*)NativeMemory.Alloc(bytes);
+		Len = bytes;
+	}
+	public UnmanagedHeapMemory(int bytes) {
+		Pointer = (byte*)NativeMemory.Alloc((nuint)bytes);
+		Len = (nuint)bytes;
+	}
+
+	public static implicit operator Span<byte>(UnmanagedHeapMemory memory) => new(memory.Pointer, (int)memory.Length);
+
+	public void Dispose() {
+		if (Pointer == null) {
+			Warning("WARNING: ATTEPTED TO DISPOSE OF NO LONGER VALID UNMANAGED HEAP MEMORY\n");
+			return;
+		}
+		NativeMemory.Free(Pointer);
+		Pointer = null;
+		Len = 0;
+	}
+
+	public readonly nuint Length => Len;
+	public readonly nuint Handle => (nuint)Pointer;
 }
