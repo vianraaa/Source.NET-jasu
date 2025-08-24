@@ -164,13 +164,25 @@ public static class UnmanagedUtils
 		}
 	}
 
-	public static ulong Hash(this ReadOnlySpan<char> str) {
+	public static unsafe ulong Hash(this ReadOnlySpan<char> str, bool invariant = true) {
 		if (str == null || str.Length == 0)
 			return 0;
 
-		Span<byte> utf8 = stackalloc byte[str.Length * 4]; // worst case UTF-8 size
-		int written = Encoding.UTF8.GetBytes(str, utf8);
-		return XXH64.DigestOf(utf8[0..written]);
+		ReadOnlySpan<char> target;
+		if (invariant) {
+			Span<char> lowerBuffer = stackalloc char[str.Length];
+			str.ToLowerInvariant(lowerBuffer);
+			target = lowerBuffer;
+		}
+		else {
+			target = str;
+		}
+
+		Span<byte> utf8 = stackalloc byte[target.Length * 4]; // worst case UTF-8 size
+		int written = Encoding.UTF8.GetBytes(target, utf8);
+		ulong hash = XXH64.DigestOf(utf8[0..written]);
+		//DevMsg($"{target} == {hash}\n");
+		return hash;
 	}
 
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {

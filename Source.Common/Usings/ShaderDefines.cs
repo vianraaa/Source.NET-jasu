@@ -5,7 +5,7 @@ namespace Source;
 
 public static class ShaderDefines
 {
-	public const int INVALID_SHADERAPI_TEXTURE_HANDLE = 0;
+	public const ShaderAPITextureHandle_t INVALID_SHADERAPI_TEXTURE_HANDLE = 0;
 
 
 	public static bool IsFlagSet(Span<IMaterialVar> shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & flag) != 0;

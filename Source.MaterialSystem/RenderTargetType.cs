@@ -4,9 +4,9 @@ public enum RenderTargetType
 {
 	NoRenderTarget,
 	RenderTarget,
-	RenderTargetWithDepth,
-	RenderTargetNoDepth,
-	RenderTargetOnlyDepth,
+	WithDepth,
+	NoDepth,
+	OnlyDepth,
 }
 public enum ResidencyType {
 	None,

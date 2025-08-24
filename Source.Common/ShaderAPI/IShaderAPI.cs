@@ -8,6 +8,19 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common.ShaderAPI;
+public enum CreateTextureFlags
+{
+	Cubemap = 0x0001,
+	RenderTarget = 0x0002,
+	Managed = 0x0004,
+	DepthBuffer = 0x0008,
+	Dynamic = 0x0010,
+	AutoMipmap = 0x0020,
+	VertexTexture = 0x0040,
+	SysMem = 0x0200, 
+	UnfilterableOK = 0x1000,
+	SRGB = 0x4000, 
+}
 public interface IShaderAPI : IShaderDynamicAPI
 {
 	void SetViewports(ReadOnlySpan<ShaderViewport> viewports);

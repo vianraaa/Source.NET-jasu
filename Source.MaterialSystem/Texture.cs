@@ -1,10 +1,15 @@
-﻿using Source.Common;
+﻿// TODO: Remove unused flags that aren't applicable in our use cases.
+// (although this goal applies to the entire project, frankly)
+
+using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -78,6 +83,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	public int GetMappingWidth() => DimsMapping.Height;
 
 	public ReadOnlySpan<char> GetName() => Name;
+	public ReadOnlySpan<char> GetTextureGroupName() => TextureGroupName;
 
 	public NormalDecodeMode GetNormalDecodeMode() {
 		throw new NotImplementedException();
@@ -327,7 +333,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 				NotifyUnloadedFile();
 
 				Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
-				GetCacheFilename(cacheFileName);
+				GetCacheFilename(ref cacheFileName);
 
 				// Get the data from disk...
 				// NOTE: Reloading the texture bits can cause the texture size, frames, format, pretty much *anything* can change.
@@ -427,11 +433,101 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private bool AllocateShaderAPITextures() {
-		throw new NotImplementedException();
+		int count = FrameCount;
+
+		CreateTextureFlags createFlags = 0;
+		if ((Flags & (uint)CompiledVtfFlags.EnvMap) > 0 && materials.HardwareConfig.SupportsCubeMaps()) {
+			createFlags |= CreateTextureFlags.Cubemap;
+		}
+
+		bool bIsFloat = (ImageFormat == ImageFormat.RGBA16161616F) || (ImageFormat == ImageFormat.R32F) ||
+						(ImageFormat == ImageFormat.RGB323232F) || (ImageFormat == ImageFormat.RGBA32323232F);
+
+		// Don't do sRGB on floating point textures
+		if ((Flags & (uint)CompiledVtfFlags.SRGB) > 0 && !bIsFloat) {
+			createFlags |= CreateTextureFlags.SRGB;    // for Posix/GL only
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.RenderTarget) > 0) {
+			createFlags |= CreateTextureFlags.RenderTarget;
+
+			// This here is simply so we can use a different call to
+			// create the depth texture below	
+			if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0 && (count == 2)) //nCount must be 2 on pc
+			{
+				--count;
+			}
+		}
+		else {
+			// If it's not a render target, use the texture manager in dx
+			if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+				createFlags |= CreateTextureFlags.SysMem;
+			else {
+				createFlags |= CreateTextureFlags.Managed;
+			}
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.PointSample) > 0) {
+			createFlags |= CreateTextureFlags.UnfilterableOK;
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.VertexTexture) > 0) {
+			createFlags |= CreateTextureFlags.VertexTexture;
+		}
+
+		int nCopies = 1;
+		if (IsProcedural()) {
+			// This is sort of hacky... should we store the # of copies in the VTF?
+			if ((Flags & (uint)CompiledVtfFlags.SingleCopy) == 0) {
+				// FIXME: That 6 there is heuristically what I came up with what I
+				// need to get eyes not to stall on map alyx3. We need a better way
+				// of determining how many copies of the texture we should store.
+				nCopies = 6;
+			}
+		}
+
+		// For depth only render target: adjust texture width/height
+		// Currently we just leave it the same size, will update with further testing
+		int shaderApiCreateTextureDepth = ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) != 0 && (OriginalRenderTargetType == RenderTargetType.OnlyDepth)) ? 1 : DimsAllocated.Depth;
+
+		// Create all animated texture frames in a single call
+		materials.ShaderAPI.CreateTextures(
+			TextureHandles!, count,
+			DimsAllocated.Width, DimsAllocated.Height, shaderApiCreateTextureDepth, ImageFormat, DimsAllocated.MipCount,
+			nCopies, createFlags, GetName(), GetTextureGroupName());
+
+		int accountingCount = count;
+
+		// Create the depth render target buffer
+		if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0) {
+			Assert(count == 1);
+
+			Span<char> debugName = stackalloc char[128];
+			sprintf(debugName, "%s_ZBuffer", new string(GetName()));
+			Assert(FrameCount >= 2);
+			TextureHandles![1] = materials.ShaderAPI.CreateDepthTexture(
+					ImageFormat,
+					DimsAllocated.Width,
+					DimsAllocated.Height,
+					debugName,
+					(OriginalRenderTargetType == RenderTargetType.OnlyDepth));
+			accountingCount += 1;
+		}
+
+		InternalFlags |= (uint)InternalTextureFlags.Allocated;
+
+		return true;
 	}
 
 	private void FreeShaderAPITextures() {
-		throw new NotImplementedException();
+		if (TextureHandles != null && HasBeenAllocated()) {
+			for (int i = FrameCount; --i >= 0;) {
+				if (materials.ShaderAPI.IsTexture(TextureHandles[i])) {
+					materials.ShaderAPI.DeleteTexture(TextureHandles[i]);
+					TextureHandles[i] = INVALID_SHADERAPI_TEXTURE_HANDLE;
+				}
+			}
+		}
 	}
 
 	private void MigrateShaderAPITextures() {
@@ -452,7 +548,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			if (!GetFileHandle(out fileHandle, cacheFileName, out resolvedFilename))
 				return HandleFileLoadFailedTexture(vtfTexture);
 
-			TextureLODControlSettings settings = CachedFileLodSettings;
+			vtfTexture!.Unserialize(fileHandle.Stream, false);
 
 			fileHandle?.Dispose();
 		}
@@ -466,7 +562,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new Exception("File load failed (time to implement HandleFileLoadFailedTexture, or something went horribly wrong)");
 	}
 
-	private bool GetFileHandle(out IFileHandle? fileHandle, Span<char> cacheFileName, out string? resolvedFilename) {
+	private bool GetFileHandle([NotNullWhen(true)] out IFileHandle? fileHandle, Span<char> cacheFileName, out string? resolvedFilename) {
 		fileHandle = null;
 		resolvedFilename = null; // Requires OpenEx; do later
 		while (fileHandle == null) {
@@ -484,8 +580,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		return true;
 	}
 
-	private void GetCacheFilename(Span<char> pCacheFileName) {
-		sprintf(pCacheFileName, "materials/%s.vtf", Name);
+	private void GetCacheFilename(ref Span<char> pCacheFileName) {
+		int written = sprintf(pCacheFileName, "materials/%s.vtf", Name);
+		pCacheFileName = pCacheFileName[..written];
 	}
 
 	private void NotifyUnloadedFile() {

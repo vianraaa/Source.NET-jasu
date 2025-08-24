@@ -1134,6 +1134,7 @@ public unsafe static class Gl46
     public const GLenum GL_RGBA4 = 0x8056;
     public const GLenum GL_RGB5_A1 = 0x8057;
     public const GLenum GL_RGBA8 = 0x8058;
+    public const GLenum GL_BGRA8_EXT = 0x93A1;
     public const GLenum GL_RGB10_A2 = 0x8059;
     public const GLenum GL_RGBA12 = 0x805A;
     public const GLenum GL_RGBA16 = 0x805B;
@@ -4598,8 +4599,12 @@ public unsafe static class Gl46
     public const GLenum GL_RG32I = 0x823B;
     public const GLenum GL_RG32UI = 0x823C;
     public const GLenum GL_VERTEX_ARRAY_BINDING = 0x85B5;
+	public const GLenum GL_COMPRESSED_RGB_S3TC_DXT1_EXT = 0x83F0;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT3_EXT = 0x83F2;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3;
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLCOLORMASKIPROC(GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
     private static PFNGLCOLORMASKIPROC _glColorMaski;
     /// <summary>

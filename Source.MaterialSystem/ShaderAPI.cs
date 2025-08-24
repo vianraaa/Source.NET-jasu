@@ -5,6 +5,7 @@ using OpenGL;
 using Raylib_cs;
 
 using Source.Common;
+using Source.Common.Bitmap;
 using Source.Common.Engine;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
@@ -540,5 +541,102 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	internal void TexImageFromVTF(IVTFTexture? vtfTexture, int i) {
 		throw new NotImplementedException();
+	}
+
+	public unsafe void CreateTextures(
+		ShaderAPITextureHandle_t[] textureHandles,
+		int count,
+		int width,
+		int height,
+		int depth,
+		ImageFormat imageFormat,
+		ushort mipCount,
+		int copies,
+		CreateTextureFlags creationFlags,
+		ReadOnlySpan<char> debugName,
+		ReadOnlySpan<char> textureGroup) {
+		if (depth == 0)
+			depth = 1;
+
+		bool isCubeMap = (creationFlags & CreateTextureFlags.Cubemap) != 0;
+		bool isRenderTarget = (creationFlags & CreateTextureFlags.RenderTarget) != 0;
+		bool managed = (creationFlags & CreateTextureFlags.Managed) != 0;
+		bool isDepthBuffer = (creationFlags & CreateTextureFlags.DepthBuffer) != 0;
+		bool isDynamic = (creationFlags & CreateTextureFlags.Dynamic) != 0;
+		bool isSRGB = (creationFlags & CreateTextureFlags.SRGB) != 0;
+
+		fixed (ShaderAPITextureHandle_t* handles = textureHandles)
+			glCreateTextures(GL_TEXTURE_2D, textureHandles.Length, handles);
+
+		for (int i = 0; i < count; i++) {
+			ShaderAPITextureHandle_t handle = textureHandles[i];
+			glTextureStorage2D(handle, mipCount, GetGLImageFormat(imageFormat), width, height);
+		}
+	}
+
+	// An uncomfortable amount of this is guessing...
+	// The various forms of RGBA rearranged needs transmutating - we'll figure that out later as well.
+	public static int GetGLImageFormat(ImageFormat format) => format switch {
+		// Uncompressed color formats
+		ImageFormat.RGBA8888 => GL_RGBA8,
+		ImageFormat.ABGR8888 => GL_RGBA8,
+		ImageFormat.RGB888 => GL_RGBA8, 
+		ImageFormat.BGR888 => GL_RGBA8, 
+		ImageFormat.RGB565 => GL_RGB565, 
+		ImageFormat.BGR565 => GL_RGB565, 
+		ImageFormat.I8 => GL_R8, 
+		ImageFormat.IA88 => GL_RG8, 
+		ImageFormat.A8 => GL_RGBA8, 
+		ImageFormat.RGB888_Bluescreen => GL_RGB8,
+		ImageFormat.BGR888_Bluescreen => GL_RGB8,
+		ImageFormat.ARGB8888 => GL_RGBA8,     
+		ImageFormat.BGRA8888 => GL_BGRA8_EXT, 
+		ImageFormat.BGRX8888 => GL_RGBA8,     
+		ImageFormat.BGRX5551 => GL_RGBA8,     
+		ImageFormat.BGRA4444 => GL_RGBA4,     
+		ImageFormat.BGRA5551 => GL_RGB5_A1,   
+		ImageFormat.UV88 => GL_RG8,
+		ImageFormat.UVLX8888 => GL_RGBA8,
+		ImageFormat.UVWQ8888 => GL_RGBA8,
+		ImageFormat.RGBA16161616 => GL_RGBA16,
+		ImageFormat.RGBA16161616F => GL_RGBA16F,
+		ImageFormat.R32F => GL_R32F,
+		ImageFormat.RGB323232F => GL_RGB32F,
+		ImageFormat.RGBA32323232F => GL_RGBA32F, 
+
+		// Compressed DXT formats
+		ImageFormat.DXT1 => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 
+		ImageFormat.DXT3 => GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, 
+		ImageFormat.DXT5 => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, 
+		ImageFormat.DXT1_OneBitAlpha => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+		ImageFormat.DXT1_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+		ImageFormat.DXT5_Runtime => GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+
+		// ATI compressed normal maps
+		ImageFormat.ATI2N => GL_COMPRESSED_RG_RGTC2, 
+		ImageFormat.ATI1N => GL_COMPRESSED_RED_RGTC1,
+
+		// Depth-stencil
+		ImageFormat.NV_DST16 => GL_DEPTH_COMPONENT16, 
+		ImageFormat.NV_DST24 => GL_DEPTH_COMPONENT24, 
+		ImageFormat.NV_IntZ => GL_DEPTH_COMPONENT24, 
+		ImageFormat.NV_RawZ => GL_DEPTH_COMPONENT32, 
+		ImageFormat.ATI_DST16 => GL_DEPTH_COMPONENT16, 
+		ImageFormat.ATI_DST24 => GL_DEPTH_COMPONENT24, 
+		ImageFormat.NV_NULL => 0,      // dummy, no storage
+
+		_ => throw new NotSupportedException($"GetGLImageFormat: unexpected format '{format}'"),
+	};
+
+	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool v) {
+		throw new NotImplementedException();
+	}
+
+	internal bool IsTexture(ShaderAPITextureHandle_t handle) {
+		return true; // TODO
+	}
+
+	internal void DeleteTexture(ShaderAPITextureHandle_t handle) {
+		// TODO
 	}
 }
