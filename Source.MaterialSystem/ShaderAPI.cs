@@ -473,7 +473,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t v) {
-		throw new NotImplementedException();
 	}
 
 	public bool CanDownloadTextures() {

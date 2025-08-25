@@ -275,6 +275,13 @@ public unsafe class IndexBuffer : IDisposable
 		ibo = (int)glCreateBuffer();
 		glNamedBufferStorage((uint)ibo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		SysmemBuffer = glMapNamedBufferRange((uint)ibo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+
+		if (SysmemBuffer == null) {
+			Warning("WARNING: RecomputeIBO failure (OpenGL's not happy...)\n");
+			Warning($"    OpenGL error code    : {glGetErrorName()}\n");
+			Warning($"    Vertex buffer object : {ibo}\n");
+			Warning($"    Attempted alloc size : {BufferSize}\n");
+		}
 	}
 
 	public short* Lock(bool readOnly, int indexCount, out int startIndex, int firstIndex) {
@@ -319,6 +326,8 @@ public unsafe class IndexBuffer : IDisposable
 
 		count += (count % 2);
 		IndexCount = count;
+
+		BufferSize = sizeof(ushort) * IndexCount;
 
 		RecomputeIBO();
 	}
@@ -655,7 +664,7 @@ public unsafe class Mesh : IMesh
 	}
 
 	public virtual VertexFormat GetVertexFormat() {
-		throw new NotImplementedException();
+		return VertexFormat;
 	}
 
 	public virtual int IndexCount() {
