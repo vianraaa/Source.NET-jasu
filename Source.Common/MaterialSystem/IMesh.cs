@@ -88,7 +88,7 @@ public interface IIndexBuffer
 	bool IsDynamic();
 	void BeginCastBuffer(MaterialIndexFormat format);
 	void EndCastBuffer();
-	bool Lock(int maxIndexCount, bool append, ref IndexDesc desc);
+	int Lock(bool readOnly, int firstIndex, int indexCount, ref IndexDesc desc);
 	bool Unlock(int writtenIndexCount, ref IndexDesc desc);
 }
 
@@ -201,6 +201,7 @@ public unsafe struct VertexBuilder
 		*pDst++ = y;
 		*pDst = z;
 	}
+
 	public void Position3fv(ReadOnlySpan<float> v) {
 		fixed (float* vptr = v) {
 			float* vp = vptr;
@@ -208,6 +209,77 @@ public unsafe struct VertexBuilder
 			*pDst++ = *vp++;
 			*pDst++ = *vp++;
 			*pDst = *vp;
+		}
+	}
+
+	public void Normal3fv(ReadOnlySpan<float> n) {
+		fixed (float* nptr = n) {
+			float* np = nptr;
+			float* pDst = CurrNormal;
+			*pDst++ = *np++;
+			*pDst++ = *np++;
+			*pDst = *np;
+		}
+	}
+
+	public void Normal3f(float x, float y, float z) {
+		float* pDst = CurrNormal;
+		*pDst++ = x;
+		*pDst++ = y;
+		*pDst = z;
+	}
+
+	public void Color3f(float r, float g, float b) {
+		byte* pDst = CurrColor;
+		*pDst++ = (byte)Math.Clamp(r * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(g * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(b * 255, 0, 255);
+		*pDst = 255;
+	}
+
+	public void Color3fv(ReadOnlySpan<float> rgb) {
+		fixed (float* cptr = rgb) {
+			float* cp = cptr;
+			byte* pDst = CurrColor;
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst = 255;
+		}
+	}
+
+	public void Color4f(float r, float g, float b, float a) {
+		byte* pDst = CurrColor;
+		*pDst++ = (byte)Math.Clamp(r * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(g * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(b * 255, 0, 255);
+		*pDst = (byte)Math.Clamp(a * 255, 0, 255);
+	}
+
+	public void Color4fv(ReadOnlySpan<float> rgba) {
+		fixed (float* cptr = rgba) {
+			float* cp = cptr;
+			byte* pDst = CurrColor;
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst = (byte)Math.Clamp(*cp, 0, 255);
+		}
+	}
+
+	internal void TexCoord2f(int stage, float s, float t) {
+		float* pDst = CurrTexCoord[stage];
+		*pDst++ = s;
+		*pDst++ = t;
+	}
+
+	public void AdvanceVertex() {
+		CurrPosition += Desc.PositionSize;
+		CurrNormal += Desc.PositionSize;
+		CurrColor += Desc.ColorSize;
+
+		for (int i = 0; i < 8; i++) {
+			CurrTexCoord[i] += Desc.TexCoordSize[i];
 		}
 	}
 }
@@ -349,7 +421,7 @@ public unsafe struct MeshBuilder : IDisposable
 	// Given an index, point to the associated vertex
 	public void SelectVertexFromIndex(int idx) => throw new NotImplementedException();
 	// Advances the current vertex and index by one
-	public void AdvanceVertex() => throw new NotImplementedException();
+	public void AdvanceVertex() => VertexBuilder.AdvanceVertex();
 	public void AdvanceVertices(int nVerts) => throw new NotImplementedException();
 	public void AdvanceIndex() => throw new NotImplementedException();
 	public void AdvanceIndices(int nIndices) => throw new NotImplementedException();
@@ -373,24 +445,21 @@ public unsafe struct MeshBuilder : IDisposable
 	public ReadOnlySpan<ushort> Index() => throw new NotImplementedException();
 
 	// position setting
-	public void Position3f(float x, float y, float z) {
-		VertexBuilder.Position3f(x, y, z);
-	}
-	public void Position3fv(ReadOnlySpan<float> v) {
-		VertexBuilder.Position3fv(v);
-	}
+	public void Position3f(float x, float y, float z) => VertexBuilder.Position3f(x, y, z);
+	public void Position3fv(ReadOnlySpan<float> v) => VertexBuilder.Position3fv(v);
 
 	// normal setting
-	public void Normal3f(float nx, float ny, float nz) => throw new NotImplementedException();
-	public void Normal3fv(ReadOnlySpan<float> n) => throw new NotImplementedException();
+	public void Normal3f(float x, float y, float z) => VertexBuilder.Normal3f(x, y, z);
+	public void Normal3fv(ReadOnlySpan<float> n) => VertexBuilder.Normal3fv(n);
+	// What do these even do
 	public void NormalDelta3fv(ReadOnlySpan<float> n) => throw new NotImplementedException();
 	public void NormalDelta3f(float nx, float ny, float nz) => throw new NotImplementedException();
 
 	// color setting
-	public void Color3f(float r, float g, float b) => throw new NotImplementedException();
-	public void Color3fv(ReadOnlySpan<float> rgb) => throw new NotImplementedException();
-	public void Color4f(float r, float g, float b, float a) => throw new NotImplementedException();
-	public void Color4fv(ReadOnlySpan<float> rgba) => throw new NotImplementedException();
+	public void Color3f(float r, float g, float b) => VertexBuilder.Color3f(r, g, b);
+	public void Color3fv(ReadOnlySpan<float> rgb) => VertexBuilder.Color3fv(rgb);
+	public void Color4f(float r, float g, float b, float a) => VertexBuilder.Color4f(r, g, b, a);
+	public void Color4fv(ReadOnlySpan<float> rgba) => VertexBuilder.Color4fv(rgba);
 
 	// Faster versions of color
 	public void Color3ub(byte r, byte g, byte b) => throw new NotImplementedException();
@@ -412,7 +481,7 @@ public unsafe struct MeshBuilder : IDisposable
 
 	// texture coordinate setting
 	public void TexCoord1f(int stage, float s) => throw new NotImplementedException();
-	public void TexCoord2f(int stage, float s, float t) => throw new NotImplementedException();
+	public void TexCoord2f(int stage, float s, float t) => VertexBuilder.TexCoord2f(stage, s, t);
 	public void TexCoord2fv(int stage, ReadOnlySpan<float> st) => throw new NotImplementedException();
 	public void TexCoord3f(int stage, float s, float t, float u) => throw new NotImplementedException();
 	public void TexCoord3fv(int stage, ReadOnlySpan<float> stu) => throw new NotImplementedException();
@@ -423,11 +492,11 @@ public unsafe struct MeshBuilder : IDisposable
 	public void TexCoordSubRect2fv(int stage, ReadOnlySpan<float> st, ReadOnlySpan<float> offset, ReadOnlySpan<float> scale) => throw new NotImplementedException();
 
 	// tangent space 
-	public void TangentS3f(float sx, float sy, float sz) => throw new NotImplementedException();
-	public void TangentS3fv(ReadOnlySpan<float> s) => throw new NotImplementedException();
+	public void TangentS3f(float sx, float sy, float sz) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentS3fv(ReadOnlySpan<float> s) { /* TODO: add tangents to vertex elements + descriptor */ }
 
-	public void TangentT3f(float tx, float ty, float tz) => throw new NotImplementedException();
-	public void TangentT3fv(ReadOnlySpan<float> t) => throw new NotImplementedException();
+	public void TangentT3f(float tx, float ty, float tz) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentT3fv(ReadOnlySpan<float> t) { /* TODO: add tangents to vertex elements + descriptor */ }
 
 	// Wrinkle
 	public void Wrinkle1f(float flWrinkle) => throw new NotImplementedException();

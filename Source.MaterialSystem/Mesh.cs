@@ -268,9 +268,9 @@ public unsafe class IndexBuffer : IDisposable
 		SysmemBuffer = glMapNamedBufferRange((uint)ibo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 
-	public short* Lock(int numVerts, out int baseVertexIndex) {
+	public short* Lock(bool readOnly, int indexCount, out int startIndex, int firstIndex) {
 		Assert(!Locked);
-		baseVertexIndex = 0;
+		startIndex = 0;
 		if (SysmemBuffer == null) {
 			RecomputeIBO();
 		}
@@ -431,7 +431,9 @@ public unsafe class DynamicMesh : Mesh
 		}
 
 		Lock(vertexCount, false, ref desc.Vertex);
-		Lock(indexCount, false, ref desc.Index);
+		int firstIndex = Lock(false, -1, indexCount, ref desc.Index);
+		if (FirstIndex < 0)
+			FirstIndex = firstIndex; // ???????????????
 	}
 	
 	public void Init(int bufferId) {
@@ -519,8 +521,22 @@ public unsafe class Mesh : IMesh
 		return true;
 	}
 
-	public virtual bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
-		throw new NotImplementedException();
+	public virtual int Lock(bool readOnly, int firstIndex, int indexCount, ref IndexDesc desc) {
+		if (ShaderDevice.IsDeactivated() || indexCount == 0) {
+			Assert(false);
+			return 0;
+		}
+
+		desc.Indices = (ushort*)IndexBuffer.Lock(readOnly, indexCount, out int startIndex, firstIndex);
+		if(desc.Indices == null) {
+			desc.IndexSize = 0;
+			Assert(false);
+			Warning("Failed to lock index buffer...\n");
+			return 0;
+		}
+
+		desc.IndexSize = 1;
+		return startIndex;
 	}
 
 	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
