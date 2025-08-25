@@ -1,11 +1,13 @@
 ﻿using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Engine;
 
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace Source.VTF;
@@ -48,8 +50,34 @@ public sealed class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public int ComputeFaceSize(int startingMipLevle = 0) {
-		throw new NotImplementedException();
+	public int ComputeFaceSize(int startingMipLevel = 0) {
+		return ComputeFaceSize(startingMipLevel, Format);
+	}
+
+	public int ComputeFaceSize(int startingMipLevel, ImageFormat format) {
+		int size = 0;
+		int w = Width;
+		int h = Height;
+		int d = Depth;
+
+		for (int i = 0; i < MipCount; ++i) {
+			if (i >= startingMipLevel) {
+				size += ImageLoader.GetMemRequired(w, h, d, format, false);
+			}
+			w >>= 1;
+			h >>= 1;
+			d >>= 1;
+			if (w < 1) {
+				w = 1;
+			}
+			if (h < 1) {
+				h = 1;
+			}
+			if (d < 1) {
+				d = 1;
+			}
+		}
+		return size;
 	}
 
 	public void ComputeMipLevelDimensions(int level, out int width, out int height, out int depth) {
@@ -70,7 +98,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public int ComputeMipSize(int mipLevel) {
-		throw new NotImplementedException();
+		return ComputeMipSize(mipLevel, Format);
+	}
+
+	public int ComputeMipSize(int mipLevel, ImageFormat format) {
+		ComputeMipLevelDimensions(mipLevel, out int w, out int h, out int d);
+		return ImageLoader.GetMemRequired(w, h, d, Format, false);
 	}
 
 	public void ComputeReflectivity() {
@@ -92,7 +125,7 @@ public sealed class VTFTexture : IVTFTexture
 	int IVTFTexture.Depth() => Depth;
 
 	public void Dispose() {
-		throw new NotImplementedException();
+
 	}
 
 	int IVTFTexture.FaceCount() => FaceCount;
@@ -130,7 +163,31 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel) {
-		throw new NotImplementedException();
+		Assert(ImageData != null);
+		nint offset = GetImageOffset(frame, face, mipLevel, Format);
+		return ImageData.AsSpan()[(int)offset..];
+	}
+
+	private nint GetImageOffset(int frame, int face, int mipLevel, ImageFormat format) {
+		Assert(frame < FrameCount);
+		Assert(face < FaceCount);
+		Assert(mipLevel < MipCount);
+
+		int i;
+		nint iOffset = 0;
+
+		int iFaceSize = ComputeFaceSize(0, format);
+		iOffset = frame * FaceCount * iFaceSize;
+
+		// Get to the right face
+		iOffset += face * iFaceSize;
+
+		// Get to the right mip level
+		for (i = 0; i < mipLevel; ++i) {
+			iOffset += ComputeMipSize(i, format);
+		}
+
+		return iOffset;
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel, int x, int y, int z = 0) {

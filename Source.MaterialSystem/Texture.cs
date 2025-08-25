@@ -171,7 +171,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private void ReleaseScratchVTFTexture(IVTFTexture scratchVTF) {
-		VTFTextures.Value!.Dispose();
+		StreamingVTF = null;
 	}
 
 

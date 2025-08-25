@@ -579,14 +579,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	private unsafe void LoadTextureFromVTF(in TextureLoadInfo info, IVTFTexture vtf, int vtfFrame) {
+		vtf.ImageFileInfo(vtfFrame, 0, info.Level, out int start, out int size);
+
 		if (info.SrcFormat.IsCompressed()) {
-			// TODO: a scratch buffer of some kind would be better, but I am lazy
-			using UnmanagedHeapMemory memory = new(vtf.ComputeMipSize(info.Level));
-			glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), (int)memory.Handle, (void*)memory.Handle);
+			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
+			fixed (byte* bytes = data)
+			glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
 		}
 		else {
-			using UnmanagedHeapMemory memory = new(vtf.ComputeMipSize(info.Level));
-			glTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), (int)memory.Handle, (void*)memory.Handle);
+			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
+			fixed (byte* bytes = data)
+				glTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
 		}
 	}
 

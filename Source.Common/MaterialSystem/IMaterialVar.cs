@@ -35,6 +35,7 @@ public abstract class IMaterialVar
 	protected int IntVal;
 	protected Vector4 VecVal;
 	protected MaterialVarType Type;
+	protected ITexture? TextureValue;
 	protected byte NumVectorComps;
 	protected bool FakeMaterialVar;
 	protected byte TempIndex;
