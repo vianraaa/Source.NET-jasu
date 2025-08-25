@@ -141,5 +141,7 @@ public abstract class BaseVSShader : BaseShader
 					ClearFlags(shaderParams, MaterialVarFlags.BaseAlphaEnvMapMask);
 			}
 		}
+
+		DevMsg("Managed to init an UnlitGeneric shader instance.");
 	}
 }
