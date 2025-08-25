@@ -1,4 +1,7 @@
-﻿using Source.Common.MaterialSystem;
+﻿using Raylib_cs;
+
+using Source.Common.Engine;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
 using System.Net.Sockets;
@@ -27,6 +30,9 @@ public unsafe class VertexBuffer : IDisposable
 
 	int vao = -1;
 	int vbo = -1;
+
+	internal uint VAO() => vao > 0 ? (uint)vao : throw new NullReferenceException("Vertex Array Object was null");
+	internal uint VBO() => vbo > 0 ? (uint)vbo : throw new NullReferenceException("Vertex Buffer Object was null");
 
 	public VertexBuffer() {
 	}
@@ -436,11 +442,6 @@ public unsafe class DynamicMesh : Mesh
 	bool VertexOverride;
 	bool IndexOverride;
 
-	int TotalVertices;
-	int TotalIndices;
-	int FirstVertex;
-	int FirstIndex;
-
 	int BufferId;
 	public void ResetVertexAndIndexCounts() {
 		TotalVertices = TotalIndices = 0;
@@ -597,13 +598,20 @@ public unsafe class Mesh : IMesh
 	protected VertexFormat LastVertexFormat;
 	protected VertexFormat VertexFormat;
 	protected IMaterialInternal Material;
-	protected MaterialPrimitiveType Type;
+	protected MaterialPrimitiveType Type = MaterialPrimitiveType.Triangles;
 	protected bool IsDrawing;
 
 	protected static PrimList* s_Prims;
 	protected static int s_PrimsCount;
 	protected static uint s_FirstVertex;
 	protected static uint s_NumVertices;
+
+
+	protected int Mode = ComputeMode(MaterialPrimitiveType.Triangles);
+	protected int TotalVertices;
+	protected int TotalIndices;
+	protected int FirstVertex;
+	protected int FirstIndex;
 
 	public VertexBuffer GetVertexBuffer() => throw new Exception();
 	public IndexBuffer GetIndexBuffer() => throw new Exception();
@@ -743,6 +751,7 @@ public unsafe class Mesh : IMesh
 			return;
 
 		Type = type;
+		Mode = ComputeMode(type);
 	}
 
 	public virtual bool Unlock(int vertexCount, ref VertexDesc desc) {
@@ -779,7 +788,72 @@ public unsafe class Mesh : IMesh
 		VertexFormat = fmt;
 	}
 
-	public virtual void RenderPass() {
+	public virtual unsafe void RenderPass() {
+		HandleLateCreation();
+		Assert(Type != MaterialPrimitiveType.Heterogenous);
+
+		for (int iPrim = 0; iPrim < s_PrimsCount; iPrim++) {
+			PrimList* pPrim = &s_Prims[iPrim];
+
+			if (pPrim->NumIndices == 0)
+				continue;
+
+			if ((Type == MaterialPrimitiveType.Points) || (Type == MaterialPrimitiveType.InstancedQuads)) {
+				throw new NotImplementedException();
+			}
+			else {
+				int numPrimitives = NumPrimitives(s_NumVertices, pPrim->NumIndices);
+
+				CheckIndices(pPrim, numPrimitives);
+				glBindVertexArray(VertexBuffer!.VAO());
+				glDrawElements(Mode, pPrim->NumIndices, GL_UNSIGNED_SHORT, (void*)pPrim->FirstIndex);
+			}
+		}
+	}
+
+	public static int ComputeMode(MaterialPrimitiveType type) {
+		switch (type) {
+			case MaterialPrimitiveType.Points: return GL_POINTS;
+			case MaterialPrimitiveType.Lines: return GL_LINES;
+			case MaterialPrimitiveType.Triangles: return GL_TRIANGLES;
+			case MaterialPrimitiveType.TriangleStrip: return GL_TRIANGLE_STRIP;
+			default: throw new Exception();
+		}
+	}
+
+	private int NumPrimitives(uint vertexCount, int indexCount) {
+		switch (Mode) {
+			case GL_POINTS: return (int)vertexCount;
+			case GL_LINES: return indexCount / 2;
+			case GL_TRIANGLES: return indexCount / 3;
+			case GL_TRIANGLE_STRIP: return indexCount - 2;
+			default: Assert(0); return 0;
+		}
+	}
+
+	private void CheckIndices(PrimList* pPrim, int numPrimitives) {
+		int indexCount = 0;
+		if (Mode == GL_TRIANGLES) {
+			indexCount = numPrimitives * 3;
+		}
+		else if (Mode == GL_TRIANGLE_STRIP) {
+			indexCount = numPrimitives + 2;
+		}
+
+		if (indexCount != 0) {
+			// TODO: Should index buffer be global? Why the hell was it global before??
+			Assert(pPrim->FirstIndex >= 0 && pPrim->FirstIndex < IndexBuffer.IndexCount);
+
+			for (int j = 0; j < indexCount; j++) { // TODO
+				//uint index = IndexBuffer.GetShadowIndex(j + pPrim->FirstIndex);
+
+				//if (index >= s_FirstVertex && index < s_FirstVertex + s_NumVertices) {
+				//	continue;
+				//}
+
+				//Assert(false);
+			}
+		}
 	}
 
 	internal bool HasColorMesh() {
