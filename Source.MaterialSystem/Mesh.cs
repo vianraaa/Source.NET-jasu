@@ -111,8 +111,7 @@ public unsafe class VertexBuffer : IDisposable
 		SysmemBuffer = glMapNamedBufferRange((uint)vbo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		if(SysmemBuffer == null) {
 			Warning("WARNING: RecomputeVBO failure (OpenGL's not happy...)\n");
-			int error = glGetError();
-			Warning($"OpenGL error code: {glGetErrorNamed()}");
+			Warning($"OpenGL error code: {glGetErrorName()}");
 		}
 		RecomputeVAO();
 	}

@@ -142,6 +142,6 @@ public abstract class BaseVSShader : BaseShader
 			}
 		}
 
-		DevMsg("Managed to init an UnlitGeneric shader instance.");
+		DevMsg("Managed to init an UnlitGeneric shader instance.\n");
 	}
 }
