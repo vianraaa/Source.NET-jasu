@@ -134,7 +134,7 @@ public class MeshMgr
 		return DynamicVertexBuffers[dynamicBufferID];
 	}
 
-	private unsafe int VertexFormatSize(VertexFormat vertexFormat) {
+	internal unsafe int VertexFormatSize(VertexFormat vertexFormat) {
 		MeshDesc desc = new();
 		VertexBuffer.ComputeVertexDescription(null, vertexFormat, ref desc.Vertex);
 		return desc.Vertex.ActualVertexSize;

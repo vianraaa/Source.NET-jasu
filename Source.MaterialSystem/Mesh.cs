@@ -105,7 +105,7 @@ public unsafe class VertexBuffer : IDisposable
 		vbo = (int)glCreateBuffer();
 		glNamedBufferStorage((uint)vbo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		SysmemBuffer = glMapNamedBufferRange((uint)vbo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(SysmemBuffer == null) {
+		if (SysmemBuffer == null) {
 			Warning("WARNING: RecomputeVBO failure (OpenGL's not happy...)\n");
 			Warning($"    OpenGL error code    : {glGetErrorName()}\n");
 			Warning($"    Vertex buffer object : {vbo}\n");
@@ -124,9 +124,14 @@ public unsafe class VertexBuffer : IDisposable
 		return (byte*)SysmemBuffer;
 	}
 
-	public void Unlock() {
+	public void Unlock(int vertexCount) {
 		if (!Locked)
 			return;
+
+		int lockOffset = NextLockOffset();
+		int bufferSize = vertexCount * VertexSize;
+
+		Position = lockOffset + BufferSize;
 
 		Locked = false;
 	}
@@ -240,6 +245,10 @@ public unsafe class VertexBuffer : IDisposable
 			SysmemBuffer = null;
 		}
 	}
+
+	internal void HandleLateCreation() {
+
+	}
 }
 
 public unsafe class IndexBuffer : IDisposable
@@ -278,10 +287,11 @@ public unsafe class IndexBuffer : IDisposable
 		return (short*)SysmemBuffer;
 	}
 
-	public void Unlock() {
+	public void Unlock(int indexCount) {
 		if (!Locked)
 			return;
 
+		Position += indexCount;
 		Locked = false;
 	}
 
@@ -311,6 +321,10 @@ public unsafe class IndexBuffer : IDisposable
 		IndexCount = count;
 
 		RecomputeIBO();
+	}
+
+	internal void HandleLateCreation() {
+
 	}
 }
 
@@ -379,6 +393,33 @@ public unsafe class BufferedMesh : Mesh
 
 		Mesh.LockMesh(vertexCount, indexCount, ref desc);
 	}
+
+	public override void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		if ((Mesh!.GetPrimitiveType() == MaterialPrimitiveType.TriangleStrip) && desc.Index.IndexSize > 0) {
+			if (ExtraIndices > 0) 
+				*(desc.Index.Indices - 1) = *desc.Index.Indices;
+
+			LastIndex = desc.Index.Indices[indexCount - 1];
+			indexCount += ExtraIndices;
+		}
+
+		Mesh.UnlockMesh(vertexCount, indexCount, ref desc);
+	}
+
+	public override void Draw(int firstIndex = -1, int indexCount = 0) {
+		if(!ShaderUtil.OnDrawMesh(this, firstIndex, indexCount)) {
+			WasRendered = true;
+			MarkAsDrawn();
+			return;
+		}
+
+		Assert(!IsFlushing && !WasRendered);
+		Assert(firstIndex == -1 && indexCount == 0);
+
+		WasRendered = true;
+		FlushNeeded = true;
+		// ShaderAPI.FlushBufferedPrimitives(); is sometimes called here... figure out why later?
+	}
 }
 public unsafe class DynamicMesh : Mesh
 {
@@ -392,7 +433,6 @@ public unsafe class DynamicMesh : Mesh
 	int FirstIndex;
 
 	int BufferId;
-
 	public void ResetVertexAndIndexCounts() {
 		TotalVertices = TotalIndices = 0;
 		FirstIndex = FirstVertex = -1;
@@ -435,7 +475,7 @@ public unsafe class DynamicMesh : Mesh
 		if (FirstIndex < 0)
 			FirstIndex = firstIndex; // ???????????????
 	}
-	
+
 	public void Init(int bufferId) {
 		BufferId = bufferId;
 	}
@@ -444,16 +484,95 @@ public unsafe class DynamicMesh : Mesh
 		if (ShaderDevice.IsDeactivated())
 			return;
 
-		if(format != VertexFormat || VertexOverride || IndexOverride) {
+		if (format != VertexFormat || VertexOverride || IndexOverride) {
 			VertexFormat = format;
 			UseVertexBuffer(MeshMgr.FindOrCreateVertexBuffer(BufferId, format));
 
-			if(BufferId == 0) 
+			if (BufferId == 0)
 				UseIndexBuffer(MeshMgr.GetDynamicIndexBuffer());
 
 			VertexOverride = IndexOverride = false;
 		}
 	}
+	public override void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		TotalVertices += vertexCount;
+		TotalIndices += indexCount;
+		base.UnlockMesh(vertexCount, indexCount, ref desc);
+	}
+	public override void Draw(int firstIndex = -1, int indexCount = 0) {
+		if(!ShaderUtil.OnDrawMesh(this, firstIndex, indexCount)) {
+			MarkAsDrawn();
+			return;
+		}
+
+		HasDrawn = true;
+
+		if (IndexOverride || VertexOverride || ((TotalVertices > 0) && (TotalIndices > 0 || Type == MaterialPrimitiveType.Points || Type == MaterialPrimitiveType.InstancedQuads))) {
+			Assert(!IsDrawing);
+
+			HandleLateCreation();
+
+			// only have a non-zero first vertex when we are using static indices
+			int nFirstVertex = VertexOverride ? 0 : FirstVertex;
+			int actualFirstVertex = IndexOverride ? nFirstVertex : 0;
+			int nVertexOffsetInBytes = HasFlexMesh() ? nFirstVertex * MeshMgr.VertexFormatSize(GetVertexFormat()) : 0;
+			int baseIndex = IndexOverride ? 0 : FirstIndex;
+
+			// Overriding with the dynamic index buffer, preserve state!
+			if (IndexOverride && IndexBuffer == MeshMgr.GetDynamicIndexBuffer()) {
+				baseIndex = FirstIndex;
+			}
+
+			VertexFormat fmt = VertexOverride ? GetVertexFormat() : VertexFormat.Invalid;
+			if (!SetRenderState(nVertexOffsetInBytes, actualFirstVertex, fmt))
+				return;
+
+			// Draws a portion of the mesh
+			int numVertices = VertexOverride ? VertexBuffer.VertexCount : TotalVertices;
+			if ((firstIndex != -1) && (indexCount != 0)) {
+				firstIndex += baseIndex;
+			}
+			else {
+				firstIndex = baseIndex;
+				if (IndexOverride) {
+					indexCount = IndexBuffer.IndexCount;
+					Assert(indexCount != 0);
+				}
+				else {
+					indexCount = TotalIndices;
+
+					if ((Type == MaterialPrimitiveType.Points) || (Type == MaterialPrimitiveType.InstancedQuads)) 
+						indexCount = TotalVertices;
+					
+					Assert(indexCount != 0);
+				}
+			}
+
+			// Fix up nFirstVertex to indicate the first vertex used in the data
+			if (!HasFlexMesh()) {
+				actualFirstVertex = nFirstVertex - actualFirstVertex;
+			}
+
+			s_FirstVertex = (uint)actualFirstVertex;
+			s_NumVertices = (uint)numVertices;
+
+			PrimList* prim = stackalloc PrimList[1];
+			prim->FirstIndex = firstIndex;
+			prim->NumIndices = indexCount;
+			Assert(indexCount != 0);
+			s_Prims = prim;
+			s_PrimsCount = 1;
+
+			DrawMesh();
+
+			s_Prims = null;
+		}
+	}
+}
+
+public struct PrimList {
+	public int FirstIndex;
+	public int NumIndices;
 }
 
 public unsafe class Mesh : IMesh
@@ -466,14 +585,56 @@ public unsafe class Mesh : IMesh
 	protected VertexBuffer VertexBuffer;
 	protected IndexBuffer IndexBuffer;
 
+	protected VertexFormat LastVertexFormat;
 	protected VertexFormat VertexFormat;
 	protected IMaterialInternal Material;
 	protected MaterialPrimitiveType Type;
+	protected bool IsDrawing;
+
+	protected static PrimList* s_Prims;
+	protected static int s_PrimsCount;
+	protected static uint s_FirstVertex;
+	protected static uint s_NumVertices;
 
 	public VertexBuffer GetVertexBuffer() => throw new Exception();
 	public IndexBuffer GetIndexBuffer() => throw new Exception();
 
 	public virtual void BeginCastBuffer(VertexFormat format) {
+		throw new NotImplementedException();
+	}
+	public void DrawMesh() {
+		Assert(!IsDrawing);
+		IsDrawing = true;
+
+		ShaderAPI.DrawMesh(this);
+
+		IsDrawing = false;
+	}
+
+	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat) {
+		if (ShaderDevice.IsDeactivated()) {
+			ResetMeshRenderState();
+			return false;
+		}
+
+		LastVertexFormat = vertexFormat;
+
+		SetVertexStreamState(vertexOffsetInBytes);
+		SetIndexStreamState(firstIndex);
+
+		return true;
+	}
+
+	// What do these do...
+	private void SetVertexStreamState(int vertexOffsetInBytes) {
+
+	}
+
+	private void SetIndexStreamState(object firstIndex) {
+
+	}
+
+	private void ResetMeshRenderState() {
 		throw new NotImplementedException();
 	}
 
@@ -509,6 +670,11 @@ public unsafe class Mesh : IMesh
 		throw new NotImplementedException();
 	}
 
+	public void HandleLateCreation() {
+		VertexBuffer?.HandleLateCreation();
+		IndexBuffer?.HandleLateCreation();
+	}
+
 	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
 		if (VertexBuffer == null) {
 			// todo:
@@ -528,7 +694,7 @@ public unsafe class Mesh : IMesh
 		}
 
 		desc.Indices = (ushort*)IndexBuffer.Lock(readOnly, indexCount, out int startIndex, firstIndex);
-		if(desc.Indices == null) {
+		if (desc.Indices == null) {
 			desc.IndexSize = 0;
 			Assert(false);
 			Warning("Failed to lock index buffer...\n");
@@ -571,15 +737,25 @@ public unsafe class Mesh : IMesh
 	}
 
 	public virtual bool Unlock(int vertexCount, ref VertexDesc desc) {
-		throw new NotImplementedException();
+		VertexBuffer.Unlock(vertexCount);
+		return true;
 	}
 
-	public virtual bool Unlock(int writtenIndexCount, ref IndexDesc desc) {
-		throw new NotImplementedException();
+	public virtual bool Unlock(int indexCount, ref IndexDesc desc) {
+		IndexBuffer.Unlock(indexCount);
+		return true;
 	}
+
+	int NumVertices;
+	int NumIndices;
 
 	public virtual void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
-		throw new NotImplementedException();
+		Unlock(vertexCount, ref desc.Vertex);
+		if (Type != MaterialPrimitiveType.Points)
+			Unlock(indexCount, ref desc.Index);
+
+		NumVertices = vertexCount;
+		NumIndices = indexCount;
 	}
 
 	public virtual int VertexCount() {
