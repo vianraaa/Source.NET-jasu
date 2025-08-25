@@ -13,23 +13,17 @@ public unsafe struct VertexDesc
 {
 	public int PositionSize;
 	public int BoneWeightSize;
-	public int BoneMatrixIndexSize;
+	public int BoneIndexSize;
 	public int NormalSize;
 	public int ColorSize;
 	public int SpecularSize;
-	fixed int texcoordSize[8];
-	public Span<int> TexcoordSize {
+	public fixed int TexCoordSizePtr[8];
+	public Span<int> TexCoordSize {
 		get {
-			fixed (int* i = texcoordSize)
+			fixed (int* i = TexCoordSizePtr)
 				return new(i, 8);
 		}
 	}
-
-	public int TangentSSize;
-	public int TangentTSize;
-	public int WrinkleSize;
-
-	public int UserDataSize;
 
 	public int ActualVertexSize;
 
@@ -39,7 +33,7 @@ public unsafe struct VertexDesc
 
 	public float* Position;
 	public float* BoneWeight;
-	public byte* BoneMatrixIndex;
+	public byte* BoneIndex;
 	public float* Normal;
 	public byte* Color;
 	public byte* Specular;
@@ -57,10 +51,6 @@ public unsafe struct VertexDesc
 				return txPtr;
 		}
 	}
-	public float* TangentS;
-	public float* TangentT;
-	public float* Wrinkle;
-	public float* UserData;
 	public int FirstVertex;
 	public uint OffsetVertex;
 }
@@ -350,7 +340,7 @@ public unsafe struct MeshBuilder : IDisposable
 	public int VertexSize() { return Desc.Vertex.ActualVertexSize; }
 
 	// returns the data size of a given texture coordinate
-	public int TextureCoordinateSize(int nTexCoordNumber) { return Desc.Vertex.TexcoordSize[nTexCoordNumber]; }
+	public int TextureCoordinateSize(int nTexCoordNumber) { return Desc.Vertex.TexCoordSize[nTexCoordNumber]; }
 
 	// Selects the nth Vertex and Index 
 	public void SelectVertex(int idx) => throw new NotImplementedException();

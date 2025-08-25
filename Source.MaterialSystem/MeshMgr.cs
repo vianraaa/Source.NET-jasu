@@ -102,32 +102,21 @@ public class MeshMgr
 			DynamicVertexBuffers.Add(vertexBuffer);
 		}
 
-		if (DynamicVertexBuffers[dynamicBufferID].VertexSize != vertexSize) {
+		VertexBuffer buffer = DynamicVertexBuffers[dynamicBufferID];
+
+		if (buffer.VertexSize != vertexSize) {
 			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
-			DynamicVertexBuffers[dynamicBufferID].VertexSize = vertexSize;
-			DynamicVertexBuffers[dynamicBufferID].ChangeConfiguration(vertexSize, bufferMemory);
+			buffer.VertexSize = vertexSize;
+			buffer.ChangeConfiguration(vertexSize, bufferMemory);
 		}
 
 		return DynamicVertexBuffers[dynamicBufferID];
 	}
 
-	private static int VertexFormatSize(VertexFormat vertexFormat) {
-		int sizeOfOneVertex = 0;
-		if (vertexFormat.HasFlag(VertexFormat.Position))
-			sizeOfOneVertex += 3 * sizeof(float);
-		if (vertexFormat.HasFlag(VertexFormat.Normal)) 
-			sizeOfOneVertex += 3 * sizeof(float);
-		if (vertexFormat.HasFlag(VertexFormat.Color)) 
-			sizeOfOneVertex += 4 * sizeof(byte);
-		if (vertexFormat.HasFlag(VertexFormat.Specular))
-			sizeOfOneVertex += 3 * sizeof(float);
-		if (vertexFormat.HasFlag(VertexFormat.BoneIndex))
-			sizeOfOneVertex += 1 * sizeof(byte);
-		if (vertexFormat.HasFlag(VertexFormat.BoneWeights)) 
-			sizeOfOneVertex += 4 * sizeof(float);
-		if (vertexFormat.HasFlag(VertexFormat.TexCoord)) 
-			sizeOfOneVertex += 2 * sizeof(float);
-		return sizeOfOneVertex;
+	private unsafe int VertexFormatSize(VertexFormat vertexFormat) {
+		MeshDesc desc = new();
+		VertexBuffer.ComputeVertexDescription(null, vertexFormat, ref desc.Vertex);
+		return desc.Vertex.ActualVertexSize;
 	}
 
 	internal IndexBuffer GetDynamicIndexBuffer() {

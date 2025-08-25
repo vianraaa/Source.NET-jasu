@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Source.Common.MaterialSystem;
 
@@ -13,8 +14,73 @@ public enum VertexElement : int
 	BoneIndex = 4,
 	BoneWeights = 5,
 	TexCoord = 6,
-
 	Count
+}
+
+public enum VertexAttributeType
+{
+	Byte = 0x1400,
+	UnsignedByte = 0x1401,
+	Short = 0x1402,
+	UnsignedShort = 0x1403,
+	Int = 0x1404,
+	UnsignedInt = 0x1405,
+	Float = 0x1406
+}
+
+public static class VertexExts
+{
+	public static nint SizeOf(this VertexAttributeType type) => type switch {
+		VertexAttributeType.Byte => sizeof(sbyte),
+		VertexAttributeType.UnsignedByte => sizeof(byte),
+		VertexAttributeType.Short => sizeof(short),
+		VertexAttributeType.UnsignedShort => sizeof(ushort),
+		VertexAttributeType.Int => sizeof(int),
+		VertexAttributeType.UnsignedInt => sizeof(uint),
+		VertexAttributeType.Float => sizeof(float),
+		_ => throw new NotSupportedException()
+	};
+
+	public static nint GetSize(this VertexElement element, VertexCompressionType compression = VertexCompressionType.None) {
+		element.GetInformation(out int count, out VertexAttributeType type);
+		return count * type.SizeOf();
+	}
+
+	public static void GetInformation(this VertexElement element, out int count, out VertexAttributeType type, VertexCompressionType compression = VertexCompressionType.None) {
+		switch (element) {
+			case VertexElement.Position:
+				count = 3;
+				type = VertexAttributeType.Float;
+				return;
+			case VertexElement.Normal:
+				count = 3;
+				type = VertexAttributeType.Float;
+				return;
+			case VertexElement.Color:
+				count = 4;
+				type = VertexAttributeType.UnsignedByte;
+				return;
+			case VertexElement.Specular:
+				count = 4;
+				type = VertexAttributeType.UnsignedByte;
+				return;
+			case VertexElement.BoneIndex:
+				count = 4;
+				type = VertexAttributeType.UnsignedByte;
+				return;
+			case VertexElement.BoneWeights:
+				count = 4;
+				type = VertexAttributeType.Float;
+				return;
+			case VertexElement.TexCoord:
+				count = 2;
+				type = VertexAttributeType.Float;
+				return;
+		}
+		AssertMsg(false, "No size definition");
+		count = 0;
+		type = VertexAttributeType.Byte;
+	}
 }
 
 [Flags]
