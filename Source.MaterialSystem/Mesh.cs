@@ -341,6 +341,8 @@ public unsafe class IndexBuffer : IDisposable
 	internal void HandleLateCreation() {
 
 	}
+
+	internal uint IBO() => ibo > 0 ? (uint)ibo : throw new NullReferenceException("Index Buffer Object was null");
 }
 
 public unsafe class BufferedMesh : Mesh
@@ -777,7 +779,7 @@ public unsafe class Mesh : IMesh
 	}
 
 	public virtual int VertexCount() {
-		throw new NotImplementedException();
+		return NumVertices;
 	}
 
 	public virtual void SetMaterial(IMaterialInternal matInternal) {
@@ -805,7 +807,10 @@ public unsafe class Mesh : IMesh
 				int numPrimitives = NumPrimitives(s_NumVertices, pPrim->NumIndices);
 
 				CheckIndices(pPrim, numPrimitives);
-				glBindVertexArray(VertexBuffer!.VAO());
+				uint vao = VertexBuffer!.VAO();
+				uint ibo = IndexBuffer!.IBO();
+				glVertexArrayElementBuffer(vao, ibo);
+				glBindVertexArray(vao);
 				glDrawElements(Mode, pPrim->NumIndices, GL_UNSIGNED_SHORT, (void*)pPrim->FirstIndex);
 			}
 		}

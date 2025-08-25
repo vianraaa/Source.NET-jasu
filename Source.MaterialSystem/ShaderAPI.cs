@@ -396,6 +396,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		}
 
 		glFlush();
+		Device!.SwapBuffers();
 	}
 
 	bool IShaderDevice.IsDeactivated() => IsDeactivated();
