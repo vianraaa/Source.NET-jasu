@@ -267,6 +267,7 @@ public class ShaderSystem : IShaderSystemInternal
 	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState, ReadOnlySpan<char> materialName) {
 		Assert(RenderState == null);
 		InitRenderStateFlags(ref renderState, shaderParams);
+		shader.SpecifyVertexFormat(ref renderState.VertexFormat);
 		return true;
 	}
 

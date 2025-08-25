@@ -146,63 +146,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ShaderManager.ResetShaderState();
 	}
 
-	public VertexFormat ComputeVertexFormat(Span<VertexFormat> formats) {
-		return ComputeVertexUsage(formats);
-	}
-
-	public VertexFormat ComputeVertexUsage(Span<VertexFormat> formats) {
-		if (formats.Length == 0)
-			return 0;
-
-		if (formats.Length == 1) {
-			return formats[0];
-		}
-
-		VertexCompressionType compression = VertexCompressionType.None;
-		int userDataSize = 0, numBones = 0, flags = 0;
-		Span<int> texCoordSize = [0, 0, 0, 0, 0, 0, 0, 0];
-		for (int i = formats.Length; --i >= 0;) {
-			VertexFormat fmt = formats[i];
-			flags |= fmt.VertexFlags();
-
-			VertexCompressionType newCompression = fmt.CompressionType();
-			if (compression != newCompression && compression != VertexCompressionType.Invalid) {
-				Warning("Encountered a material with two passes that specify different vertex compression types!\n");
-				compression = VertexCompressionType.Invalid;
-			}
-
-			int newNumBones = fmt.NumBoneWeights();
-			if ((numBones != newNumBones) && newNumBones != 0) {
-				if (numBones != 0) {
-					Warning("Encountered a material with two passes that use different numbers of bones!\n");
-				}
-				numBones = newNumBones;
-			}
-
-			int newUserSize = fmt.UserDataSize();
-			if ((userDataSize != newUserSize) && (newUserSize != 0)) {
-				if (userDataSize != 0) {
-					Warning("Encountered a material with two passes that use different user data sizes!\n");
-				}
-				userDataSize = newUserSize;
-			}
-
-			for (int j = 0; j < IMesh.VERTEX_MAX_TEXTURE_COORDINATES; ++j) {
-				int newSize = fmt.TexCoordSize(j);
-				if ((texCoordSize[j] != newSize) && (newSize != 0)) {
-					if (texCoordSize[j] != 0) {
-						Warning("Encountered a material with two passes that use different texture coord sizes!\n");
-					}
-					if (texCoordSize[j] < newSize) {
-						texCoordSize[j] = newSize;
-					}
-				}
-			}
-		}
-
-		return MeshMgr.ComputeVertexFormat(flags, IMesh.VERTEX_MAX_TEXTURE_COORDINATES, texCoordSize, numBones, userDataSize);
-	}
-
 	public MaterialFogMode GetSceneFogMode() {
 		return SceneFogMode;
 	}
@@ -226,7 +169,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		// ShaderManager()->SetPixelShaderIndex( vshIndex );
 	}
 
-	MeshBase? RenderMesh;
+	Mesh? RenderMesh;
 	IMaterialInternal? Material;
 
 	internal void RenderPass() {
@@ -289,12 +232,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void DrawMesh(IMesh imesh) {
-		MeshBase mesh = (MeshBase)imesh!;
+		Mesh mesh = (Mesh)imesh!;
 		RenderMesh = mesh;
 		VertexFormat vertexFormat = RenderMesh.GetVertexFormat();
 		SetVertexDecl(vertexFormat, RenderMesh.HasColorMesh(), RenderMesh.HasFlexMesh(), Material!.IsUsingVertexID());
 		CommitStateChanges();
-		Material!.DrawMesh(vertexFormat.CompressionType());
+		Material!.DrawMesh(VertexCompressionType.None);
 		RenderMesh = null;
 	}
 

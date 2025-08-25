@@ -234,4 +234,8 @@ public abstract class BaseShader : IShader
 		float alpha = parms[(int)ShaderMaterialVars.Alpha].GetFloatValue();
 		return Math.Clamp(alpha, 0, 1);
 	}
+
+	public virtual void SpecifyVertexFormat(ref VertexFormat vertexFormat) {
+		Warning("No SpecifyVertexFormat override!!!\n");
+	}
 }

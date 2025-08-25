@@ -187,14 +187,6 @@ public class MatRenderContext : IMatRenderContextInternal
 			Bind(autoBind, null);
 		}
 
-		if (vertexOverride != null) {
-			if (vertexOverride.GetVertexFormat().CompressionType() != VertexCompressionType.None) {
-				// UNDONE: support compressed dynamic meshes if needed (pro: less VB memory, con: time spent compressing)
-				Debugger.Break();
-				return null;
-			}
-		}
-
 		// For anything more than 1 bone, imply the last weight from the 1 - the sum of the others.
 		int nCurrentBoneCount = shaderAPI.GetCurrentNumBones();
 		Assert(nCurrentBoneCount <= 4);

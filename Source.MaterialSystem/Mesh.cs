@@ -9,6 +9,7 @@ namespace Source.MaterialSystem;
 public unsafe class VertexBuffer
 {
 	internal VertexFormat VertexBufferFormat;
+	internal int Position;
 	internal int VertexCount;
 	internal int VertexSize;
 	internal void* SysmemBuffer;
@@ -43,67 +44,10 @@ public unsafe class VertexBuffer
 		ExternalMemory = false;
 	}
 
-	public static int VertexFormatSize(VertexFormat vertexFormat) {
-		VertexCompressionType compression = vertexFormat.CompressionType();
-
-		int offset = 0;
-		Assert((((int)vertexFormat & VertexFormatFlags.VertexFormatWrinkle) == 0) || ((vertexFormat & VertexFormat.Position) != 0));
-		if ((vertexFormat & VertexFormat.Position) > 0) {
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.Position, compression);
-			if (((int)vertexFormat & VertexFormatFlags.VertexFormatWrinkle) > 0) 
-				offset += IMaterialExts.GetVertexElementSize(VertexElement.Wrinkle, compression);
-		}
-		
-		int numBoneWeights = vertexFormat.NumBoneWeights();
-
-		if (((int)vertexFormat & VertexFormatFlags.VertexFormatBoneIndex) > 0)
-			if (numBoneWeights > 0) 
-				offset += IMaterialExts.GetVertexElementSize(VertexElement.BoneWeights2, compression);
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.BoneIndex, compression);
-
-
-		if (((int) vertexFormat & VertexFormatFlags.VertexFormatNormal) > 0) 
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.Normal, compression);
-
-		if (((int)vertexFormat & VertexFormatFlags.VertexFormatColor) > 0)
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.Color, compression);
-
-		if (((int)vertexFormat & VertexFormatFlags.VertexFormatSpecular) > 0)
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.Specular, compression);
-
-		// Set up texture coordinates
-			Span<VertexElement> texCoordElements = [VertexElement.TexCoord1D_0, VertexElement.TexCoord2D_0, VertexElement.TexCoord3D_0, VertexElement.TexCoord4D_0];
-		int i;
-		for (i = 0; i < IMesh.VERTEX_MAX_TEXTURE_COORDINATES; ++i) {
-			// FIXME: compress texcoords to SHORT2N/SHORT4N, with a scale rolled into the texture transform
-			int nSize = vertexFormat.TexCoordSize(i);
-			if (nSize != 0) {
-				VertexElement texCoordElement = texCoordElements[nSize - 1] + i;
-				offset += IMaterialExts.GetVertexElementSize(texCoordElement, compression);
-			}
-		}
-
-		// Binormal + tangent...
-		// Note we have to put these at the end so the vertex is FVF + stuff at end
-		if (((int)vertexFormat & VertexFormatFlags.VertexFormatTangentS) > 0)
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.TangentS, compression);
-
-		if(((int)vertexFormat & VertexFormatFlags.VertexFormatTangentT) > 0)
-			offset += IMaterialExts.GetVertexElementSize(VertexElement.TangentT, compression);
-
-		// User data..
-		int userDataSize = vertexFormat.UserDataSize();
-		if (userDataSize > 0) {
-			VertexElement userDataElement = VertexElement.UserData1 + (userDataSize - 1);
-			offset += IMaterialExts.GetVertexElementSize(userDataElement, compression);
-		}
-
-		bool bCacheAlign = ((int)vertexFormat & VertexFormatFlags.VertexFormatUseExactFormat) == 0;
-		if (bCacheAlign && (offset > 16) && IsPC()) {
-			offset = (offset + 0xF) & (~0xF);
-		}
-
-		return offset;
+	public int NextLockOffset() {
+		int nextOffset = (Position + VertexSize - 1) / VertexSize;
+		nextOffset *= VertexSize;
+		return nextOffset;
 	}
 
 	internal void ChangeConfiguration(int vertexSize, int totalSize) {
@@ -139,6 +83,10 @@ public unsafe class VertexBuffer
 			return;
 
 		Locked = false;
+	}
+
+	internal bool HasEnoughRoom(int numVertices) {
+		return (NextLockOffset() + (numVertices * VertexSize)) <= BufferSize;
 	}
 }
 
@@ -190,15 +138,77 @@ public unsafe class IndexBuffer
 
 		Locked = false;
 	}
+
+	internal bool HasEnoughRoom(int indexCount) {
+		throw new NotImplementedException();
+	}
 }
 
 public unsafe class BufferedMesh : Mesh
 {
-	public void Flush() {
+	Mesh? Mesh;
+	ushort LastIndex;
+	ushort ExtraIndices;
+	bool IsFlushing;
+	bool WasRendered;
+	bool FlushNeeded;
 
+	public void ResetRendered() {
+		WasRendered = false;
+	}
+	public bool WasNotRendered() => !WasRendered;
+
+	public void Flush() {
+		if (Mesh != null && !IsFlushing && FlushNeeded) {
+			IsFlushing = true;
+			((IMesh)Mesh!)!.Draw();
+			IsFlushing = false;
+			FlushNeeded = false;
+		}
+	}
+
+	public void SetMesh(Mesh? mesh) {
+		if (Mesh != mesh) {
+			ShaderAPI.FlushBufferedPrimitives();
+			Mesh = mesh;
+		}
+	}
+
+	public override void SetMaterial(IMaterialInternal matInternal) {
+		Assert(Mesh != null);
+		Mesh.SetMaterial(matInternal);
+	}
+	public override void SetVertexFormat(VertexFormat fmt) {
+		Assert(Mesh != null);
+		if (Mesh.NeedsVertexFormatReset(fmt)) {
+			ShaderAPI.FlushBufferedPrimitives();
+			Mesh.SetVertexFormat(fmt);
+		}
 	}
 }
-public unsafe class DynamicMesh : Mesh { }
+public unsafe class DynamicMesh : Mesh
+{
+	bool HasDrawn;
+	bool VertexOverride;
+	bool IndexOverride;
+
+	internal void OverrideVertexBuffer(VertexBuffer vertexBuffer) {
+		throw new NotImplementedException();
+	}
+
+	internal void OverrideIndexBuffer(IndexBuffer indexBuffer) {
+		throw new NotImplementedException();
+	}
+	public override bool NeedsVertexFormatReset(VertexFormat fmt) {
+		return VertexOverride || IndexOverride || base.NeedsVertexFormatReset(fmt);
+	}
+	public override bool HasEnoughRoom(int vertexCount, int indexCount) {
+		if (ShaderDevice.IsDeactivated())
+			return false;
+		Assert(VertexBuffer != null);
+		return VertexBuffer.HasEnoughRoom(vertexCount) && IndexBuffer.HasEnoughRoom(indexCount);
+	}
+}
 
 public unsafe class Mesh : IMesh
 {
@@ -206,6 +216,13 @@ public unsafe class Mesh : IMesh
 	public IShaderUtil ShaderUtil;
 	public MeshMgr MeshMgr;
 	public IShaderDevice ShaderDevice;
+
+	protected VertexBuffer VertexBuffer;
+	protected IndexBuffer IndexBuffer;
+
+	VertexFormat VertexFormat;
+	IMaterialInternal Material;
+	MaterialPrimitiveType Type;
 
 	public VertexBuffer GetVertexBuffer() => throw new Exception();
 	public IndexBuffer GetIndexBuffer() => throw new Exception();
@@ -295,10 +312,27 @@ public unsafe class Mesh : IMesh
 	}
 
 	public virtual void SetMaterial(IMaterialInternal matInternal) {
-		throw new NotImplementedException();
+		Material = matInternal;
 	}
 
 	public virtual void SetVertexFormat(VertexFormat fmt) {
-		throw new NotImplementedException();
+		VertexFormat = fmt;
 	}
+
+	public virtual void RenderPass() {
+	}
+
+	internal bool HasColorMesh() {
+		return false;
+	}
+
+	internal bool HasFlexMesh() {
+		return false;
+	}
+
+	public virtual bool NeedsVertexFormatReset(VertexFormat fmt) {
+		return VertexFormat != fmt;
+	}
+
+	public virtual bool HasEnoughRoom(int vertexCount, int indexCount) => true;
 }

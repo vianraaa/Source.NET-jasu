@@ -79,17 +79,6 @@ public struct MeshDesc
 	public IndexDesc Index;
 }
 
-public struct ModelVertex
-{
-	Vector3 Position;
-	Vector2 BoneWeights;
-	uint BoneIndices;
-	Vector3 Normal;
-	uint Color;
-	Vector2 TexCoord;
-	Vector4 UserData;
-}
-
 public interface IVertexBuffer
 {
 	int VertexCount();

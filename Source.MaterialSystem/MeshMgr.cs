@@ -8,34 +8,6 @@ public class MeshMgr
 {
 	internal MaterialSystem MaterialSystem;
 
-	public VertexFormat ComputeVertexFormat(int flags, int texCoordArraySize, Span<int> texCoordDimensions, int numBonesWeights, int userDataSize) {
-		VertexFormat fmt = (VertexFormat)(flags & ~VertexFormatFlags.VertexFormatUseExactFormat);
-		if (true) {
-			fmt &= ~VertexFormat.Compressed;
-		}
-
-		Assert(numBonesWeights <= 4);
-		if (numBonesWeights > 0) {
-			fmt |= VERTEX_BONEWEIGHT(2);
-		}
-
-		Assert(userDataSize <= 4);
-		fmt |= VERTEX_USERDATA_SIZE(userDataSize);
-
-		texCoordArraySize = Math.Min(texCoordArraySize, IMesh.VERTEX_MAX_TEXTURE_COORDINATES);
-		for (int i = 0; i < texCoordArraySize; i++) {
-			if (texCoordDimensions != null) {
-				Assert(texCoordDimensions[i] >= 0 && texCoordDimensions[i] <= 4);
-				fmt |= VERTEX_TEXCOORD_SIZE(i, texCoordDimensions[i]);
-			}
-			else {
-				fmt |= VERTEX_TEXCOORD_SIZE(i, 2);
-			}
-		}
-
-		return fmt;
-	}
-
 	internal void Flush() {
 		if (IsPC()) 
 			BufferedMesh.Flush();
@@ -59,21 +31,7 @@ public class MeshMgr
 		}
 
 		if (vertexOverride == null) {
-			VertexFormat materialFormat = matInternal.GetVertexFormat() & ~VertexFormat.Compressed;
-			VertexFormat fmt = (vertexFormat != 0) ? vertexFormat : materialFormat;
-			if (vertexFormat != 0) {
-				int nVertexFormatBoneWeights = vertexFormat.NumBoneWeights();
-				if (hwSkinBoneCount < nVertexFormatBoneWeights) {
-					hwSkinBoneCount = nVertexFormatBoneWeights;
-				}
-			}
-
-			fmt &= (VertexFormat)~VertexFormatFlags.VertexBoneWeightMask;
-			if (hwSkinBoneCount > 0) {
-				fmt |= VERTEX_BONEWEIGHT(2);
-				fmt |= (VertexFormat)VertexFormatFlags.VertexFormatBoneIndex;
-			}
-
+			VertexFormat fmt = matInternal.GetVertexFormat();
 			mesh.SetVertexFormat(fmt);
 		}
 		else {
@@ -153,8 +111,23 @@ public class MeshMgr
 		return DynamicVertexBuffers[dynamicBufferID];
 	}
 
-	private static int VertexFormatSize(VertexFormat format) {
-		return VertexBuffer.VertexFormatSize(format);
+	private static int VertexFormatSize(VertexFormat vertexFormat) {
+		int sizeOfOneVertex = 0;
+		if (vertexFormat.HasFlag(VertexFormat.Position))
+			sizeOfOneVertex += 3 * sizeof(float);
+		if (vertexFormat.HasFlag(VertexFormat.Normal)) 
+			sizeOfOneVertex += 3 * sizeof(float);
+		if (vertexFormat.HasFlag(VertexFormat.Color)) 
+			sizeOfOneVertex += 4 * sizeof(byte);
+		if (vertexFormat.HasFlag(VertexFormat.Specular))
+			sizeOfOneVertex += 3 * sizeof(float);
+		if (vertexFormat.HasFlag(VertexFormat.BoneIndex))
+			sizeOfOneVertex += 1 * sizeof(byte);
+		if (vertexFormat.HasFlag(VertexFormat.BoneWeights)) 
+			sizeOfOneVertex += 4 * sizeof(float);
+		if (vertexFormat.HasFlag(VertexFormat.TexCoord)) 
+			sizeOfOneVertex += 2 * sizeof(float);
+		return sizeOfOneVertex;
 	}
 
 	internal IndexBuffer GetDynamicIndexBuffer() {
