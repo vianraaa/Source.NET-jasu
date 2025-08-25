@@ -45,7 +45,8 @@ public class MatRenderContext : IMatRenderContextInternal
 	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Peek();
 
 	public void BeginRender() {
-
+		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_BACK, GL_LINE);
 	}
 
 	public void ClearColor3ub(byte r, byte g, byte b) => shaderAPI.ClearColor3ub(r, g, b);

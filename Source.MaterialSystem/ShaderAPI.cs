@@ -116,8 +116,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	}
 
-	private void CreateMatrixStacks() {
+	uint uboMatrices;
 
+	private unsafe void CreateMatrixStacks() {
+		uboMatrices = glCreateBuffer();
+		glNamedBufferData(uboMatrices, sizeof(Matrix4x4) * 3, null, GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboMatrices);
 	}
 
 	private void AcquireInternalRenderTargets() {
@@ -402,21 +406,20 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	bool IShaderDevice.IsDeactivated() => IsDeactivated();
 
 
-	public void MatrixMode(MaterialMatrixMode i) {
-
+	MaterialMatrixMode currentMode;
+	public void MatrixMode(MaterialMatrixMode mode) {
+		currentMode = mode;
 	}
 
-	public void LoadMatrix(in Matrix4x4 transposeTop) {
-
-	}
-
-	public int GetMatrixStack(MaterialMatrixMode mode) {
-		Assert(mode >= 0 && mode < MaterialMatrixMode.Count);
-		return (int)mode;
+	public unsafe void LoadMatrix(in Matrix4x4 transposeTop) {
+		int m4x4 = sizeof(Matrix4x4);
+		int loc = (int)currentMode * m4x4;
+		fixed (Matrix4x4* pM4x4 = &transposeTop)
+			glNamedBufferSubData(uboMatrices, loc, m4x4, pM4x4);
 	}
 
 	public void LoadIdentity() {
-
+		LoadMatrix(Matrix4x4.Identity);
 	}
 
 	public int GetCurrentNumBones() {
