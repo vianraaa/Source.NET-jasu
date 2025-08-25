@@ -141,6 +141,6 @@ public class MeshMgr
 	}
 
 	internal IndexBuffer GetDynamicIndexBuffer() {
-		throw new NotImplementedException();
+		return DynamicIndexBuffer!;
 	}
 }

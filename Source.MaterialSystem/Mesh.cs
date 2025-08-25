@@ -245,8 +245,8 @@ public unsafe class VertexBuffer : IDisposable
 public unsafe class IndexBuffer : IDisposable
 {
 	internal MaterialIndexFormat IndexFormat;
-	internal int VertexCount;
-	internal int VertexSize;
+	internal int IndexCount;
+	internal int Position;
 	internal void* SysmemBuffer;
 	internal int SysmemBufferStartBytes;
 	internal int BufferSize;
@@ -261,14 +261,8 @@ public unsafe class IndexBuffer : IDisposable
 
 	int ibo = -1;
 	byte* mem;
-	private unsafe void SetupSysmem() {
-		if (ibo != -1) {
-			Assert(SysmemBuffer != null);
-			fixed (int* ugh = &ibo)
-				glDeleteBuffers(1, (uint*)ugh);
-			ibo = -1;
-			SysmemBuffer = null;
-		}
+	public unsafe void RecomputeIBO() {
+		Dispose();
 		ibo = (int)glCreateBuffer();
 		glNamedBufferStorage((uint)ibo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		SysmemBuffer = glMapNamedBufferRange((uint)ibo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -278,7 +272,7 @@ public unsafe class IndexBuffer : IDisposable
 		Assert(!Locked);
 		baseVertexIndex = 0;
 		if (SysmemBuffer == null) {
-			SetupSysmem();
+			RecomputeIBO();
 		}
 		Locked = true;
 		return (short*)SysmemBuffer;
@@ -291,16 +285,32 @@ public unsafe class IndexBuffer : IDisposable
 		Locked = false;
 	}
 
-	internal bool HasEnoughRoom(int indexCount) {
-		throw new NotImplementedException();
+	internal bool HasEnoughRoom(int indices) {
+		return (indices + Position) <= IndexCount;
 	}
 
 	public void Dispose() {
-		throw new NotImplementedException();
+		if (ibo != -1) {
+			Assert(SysmemBuffer != null);
+			fixed (int* ugh = &ibo)
+				glDeleteBuffers(1, (uint*)ugh);
+			ibo = -1;
+			SysmemBuffer = null;
+		}
 	}
 
 	public IndexBuffer(int count, bool dynamic = false) {
+		Position = 0;
+		Locked = false;
+		Flush = true;
+		Dynamic = dynamic;
+		ExternalMemory = false;
+		LateCreateShouldDiscard = false;
 
+		count += (count % 2);
+		IndexCount = count;
+
+		RecomputeIBO();
 	}
 }
 
@@ -435,6 +445,11 @@ public unsafe class DynamicMesh : Mesh
 		if(format != VertexFormat || VertexOverride || IndexOverride) {
 			VertexFormat = format;
 			UseVertexBuffer(MeshMgr.FindOrCreateVertexBuffer(BufferId, format));
+
+			if(BufferId == 0) 
+				UseIndexBuffer(MeshMgr.GetDynamicIndexBuffer());
+
+			VertexOverride = IndexOverride = false;
 		}
 	}
 }
