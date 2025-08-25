@@ -892,7 +892,7 @@ public unsafe static class Gl46
     /// <returns>One of <see cref="GL_NO_ERROR" />, <see cref="GL_INVALID_ENUM" />, <see cref="GL_INVALID_VALUE" />, <see cref="GL_INVALID_OPERATION" />, <see cref="GL_INVALID_FRAMEBUFFER_OPERATION" />, <see cref="GL_OUT_OF_MEMORY" />, <see cref="GL_STACK_UNDERFLOW" />, or <see cref="GL_STACK_OVERFLOW" />.</returns>
     public static GLenum glGetError() => _glGetError();
 	/// <summary>
-	/// This is really slow and you should avoid calling it unless debugging
+	/// This is probably *really* slow and you should avoid calling it unless debugging
 	/// </summary>
 	/// <returns></returns>
     public static string glGetErrorName() {

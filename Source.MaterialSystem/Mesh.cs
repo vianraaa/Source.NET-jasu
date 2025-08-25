@@ -28,11 +28,7 @@ public unsafe class VertexBuffer : IDisposable
 	int vao = -1;
 	int vbo = -1;
 
-	public VertexBuffer(int vertexSize, int vertexCount, bool dynamic) {
-		Assert(Dynamic && !Locked && vertexSize > 0);
-		VertexSize = vertexSize;
-		VertexCount = BufferSize / vertexSize;
-		BufferSize = VertexSize * VertexCount;
+	public VertexBuffer() {
 	}
 
 	public VertexBuffer(VertexFormat format, int vertexSize, int vertexCount, bool dynamic) {
@@ -103,7 +99,7 @@ public unsafe class VertexBuffer : IDisposable
 		RecomputeVBO();
 	}
 
-	private unsafe void RecomputeVBO() {
+	public unsafe void RecomputeVBO() {
 		Dispose();
 
 		vbo = (int)glCreateBuffer();
@@ -111,7 +107,9 @@ public unsafe class VertexBuffer : IDisposable
 		SysmemBuffer = glMapNamedBufferRange((uint)vbo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		if(SysmemBuffer == null) {
 			Warning("WARNING: RecomputeVBO failure (OpenGL's not happy...)\n");
-			Warning($"OpenGL error code: {glGetErrorName()}");
+			Warning($"    OpenGL error code    : {glGetErrorName()}\n");
+			Warning($"    Vertex buffer object : {vbo}\n");
+			Warning($"    Attempted alloc size : {BufferSize}\n");
 		}
 		RecomputeVAO();
 	}
