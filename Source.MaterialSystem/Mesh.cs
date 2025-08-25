@@ -99,7 +99,8 @@ public unsafe class VertexBuffer : IDisposable
 		return nextOffset;
 	}
 
-	internal void ChangeConfiguration(int vertexSize, int totalSize) {
+	internal void ChangeConfiguration(VertexFormat format, int vertexSize, int totalSize) {
+		VertexBufferFormat = format;
 		VertexSize = vertexSize;
 		VertexCount = BufferSize / vertexSize;
 		RecomputeVBO();

@@ -45,8 +45,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Peek();
 
 	public void BeginRender() {
-		glPolygonMode(GL_FRONT, GL_LINE);
-		glPolygonMode(GL_BACK, GL_LINE);
+
 	}
 
 	public void ClearColor3ub(byte r, byte g, byte b) => shaderAPI.ClearColor3ub(r, g, b);
@@ -79,7 +78,25 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public void GetViewport(out int x, out int y, out int width, out int height) {
-		x = y = width = height = 0;
+		Assert(RenderTargetStack.Count > 0);
+		ref RenderTargetStackElement element = ref RenderTargetStack.Top();
+		if(element.ViewW <= 0 || element.ViewH <= 0) {
+			x = y = 0;
+			ITexture? renderTarget = element.RenderTargets[0];
+			if(renderTarget == null) {
+				shaderAPI.GetBackBufferDimensions(out width, out height);
+			}
+			else {
+				width = renderTarget.GetActualWidth();
+				height = renderTarget.GetActualHeight();
+			}
+		}
+		else {
+			x = element.ViewX;
+			y = element.ViewY;
+			width = element.ViewW;
+			height = element.ViewH;
+		}
 	}
 
 	public void LoadIdentity() {
@@ -227,7 +244,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public static bool ShouldValidateMatrices() => false;
-	public static bool AllowLazyMatrixSync() => false;
+	public static bool AllowLazyMatrixSync() => true;
 
 	public void ForceSyncMatrix(MaterialMatrixMode mode) {
 		ref MatrixStackItem top = ref MatrixStacks[(int)mode].Top();

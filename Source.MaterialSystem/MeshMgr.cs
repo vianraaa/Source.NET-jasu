@@ -128,7 +128,7 @@ public class MeshMgr
 		if (buffer.VertexSize != vertexSize) {
 			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
 			buffer.VertexSize = vertexSize;
-			buffer.ChangeConfiguration(vertexSize, bufferMemory);
+			buffer.ChangeConfiguration(vertexFormat, vertexSize, bufferMemory);
 		}
 
 		return DynamicVertexBuffers[dynamicBufferID];
