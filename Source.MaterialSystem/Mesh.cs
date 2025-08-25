@@ -74,7 +74,7 @@ public unsafe class VertexBuffer
 			int elementSize = count * (int)type.SizeOf();
 			glEnableVertexArrayAttrib(vao, elementAttribute);
 			// type is relative to OpenGL's enumeration
-			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (int)elementSize);
+			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)elementSize);
 
 			bindings[bindingsPtr++] = elementAttribute;
 			sizeof1vertex += elementSize;
