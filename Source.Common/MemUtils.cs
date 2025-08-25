@@ -10,6 +10,19 @@ namespace Source.Common;
 
 public static unsafe class MemUtils
 {
+	public static void memset<T>(T* field, byte data, nuint size) where T : unmanaged {
+		byte* write = (byte*)field;
+		for (nuint i = 0; i < size; i++)
+			write[i] = data;
+	}
+	/// <summary>
+	/// This honestly might not be faster.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="field"></param>
+	public static void memreset<T>(ref T field) where T : struct {
+		Unsafe.InitBlock(ref Unsafe.As<T, byte>(ref field), 0, (uint)Unsafe.SizeOf<T>());
+	}
 	/// <summary>
 	/// Performs C-style memory comparison on two unmanaged types.
 	/// </summary>

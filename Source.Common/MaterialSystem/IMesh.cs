@@ -274,6 +274,9 @@ public unsafe struct VertexBuilder
 	}
 
 	public void AdvanceVertex() {
+		if (++CurrentVertex > VertexCount)
+			VertexCount = CurrentVertex;
+
 		CurrPosition += Desc.PositionSize;
 		CurrNormal += Desc.PositionSize;
 		CurrColor += Desc.ColorSize;
@@ -281,6 +284,17 @@ public unsafe struct VertexBuilder
 		for (int i = 0; i < 8; i++) {
 			CurrTexCoord[i] += Desc.TexCoordSize[i];
 		}
+	}
+
+	internal void AttachEnd() {
+		VertexBuffer = null;
+		MaxVertexCount = 0;
+
+		CurrPosition = null;
+		CurrNormal = null;
+		CurrColor = null;
+
+		memreset(ref Desc);
 	}
 }
 
@@ -326,6 +340,99 @@ public struct IndexBuilder
 
 	public void Reset() {
 		CurrentIndex = 0;
+	}
+
+	internal unsafe void GenerateIndices(MaterialPrimitiveType primitiveType, int indexCount) {
+		if (Desc.IndexSize == 0)
+			return;
+
+		int maxIndices = MaxIndexCount - CurrentIndex;
+		indexCount = Math.Min(maxIndices, indexCount);
+		if (indexCount == 0)
+			return;
+
+		ushort* indices = &Desc.Indices[CurrentIndex];
+		switch (primitiveType) {
+			case MaterialPrimitiveType.InstancedQuads:
+				Assert(false); // Shouldn't get here (this primtype is unindexed)
+				break;
+			case MaterialPrimitiveType.Quads:
+				GenerateQuadIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.Polygon:
+				GeneratePolygonIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.LineStrip:
+				GenerateLineStripIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.LineLoop:
+				GenerateLineLoopIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.Points:
+				Assert(false); // Shouldn't get here (this primtype is unindexed)
+				break;
+			default:
+				GenerateSequentialIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+		}
+
+		AdvanceIndices(indexCount);
+	}
+
+	private unsafe static void GenerateLineStripIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateLineLoopIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateSequentialIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GeneratePolygonIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateQuadIndexBuffer(ushort* indices, int indexCount, int firstVertex) {
+		if (indices == null)
+			return;
+
+		// Format the quad buffer
+		int i;
+		int numQuads = indexCount / 6;
+		int baseVertex = firstVertex;
+		for (i = 0; i < numQuads; ++i) {
+			indices[0] = (ushort)(baseVertex);
+			indices[1] = (ushort)(baseVertex + 1);
+			indices[2] = (ushort)(baseVertex + 2);
+
+			indices[3] = (ushort)(baseVertex);
+			indices[4] = (ushort)(baseVertex + 2);
+			indices[5] = (ushort)(baseVertex + 3);
+
+			baseVertex += 4;
+			indices += 6;
+		}
+	}
+
+	public void AdvanceIndex(int indices) {
+		CurrentIndex += (int)Desc.IndexSize;
+		if (CurrentIndex > IndexCount)
+			IndexCount = CurrentIndex;
+	}
+
+	public void AdvanceIndices(int indices) {
+		CurrentIndex += (int)(indices * Desc.IndexSize);
+		if (CurrentIndex > IndexCount)
+			IndexCount = CurrentIndex;
+	}
+
+	internal void AttachEnd() {
+		IndexBuffer = null;
+		MaxIndexCount = 0;
+		memreset(ref Desc);
 	}
 }
 
@@ -387,7 +494,25 @@ public unsafe struct MeshBuilder : IDisposable
 
 	// Use this when you're done writing
 	// Set bDraw to true to call m_pMesh->Draw automatically.
-	public void End(bool bSpewData = false, bool bDraw = false) => throw new NotImplementedException();
+	public void End(bool spewData = false, bool draw = false) {
+		if (GenerateIndices) {
+			int indexCount = IndicesFromVertices(Type, VertexBuilder.VertexCount);
+			IndexBuilder.GenerateIndices(Type, indexCount);
+		}
+
+		if (spewData)
+			Warning("Mesh spew not supported yet...\n");
+
+		Mesh!.UnlockMesh(VertexBuilder.VertexCount, IndexBuilder.IndexCount, ref Desc);
+
+		IndexBuilder.AttachEnd();
+		VertexBuilder.AttachEnd();
+		if (draw)
+			Mesh.Draw();
+
+		Mesh = null;
+		memreset(ref Desc);
+	}
 
 	// Locks the vertex buffer to modify existing data
 	// Passing nVertexCount == -1 says to lock all the vertices for modification.
@@ -568,7 +693,27 @@ public unsafe struct MeshBuilder : IDisposable
 		Assert(maxVertices <= 32768);
 		Assert(maxIndices <= 32768);
 	}
-	private int IndicesFromVertices(MaterialPrimitiveType type, int nVertexCount) => throw new NotImplementedException();
+	private int IndicesFromVertices(MaterialPrimitiveType type, int vertexCount) {
+		switch (type) {
+			case MaterialPrimitiveType.Quads:
+				Assert((vertexCount & 0x3) == 0);
+				return (vertexCount * 6) / 4;
+			case MaterialPrimitiveType.InstancedQuads:
+				// This primtype is unindexed
+				return 0;
+			case MaterialPrimitiveType.Polygon:
+				Assert(vertexCount >= 3);
+				return (vertexCount - 2) * 3;
+			case MaterialPrimitiveType.LineStrip:
+				Assert(vertexCount >= 2);
+				return (vertexCount - 1) * 2;
+			case MaterialPrimitiveType.LineLoop:
+				Assert(vertexCount >= 3);
+				return vertexCount * 2;
+			default:
+				return vertexCount;
+		}
+	}
 
 	// The mesh we're modifying
 	IMesh? Mesh;
