@@ -897,7 +897,7 @@ public unsafe static class Gl46
 	/// <returns></returns>
     public static string glGetErrorName() {
 		int err = _glGetError();
-		FieldInfo? info = typeof(Gl46).GetFields().FirstOrDefault(x => x.IsLiteral && x.GetValue(null) is int i and i == err);
+		FieldInfo? info = typeof(Gl46).GetFields().FirstOrDefault(x => x.IsLiteral && x.GetValue(null) is int i && i == err);
 		return info?.Name ?? $"<unknown GL error {err}>";
 	}
 
