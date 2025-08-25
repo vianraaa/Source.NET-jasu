@@ -472,7 +472,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		throw new NotImplementedException();
 	}
 
-	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t v) {
+	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t textureHandle) {
+		if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE)
+			return; // TODO: can we UNSET the sampler???
+
+		glProgramUniform1i((uint)hardwareTarget.Program, hardwareTarget.Location, textureHandle);
 	}
 
 	public bool CanDownloadTextures() {

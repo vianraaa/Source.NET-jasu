@@ -111,6 +111,7 @@ public abstract class BaseShader : IShader
 					continue;
 				}
 			}
+			GPU.Program = GPU.Shader == ShaderType.Vertex ? vsh.Handle : psh.Handle;
 		}
 	}
 
