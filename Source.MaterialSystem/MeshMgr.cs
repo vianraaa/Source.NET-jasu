@@ -78,15 +78,35 @@ public class MeshMgr
 		return ret;
 	}
 
+
+	List<VertexBuffer> DynamicVertexBuffers = [];
+	IndexBuffer? DynamicIndexBuffer;
+
 	BufferedMesh BufferedMesh;
 	DynamicMesh DynamicMesh;
 
 	internal void Init() {
 		BufferedMesh = InitMesh<BufferedMesh>();
 		DynamicMesh = InitMesh<DynamicMesh>();
+		DynamicMesh.Init(0);
+		CreateDynamicIndexBuffer();
+		CreateZeroVertexBuffer();
+		BufferedMode = true;
 	}
 
-	List<VertexBuffer> DynamicVertexBuffers = [];
+	private void CreateDynamicIndexBuffer() {
+		DestroyDynamicIndexBuffer();
+		DynamicIndexBuffer = new IndexBuffer(IMesh.INDEX_BUFFER_SIZE, true);
+	}
+	private void DestroyDynamicIndexBuffer() {
+		DynamicIndexBuffer?.Dispose();
+		DynamicIndexBuffer = null;
+	}
+
+	private void CreateZeroVertexBuffer() {
+		// Todo...
+	}
+
 
 	public const int VERTEX_BUFFER_SIZE = 32768;
 	public const int MAX_QUAD_INDICES = 16384;

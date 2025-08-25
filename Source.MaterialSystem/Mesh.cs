@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem;
 
-public unsafe class VertexBuffer
+public unsafe class VertexBuffer : IDisposable
 {
 	VertexFormat VertexBufferFormat;
 	internal int Position;
@@ -104,18 +104,16 @@ public unsafe class VertexBuffer
 	}
 
 	private unsafe void RecomputeVBO() {
-		if (vbo != -1) {
-			Assert(SysmemBuffer != null);
-			fixed (int* ugh = &vbo)
-				glDeleteBuffers(1, (uint*)vbo);
-			vbo = -1;
-			SysmemBuffer = null;
-		}
+		Dispose();
 
 		vbo = (int)glCreateBuffer();
 		glNamedBufferStorage((uint)vbo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		SysmemBuffer = glMapNamedBufferRange((uint)vbo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-
+		if(SysmemBuffer == null) {
+			Warning("WARNING: RecomputeVBO failure (OpenGL's not happy...)\n");
+			int error = glGetError();
+			Warning($"OpenGL error code: {glGetErrorNamed()}");
+		}
 		RecomputeVAO();
 	}
 
@@ -235,9 +233,19 @@ public unsafe class VertexBuffer
 			}
 		}
 	}
+
+	public void Dispose() {
+		if (vbo != -1) {
+			Assert(SysmemBuffer != null);
+			fixed (int* ugh = &vbo)
+				glDeleteBuffers(1, (uint*)ugh);
+			vbo = -1;
+			SysmemBuffer = null;
+		}
+	}
 }
 
-public unsafe class IndexBuffer
+public unsafe class IndexBuffer : IDisposable
 {
 	internal MaterialIndexFormat IndexFormat;
 	internal int VertexCount;
@@ -260,7 +268,7 @@ public unsafe class IndexBuffer
 		if (ibo != -1) {
 			Assert(SysmemBuffer != null);
 			fixed (int* ugh = &ibo)
-				glDeleteBuffers(1, (uint*)ibo);
+				glDeleteBuffers(1, (uint*)ugh);
 			ibo = -1;
 			SysmemBuffer = null;
 		}
@@ -288,6 +296,14 @@ public unsafe class IndexBuffer
 
 	internal bool HasEnoughRoom(int indexCount) {
 		throw new NotImplementedException();
+	}
+
+	public void Dispose() {
+		throw new NotImplementedException();
+	}
+
+	public IndexBuffer(int count, bool dynamic = false) {
+
 	}
 }
 
@@ -368,6 +384,8 @@ public unsafe class DynamicMesh : Mesh
 	int FirstVertex;
 	int FirstIndex;
 
+	int BufferId;
+
 	public void ResetVertexAndIndexCounts() {
 		TotalVertices = TotalIndices = 0;
 		FirstIndex = FirstVertex = -1;
@@ -408,6 +426,20 @@ public unsafe class DynamicMesh : Mesh
 		Lock(vertexCount, false, ref desc.Vertex);
 		Lock(indexCount, false, ref desc.Index);
 	}
+	
+	public void Init(int bufferId) {
+		BufferId = bufferId;
+	}
+
+	public override void SetVertexFormat(VertexFormat format) {
+		if (ShaderDevice.IsDeactivated())
+			return;
+
+		if(format != VertexFormat || VertexOverride || IndexOverride) {
+			VertexFormat = format;
+			UseVertexBuffer(MeshMgr.FindOrCreateVertexBuffer(BufferId, format));
+		}
+	}
 }
 
 public unsafe class Mesh : IMesh
@@ -420,9 +452,9 @@ public unsafe class Mesh : IMesh
 	protected VertexBuffer VertexBuffer;
 	protected IndexBuffer IndexBuffer;
 
-	VertexFormat VertexFormat;
-	IMaterialInternal Material;
-	MaterialPrimitiveType Type;
+	protected VertexFormat VertexFormat;
+	protected IMaterialInternal Material;
+	protected MaterialPrimitiveType Type;
 
 	public VertexBuffer GetVertexBuffer() => throw new Exception();
 	public IndexBuffer GetIndexBuffer() => throw new Exception();
@@ -553,5 +585,13 @@ public unsafe class Mesh : IMesh
 
 	public virtual void PreLock() {
 		throw new NotImplementedException();
+	}
+
+	public virtual void UseVertexBuffer(VertexBuffer vertexBuffer) {
+		VertexBuffer = vertexBuffer;
+	}
+
+	public virtual void UseIndexBuffer(IndexBuffer indexBuffer) {
+		IndexBuffer = indexBuffer;
 	}
 }

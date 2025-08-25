@@ -82,6 +82,8 @@ using GLchar = System.Byte;
 using GLuint64 = System.UInt64;
 using GLint64 = System.Int64;
 using System.Runtime.CompilerServices;
+using System.Reflection;
+using System.Linq;
 
 #endif
 
@@ -889,6 +891,15 @@ public unsafe static class Gl46
     /// </summary>
     /// <returns>One of <see cref="GL_NO_ERROR" />, <see cref="GL_INVALID_ENUM" />, <see cref="GL_INVALID_VALUE" />, <see cref="GL_INVALID_OPERATION" />, <see cref="GL_INVALID_FRAMEBUFFER_OPERATION" />, <see cref="GL_OUT_OF_MEMORY" />, <see cref="GL_STACK_UNDERFLOW" />, or <see cref="GL_STACK_OVERFLOW" />.</returns>
     public static GLenum glGetError() => _glGetError();
+	/// <summary>
+	/// This is really slow and you should avoid calling it unless debugging
+	/// </summary>
+	/// <returns></returns>
+    public static string glGetErrorName() {
+		int err = _glGetError();
+		FieldInfo? info = typeof(Gl46).GetFields().FirstOrDefault(x => x.IsLiteral && x.GetValue(null) is int i and i == err);
+		return info?.Name ?? $"<unknown GL error {err}>";
+	}
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLGETFLOATVPROC(GLenum pname, GLfloat* data);
