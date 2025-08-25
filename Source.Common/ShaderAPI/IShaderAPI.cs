@@ -37,4 +37,5 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void GetBackBufferDimensions(out int width, out int height);
 	void BeginFrame();
 	void EndFrame();
+	int GetCurrentDynamicVBSize();
 }

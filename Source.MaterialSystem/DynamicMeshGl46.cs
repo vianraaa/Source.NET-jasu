@@ -27,6 +27,15 @@ public unsafe class DynamicMeshGl46 : MeshGl46
 	public override void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
 		Lock(vertexCount, false, ref desc.Vertex);
 		Lock(vertexCount, false, ref desc.Index);
+
+		FirstVertex = desc.Vertex.FirstVertex;
+		FirstIndex = (int)desc.Index.FirstIndex;
+
+		desc.Index.Indices = (ushort*)IndexBuffer.SysmemBuffer;
+	}
+
+	public override bool NeedsVertexFormatReset(VertexFormat format) {
+		return VertexOverride || IndexOverride || VertexFormat != format;
 	}
 
 	public override void PreLock() {
@@ -39,6 +48,34 @@ public unsafe class DynamicMeshGl46 : MeshGl46
 		TotalVertices = TotalIndices = 0;
 		FirstIndex = FirstVertex = -1;
 		HasDrawn = false;
+	}
+
+	public override void SetVertexFormat(VertexFormat format) {
+		if (ShaderDevice.IsDeactivated())
+			return;
+
+		if(format.CompressionType() != VertexCompressionType.None) {
+			Warning("ERROR: dynamic meshes cannot use compressed vertices!\n");
+			Assert(false);
+			format &= ~VertexFormat.Compressed;
+		}
+
+		if(format != VertexFormat || VertexOverride || IndexOverride) {
+			VertexFormat = format;
+			UseVertexBuffer(MeshMgr.FindOrCreateVertexBuffer(BufferID, format));
+			if(BufferID == 0) {
+				UseIndexBuffer(MeshMgr.GetDynamicIndexBuffer());
+			}
+			VertexOverride = IndexOverride = false;
+		}
+	}
+
+	private void UseIndexBuffer(IndexBuffer indexBuffer) {
+		throw new NotImplementedException();
+	}
+
+	private void UseVertexBuffer(VertexBuffer vertexBuffer) {
+		throw new NotImplementedException();
 	}
 
 	public override void Draw(int firstIndex = -1, int indexCount = 0) {

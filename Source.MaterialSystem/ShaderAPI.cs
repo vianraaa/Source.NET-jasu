@@ -642,4 +642,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public ImageFormat FindNearestSupportedFormat(ImageFormat format, bool isVertexTexture, bool isRenderTarget, bool filterableRequired) {
 		return format;
 	}
+
+	public int GetCurrentDynamicVBSize() {
+		return (1024 + 512) * 1024; // See if it's still needed to use smaller sizes at certain points... how would this even work, I wonder
+	}
 }

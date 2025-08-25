@@ -39,7 +39,7 @@ public class BaseMeshGl46 : MeshBase {
 		Material = (IMaterialInternal)material!;
 	}
 
-	internal void SetVertexFormat(VertexFormat fmt) {
+	public virtual void SetVertexFormat(VertexFormat fmt) {
 		VertexFormat = fmt;
 	}
 
@@ -49,5 +49,9 @@ public class BaseMeshGl46 : MeshBase {
 
 	public virtual bool HasEnoughRoom(int vertexCount, int indexCount) {
 		throw new NotImplementedException();
+	}
+
+	public virtual bool NeedsVertexFormatReset(VertexFormat format) {
+		return format != VertexFormat;
 	}
 }

@@ -208,7 +208,8 @@ public interface IMaterial
 	bool InMaterialPage();
 	IMaterial GetMaterialPage();
 }
-public static class IMaterialExts {
+public static class IMaterialExts
+{
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int VertexFlags(this VertexFormat format) => (int)format & ((1 << (VertexFormatFlags.VertexLastBit + 1)) - 1);
 	public static int NumBoneWeights(this VertexFormat format) => ((int)format >> VertexFormatFlags.VertexBoneWeightBit) & 0x7;
@@ -216,4 +217,78 @@ public static class IMaterialExts {
 	public static int TexCoordSize(this VertexFormat format, int texCoordIndex) => ((int)format >> (VertexFormatFlags.TexCoordSizeBit + 3 * texCoordIndex)) & 0x7;
 	public static bool UsesVertexShader(this VertexFormat format) => ((int)format & VertexFormatFlags.VertexFormatVertexShader) != 0;
 	public static VertexCompressionType CompressionType(this VertexFormat format) => ((int)format & VertexFormatFlags.VertexFormatCompressed) != 0 ? VertexCompressionType.On : VertexCompressionType.None;
+
+	public static ushort GetVertexElementSize(VertexElement element, VertexCompressionType compressionType) {
+		if (compressionType == VertexCompressionType.On) {
+			// Compressed-vertex element sizes
+			switch (element) {
+				// Normals and tangents (userdata4) are combined into a single UBYTE4 vertex element
+				case VertexElement.Normal:
+					return 4 * sizeof(byte);
+				case VertexElement.UserData4:
+					return 0;
+				// Compressed bone weights use a SHORT2 vertex element:
+				case VertexElement.BoneWeights1:
+				case VertexElement.BoneWeights2:
+					return 2 * sizeof(short);
+				default:
+					break;
+			}
+		}
+
+		// Uncompressed-vertex element sizes
+		switch (element) {
+			case VertexElement.Position: return (3 * sizeof(float));
+			case VertexElement.Normal: return (3 * sizeof(float));
+			case VertexElement.Color: return (4 * sizeof(byte));
+			case VertexElement.Specular: return (4 * sizeof(byte));
+			case VertexElement.TangentS: return (3 * sizeof(float));
+			case VertexElement.TangentT: return (3 * sizeof(float));
+			case VertexElement.Wrinkle: return (1 * sizeof(float));
+			case VertexElement.BoneIndex: return (4 * sizeof(byte));
+			case VertexElement.BoneWeights1: return (1 * sizeof(float));
+			case VertexElement.BoneWeights2: return (2 * sizeof(float));
+			case VertexElement.BoneWeights3: return (3 * sizeof(float));
+			case VertexElement.BoneWeights4: return (4 * sizeof(float));
+			case VertexElement.UserData1: return (1 * sizeof(float));
+			case VertexElement.UserData2: return (2 * sizeof(float));
+			case VertexElement.UserData3: return (3 * sizeof(float));
+			case VertexElement.UserData4: return (4 * sizeof(float));
+			case VertexElement.TexCoord1D_0: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_1: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_2: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_3: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_4: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_5: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_6: return (1 * sizeof(float));
+			case VertexElement.TexCoord1D_7: return (1 * sizeof(float));
+			case VertexElement.TexCoord2D_0: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_1: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_2: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_3: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_4: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_5: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_6: return (2 * sizeof(float));
+			case VertexElement.TexCoord2D_7: return (2 * sizeof(float));
+			case VertexElement.TexCoord3D_0: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_1: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_2: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_3: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_4: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_5: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_6: return (3 * sizeof(float));
+			case VertexElement.TexCoord3D_7: return (3 * sizeof(float));
+			case VertexElement.TexCoord4D_0: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_1: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_2: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_3: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_4: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_5: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_6: return (4 * sizeof(float));
+			case VertexElement.TexCoord4D_7: return (4 * sizeof(float));
+			default:
+				Assert(0);
+				return 0;
+		}
+	}
 }

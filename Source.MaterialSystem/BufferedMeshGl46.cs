@@ -23,9 +23,6 @@ public class BufferedMeshGl46 : BaseMeshGl46
 	public virtual void Spew(int vertexCount, int indexCount, out MeshDesc spewDesc) {
 		spewDesc = default;
 	}
-	public virtual void SetVertexFormat(VertexFormat format) {
-
-	}
 	public override void Draw(int firstIndex = -1, int indexCount = 0) {
 		if (!ShaderUtil.OnDrawMesh(this, firstIndex, indexCount)) {
 			WasRendered = true;
@@ -109,6 +106,14 @@ public class BufferedMeshGl46 : BaseMeshGl46
 
 	public override void HandleLateCreation() {
 		Mesh?.HandleLateCreation();
+	}
+
+	public override void SetVertexFormat(VertexFormat format) {
+		Assert(Mesh != null);
+		if (Mesh.NeedsVertexFormatReset(format)) {
+			ShaderAPI.FlushBufferedPrimitives();
+			Mesh.SetVertexFormat(format);
+		}
 	}
 
 	public void Flush() {
