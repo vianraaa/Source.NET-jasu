@@ -37,13 +37,11 @@ public class MeshMgr
 	}
 
 	internal void Flush() {
-		if (IsPC()) {
-			BufferedMesh.HandleLateCreation();
+		if (IsPC()) 
 			BufferedMesh.Flush();
-		}
 	}
 
-	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh vertexOverride, IMesh indexOverride) {
+	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride) {
 		Assert(material == null || ((IMaterialInternal)material).IsRealTimeVersion());
 
 		if (BufferedMode != buffered && BufferedMode) {
@@ -52,7 +50,7 @@ public class MeshMgr
 		BufferedMode = buffered;
 
 		IMaterialInternal matInternal = (IMaterialInternal)material!;
-		BaseMeshGl46 mesh = DynamicMesh;
+		Mesh mesh = DynamicMesh;
 
 		if (BufferedMode) {
 			Assert(!BufferedMesh.WasNotRendered());
@@ -79,16 +77,16 @@ public class MeshMgr
 			mesh.SetVertexFormat(fmt);
 		}
 		else {
-			BaseMeshGl46 gl46Mesh = (BaseMeshGl46)vertexOverride;
-			mesh.SetVertexFormat(gl46Mesh.GetVertexFormat());
+			Mesh vertexMesh = (Mesh)vertexOverride;
+			mesh.SetVertexFormat(vertexMesh.GetVertexFormat());
 		}
 
 		mesh.SetMaterial(matInternal);
 		if (mesh == DynamicMesh) {
-			BaseMeshGl46? baseVertex = (BaseMeshGl46?)vertexOverride;
+			Mesh? baseVertex = (Mesh?)vertexOverride;
 			if (baseVertex != null)
 				DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
-			BaseMeshGl46? baseIndex = (BaseMeshGl46?)vertexOverride;
+			Mesh? baseIndex = (Mesh?)vertexOverride;
 			if (baseIndex != null)
 				DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
 		}
@@ -113,7 +111,7 @@ public class MeshMgr
 
 	// We can't rely on imported engineAPI.New<>() calls here because it makes the dependency injection
 	// system crash and burn
-	private TMesh InitMesh<TMesh>() where TMesh : BaseMeshGl46, new() {
+	private TMesh InitMesh<TMesh>() where TMesh : Mesh, new() {
 		TMesh ret = new TMesh();
 		ret.ShaderAPI = MaterialSystem.ShaderAPI;
 		ret.ShaderUtil = MaterialSystem;
@@ -122,12 +120,12 @@ public class MeshMgr
 		return ret;
 	}
 
-	BufferedMeshGl46 BufferedMesh;
-	DynamicMeshGl46 DynamicMesh;
+	BufferedMesh BufferedMesh;
+	DynamicMesh DynamicMesh;
 
 	internal void Init() {
-		BufferedMesh = InitMesh<BufferedMeshGl46>();
-		DynamicMesh = InitMesh<DynamicMeshGl46>();
+		BufferedMesh = InitMesh<BufferedMesh>();
+		DynamicMesh = InitMesh<DynamicMesh>();
 	}
 
 	List<VertexBuffer> DynamicVertexBuffers = [];

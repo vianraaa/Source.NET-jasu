@@ -1,4 +1,5 @@
 ﻿using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -191,80 +192,113 @@ public unsafe class IndexBuffer
 	}
 }
 
-public unsafe class MeshGl46 : BaseMeshGl46
+public unsafe class BufferedMesh : Mesh
 {
-	protected static nint s_FirstVertex;
-	protected static nint s_NumVertices;
-	protected static PrimList* s_pPrims;
-	protected static nint s_nPrims;
-	public static Span<PrimList> Primitives => new(s_pPrims, (int)s_nPrims);
+	public void Flush() {
 
-	protected VertexBuffer VertexBuffer;
-	protected IndexBuffer IndexBuffer;
-
-	public override void RenderPass() {
-		Warning("Cannot renderpass\n");
 	}
+}
+public unsafe class DynamicMesh : Mesh { }
 
-	public MaterialPrimitiveType Type;
-	public uint Mode;
+public unsafe class Mesh : IMesh
+{
+	public IShaderAPI ShaderAPI;
+	public IShaderUtil ShaderUtil;
+	public MeshMgr MeshMgr;
+	public IShaderDevice ShaderDevice;
 
-	public override MaterialPrimitiveType GetPrimitiveType() {
-		return Type;
-	}
+	public VertexBuffer GetVertexBuffer() => throw new Exception();
+	public IndexBuffer GetIndexBuffer() => throw new Exception();
 
-	public override unsafe bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
-		VertexBuffer.Lock(vertexCount, out desc.FirstVertex);
-		// todo: how do we compute strides etc
-		return true;
-	}
-
-
-	public override unsafe bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
+	public virtual void BeginCastBuffer(VertexFormat format) {
 		throw new NotImplementedException();
 	}
 
-
-	public override void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
-		ShaderUtil.SyncMatrices();
+	public virtual void BeginCastBuffer(MaterialIndexFormat format) {
+		throw new NotImplementedException();
 	}
 
-	public override void SetPrimitiveType(MaterialPrimitiveType type) {
-		if (!ShaderUtil.OnSetPrimitiveType(this, type))
-			return;
-
-		Type = type;
-		Mode = ToGLPrimitive(type);
+	public virtual void Draw(int firstIndex = -1, int indexCount = 0) {
+		throw new NotImplementedException();
 	}
 
-	private uint ToGLPrimitive(MaterialPrimitiveType type) {
-		switch (type) {
-			case MaterialPrimitiveType.Points: return GL_POINTS;
-			case MaterialPrimitiveType.Lines: return GL_LINES;
-			case MaterialPrimitiveType.Triangles: return GL_TRIANGLES;
-			case MaterialPrimitiveType.TriangleStrip: return GL_TRIANGLE_STRIP;
-			case MaterialPrimitiveType.LineStrip: return GL_LINE_STRIP;
-			case MaterialPrimitiveType.LineLoop: return GL_LINE_LOOP;
-			case MaterialPrimitiveType.Quads: return GL_QUADS;
-			case MaterialPrimitiveType.InstancedQuads: return GL_QUADS; // instancing handled elsewhere
-			default: Assert(false); return GL_TRIANGLES;
-		}
+	public virtual void EndCastBuffer() {
+		throw new NotImplementedException();
 	}
 
-	public static VertexFormat LastVertexFormat;
-
-	public static void ResetMeshRenderState() {
-
+	public virtual int GetRoomRemaining() {
+		throw new NotImplementedException();
 	}
 
-	protected virtual bool SetRenderState(int vertexOffsetInBytes, int actualFirstVertex, VertexFormat fmt) {
-		if (ShaderDevice.IsDeactivated()) {
-			ResetMeshRenderState();
-			return false;
-		}
+	public virtual VertexFormat GetVertexFormat() {
+		throw new NotImplementedException();
+	}
 
-		LastVertexFormat = fmt;
+	public virtual int IndexCount() {
+		throw new NotImplementedException();
+	}
 
-		return true;
+	public virtual MaterialIndexFormat IndexFormat() {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool IsDynamic() {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool Lock(int maxIndexCount, bool append, ref IndexDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void MarkAsDrawn() {
+		throw new NotImplementedException();
+	}
+
+	public virtual void ModifyBegin(int firstVertex, int vertexCount, int firstIndex, int indexCount, ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void ModifyEnd(ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void SetColorMesh(IMesh colorMesh, int vertexOffset) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void SetPrimitiveType(MaterialPrimitiveType type) {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool Unlock(int vertexCount, ref VertexDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool Unlock(int writtenIndexCount, ref IndexDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual int VertexCount() {
+		throw new NotImplementedException();
+	}
+
+	public virtual void SetMaterial(IMaterialInternal matInternal) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void SetVertexFormat(VertexFormat fmt) {
+		throw new NotImplementedException();
 	}
 }
