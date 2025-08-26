@@ -321,7 +321,7 @@ public abstract class BaseClientState(
 		if (msg.CreateOnClient) {
 			ConMsg("Can't create class tables.\n");
 			Assert(false);
-			return false;
+			return true;
 		}
 		
 		ServerClasses = msg.Classes.Count;

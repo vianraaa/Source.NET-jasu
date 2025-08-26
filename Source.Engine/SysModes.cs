@@ -150,7 +150,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 			if (!texture.Unserialize(handle)) {
 				Error($"Invalid or corrupt texture {material}\n");
 			}
-			texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
+			// texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
 			return texture;
 		}
 

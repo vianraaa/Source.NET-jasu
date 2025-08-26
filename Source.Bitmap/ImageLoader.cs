@@ -2,9 +2,25 @@
 using Source.Common.Bitmap;
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace Source.Bitmap;
 
+public struct RGBA8888
+{
+	public byte R;
+	public byte G;
+	public byte B;
+	public byte A;
+}
+
+public struct BGRA8888
+{
+	public byte B;
+	public byte G;
+	public byte R;
+	public byte A;
+}
 
 public static class ImageLoader
 {
@@ -275,4 +291,35 @@ public static class ImageLoader
 
 		_ => throw new NotSupportedException($"GetGLImageFormat: unexpected format '{format}'"),
 	};
+
+	public static bool ConvertImageFormat(Span<byte> srcData, ImageFormat srcFormat, Span<byte> dstData, ImageFormat dstFormat, int width, int height) {
+		switch (srcFormat) {
+			case ImageFormat.DXT5:
+				switch (dstFormat) {
+					case ImageFormat.RGBA8888:
+						ConvertFromDXT5(srcData, MemoryMarshal.Cast<byte, RGBA8888>(dstData), width, height);
+						return true;
+				}
+				break;
+		}
+
+		AssertMsg(false, $"No good way to convert {srcFormat} to {dstFormat}, expect issues\n");
+		return false;
+	}
+
+	private static void ConvertFromDXT5<T>(Span<byte> srcData, Span<T> span, int width, int height) {
+		int realWidth = 0;
+		int realHeight = 0;
+
+		if (width < 4 || height < 4)
+			Assert(false);
+
+		Assert((width % 4) == 0);
+		Assert((height % 4) == 0);
+
+		int xblocks = width >> 2, yblocks = height >> 2;
+		BGRA8888 col0, col1, col2, col3;
+
+		throw new Exception("I don't care enough to implement ConvertFromDXT5 right now will do it later");
+	}
 }

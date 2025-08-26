@@ -64,6 +64,9 @@ public static unsafe class MemUtils
 	public static void memcpy<T>(ref T dest, ref T src) where T : unmanaged {
 		dest = src;
 	}
+	public static void memcpy<T>(Span<T> dest, Span<T> src) where T : unmanaged {
+		src.CopyTo(dest);
+	}
 }
 
 public unsafe ref struct UnmanagedHeapMemory {

@@ -3,6 +3,7 @@ using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Engine;
 
+using System.Buffers;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -111,18 +112,70 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public int ComputeTotalSize() {
-		throw new NotImplementedException();
+		return ComputeTotalSize(Format);
+	}
+
+	public int ComputeTotalSize(ImageFormat format) {
+		nint memRequired = ComputeFaceSize(0, format);
+		return (int)(FaceCount * FrameCount * memRequired);
 	}
 
 	public void ConstructLowResImage() {
 		throw new NotImplementedException();
 	}
 
-	public void ConvertImageFormat(ImageFormat format, bool normalToDUDV) {
+	public void ConvertImageFormat(ImageFormat fmt, bool normalToDUDV) {
 		if (ImageData == null)
 			return;
 
+		nint convertedSize = ComputeTotalSize(fmt);
+		byte[] convertedImage = ArrayPool<byte>.Shared.Rent((int)convertedSize);
 
+		for (int mip = 0; mip < MipCount; mip++) {
+			ComputeMipLevelDimensions(mip, out int width, out int height, out int depth);
+			nint srcFaceStride = ImageLoader.GetMemRequired(width, height, 1, Format, false);
+			nint dstFaceStride = ImageLoader.GetMemRequired(width, height, 1, fmt, false);
+			for (int frame = 0; frame < FrameCount; frame++) {
+				for (int face = 0; face < FaceCount; face++) {
+					Span<byte> srcData = GetImageData(frame, face, mip);
+					Span<byte> dstData = convertedImage.AsSpan()[(int)GetImageOffset(frame, face, mip, fmt)..];
+					for (int z = 0; z < depth; ++z, srcData = srcData[(int)srcFaceStride..], dstData = dstData[(int)dstFaceStride..]) {
+						if (normalToDUDV) {
+							Error("No\n");
+							return;
+						}
+						else {
+							ImageLoader.ConvertImageFormat(srcData, Format, dstData, fmt, width, height);
+						}
+					}
+				}
+			}
+		}
+
+		memcpy<byte>(ImageData, convertedImage[..(int)convertedSize]);
+		Format = fmt;
+
+		if (!ImageLoader.IsCompressed(fmt)) {
+			ref ImageFormatInfo info = ref ImageLoader.ImageFormatInfo(fmt);
+			int alphaBits = info.AlphaBits;
+			if (alphaBits > 1) {
+				Flags |= (int)(CompiledVtfFlags.EightBitAlpha);
+				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+			}
+			if (alphaBits <= 1) {
+				Flags &= ~(int)(CompiledVtfFlags.EightBitAlpha);
+				if (alphaBits == 0) {
+					Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+				}
+			}
+		}
+		else {
+			if ((fmt == ImageFormat.DXT5) || (fmt == ImageFormat.ATI2N) || (fmt == ImageFormat.ATI1N)) {
+				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha | CompiledVtfFlags.EightBitAlpha);
+			}
+		}
+
+		ArrayPool<byte>.Shared.Return(convertedImage, true);
 	}
 
 	int IVTFTexture.Depth() => Depth;
@@ -156,7 +209,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	private Span<byte> GetResourceData(ResourceEntryType type) {
-		throw new Exception();
+		ref ResourceEntryInfo info = ref FindResourceEntryInfo(type);
+		if(!Unsafe.IsNullRef(ref info)) {
+			return ImageData!.AsSpan()[(int)info.Offset..];
+		}
+
+		return null;
 	}
 
 	public bool HasResourceEntry(uint type) {
@@ -488,7 +546,8 @@ public sealed class VTFTexture : IVTFTexture
 			for (int frame = 0; frame < FrameCount; frame++) {
 				for (int face = 0; face < facesToRead; face++) {
 					Span<byte> mipBits = GetImageData(frame, face, mip);
-					stream.Read(mipBits[..mipSize]);
+					Span<byte> mipSpan = mipBits[..mipSize];
+					stream.Read(mipSpan);
 				}
 			}
 		}
@@ -503,7 +562,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	private bool AllocateImageData(nint imageSize) {
-		throw new NotImplementedException();
+		return GenericAllocateReusableData(ref ImageData, imageSize);
+	}
+
+	private static bool GenericAllocateReusableData(ref byte[]? imageData, nint numRequested) {
+		imageData = new byte[numRequested];
+		return true;
 	}
 
 	private bool LoadLowResData(Stream stream) {
