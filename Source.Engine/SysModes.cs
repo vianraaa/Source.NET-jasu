@@ -105,38 +105,58 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		using MatRenderContextPtr renderContext = new(materials);
 
 		KeyValues keyValues = new KeyValues("UnlitGeneric");
-		keyValues.SetString("$basetexture", "kagami.vtf");
+		keyValues.SetString("$basetexture", "console/kagami.vtf");
 		keyValues.SetInt("$ignorez", 1);
-		keyValues.SetInt("nofog", 1);
-		keyValues.SetInt("no_fullbright", 1);
-		keyValues.SetInt("nocull", 1);
+		keyValues.SetInt("$nofog", 1);
+		keyValues.SetInt("$no_fullbright", 1);
+		keyValues.SetInt("$nocull", 1);
 		IMaterial material = materials.CreateMaterial("__background", keyValues);
+
+		keyValues = new KeyValues("UnlitGeneric");
+		keyValues.SetString("$basetexture", "console/startup_loading.vtf");
+		keyValues.SetInt("$translucent", 1);
+		keyValues.SetInt("$ignorez", 1);
+		keyValues.SetInt("$nofog", 1);
+		keyValues.SetInt("$no_fullbright", 1);
+		keyValues.SetInt("$nocull", 1);
+		IMaterial loadingMaterial = materials.CreateMaterial("__loading", keyValues);
 
 		int w = GetModeStereoWidth();
 		int h = GetModeStereoHeight();
 		int tw = backgroundTexture!.Width();
 		int th = backgroundTexture!.Height();
+		int lw = loadingTexture!.Width();
+		int lh = loadingTexture!.Height();
 
 		renderContext.Viewport(0, 0, w, h);
 		renderContext.DepthRange(0, 1);
-		// SetToneMappingScaleLinear - what does it do...
+		// SetToneMappingScaleLinear - what does it do... (in this context)
+		// I guess it just sets it to 1, 1, 1 but still, need to review how we'd even replicate tone mapping 
 		float depth = 0.5f;
 
 		for (int i = 0; i < 2; i++) {
 			renderContext.ClearColor3ub(0, 0, 0);
 			renderContext.ClearBuffers(true, true, true);
 			renderUtils.DrawScreenSpaceRectangle(material, 0, 0, w, h, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
+			renderUtils.DrawScreenSpaceRectangle(loadingMaterial, w - lw, h - lh, lw, lh, 0, 0, lw - 1, lh - 1, lw, lh, null, 1, 1, depth);
 			materials.SwapBuffers();
 		}
 	}
 
 	IVTFTexture? backgroundTexture;
+	IVTFTexture? loadingTexture;
 
 	private void SetupStartupGraphic() {
-		string material = "materials/kagami.vtf";
+		string material = "materials/console/kagami.vtf";
 		backgroundTexture = LoadVTF(material);
 		if (backgroundTexture == null) {
 			Error($"Can't find background image '{material}'\n");
+			return;
+		}
+
+		loadingTexture = LoadVTF("materials/console/startup_loading.vtf");
+		if (loadingTexture == null) {
+			Error($"Can't find background image materials/console/startup_loading.vtf\n");
 			return;
 		}
 	}

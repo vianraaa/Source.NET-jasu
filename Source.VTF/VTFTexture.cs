@@ -266,7 +266,9 @@ public sealed class VTFTexture : IVTFTexture
 				return ref searchResource;
 		}
 
-		Resources.Add(new());
+		Resources.Add(new() {
+			Tag = type
+		});
 		ref ResourceEntryInfo newResource = ref CollectionsMarshal.AsSpan(Resources)[Resources.Count - 1];
 		return ref newResource;
 	}
