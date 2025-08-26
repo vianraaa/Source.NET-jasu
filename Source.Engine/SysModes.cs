@@ -10,6 +10,7 @@ using Source.Common.MaterialSystem;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -135,7 +136,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		string material = "materials/kagami.vtf";
 		backgroundTexture = LoadVTF(material);
 		if (backgroundTexture == null) {
-			Dbg.Error($"Can't find background image '{material}'\n");
+			Error($"Can't find background image '{material}'\n");
 			return;
 		}
 	}
@@ -145,9 +146,9 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		if (handle != null) {
 			IVTFTexture texture = IVTFTexture.Create();
 			if (!texture.Unserialize(handle)) {
-				Dbg.Error($"Invalid or corrupt texture {material}\n");
+				Error($"Invalid or corrupt texture {material}\n");
 			}
-			texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
+			// texture.ConvertImageFormat(ImageFormat.RGBA8888, false);
 			return texture;
 		}
 

@@ -82,6 +82,8 @@ using GLchar = System.Byte;
 using GLuint64 = System.UInt64;
 using GLint64 = System.Int64;
 using System.Runtime.CompilerServices;
+using System.Reflection;
+using System.Linq;
 
 #endif
 
@@ -889,6 +891,15 @@ public unsafe static class Gl46
     /// </summary>
     /// <returns>One of <see cref="GL_NO_ERROR" />, <see cref="GL_INVALID_ENUM" />, <see cref="GL_INVALID_VALUE" />, <see cref="GL_INVALID_OPERATION" />, <see cref="GL_INVALID_FRAMEBUFFER_OPERATION" />, <see cref="GL_OUT_OF_MEMORY" />, <see cref="GL_STACK_UNDERFLOW" />, or <see cref="GL_STACK_OVERFLOW" />.</returns>
     public static GLenum glGetError() => _glGetError();
+	/// <summary>
+	/// This is probably *really* slow and you should avoid calling it unless debugging
+	/// </summary>
+	/// <returns></returns>
+    public static string glGetErrorName() {
+		int err = _glGetError();
+		FieldInfo? info = typeof(Gl46).GetFields().FirstOrDefault(x => x.IsLiteral && x.GetValue(null) is int i && i == err);
+		return info?.Name ?? $"<unknown GL error {err}>";
+	}
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLGETFLOATVPROC(GLenum pname, GLfloat* data);
@@ -1134,6 +1145,7 @@ public unsafe static class Gl46
     public const GLenum GL_RGBA4 = 0x8056;
     public const GLenum GL_RGB5_A1 = 0x8057;
     public const GLenum GL_RGBA8 = 0x8058;
+    public const GLenum GL_BGRA8_EXT = 0x93A1;
     public const GLenum GL_RGB10_A2 = 0x8059;
     public const GLenum GL_RGBA12 = 0x805A;
     public const GLenum GL_RGBA16 = 0x805B;
@@ -4598,8 +4610,12 @@ public unsafe static class Gl46
     public const GLenum GL_RG32I = 0x823B;
     public const GLenum GL_RG32UI = 0x823C;
     public const GLenum GL_VERTEX_ARRAY_BINDING = 0x85B5;
+	public const GLenum GL_COMPRESSED_RGB_S3TC_DXT1_EXT = 0x83F0;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT3_EXT = 0x83F2;
+	public const GLenum GL_COMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3;
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void PFNGLCOLORMASKIPROC(GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
     private static PFNGLCOLORMASKIPROC _glColorMaski;
     /// <summary>

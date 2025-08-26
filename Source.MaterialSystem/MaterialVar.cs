@@ -76,11 +76,14 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override string GetStringValue() {
-		throw new NotImplementedException();
+		return StringVal;
 	}
 
 	public override ITexture? GetTextureValue() {
-		throw new NotImplementedException();
+		if (Type == MaterialVarType.Texture)
+			return TextureValue;
+
+		return null;
 	}
 
 	public override unsafe void GetVecValue(Span<float> val) {
@@ -121,7 +124,8 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetTextureValue(ITexture? texture) {
-		throw new NotImplementedException();
+		Type = MaterialVarType.Texture;
+		TextureValue = texture;
 	}
 
 	public override void SetUndefined() {

@@ -11,18 +11,6 @@ namespace Source;
 
 public static class MaterialDefines
 {
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static VertexFormat VERTEX_BONEWEIGHT(int n) => (VertexFormat)(((ulong)n) << VertexFormatFlags.VertexBoneWeightBit);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static VertexFormat VERTEX_USERDATA_SIZE(int n) => (VertexFormat)(((ulong)n) << VertexFormatFlags.UserDataSizeBit);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static VertexFormat VERTEX_TEXCOORD_MASK(int coord) => (VertexFormat)((0x7UL) << (VertexFormatFlags.TexCoordSizeBit + 3 * coord));
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static VertexFormat VERTEX_TEXCOORD_SIZE(int index, int numCoords) {
-		ulong n64 = (ulong)numCoords;
-		int nshift = VertexFormatFlags.TexCoordSizeBit + (3 * index);
-		return (VertexFormat)(n64 << nshift);
-	}
 	public static bool IsPlatformOpenGL() => true;
 	public const int MATERIAL_MAX_PATH = 256;
 }

@@ -40,7 +40,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public HDRType GetHDRType() {
-		throw new NotImplementedException();
+		return HDRType.None;
 	}
 
 	public int GetMaxDXSupportLevel() {
@@ -119,16 +119,22 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 		throw new NotImplementedException();
 	}
 
-	public int MaxTextureDepth() {
-		throw new NotImplementedException();
+	public unsafe int MaxTextureDepth() {
+		int* maxTextureSize = stackalloc int[1];
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
+		return *maxTextureSize;
 	}
 
-	public int MaxTextureHeight() {
-		throw new NotImplementedException();
+	public unsafe int MaxTextureHeight() {
+		int* maxTextureSize = stackalloc int[1];
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
+		return *maxTextureSize;
 	}
 
-	public int MaxTextureWidth() {
-		throw new NotImplementedException();
+	public unsafe int MaxTextureWidth() {
+		int* maxTextureSize = stackalloc int[1];
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, maxTextureSize);
+		return *maxTextureSize;
 	}
 
 	public int MaxUserClipPlanes() {
@@ -200,7 +206,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public bool SupportsCompressedTextures() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public VertexCompressionType SupportsCompressedVertices() {
@@ -232,7 +238,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public bool SupportsMipmappedCubemaps() {
-		throw new NotImplementedException();
+		return false;
 	}
 
 	public bool SupportsNonPow2Textures() {

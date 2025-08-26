@@ -26,14 +26,16 @@ public interface IShader
 	ShaderParamType GetParamType(int paramIndex);
     ReadOnlySpan<char> GetParamDefault(int paramIndex);
 	string? GetFallbackShader(IMaterialVar[] vars);
-	void InitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName);
-	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	void DrawElements(IMaterialVar[] shaderParams, int modulationFlags, IShaderShadow shadow, IShaderDynamicAPI shaderAPI, VertexCompressionType none, ref BasePerMaterialContextData basePerMaterialContextData);
-	int ComputeModulationFlags(Span<IMaterialVar> parms, IShaderAPI shaderAPI);
+	void InitShaderParams(IMaterialVar[] vars, IShaderAPI shaderAPI, ReadOnlySpan<char> materialName);
+	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderAPI shaderAPI, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
+	void DrawElements(IMaterialVar[] shaderParams, IShaderDynamicAPI shaderAPI, VertexCompressionType none);
+	void SpecifyVertexFormat(ref VertexFormat vertexFormat);
 }
 
 public interface IShaderInit {
 	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0);
+	VertexShaderHandle LoadVertexShader(ReadOnlySpan<char> name);
+	PixelShaderHandle LoadPixelShader(ReadOnlySpan<char> name);
 }
 
 
@@ -68,18 +70,27 @@ public struct ShaderViewport {
 
 public interface IShaderDynamicAPI
 {
-	int GetCurrentNumBones();
 	MaterialFogMode GetSceneFogMode();
 	bool InFlashlightMode();
 	void PushMatrix();
 	void PopMatrix();
-	void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2);
-	void SetVertexShaderIndex(int value);
 	IMesh GetDynamicMesh(IMaterial material, int nCurrentBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride);
 	bool InEditorMode();
-	void SetVertexShaderConstant(int vERTEX_SHADER_MODULATION_COLOR, Span<float> color);
+
+
+	void BindVertexShader(in VertexShaderHandle vertexShader);
+	void BindPixelShader(in PixelShaderHandle pixelShader);
+
+	int LocateShaderUniform(ReadOnlySpan<char> name);
+
+	void SetShaderUniform(int uniform, int integer);
+	void SetShaderUniform(int uniform, float fl);
+	void SetShaderUniform(int uniform, ReadOnlySpan<float> flConsts);
 
 	void MatrixMode(MaterialMatrixMode i);
 	void LoadMatrix(in Matrix4x4 transposeTop);
 	void LoadIdentity();
+	int GetCurrentNumBones();
+	GraphicsDriver GetDriver();
+	nint GetCurrentProgram();
 }

@@ -29,7 +29,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		services.AddSingleton<ShaderAPIGl46>();
 		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
 		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
-		services.AddSingleton<IShaderShadow, ShaderShadowGl46>();
 		services.AddSingleton<IShaderUtil>(x => x.GetRequiredService<MaterialSystem>());
 		services.AddSingleton<ITextureManager, TextureManager>();
 		services.AddSingleton<IShaderSystem, ShaderSystem>();
@@ -45,7 +44,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly ShaderSystem ShaderSystem;
 	public readonly IShaderDevice ShaderDevice;
 	public readonly ShaderAPIGl46 ShaderAPI;
-	public readonly ShaderShadowGl46 ShaderShadow;
 	public readonly MeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
 	public readonly MaterialSystem_Config Config;
@@ -56,7 +54,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		FileSystem = services.GetRequiredService<IFileSystem>();
 		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
 		ShaderDevice = services.GetRequiredService<IShaderDevice>();
-		ShaderShadow = (services.GetRequiredService<IShaderShadow>() as ShaderShadowGl46)!;
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
 		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
@@ -69,21 +66,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		ShaderAPI.MeshMgr = MeshMgr;
 		ShaderAPI.ShaderManager = ShaderSystem;
-		ShaderAPI.TransitionTable = new(ShaderShadow);
-		ShaderAPI.TransitionTable.HardwareConfig = HardwareConfig;
-		ShaderAPI.TransitionTable.ShaderAPI = ShaderAPI;
-		ShaderAPI.TransitionTable.ShaderDevice = ShaderDevice;
-		ShaderAPI.TransitionTable.ShaderManager = ShaderSystem;
 
 		ShaderAPI.services = services;
 
 		TextureSystem.MaterialSystem = this;
 
-		ShaderAPI.ShaderShadow = ShaderShadow;
 		ShaderAPI.ShaderUtil = this;
-
-		ShaderShadow.HardwareConfig = HardwareConfig;
-		ShaderShadow.MeshMgr = MeshMgr;
 
 		ShaderSystem.Config = Config;
 		ShaderSystem.MaterialSystem = this;
@@ -274,18 +262,31 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public void SyncMatrices() => GetRenderContextInternal().SyncMatrices();
 	public void SyncMatrix(MaterialMatrixMode mode) => GetRenderContextInternal().SyncMatrix(mode);
 
+	public ITexture FindTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroupName, bool complain, int additionalCreationFlags) {
+		ITextureInternal texture = TextureSystem.FindOrLoadTexture(textureName, textureGroupName, additionalCreationFlags);
+		Assert(texture);
+		if(texture != null && texture.IsError()) {
+			if (complain) {
+				DevWarning($"Texture '{textureName}' not found.\n");
+			}
+		}
+		return texture;
+	}
+
+	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
+		return "GAME";
+	}
+
 	public IMaterialInternal errorMaterial;
 }
 
 public enum MatrixStackFlags : uint
 {
-	Dirty = 1 << 0,
-	Identity = 1 << 1
+	Dirty = 1 << 0
 }
 public struct MatrixStackItem
 {
 	public Matrix4x4 Matrix;
-	public MatrixStackFlags Flags;
 }
 
 public struct RenderTargetStackElement

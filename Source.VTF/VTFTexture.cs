@@ -1,11 +1,15 @@
 ﻿using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Engine;
 
+using System.Buffers;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace Source.VTF;
@@ -48,8 +52,34 @@ public sealed class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public int ComputeFaceSize(int startingMipLevle = 0) {
-		throw new NotImplementedException();
+	public int ComputeFaceSize(int startingMipLevel = 0) {
+		return ComputeFaceSize(startingMipLevel, Format);
+	}
+
+	public int ComputeFaceSize(int startingMipLevel, ImageFormat format) {
+		int size = 0;
+		int w = Width;
+		int h = Height;
+		int d = Depth;
+
+		for (int i = 0; i < MipCount; ++i) {
+			if (i >= startingMipLevel) {
+				size += ImageLoader.GetMemRequired(w, h, d, format, false);
+			}
+			w >>= 1;
+			h >>= 1;
+			d >>= 1;
+			if (w < 1) {
+				w = 1;
+			}
+			if (h < 1) {
+				h = 1;
+			}
+			if (d < 1) {
+				d = 1;
+			}
+		}
+		return size;
 	}
 
 	public void ComputeMipLevelDimensions(int level, out int width, out int height, out int depth) {
@@ -57,11 +87,11 @@ public sealed class VTFTexture : IVTFTexture
 		height = Height >> level;
 		depth = Depth >> level;
 
-		if (width < 1) 
+		if (width < 1)
 			width = 1;
-		if (height < 1) 
+		if (height < 1)
 			height = 1;
-		if (depth < 1) 
+		if (depth < 1)
 			depth = 1;
 	}
 
@@ -70,7 +100,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public int ComputeMipSize(int mipLevel) {
-		throw new NotImplementedException();
+		return ComputeMipSize(mipLevel, Format);
+	}
+
+	public int ComputeMipSize(int mipLevel, ImageFormat format) {
+		ComputeMipLevelDimensions(mipLevel, out int w, out int h, out int d);
+		return ImageLoader.GetMemRequired(w, h, d, Format, false);
 	}
 
 	public void ComputeReflectivity() {
@@ -78,21 +113,76 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public int ComputeTotalSize() {
-		throw new NotImplementedException();
+		return ComputeTotalSize(Format);
+	}
+
+	public int ComputeTotalSize(ImageFormat format) {
+		nint memRequired = ComputeFaceSize(0, format);
+		return (int)(FaceCount * FrameCount * memRequired);
 	}
 
 	public void ConstructLowResImage() {
 		throw new NotImplementedException();
 	}
 
-	public void ConvertImageFormat(ImageFormat format, bool normalToDUDV) {
-		Dbg.Msg("no convertimageformat yet\n");
+	public void ConvertImageFormat(ImageFormat fmt, bool normalToDUDV) {
+		if (ImageData == null)
+			return;
+
+		nint convertedSize = ComputeTotalSize(fmt);
+		byte[] convertedImage = ArrayPool<byte>.Shared.Rent((int)convertedSize);
+
+		for (int mip = 0; mip < MipCount; mip++) {
+			ComputeMipLevelDimensions(mip, out int width, out int height, out int depth);
+			nint srcFaceStride = ImageLoader.GetMemRequired(width, height, 1, Format, false);
+			nint dstFaceStride = ImageLoader.GetMemRequired(width, height, 1, fmt, false);
+			for (int frame = 0; frame < FrameCount; frame++) {
+				for (int face = 0; face < FaceCount; face++) {
+					Span<byte> srcData = GetImageData(frame, face, mip);
+					Span<byte> dstData = convertedImage.AsSpan()[(int)GetImageOffset(frame, face, mip, fmt)..];
+					for (int z = 0; z < depth; ++z, srcData = srcData[(int)srcFaceStride..], dstData = dstData[(int)dstFaceStride..]) {
+						if (normalToDUDV) {
+							Error("No\n");
+							return;
+						}
+						else {
+							ImageLoader.ConvertImageFormat(srcData, Format, dstData, fmt, width, height);
+						}
+					}
+				}
+			}
+		}
+
+		memcpy<byte>(ImageData, convertedImage[..(int)convertedSize]);
+		Format = fmt;
+
+		if (!ImageLoader.IsCompressed(fmt)) {
+			ref ImageFormatInfo info = ref ImageLoader.ImageFormatInfo(fmt);
+			int alphaBits = info.AlphaBits;
+			if (alphaBits > 1) {
+				Flags |= (int)(CompiledVtfFlags.EightBitAlpha);
+				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+			}
+			if (alphaBits <= 1) {
+				Flags &= ~(int)(CompiledVtfFlags.EightBitAlpha);
+				if (alphaBits == 0) {
+					Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+				}
+			}
+		}
+		else {
+			if ((fmt == ImageFormat.DXT5) || (fmt == ImageFormat.ATI2N) || (fmt == ImageFormat.ATI1N)) {
+				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha | CompiledVtfFlags.EightBitAlpha);
+			}
+		}
+
+		ArrayPool<byte>.Shared.Return(convertedImage, true);
 	}
 
 	int IVTFTexture.Depth() => Depth;
 
 	public void Dispose() {
-		throw new NotImplementedException();
+
 	}
 
 	int IVTFTexture.FaceCount() => FaceCount;
@@ -116,7 +206,16 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public Span<byte> GetResourceData(uint type) {
-		throw new NotImplementedException();
+		return GetResourceData((ResourceEntryType)type);
+	}
+
+	private Span<byte> GetResourceData(ResourceEntryType type) {
+		ref ResourceEntryInfo info = ref FindResourceEntryInfo(type);
+		if(!Unsafe.IsNullRef(ref info)) {
+			return ImageData!.AsSpan()[(int)info.Offset..];
+		}
+
+		return null;
 	}
 
 	public bool HasResourceEntry(uint type) {
@@ -126,11 +225,33 @@ public sealed class VTFTexture : IVTFTexture
 	int IVTFTexture.Height() => Height;
 
 	Span<byte> IVTFTexture.ImageData() {
-		throw new NotImplementedException();
+		return GetImageData(0, 0, 0);
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel) {
-		throw new NotImplementedException();
+		return GetImageData(frame, face, mipLevel);
+	}
+
+	public nint GetImageOffset(int frame, int face, int mipLevel, ImageFormat format) {
+		Assert(frame < FrameCount);
+		Assert(face < FaceCount);
+		Assert(mipLevel < MipCount);
+
+		int i;
+		nint iOffset = 0;
+
+		int iFaceSize = ComputeFaceSize(0, format);
+		iOffset = frame * FaceCount * iFaceSize;
+
+		// Get to the right face
+		iOffset += face * iFaceSize;
+
+		// Get to the right mip level
+		for (i = 0; i < mipLevel; ++i) {
+			iOffset += ComputeMipSize(i, format);
+		}
+
+		return iOffset;
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel, int x, int y, int z = 0) {
@@ -157,7 +278,7 @@ public sealed class VTFTexture : IVTFTexture
 				return ref searchResource;
 		}
 
-		return ref ResourceEntryInfo.NULL;
+		return ref Unsafe.NullRef<ResourceEntryInfo>();
 	}
 
 	public void ImageFileInfo(int frame, int face, int mipLevel, out int startLocation, out int sizeInBytes) {
@@ -348,9 +469,112 @@ public sealed class VTFTexture : IVTFTexture
 		if (headerOnly)
 			return true;
 
+		ref ResourceEntryInfo lowResDataInfo = ref FindResourceEntryInfo(ResourceEntryType.LowResThumbnail);
+		if (!Unsafe.IsNullRef(ref lowResDataInfo)) {
+			stream.Seek(lowResDataInfo.Offset, SeekOrigin.Begin);
+			if (!LoadLowResData(stream))
+				return false;
+		}
+
+		// TODO: LoadNewResources
+
+		ref ResourceEntryInfo imageDataInfo = ref FindResourceEntryInfo(ResourceEntryType.HighResImageData);
+		if (!Unsafe.IsNullRef(ref imageDataInfo)) {
+			stream.Seek(imageDataInfo.Offset, SeekOrigin.Begin);
+			if (!LoadImageData(stream, header, skipMipLevels))
+				return false;
+		}
+		else
+			return false;
+
 		return true;
 	}
 
+	private bool LoadImageData(Stream stream, VTFFileHeader header, int skipMipLevels) {
+		if(skipMipLevels > 0) {
+			if(header.NumMipLevels < skipMipLevels) {
+				Warning("Warning! Encountered old format VTF file; please rebuild it!\n");
+				return false;
+			}
+
+			ComputeMipLevelDimensions(skipMipLevels, out Width, out Height, out Depth);
+			MipCount -= skipMipLevels;
+		}
+
+		nint imageSize = ComputeFaceSize();
+		imageSize *= FaceCount * FrameCount;
+
+		int facesToRead = FaceCount;
+		if (IsCubeMap())
+			throw new NotImplementedException("No cubemap support yet");
+
+		if (!AllocateImageData(imageSize))
+			return false;
+
+		bool mipDataPresent = true;
+		int firstAvailableMip = 0;
+		int lastAvailableMip = MipCount - 1;
+
+		Span<byte> data = GetResourceData(ResourceEntryType.TextureLOD);
+		if (data != null) {
+			ref TextureStreamSettings_t streamSettings = ref MemoryMarshal.Cast<byte, TextureStreamSettings_t>(data)[0];
+			firstAvailableMip = Math.Max(0, streamSettings.FirstAvailableMip - skipMipLevels);
+			lastAvailableMip = Math.Max(0, streamSettings.LastAvailableMip - skipMipLevels);
+			mipDataPresent = false;
+		}
+
+		// Not doing streamable textures right now
+
+		Assert(firstAvailableMip >= 0 && firstAvailableMip <= lastAvailableMip && lastAvailableMip < MipCount);
+
+		FinestMipmapLevel = firstAvailableMip;
+		CoarsestMipmapLevel = lastAvailableMip;
+
+		for (int mip = MipCount; --mip >= 0;) {
+			if (header.NumMipLevels - skipMipLevels <= mip)
+				continue;
+
+			int mipSize = ComputeMipSize(mip);
+
+			if (mip > lastAvailableMip || mip < firstAvailableMip) {
+				if (mipDataPresent)
+					for (int frame = 0; frame < FrameCount; frame++)
+						for (int face = 0; face < facesToRead; face++)
+							stream.Seek(mipSize, SeekOrigin.Current);
+				continue;
+			}
+
+			for (int frame = 0; frame < FrameCount; frame++) {
+				for (int face = 0; face < facesToRead; face++) {
+					Span<byte> mipBits = GetImageData(frame, face, mip);
+					int bytesRead = stream.Read(mipBits);
+					Debug.Assert(mipBits.Length == bytesRead);
+				}
+			}
+		}
+
+		return stream.Position <= stream.Length;
+	}
+
+	private Span<byte> GetImageData(int frame, int face, int mip) {
+		Assert(ImageData != null);
+		nint offset = GetImageOffset(frame, face, mip, Format);
+		nint size = ComputeMipSize(mip, Format);
+		return ImageData.AsSpan()[(int)offset..(int)(offset + size)];
+	}
+
+	private bool AllocateImageData(nint imageSize) {
+		return GenericAllocateReusableData(ref ImageData, imageSize);
+	}
+
+	private static bool GenericAllocateReusableData(ref byte[]? imageData, nint numRequested) {
+		imageData = new byte[numRequested];
+		return true;
+	}
+
+	private bool LoadLowResData(Stream stream) {
+		return true; // not reading that right now
+	}
 
 	private int ComputeMipCount() {
 		return ImageLoader.GetNumMipMapLevels(Width, Height, Depth);
@@ -481,4 +705,12 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	int IVTFTexture.Width() => Width;
+
+	public uint GetResourceTypes(Span<ResourceEntryType> arrRsrcTypes) {
+		if (arrRsrcTypes != null) 
+			for (int i = 0; i < Math.Min(arrRsrcTypes.Length, Resources.Count); i++) 
+				arrRsrcTypes[i] = Resources[i].Tag;
+
+		return (uint)Resources.Count;
+	}
 }

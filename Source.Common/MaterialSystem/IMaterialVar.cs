@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common.ShaderAPI;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -22,16 +24,23 @@ public enum MaterialVarType : ushort
 	Material
 }
 
+public struct MaterialVarGPU {
+	public nint Program;
+	public int Location;
+}
+
 public abstract class IMaterialVar
 {
 	protected string StringVal = "";
 	protected int IntVal;
 	protected Vector4 VecVal;
 	protected MaterialVarType Type;
+	protected ITexture? TextureValue;
 	protected byte NumVectorComps;
 	protected bool FakeMaterialVar;
 	protected byte TempIndex;
 	protected string Name = "";
+	public MaterialVarGPU GPU;
 
 	public abstract ITexture? GetTextureValue();
 	public abstract ReadOnlySpan<char> GetName();

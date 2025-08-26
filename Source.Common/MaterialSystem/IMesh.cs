@@ -13,23 +13,17 @@ public unsafe struct VertexDesc
 {
 	public int PositionSize;
 	public int BoneWeightSize;
-	public int BoneMatrixIndexSize;
+	public int BoneIndexSize;
 	public int NormalSize;
 	public int ColorSize;
 	public int SpecularSize;
-	fixed int texcoordSize[8];
-	public Span<int> TexcoordSize {
+	public fixed int TexCoordSizePtr[8];
+	public Span<int> TexCoordSize {
 		get {
-			fixed (int* i = texcoordSize)
+			fixed (int* i = TexCoordSizePtr)
 				return new(i, 8);
 		}
 	}
-
-	public int TangentSSize;
-	public int TangentTSize;
-	public int WrinkleSize;
-
-	public int UserDataSize;
 
 	public int ActualVertexSize;
 
@@ -39,7 +33,7 @@ public unsafe struct VertexDesc
 
 	public float* Position;
 	public float* BoneWeight;
-	public byte* BoneMatrixIndex;
+	public byte* BoneIndex;
 	public float* Normal;
 	public byte* Color;
 	public byte* Specular;
@@ -57,10 +51,6 @@ public unsafe struct VertexDesc
 				return txPtr;
 		}
 	}
-	public float* TangentS;
-	public float* TangentT;
-	public float* Wrinkle;
-	public float* UserData;
 	public int FirstVertex;
 	public uint OffsetVertex;
 }
@@ -77,17 +67,6 @@ public struct MeshDesc
 {
 	public VertexDesc Vertex;
 	public IndexDesc Index;
-}
-
-public struct ModelVertex
-{
-	Vector3 Position;
-	Vector2 BoneWeights;
-	uint BoneIndices;
-	Vector3 Normal;
-	uint Color;
-	Vector2 TexCoord;
-	Vector4 UserData;
 }
 
 public interface IVertexBuffer
@@ -109,7 +88,7 @@ public interface IIndexBuffer
 	bool IsDynamic();
 	void BeginCastBuffer(MaterialIndexFormat format);
 	void EndCastBuffer();
-	bool Lock(int maxIndexCount, bool append, ref IndexDesc desc);
+	int Lock(bool readOnly, int firstIndex, int indexCount, ref IndexDesc desc);
 	bool Unlock(int writtenIndexCount, ref IndexDesc desc);
 }
 
@@ -135,49 +114,49 @@ public unsafe struct VertexBuilder
 	public const ulong INVALID_BUFFER_OFFSET = 0xFFFFFFFFUL;
 
 	public VertexDesc Desc;
-	IVertexBuffer VertexBuffer;
+	public IVertexBuffer VertexBuffer;
 
 	// Used to make sure Begin/End calls and BeginModify/EndModify calls match.
-	bool Modify;
+	public bool Modify;
 
 	// Max number of indices and vertices
-	int MaxVertexCount;
+	public int MaxVertexCount;
 
 	// Number of indices and vertices
-	int VertexCount;
+	public int VertexCount;
 
 	// The current vertex and index
-	int CurrentVertex;
+	public int CurrentVertex;
 
 	// Optimization: Pointer to the current pos, norm, texcoord, and color
-	float* CurrPosition;
-	float* CurrNormal;
-	float* CurrTexCoord0;
-	float* CurrTexCoord1;
-	float* CurrTexCoord2;
-	float* CurrTexCoord3;
-	float* CurrTexCoord4;
-	float* CurrTexCoord5;
-	float* CurrTexCoord6;
-	float* CurrTexCoord7;
-	float** CurrTexCoord {
+	public float* CurrPosition;
+	public float* CurrNormal;
+	public float* CurrTexCoord0;
+	public float* CurrTexCoord1;
+	public float* CurrTexCoord2;
+	public float* CurrTexCoord3;
+	public float* CurrTexCoord4;
+	public float* CurrTexCoord5;
+	public float* CurrTexCoord6;
+	public float* CurrTexCoord7;
+	public float** CurrTexCoord {
 		get {
 			fixed (float** ctxcPtr = &CurrTexCoord0)
 				return ctxcPtr;
 		}
 	}
-	byte* CurrColor;
+	public byte* CurrColor;
 
 	// Total number of vertices appended
-	int TotalVertexCount;
+	public int TotalVertexCount;
 
 	// First vertex buffer offset + index
-	uint BufferOffset;
-	uint BufferFirstVertex;
+	public uint BufferOffset;
+	public uint BufferFirstVertex;
 
 	// Debug checks to make sure we write userdata4/tangents AFTER normals
-	bool WrittenNormal;
-	bool WrittenUserData;
+	public bool WrittenNormal;
+	public bool WrittenUserData;
 
 	public void AttachBegin(IMesh mesh, int maxVertexCount, ref VertexDesc desc) {
 		VertexCompressionType compressionType = Desc.CompressionType;
@@ -191,7 +170,7 @@ public unsafe struct VertexBuilder
 			Desc.CompressionType = compressionType;
 
 		ValidateCompressionType();
-		if(BufferOffset == INVALID_BUFFER_OFFSET) {
+		if (BufferOffset == INVALID_BUFFER_OFFSET) {
 			TotalVertexCount = 0;
 			BufferOffset = desc.OffsetVertex;
 			BufferFirstVertex = (uint)desc.FirstVertex;
@@ -215,34 +194,137 @@ public unsafe struct VertexBuilder
 		WrittenUserData = false;
 
 	}
+
+	internal void Position3f(float x, float y, float z) {
+		float* pDst = CurrPosition;
+		*pDst++ = x;
+		*pDst++ = y;
+		*pDst = z;
+	}
+
+	public void Position3fv(ReadOnlySpan<float> v) {
+		fixed (float* vptr = v) {
+			float* vp = vptr;
+			float* pDst = CurrPosition;
+			*pDst++ = *vp++;
+			*pDst++ = *vp++;
+			*pDst = *vp;
+		}
+	}
+
+	public void Normal3fv(ReadOnlySpan<float> n) {
+		fixed (float* nptr = n) {
+			float* np = nptr;
+			float* pDst = CurrNormal;
+			*pDst++ = *np++;
+			*pDst++ = *np++;
+			*pDst = *np;
+		}
+	}
+
+	public void Normal3f(float x, float y, float z) {
+		float* pDst = CurrNormal;
+		*pDst++ = x;
+		*pDst++ = y;
+		*pDst = z;
+	}
+
+	public void Color3f(float r, float g, float b) {
+		byte* pDst = CurrColor;
+		*pDst++ = (byte)Math.Clamp(r * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(g * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(b * 255, 0, 255);
+		*pDst = 255;
+	}
+
+	public void Color3fv(ReadOnlySpan<float> rgb) {
+		fixed (float* cptr = rgb) {
+			float* cp = cptr;
+			byte* pDst = CurrColor;
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst = 255;
+		}
+	}
+
+	public void Color4f(float r, float g, float b, float a) {
+		byte* pDst = CurrColor;
+		*pDst++ = (byte)Math.Clamp(r * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(g * 255, 0, 255);
+		*pDst++ = (byte)Math.Clamp(b * 255, 0, 255);
+		*pDst = (byte)Math.Clamp(a * 255, 0, 255);
+	}
+
+	public void Color4fv(ReadOnlySpan<float> rgba) {
+		fixed (float* cptr = rgba) {
+			float* cp = cptr;
+			byte* pDst = CurrColor;
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst++ = (byte)Math.Clamp(*cp++, 0, 255);
+			*pDst = (byte)Math.Clamp(*cp, 0, 255);
+		}
+	}
+
+	internal void TexCoord2f(int stage, float s, float t) {
+		float* pDst = CurrTexCoord[stage];
+		*pDst++ = s;
+		*pDst++ = t;
+	}
+
+	public void AdvanceVertex() {
+		if (++CurrentVertex > VertexCount)
+			VertexCount = CurrentVertex;
+
+		// If this cast isn't done, it increments way too far
+		CurrPosition = (float*)((byte*)CurrPosition + Desc.PositionSize);
+		CurrNormal = (float*)((byte*)CurrNormal + Desc.NormalSize);
+		CurrColor = CurrColor + Desc.ColorSize;
+
+		for (int i = 0; i < 8; i++) {
+			CurrTexCoord[i] = (float*)((byte*)CurrTexCoord[i] + Desc.TexCoordSize[i]);
+		}
+	}
+
+	internal void AttachEnd() {
+		VertexBuffer = null;
+		MaxVertexCount = 0;
+
+		CurrPosition = null;
+		CurrNormal = null;
+		CurrColor = null;
+
+		memreset(ref Desc);
+	}
 }
 
 public struct IndexBuilder
 {
 	public IndexDesc Desc;
-	IIndexBuffer IndexBuffer;
+	public IIndexBuffer IndexBuffer;
 
 	// Max number of indices
-	int MaxIndexCount;
+	public int MaxIndexCount;
 
 	// Number of indices
-	int IndexCount;
+	public int IndexCount;
 
 	// Offset to add to each index as it's written into the buffer
-	int IndexOffset;
+	public int IndexOffset;
 
 	// The current index
-	int CurrentIndex;
+	public int CurrentIndex;
 
 	// Total number of indices appended
-	int TotalIndexCount;
+	public int TotalIndexCount;
 
 	// First index buffer offset + first index
-	uint BufferOffset;
-	uint BufferFirstIndex;
+	public uint BufferOffset;
+	public uint BufferFirstIndex;
 
 	// Used to make sure Begin/End calls and BeginModify/EndModify calls match.
-	bool Modify;
+	public bool Modify;
 
 	public unsafe void AttachBegin(IMesh mesh, int maxIndexCount, ref IndexDesc desc) {
 		IndexBuffer = mesh;
@@ -260,9 +342,102 @@ public struct IndexBuilder
 	public void Reset() {
 		CurrentIndex = 0;
 	}
+
+	internal unsafe void GenerateIndices(MaterialPrimitiveType primitiveType, int indexCount) {
+		if (Desc.IndexSize == 0)
+			return;
+
+		int maxIndices = MaxIndexCount - CurrentIndex;
+		indexCount = Math.Min(maxIndices, indexCount);
+		if (indexCount == 0)
+			return;
+
+		ushort* indices = &Desc.Indices[CurrentIndex];
+		switch (primitiveType) {
+			case MaterialPrimitiveType.InstancedQuads:
+				Assert(false); // Shouldn't get here (this primtype is unindexed)
+				break;
+			case MaterialPrimitiveType.Quads:
+				GenerateQuadIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.Polygon:
+				GeneratePolygonIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.LineStrip:
+				GenerateLineStripIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.LineLoop:
+				GenerateLineLoopIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+			case MaterialPrimitiveType.Points:
+				Assert(false); // Shouldn't get here (this primtype is unindexed)
+				break;
+			default:
+				GenerateSequentialIndexBuffer(indices, indexCount, IndexOffset);
+				break;
+		}
+
+		AdvanceIndices(indexCount);
+	}
+
+	private unsafe static void GenerateLineStripIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateLineLoopIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateSequentialIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GeneratePolygonIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
+		throw new NotImplementedException();
+	}
+
+	private unsafe static void GenerateQuadIndexBuffer(ushort* indices, int indexCount, int firstVertex) {
+		if (indices == null)
+			return;
+
+		// Format the quad buffer
+		int i;
+		int numQuads = indexCount / 6;
+		int baseVertex = firstVertex;
+		for (i = 0; i < numQuads; ++i) {
+			indices[0] = (ushort)(baseVertex);
+			indices[1] = (ushort)(baseVertex + 1);
+			indices[2] = (ushort)(baseVertex + 2);
+
+			indices[3] = (ushort)(baseVertex);
+			indices[4] = (ushort)(baseVertex + 2);
+			indices[5] = (ushort)(baseVertex + 3);
+
+			baseVertex += 4;
+			indices += 6;
+		}
+	}
+
+	public void AdvanceIndex(int indices) {
+		CurrentIndex += (int)Desc.IndexSize;
+		if (CurrentIndex > IndexCount)
+			IndexCount = CurrentIndex;
+	}
+
+	public void AdvanceIndices(int indices) {
+		CurrentIndex += (int)(indices * Desc.IndexSize);
+		if (CurrentIndex > IndexCount)
+			IndexCount = CurrentIndex;
+	}
+
+	internal void AttachEnd() {
+		IndexBuffer = null;
+		MaxIndexCount = 0;
+		memreset(ref Desc);
+	}
 }
 
-public struct MeshBuilder : IDisposable
+public unsafe struct MeshBuilder : IDisposable
 {
 	public MeshDesc Desc;
 
@@ -320,7 +495,25 @@ public struct MeshBuilder : IDisposable
 
 	// Use this when you're done writing
 	// Set bDraw to true to call m_pMesh->Draw automatically.
-	public void End(bool bSpewData = false, bool bDraw = false) => throw new NotImplementedException();
+	public void End(bool spewData = false, bool draw = false) {
+		if (GenerateIndices) {
+			int indexCount = IndicesFromVertices(Type, VertexBuilder.VertexCount);
+			IndexBuilder.GenerateIndices(Type, indexCount);
+		}
+
+		if (spewData)
+			Warning("Mesh spew not supported yet...\n");
+
+		Mesh!.UnlockMesh(VertexBuilder.VertexCount, IndexBuilder.IndexCount, ref Desc);
+
+		IndexBuilder.AttachEnd();
+		VertexBuilder.AttachEnd();
+		if (draw)
+			Mesh.Draw();
+
+		Mesh = null;
+		memreset(ref Desc);
+	}
 
 	// Locks the vertex buffer to modify existing data
 	// Passing nVertexCount == -1 says to lock all the vertices for modification.
@@ -345,7 +538,7 @@ public struct MeshBuilder : IDisposable
 	public int VertexSize() { return Desc.Vertex.ActualVertexSize; }
 
 	// returns the data size of a given texture coordinate
-	public int TextureCoordinateSize(int nTexCoordNumber) { return Desc.Vertex.TexcoordSize[nTexCoordNumber]; }
+	public int TextureCoordinateSize(int nTexCoordNumber) { return Desc.Vertex.TexCoordSize[nTexCoordNumber]; }
 
 	// Selects the nth Vertex and Index 
 	public void SelectVertex(int idx) => throw new NotImplementedException();
@@ -354,7 +547,7 @@ public struct MeshBuilder : IDisposable
 	// Given an index, point to the associated vertex
 	public void SelectVertexFromIndex(int idx) => throw new NotImplementedException();
 	// Advances the current vertex and index by one
-	public void AdvanceVertex() => throw new NotImplementedException();
+	public void AdvanceVertex() => VertexBuilder.AdvanceVertex();
 	public void AdvanceVertices(int nVerts) => throw new NotImplementedException();
 	public void AdvanceIndex() => throw new NotImplementedException();
 	public void AdvanceIndices(int nIndices) => throw new NotImplementedException();
@@ -378,20 +571,21 @@ public struct MeshBuilder : IDisposable
 	public ReadOnlySpan<ushort> Index() => throw new NotImplementedException();
 
 	// position setting
-	public void Position3f(float x, float y, float z) => throw new NotImplementedException();
-	public void Position3fv(ReadOnlySpan<float> v) => throw new NotImplementedException();
+	public void Position3f(float x, float y, float z) => VertexBuilder.Position3f(x, y, z);
+	public void Position3fv(ReadOnlySpan<float> v) => VertexBuilder.Position3fv(v);
 
 	// normal setting
-	public void Normal3f(float nx, float ny, float nz) => throw new NotImplementedException();
-	public void Normal3fv(ReadOnlySpan<float> n) => throw new NotImplementedException();
+	public void Normal3f(float x, float y, float z) => VertexBuilder.Normal3f(x, y, z);
+	public void Normal3fv(ReadOnlySpan<float> n) => VertexBuilder.Normal3fv(n);
+	// What do these even do
 	public void NormalDelta3fv(ReadOnlySpan<float> n) => throw new NotImplementedException();
 	public void NormalDelta3f(float nx, float ny, float nz) => throw new NotImplementedException();
 
 	// color setting
-	public void Color3f(float r, float g, float b) => throw new NotImplementedException();
-	public void Color3fv(ReadOnlySpan<float> rgb) => throw new NotImplementedException();
-	public void Color4f(float r, float g, float b, float a) => throw new NotImplementedException();
-	public void Color4fv(ReadOnlySpan<float> rgba) => throw new NotImplementedException();
+	public void Color3f(float r, float g, float b) => VertexBuilder.Color3f(r, g, b);
+	public void Color3fv(ReadOnlySpan<float> rgb) => VertexBuilder.Color3fv(rgb);
+	public void Color4f(float r, float g, float b, float a) => VertexBuilder.Color4f(r, g, b, a);
+	public void Color4fv(ReadOnlySpan<float> rgba) => VertexBuilder.Color4fv(rgba);
 
 	// Faster versions of color
 	public void Color3ub(byte r, byte g, byte b) => throw new NotImplementedException();
@@ -413,7 +607,7 @@ public struct MeshBuilder : IDisposable
 
 	// texture coordinate setting
 	public void TexCoord1f(int stage, float s) => throw new NotImplementedException();
-	public void TexCoord2f(int stage, float s, float t) => throw new NotImplementedException();
+	public void TexCoord2f(int stage, float s, float t) => VertexBuilder.TexCoord2f(stage, s, t);
 	public void TexCoord2fv(int stage, ReadOnlySpan<float> st) => throw new NotImplementedException();
 	public void TexCoord3f(int stage, float s, float t, float u) => throw new NotImplementedException();
 	public void TexCoord3fv(int stage, ReadOnlySpan<float> stu) => throw new NotImplementedException();
@@ -424,11 +618,11 @@ public struct MeshBuilder : IDisposable
 	public void TexCoordSubRect2fv(int stage, ReadOnlySpan<float> st, ReadOnlySpan<float> offset, ReadOnlySpan<float> scale) => throw new NotImplementedException();
 
 	// tangent space 
-	public void TangentS3f(float sx, float sy, float sz) => throw new NotImplementedException();
-	public void TangentS3fv(ReadOnlySpan<float> s) => throw new NotImplementedException();
+	public void TangentS3f(float sx, float sy, float sz) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentS3fv(ReadOnlySpan<float> s) { /* TODO: add tangents to vertex elements + descriptor */ }
 
-	public void TangentT3f(float tx, float ty, float tz) => throw new NotImplementedException();
-	public void TangentT3fv(ReadOnlySpan<float> t) => throw new NotImplementedException();
+	public void TangentT3f(float tx, float ty, float tz) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentT3fv(ReadOnlySpan<float> t) { /* TODO: add tangents to vertex elements + descriptor */ }
 
 	// Wrinkle
 	public void Wrinkle1f(float flWrinkle) => throw new NotImplementedException();
@@ -500,7 +694,27 @@ public struct MeshBuilder : IDisposable
 		Assert(maxVertices <= 32768);
 		Assert(maxIndices <= 32768);
 	}
-	private int IndicesFromVertices(MaterialPrimitiveType type, int nVertexCount) => throw new NotImplementedException();
+	private int IndicesFromVertices(MaterialPrimitiveType type, int vertexCount) {
+		switch (type) {
+			case MaterialPrimitiveType.Quads:
+				Assert((vertexCount & 0x3) == 0);
+				return (vertexCount * 6) / 4;
+			case MaterialPrimitiveType.InstancedQuads:
+				// This primtype is unindexed
+				return 0;
+			case MaterialPrimitiveType.Polygon:
+				Assert(vertexCount >= 3);
+				return (vertexCount - 2) * 3;
+			case MaterialPrimitiveType.LineStrip:
+				Assert(vertexCount >= 2);
+				return (vertexCount - 1) * 2;
+			case MaterialPrimitiveType.LineLoop:
+				Assert(vertexCount >= 3);
+				return vertexCount * 2;
+			default:
+				return vertexCount;
+		}
+	}
 
 	// The mesh we're modifying
 	IMesh? Mesh;

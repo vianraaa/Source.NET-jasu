@@ -1,12 +1,21 @@
-﻿using Source.Common;
+﻿// TODO: Remove unused flags that aren't applicable in our use cases.
+// (although this goal applies to the entire project, frankly)
+
+using Source.Bitmap;
+using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -76,6 +85,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	public int GetMappingWidth() => DimsMapping.Height;
 
 	public ReadOnlySpan<char> GetName() => Name;
+	public ReadOnlySpan<char> GetTextureGroupName() => TextureGroupName;
 
 	public NormalDecodeMode GetNormalDecodeMode() {
 		throw new NotImplementedException();
@@ -114,6 +124,35 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new NotImplementedException();
 	}
 
+	public void Init(int w, int h, int d, ImageFormat fmt, int flags, int frameCount) {
+		FreeShaderAPITextures();
+		ReleaseTextureHandles();
+
+		DimsMapping.Width = (ushort)w;
+		DimsMapping.Height = (ushort)h;
+		DimsMapping.Depth = (ushort)d;
+		ImageFormat = fmt;
+		FrameCount = (ushort)frameCount;
+
+		DimsActual.Width = DimsActual.Height = 0;
+		DimsActual.Depth = 1;
+		DimsActual.MipCount = 0;
+
+		DimsAllocated.Width = 0;
+		DimsAllocated.Height = 0;
+		DimsAllocated.Depth = 0;
+		DimsAllocated.MipCount = 0;
+		StreamingMips = 0;
+
+		Flags &= ~(uint)CompiledVtfFlags.DepthRenderTarget;
+		Flags |= (uint)flags;
+
+		ResidenceTarget = ResidencyType.None;
+		ResidenceCurrent = ResidencyType.None;
+
+		AllocateTextureHandles();
+	}
+
 	internal void InitFileTexture(ReadOnlySpan<char> fileName, ReadOnlySpan<char> textureGroupName) {
 		SetName(fileName);
 		TextureGroupName = new(textureGroupName);
@@ -123,35 +162,17 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		Name = ITextureInternal.NormalizeTextureName(fileName);
 	}
 
-	public ref struct ScratchVTF
-	{
-		readonly Texture _parent;
-		IVTFTexture? scratchVTF;
+	static readonly ThreadLocal<IVTFTexture> VTFTextures = new();
 
-		public ScratchVTF(Texture tex) {
-			_parent = tex;
-			scratchVTF = tex.GetScratchVTFTexture();
-		}
+	private IVTFTexture GetScratchVTFTexture() {
+		if (!VTFTextures.IsValueCreated)
+			VTFTextures.Value = IVTFTexture.Create();
 
-		public readonly IVTFTexture? Get() => scratchVTF;
-		public void TakeOwnership() {
-			scratchVTF = null;
-		}
-
-		public void Dispose() {
-			if (scratchVTF != null)
-				_parent.ReleaseScratchVTFTexture(scratchVTF);
-			scratchVTF = null;
-		}
-	}
-
-
-	private IVTFTexture? GetScratchVTFTexture() {
-		throw new NotImplementedException();
+		return VTFTextures.Value!;
 	}
 
 	private void ReleaseScratchVTFTexture(IVTFTexture scratchVTF) {
-		throw new NotImplementedException();
+		StreamingVTF = null;
 	}
 
 
@@ -168,18 +189,17 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		int nAdditionalFlags = 0;
 		if ((Flags & (uint)CompiledVtfFlags.Streamable) != 0) {
 			// If we were previously streamed in, make sure we still do this time around.
-			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCourse;
+			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCoarse;
 			Assert((Flags & (long)CompiledVtfFlags.StreamableFine) == 0);
 		}
 
-		using ScratchVTF scratch = new(this);
-		IVTFTexture vtfTexture = scratch.Get()!;
+		IVTFTexture vtfTexture = GetScratchVTFTexture();
 
 		// The texture name doubles as the relative file name
 		// It's assumed to have already been set by this point	
 		// Compute the cache name
 		Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
-		cacheFileName.Print("materials/%s.vtf", Name);
+		sprintf(cacheFileName, "materials/%s.vtf", Name);
 
 		ushort nHeaderSize = IVTFTexture.FileHeaderSize(IVTFTexture.VTF_MAJOR_VERSION);
 		Span<byte> mem = stackalloc byte[nHeaderSize];
@@ -217,9 +237,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		Flags = (uint)CompiledVtfFlags.NoMip;
 		SetErrorTexture(true);
 		FrameCount = 1;
-		if (TextureHandles == null) 
+		if (TextureHandles == null)
 			AllocateTextureHandles();
-		
+
 	}
 
 	/// <summary>
@@ -233,11 +253,11 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			Assert(FrameCount >= 2);
 
 		TextureHandles = new ShaderAPITextureHandle_t[FrameCount];
-		for (int i = 0; i < FrameCount; i++) 
+		for (int i = 0; i < FrameCount; i++)
 			TextureHandles[i] = INVALID_SHADERAPI_TEXTURE_HANDLE;
 	}
 	private void ReleaseTextureHandles() {
-		if(TextureHandles != null) {
+		if (TextureHandles != null) {
 			TextureHandles = null;
 		}
 	}
@@ -248,6 +268,624 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 	private bool HasBeenAllocated() {
 		return (InternalFlags & (int)InternalTextureFlags.Allocated) != 0;
+	}
+
+	public void Bind(in MaterialVarGPU hardwareTarget, int frame) {
+		if (HasBeenAllocated()) {
+			materials.ShaderAPI.BindTexture(in hardwareTarget, frame, TextureHandles![frame]);
+		}
+		else {
+			Warning($"Tried to bind texture {GetName()}, but texture handles are not valid.\n");
+		}
+	}
+
+	public void Download(Rectangle rect, int additionalCreationFlags) {
+		if (materials.ShaderAPI.CanDownloadTextures()) {
+			Flags |= (uint)additionalCreationFlags;
+			DownloadTexture(rect);
+		}
+	}
+
+	private void DownloadTexture(Rectangle rect, bool copyFromCurrent = false) {
+		if (!materials.ShaderDevice.IsUsingGraphics())
+			return;
+
+		if (rect == default) {
+			ReconstructTexture(copyFromCurrent);
+		}
+		else {
+			Assert(!copyFromCurrent);
+			ReconstructPartialTexture(rect);
+		}
+
+		SetFilteringAndClampingMode();
+
+		if (((InternalTextureFlags)InternalFlags & InternalTextureFlags.ShouldExclude) > 0)
+			InternalFlags |= (uint)InternalTextureFlags.Excluded;
+		else
+			InternalFlags &= ~(uint)InternalTextureFlags.Excluded;
+
+		ActualDimensionLimit = DesiredDimensionLimit;
+	}
+
+	private void SetFilteringAndClampingMode() {
+
+	}
+
+	private void ReconstructTexture(bool copyFromCurrent) {
+		int oldWidth = DimsAllocated.Width;
+		int oldHeight = DimsAllocated.Height;
+		int oldDepth = DimsAllocated.Depth;
+		int oldMipCount = DimsAllocated.MipCount;
+		int oldFrameCount = FrameCount;
+
+		string? resolvedFilename = null;
+		IVTFTexture? vtfTexture = null;
+
+		{
+			if (IsProcedural()) {
+				// This will call the installed texture bit regeneration interface
+				vtfTexture = ReconstructProceduralBits();
+			}
+			else if (IsRenderTarget()) {
+				// Compute the actual size + format based on the current mode
+				bool ignorePicmip = RenderTargetSizeMode != RenderTargetSizeMode.LiteralPicmip;
+				ComputeActualSize(ignorePicmip);
+			}
+			else if (copyFromCurrent) {
+				ComputeActualSize(false, null, true);
+			}
+			else {
+				NotifyUnloadedFile();
+
+				Span<char> cacheFileName = stackalloc char[MATERIAL_MAX_PATH];
+				GetCacheFilename(ref cacheFileName);
+
+				// Get the data from disk...
+				// NOTE: Reloading the texture bits can cause the texture size, frames, format, pretty much *anything* can change.
+				vtfTexture = LoadTextureBitsFromFile(cacheFileName, out resolvedFilename);
+			}
+		}
+
+		if (!HasBeenAllocated() ||
+			DimsAllocated.Width != oldWidth || DimsAllocated.Height != oldHeight ||
+			DimsAllocated.Depth != oldDepth || DimsAllocated.MipCount != oldMipCount ||
+			FrameCount != oldFrameCount) {
+
+			const bool canStretchRectTextures = true;
+			bool shouldMigrateTextures = ((Flags & (uint)CompiledVtfFlags.StreamableFine) != 0) && FrameCount == oldFrameCount;
+
+			// If we're just streaming in more data--or demoting ourselves, do a migration instead. 
+			if (copyFromCurrent || (canStretchRectTextures && shouldMigrateTextures)) {
+				MigrateShaderAPITextures();
+
+				// Ahh--I feel terrible about this, but we genuinely don't need anything else if we're streaming.
+				if (copyFromCurrent)
+					return;
+			}
+			else {
+				// If we're doing a wholesale copy, we need to restore these values that will be cleared by FreeShaderAPITextures.
+				// Record them here, restore them below.
+				uint restoreStreamingFlag = (Flags & (uint)CompiledVtfFlags.Streamable);
+				ResidencyType restoreResidenceCurrent = ResidenceCurrent;
+				ResidencyType restoreResidenceTarget = ResidenceTarget;
+
+				if (HasBeenAllocated()) {
+					FreeShaderAPITextures();
+				}
+
+				// Create the shader api textures
+				if (!AllocateShaderAPITextures())
+					return;
+
+				// Restored once we successfully allocate the shader api textures, but only if we're 
+				// 
+				if (!canStretchRectTextures && shouldMigrateTextures) {
+					Flags |= restoreStreamingFlag;
+					ResidenceCurrent = restoreResidenceCurrent;
+					ResidenceTarget = restoreResidenceTarget;
+				}
+			}
+		}
+		else if (copyFromCurrent) {
+			AssertMsg(false, "We're about to crash, last chance to examine this texture.");
+		}
+
+
+		// Render Targets just need to be cleared, they have no upload
+		if (IsRenderTarget()) {
+			throw new NotImplementedException();
+		}
+
+		// Blit down the texture faces, frames, and mips into the board memory
+		int firstFace, faceCount;
+		GetDownloadFaceCount(out firstFace, out faceCount);
+
+		WriteDataToShaderAPITexture(FrameCount, faceCount, firstFace, DimsActual.MipCount, vtfTexture, ImageFormat);
+
+		ReleaseScratchVTFTexture(vtfTexture);
+		vtfTexture = null;
+	}
+
+	private void WriteDataToShaderAPITexture(ushort frameCount, int faceCount, int firstFace, ushort mipCount, IVTFTexture? vtfTexture, ImageFormat imageFormat) {
+		if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+			return;
+
+		for (int i = 0; i < FrameCount; i++) {
+			Modify(i);
+			materials.ShaderAPI.TexImageFromVTF(vtfTexture, i);
+		}
+	}
+
+	private void Modify(int frame) {
+		Assert(frame >= 0 && frame < FrameCount);
+		Assert(HasBeenAllocated());
+		materials.ShaderAPI.ModifyTexture(TextureHandles![frame]);
+	}
+
+	private void GetDownloadFaceCount(out int firstFace, out int faceCount) {
+		faceCount = 1;
+		firstFace = 0;
+		if (IsCubeMap()) {
+			if (materials.HardwareConfig.SupportsCubeMaps()) {
+				faceCount = (int)CubeMapFaceIndex.Count - 1;
+			}
+			else {
+				// This will cause us to use the spheremap instead of the cube faces
+				// in the case where we don't support cubemaps
+				firstFace = (int)CubeMapFaceIndex.Spheremap;
+			}
+		}
+	}
+
+	private bool AllocateShaderAPITextures() {
+		int count = FrameCount;
+
+		CreateTextureFlags createFlags = 0;
+		if ((Flags & (uint)CompiledVtfFlags.EnvMap) > 0 && materials.HardwareConfig.SupportsCubeMaps()) {
+			createFlags |= CreateTextureFlags.Cubemap;
+		}
+
+		bool bIsFloat = (ImageFormat == ImageFormat.RGBA16161616F) || (ImageFormat == ImageFormat.R32F) ||
+						(ImageFormat == ImageFormat.RGB323232F) || (ImageFormat == ImageFormat.RGBA32323232F);
+
+		// Don't do sRGB on floating point textures
+		if ((Flags & (uint)CompiledVtfFlags.SRGB) > 0 && !bIsFloat) {
+			createFlags |= CreateTextureFlags.SRGB;    // for Posix/GL only
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.RenderTarget) > 0) {
+			createFlags |= CreateTextureFlags.RenderTarget;
+
+			// This here is simply so we can use a different call to
+			// create the depth texture below	
+			if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0 && (count == 2)) //nCount must be 2 on pc
+			{
+				--count;
+			}
+		}
+		else {
+			// If it's not a render target, use the texture manager in dx
+			if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+				createFlags |= CreateTextureFlags.SysMem;
+			else {
+				createFlags |= CreateTextureFlags.Managed;
+			}
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.PointSample) > 0) {
+			createFlags |= CreateTextureFlags.UnfilterableOK;
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.VertexTexture) > 0) {
+			createFlags |= CreateTextureFlags.VertexTexture;
+		}
+
+		int nCopies = 1;
+		if (IsProcedural()) {
+			// This is sort of hacky... should we store the # of copies in the VTF?
+			if ((Flags & (uint)CompiledVtfFlags.SingleCopy) == 0) {
+				// FIXME: That 6 there is heuristically what I came up with what I
+				// need to get eyes not to stall on map alyx3. We need a better way
+				// of determining how many copies of the texture we should store.
+				nCopies = 6;
+			}
+		}
+
+		// For depth only render target: adjust texture width/height
+		// Currently we just leave it the same size, will update with further testing
+		int shaderApiCreateTextureDepth = ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) != 0 && (OriginalRenderTargetType == RenderTargetType.OnlyDepth)) ? 1 : DimsAllocated.Depth;
+
+		// Create all animated texture frames in a single call
+		materials.ShaderAPI.CreateTextures(
+			TextureHandles!, count,
+			DimsAllocated.Width, DimsAllocated.Height, shaderApiCreateTextureDepth, ImageFormat, DimsAllocated.MipCount,
+			nCopies, createFlags, GetName(), GetTextureGroupName());
+
+		int accountingCount = count;
+
+		// Create the depth render target buffer
+		if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0) {
+			Assert(count == 1);
+
+			Span<char> debugName = stackalloc char[128];
+			sprintf(debugName, "%s_ZBuffer", new string(GetName()));
+			Assert(FrameCount >= 2);
+			TextureHandles![1] = materials.ShaderAPI.CreateDepthTexture(
+					ImageFormat,
+					DimsAllocated.Width,
+					DimsAllocated.Height,
+					debugName,
+					(OriginalRenderTargetType == RenderTargetType.OnlyDepth));
+			accountingCount += 1;
+		}
+
+		InternalFlags |= (uint)InternalTextureFlags.Allocated;
+
+		return true;
+	}
+
+	private void FreeShaderAPITextures() {
+		if (TextureHandles != null && HasBeenAllocated()) {
+			for (int i = FrameCount; --i >= 0;) {
+				if (materials.ShaderAPI.IsTexture(TextureHandles[i])) {
+					materials.ShaderAPI.DeleteTexture(TextureHandles[i]);
+					TextureHandles[i] = INVALID_SHADERAPI_TEXTURE_HANDLE;
+				}
+			}
+		}
+	}
+
+	private void MigrateShaderAPITextures() {
+		throw new NotImplementedException();
+	}
+
+	TextureLODControlSettings CachedFileLodSettings;
+
+	private IVTFTexture? LoadTextureBitsFromFile(Span<char> cacheFileName, out string? resolvedFilename) {
+		resolvedFilename = null;
+
+		uint stripFlags;
+		IVTFTexture? vtfTexture = StreamingVTF;
+		if (vtfTexture == null) {
+			vtfTexture = GetScratchVTFTexture();
+
+			IFileHandle? fileHandle = null;
+
+			if (!GetFileHandle(out fileHandle, cacheFileName, out resolvedFilename))
+				return HandleFileLoadFailedTexture(vtfTexture);
+
+			TextureLODControlSettings settings = CachedFileLodSettings;
+			if (!SLoadTextureBitsFromFile(ref vtfTexture, fileHandle, Flags, ref settings, DesiredDimensionLimit, ref StreamingMips, GetName(), cacheFileName, out DimsMapping, out DimsActual, out DimsAllocated, out stripFlags)) {
+				fileHandle.Dispose();
+				return HandleFileLoadFailedTexture(vtfTexture);
+			}
+
+			fileHandle?.Dispose();
+		}
+
+		if ((Flags & (uint)CompiledVtfFlags.StreamableFine) == 0) {
+			TexDimensions actual = DimsActual, allocated = DimsAllocated;
+
+			Init(DimsMapping.Width, DimsMapping.Height, DimsMapping.Depth, vtfTexture.Format(), vtfTexture.Flags(), vtfTexture.FrameCount());
+
+			DimsActual = actual;
+			DimsAllocated = allocated;
+		}
+
+		// TODO: How does Source stream textures?
+		if (ConvertToActualFormat(vtfTexture)) {
+
+		}
+
+		return vtfTexture;
+	}
+
+	private bool SLoadTextureBitsFromFile(ref IVTFTexture vtfTexture, IFileHandle fileHandle, uint flags, 
+										  ref TextureLODControlSettings settings, ushort desiredDimensionLimit, 
+										  ref ushort streamingMips, ReadOnlySpan<char> name, Span<char> cacheFileName, 
+										  out TexDimensions dimsMapping, out TexDimensions dimsActual, out TexDimensions dimsAllocated, 
+										  out uint stripFlags) {
+		// TODO; finish the complexities of texture loading
+		vtfTexture!.Unserialize(fileHandle.Stream, false);
+
+		dimsMapping = new() {
+			Width = (ushort)vtfTexture.Width(),
+			Height = (ushort)vtfTexture.Height(),
+			Depth = (ushort)vtfTexture.Depth(),
+			MipCount = (ushort)vtfTexture.MipCount()
+		};
+
+		uint fullFlags = (uint)vtfTexture.Flags() | flags;
+
+		int nMipSkipCount = ComputeMipSkipCount(name, dimsMapping, false, vtfTexture, fullFlags, DesiredDimensionLimit, ref StreamingMips, out settings, out dimsActual, out dimsAllocated, out stripFlags);
+
+
+		return true;
+	}
+
+	unsafe byte* ImageData;
+
+	private bool ConvertToActualFormat(IVTFTexture vtfTexture) {
+		if (!materials.ShaderDevice.IsUsingGraphics())
+			return false;
+
+		bool converted = false;
+
+		ImageFormat fmt = ImageFormat;
+
+		ImageFormat dstFormat = ComputeActualFormat(vtfTexture.Format());
+		if (fmt != dstFormat) {
+			vtfTexture.ConvertImageFormat(dstFormat, false);
+
+			ImageFormat = dstFormat;
+			converted = true;
+		}
+		else if (materials.HardwareConfig.GetHDRType() == HDRType.Integer &&
+					dstFormat == ImageFormat.RGBA16161616F) {
+			// This is to force at most the precision of int16 for fp16 texture when running the integer path.
+			vtfTexture.ConvertImageFormat(ImageFormat.RGBA16161616, false);
+			vtfTexture.ConvertImageFormat(ImageFormat.RGBA16161616F, false);
+			converted = true;
+		}
+
+		return converted;
+	}
+
+	private ImageFormat ComputeActualFormat(ImageFormat srcFormat) {
+		ImageFormat dstFormat;
+		bool bIsCompressed = srcFormat.IsCompressed();
+		if (materials.HardwareConfig.SupportsCompressedTextures() && bIsCompressed) {
+			// for the runtime compressed formats the srcFormat won't equal the dstFormat, and we need to return srcFormat here
+			if (srcFormat.IsRuntimeCompressed()) {
+				return srcFormat;
+			}
+
+			// don't do anything since we are already in a compressed format.
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat);
+			Assert(dstFormat == srcFormat);
+			return dstFormat;
+		}
+
+		// NOTE: Below this piece of code is only called when compressed textures are
+		// turned off, or if the source texture is not compressed.
+
+		if ((srcFormat == ImageFormat.UVWQ8888) || (srcFormat == ImageFormat.UV88) || (srcFormat == ImageFormat.UVLX8888)) {
+			Assert(0);
+		}
+
+		if ((srcFormat == ImageFormat.UVWQ8888) || (srcFormat == ImageFormat.UV88) ||
+			(srcFormat == ImageFormat.UVLX8888) || (srcFormat == ImageFormat.RGBA16161616) ||
+			(srcFormat == ImageFormat.RGBA16161616F))
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat, false);
+		else if ((Flags & (uint)(CompiledVtfFlags.EightBitAlpha | CompiledVtfFlags.OneBitAlpha)) != 0)
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGRA8888);
+		else if (srcFormat == ImageFormat.I8)
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.I8);
+		else
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGR888);
+
+		return dstFormat;
+	}
+
+	private IVTFTexture? HandleFileLoadFailedTexture(IVTFTexture? vtfTexture) {
+		throw new Exception("File load failed (time to implement HandleFileLoadFailedTexture, or something went horribly wrong)");
+	}
+
+	private bool GetFileHandle([NotNullWhen(true)] out IFileHandle? fileHandle, Span<char> cacheFileName, out string? resolvedFilename) {
+		fileHandle = null;
+		resolvedFilename = null; // Requires OpenEx; do later
+		while (fileHandle == null) {
+			fileHandle = materials.FileSystem.Open(cacheFileName, FileOpenOptions.Read | FileOpenOptions.Binary, materials.GetForcedTextureLoadPathID());
+			if (fileHandle == null) {
+				break; // TODO; fallbacks
+			}
+		}
+
+		if (fileHandle == null) {
+			DevWarning($"\"{cacheFileName}\": can't be found on disk\n");
+			return false;
+		}
+
+		return true;
+	}
+
+	private void GetCacheFilename(ref Span<char> pCacheFileName) {
+		int written = sprintf(pCacheFileName, "materials/%s.vtf", Name);
+		pCacheFileName = pCacheFileName[..written];
+	}
+
+	private void NotifyUnloadedFile() {
+
+	}
+
+	private int ComputeActualSize(bool ignorePicmip = false, IVTFTexture? vtfTexture = null, bool textureMigration = false) {
+		uint stripFlags = 0;
+		return ComputeMipSkipCount(GetName(), DimsMapping, ignorePicmip, vtfTexture, Flags, DesiredDimensionLimit, ref StreamingMips, out CachedFileLodSettings, out DimsActual, out DimsAllocated, out stripFlags);
+	}
+
+	private unsafe int ComputeMipSkipCount(ReadOnlySpan<char> readOnlySpan, TexDimensions mappingDims, bool ignorePicmip, IVTFTexture? vtfTexture, uint flags, ushort desiredDimensionLimit, ref ushort streamingMips, out TextureLODControlSettings cachedFileLodSettings, out TexDimensions dimsActual, out TexDimensions dimsAllocated, out uint outStripFlags) {
+		TexDimensions actualDims = mappingDims, allocatedDims = new();
+
+		bool bTextureMigration = (Flags & (uint)CompiledVtfFlags.Streamable) != 0;
+		uint stripFlags = 0;
+
+		int nClampX = actualDims.Width;  // no clamping (clamp to texture dimensions)
+		int nClampY = actualDims.Height;
+		int nClampZ = actualDims.Depth;
+
+		// TODO: LOD controls
+
+		// In case clamp values exceed texture dimensions, then fix up
+		// the clamping values
+		nClampX = Math.Min(nClampX, (int)actualDims.Width);
+		nClampY = Math.Min(nClampY, (int)actualDims.Height);
+
+		//
+		// Honor dimension limit restrictions
+		//
+		if (DesiredDimensionLimit > 0) {
+			while (nClampX > DesiredDimensionLimit ||
+					nClampY > DesiredDimensionLimit) {
+				nClampX >>= 1;
+				nClampY >>= 1;
+			}
+		}
+
+		//
+		// Unless ignoring picmip, reflect the global picmip level in clamp dimensions
+		//
+		if (!ignorePicmip) {
+			// If picmip requests texture degradation, then honor it
+			// for loddable textures only
+			/*if ((Flags & (uint)CompiledVtfFlags.NoLOD) == 0 &&
+				  (g_config.skipMipLevels > 0)) {
+				for (int iDegrade = 0; iDegrade < g_config.skipMipLevels; ++iDegrade) {
+					// don't go lower than 4, or dxt textures won't work properly
+					if (nClampX > 4 &&
+						 nClampY > 4) {
+						nClampX >>= 1;
+						nClampY >>= 1;
+					}
+				}
+			}
+
+			// If picmip requests quality upgrade, then always honor it
+			if (g_config.skipMipLevels < 0) {
+				for (int iUpgrade = 0; iUpgrade < -g_config.skipMipLevels; ++iUpgrade) {
+					if (nClampX < actualDims.m_nWidth &&
+						 nClampY < actualDims.m_nHeight) {
+						nClampX <<= 1;
+						nClampY <<= 1;
+					}
+					else
+						break;
+				}
+			}*/
+			Assert(false);
+		}
+
+		//
+		// Now use hardware settings to clamp our "clamping dimensions"
+		//
+		int hwWidth = materials.HardwareConfig.MaxTextureWidth();
+		int hwHeight = materials.HardwareConfig.MaxTextureHeight();
+		int hwDepth = materials.HardwareConfig.MaxTextureDepth();
+
+		nClampX = Math.Min(nClampX, Math.Max(hwWidth, 4));
+		nClampY = Math.Min(nClampY, Math.Max(hwHeight, 4));
+		nClampZ = Math.Min(nClampZ, Math.Max(hwDepth, 1));
+
+		// In case clamp values exceed texture dimensions, then fix up
+		// the clamping values.
+		nClampX = Math.Min(nClampX, actualDims.Width);
+		nClampY = Math.Min(nClampY, actualDims.Height);
+		nClampZ = Math.Min(nClampZ, actualDims.Depth);
+
+		//
+		// Clamp to the determined dimensions
+		//
+		int numMipsSkipped = 0; // will compute now when clamping how many mips we drop
+		while ((actualDims.Width > nClampX) ||
+				(actualDims.Height > nClampY) ||
+				(actualDims.Depth > nClampZ)) {
+			actualDims.Width >>= 1;
+			actualDims.Height >>= 1;
+			actualDims.Depth = (ushort)Math.Max(1, actualDims.Depth >> 1);
+
+			++numMipsSkipped;
+		}
+
+		Assert(actualDims.Width > 0 && actualDims.Height > 0 && actualDims.Depth > 0);
+
+		// Now that we've got the actual size, we can figure out the mip count
+		actualDims.MipCount = ComputeActualMipCount(actualDims, Flags);
+
+		// If we're streaming, cut down what we're loading.
+		// We can only stream things that have a mipmap pyramid (not just a single mipmap).
+		bool bHasSetAllocation = false;
+		if ((Flags & (uint)CompiledVtfFlags.Streamable) == (uint)CompiledVtfFlags.StreamableCoarse) {
+			if (actualDims.MipCount > 1) {
+				allocatedDims.Width = actualDims.Width;
+				allocatedDims.Height = actualDims.Height;
+				allocatedDims.Depth = actualDims.Depth;
+				allocatedDims.MipCount = actualDims.MipCount;
+				const int STREAMING_START_MIPMAP = 3;
+
+				for (int i = 0; i < STREAMING_START_MIPMAP; ++i) {
+					// Stop when width or height is at 4 pixels (or less). We could do better, 
+					// but some textures really can't function if they're less than 4 pixels (compressed textures, for example).
+					if (allocatedDims.Width <= 4 || allocatedDims.Height <= 4)
+						break;
+
+					allocatedDims.Width >>= 1;
+					allocatedDims.Height >>= 1;
+					allocatedDims.Depth = (ushort)Math.Max(1, allocatedDims.Depth >> 1);
+					allocatedDims.MipCount = (ushort)Math.Max(1, allocatedDims.MipCount - 1);
+
+					++numMipsSkipped;
+				}
+
+				bHasSetAllocation = true;
+			}
+			else {
+				// Clear out that we're streaming, this isn't a texture we can stream.
+				stripFlags |= (uint)CompiledVtfFlags.StreamableCoarse;
+			}
+		}
+
+		if (!bHasSetAllocation) {
+			allocatedDims.Width = actualDims.Width;
+			allocatedDims.Height = actualDims.Height;
+			allocatedDims.Depth = actualDims.Depth;
+			allocatedDims.MipCount = actualDims.MipCount;
+		}
+
+		dimsActual = actualDims;
+		dimsAllocated = allocatedDims;
+		outStripFlags = stripFlags;
+		cachedFileLodSettings = default;
+
+		// Returns the number we skipped
+		return numMipsSkipped;
+	}
+
+	private ushort ComputeActualMipCount(TexDimensions actualDims, uint flags) {
+		if ((flags & (uint)CompiledVtfFlags.EnvMap) > 0) {
+			if (materials.HardwareConfig.SupportsMipmappedCubemaps()) {
+				return 1;
+			}
+		}
+
+		if ((flags & (uint)CompiledVtfFlags.NoMip) != 0) {
+			return 1;
+		}
+
+		// Unless ALLMIPS is set, we stop mips at 32x32
+		const int nMaxMipSize = 32;
+		if ((false && (Flags & (uint)CompiledVtfFlags.AllMips) == 0) || (true && (Flags & (uint)CompiledVtfFlags.Border) > 0))
+			{
+				int nNumMipLevels = 1;
+				int h = actualDims.Width;
+				int w = actualDims.Height;
+				while (Math.Min(w, h) > nMaxMipSize) {
+					++nNumMipLevels;
+
+					w >>= 1;
+					h >>= 1;
+				}
+				return (ushort)nNumMipLevels;
+			}
+
+		return (ushort)ImageLoader.GetNumMipMapLevels(actualDims.Width, actualDims.Height, actualDims.Depth);
+	}
+
+	private IVTFTexture? ReconstructProceduralBits() {
+		throw new NotImplementedException();
+	}
+
+	private void ReconstructPartialTexture(Rectangle rect) {
+
 	}
 
 	Vector3 Reflectivity;
@@ -263,13 +901,19 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	TexDimensions DimsAllocated;
 
 	ushort FrameCount;
+	ushort StreamingMips;
 	ushort OriginalRTWidth;
 	ushort OriginalRTHeight;
 	byte LowResImageWidth;
 	byte LowResImageHeight;
 	ushort DesiredDimensionLimit;
 	ushort ActualDimensionLimit;
+
+	IVTFTexture? StreamingVTF;
+	ResidencyType ResidenceTarget;
+	ResidencyType ResidenceCurrent;
+
 	ShaderAPITextureHandle_t[]? TextureHandles;
-
-
+	RenderTargetType OriginalRenderTargetType;
+	RenderTargetSizeMode RenderTargetSizeMode;
 }

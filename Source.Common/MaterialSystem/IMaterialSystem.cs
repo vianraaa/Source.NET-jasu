@@ -66,14 +66,6 @@ public enum MaterialMatrixMode
 {
 	View,
 	Projection,
-	Texture0,
-	Texture1,
-	Texture2,
-	Texture3,
-	Texture4,
-	Texture5,
-	Texture6,
-	Texture7,
 	Model,
 	Count
 }
@@ -94,6 +86,8 @@ public record struct VertexShaderHandle
 	public nint Handle;
 	public static implicit operator nint(VertexShaderHandle handle) => handle.Handle;
 	public static implicit operator VertexShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 
 public record struct GeometryShaderHandle
@@ -106,6 +100,8 @@ public record struct GeometryShaderHandle
 	public nint Handle;
 	public static implicit operator nint(GeometryShaderHandle handle) => handle.Handle;
 	public static implicit operator GeometryShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 
 public record struct PixelShaderHandle
@@ -118,6 +114,8 @@ public record struct PixelShaderHandle
 	public nint Handle;
 	public static implicit operator nint(PixelShaderHandle handle) => handle.Handle;
 	public static implicit operator PixelShaderHandle(nint handle) => new(handle);
+
+	public readonly bool IsValid() => Handle != INVALID;
 }
 public struct MaterialVideoMode
 {
@@ -126,6 +124,19 @@ public struct MaterialVideoMode
 	public ImageFormat Format;   // use ImageFormats (ignored for windowed mode)
 	public int RefreshRate;      // 0 == default (ignored for windowed mode)
 };
+public enum RenderTargetSizeMode
+{
+	NoChange = 0,
+	Default = 1,
+	Picmip = 2,
+	HDR = 3,
+	FullFrameBuffer = 4,
+	Offscreen = 5,
+	FullFrameBufferRoundedUp = 6,
+	ReplayScreenshot = 7,
+	Literal = 8,
+	LiteralPicmip = 9
+}
 
 public interface IMaterialSystem
 {
@@ -256,6 +267,6 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	}
 
 	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) {
-		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);	
+		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);
 	}
 }

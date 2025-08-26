@@ -12,6 +12,7 @@ namespace Source.StdShader.Gl46;
 
 public class UnlitGeneric : BaseVSShader
 {
+
 	public static string HelpString = "Help for UnlitGeneric";
 	public static int Flags = 0;
 	public static List<ShaderParam> ShaderParams = [];
@@ -112,13 +113,17 @@ public class UnlitGeneric : BaseVSShader
 		else
 			return ShaderParams[paramIndex - baseClassParamCount].GetDefaultValue();
 	}
-	protected override void OnInitShaderInstance(IMaterialVar[] vars, IShaderInit shaderInit, ReadOnlySpan<char> materialName) {
+	protected override void OnInitShaderInstance(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 		InitUnlitGeneric((int)ShaderMaterialVars.BaseTexture, DETAIL, ENVMAP, ENVMAPMASK);
 	}
-	protected override void OnDrawElements(IMaterialVar[] vars, IShaderShadow shaderShadow, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression, ref BasePerMaterialContextData contextData) {
+	protected override void OnDrawElements(IMaterialVar[] vars, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
 		VertexShaderUnlitGenericPass((int)ShaderMaterialVars.BaseTexture, (int)ShaderMaterialVars.Frame, (int)ShaderMaterialVars.BaseTextureTransform,
 			DETAIL, DETAILSCALE, true, ENVMAP, ENVMAPFRAME, ENVMAPMASK,
 			ENVMAPMASKFRAME, ENVMAPMASKSCALE, ENVMAPTINT, ALPHATESTREFERENCE,
 			DETAILBLENDMODE, OUTLINE, OUTLINECOLOR, OUTLINESTART0, OUTLINEEND1, SEPARATEDETAILUVS);
+	}
+	public override void SpecifyVertexFormat(ref VertexFormat vertexFormat) {
+		// We just need a few things
+		vertexFormat = VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color;
 	}
 }

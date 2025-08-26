@@ -114,18 +114,18 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 		IGraphicsContext? gfx = null;
 
 		window = window < 0 ? (nint)this.window.HardwareHandle : window;
-		if (deviceInfo.Driver.HasFlag(GraphicsAPIVersion.OpenGL)) {
+		if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL)) {
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_RED_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_GREEN_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
-			switch ((deviceInfo.Driver & ~GraphicsAPIVersion.OpenGL)) {
+			switch ((deviceInfo.Driver & ~GraphicsDriver.OpenGL)) {
 				default: 
 					Warning("Cannot support this OpenGL version");
 					return null;
-				case (GraphicsAPIVersion)460: {
+				case (GraphicsDriver)460: {
 						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
 						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);

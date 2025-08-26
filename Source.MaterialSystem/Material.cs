@@ -29,28 +29,6 @@ public enum MaterialFlags : ushort
 	ArtificalRefCount = 0x80,
 }
 
-public class EditorRenderStateList : List<RenderPassList>
-{
-	public EditorRenderStateList() : base() {
-		for (int i = 0; i < ShaderSystem.SNAPSHOT_COUNT_EDITOR; i++) {
-			Add(new() {
-
-			});
-		}
-	}
-}
-
-public class StandardRenderStateList : List<RenderPassList>
-{
-	public StandardRenderStateList() : base() {
-		for (int i = 0; i < ShaderSystem.SNAPSHOT_COUNT_NORMAL; i++) {
-			Add(new() {
-
-			});
-		}
-	}
-}
-
 public class Material : IMaterialInternal
 {
 	public readonly MaterialSystem materials;
@@ -93,17 +71,6 @@ public class Material : IMaterialInternal
 
 		ShaderRenderState.Flags = 0;
 		ShaderRenderState.VertexFormat = ShaderRenderState.VertexUsage = 0;
-		ShaderRenderState.Snapshots = CreateRenderPassList();
-	}
-
-	private List<RenderPassList> CreateRenderPassList() {
-		List<RenderPassList> renderPassList;
-		if (!materials.CanUseEditorMaterials())
-			renderPassList = new StandardRenderStateList();
-		else
-			renderPassList = new EditorRenderStateList();
-
-		return renderPassList;
 	}
 
 	public int MappingWidth;
@@ -138,22 +105,19 @@ public class Material : IMaterialInternal
 		RecomputeStateSnapshots();
 		FindRepresentativeTexture();
 		PrecacheMappingDimensions();
-		Assert(IsValidRenderState());
 	}
 
 	private void RecomputeStateSnapshots() {
-		bool ok = InitializeStateSnapshots();
+		bool ok = InitializeRenderState();
 		if (!ok)
 			SetupErrorShader();
 	}
 
-	private bool InitializeStateSnapshots() {
+	private bool InitializeRenderState() {
 		if (IsPrecached()) {
 			if (materials.GetCurrentMaterial() == this) {
 				ShaderAPI.FlushBufferedPrimitives();
 			}
-
-			CleanUpStateSnapshots();
 
 			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ref ShaderRenderState, GetName())) {
 				flags &= ~MaterialFlags.ValidRenderState;
@@ -164,12 +128,6 @@ public class Material : IMaterialInternal
 		}
 
 		return true;
-	}
-
-	private void CleanUpStateSnapshots() {
-		if (IsValidRenderState()) {
-			materials.ShaderSystem.CleanupRenderState(ref ShaderRenderState);
-		}
 	}
 
 	private void SetupErrorShader() {
@@ -253,10 +211,6 @@ public class Material : IMaterialInternal
 			MappingWidth = representativeTexture.GetMappingWidth();
 			MappingHeight = representativeTexture.GetMappingHeight();
 		}
-	}
-
-	private bool IsValidRenderState() {
-		return (flags & MaterialFlags.ValidRenderState) != 0;
 	}
 
 	private string GetTextureGroupName() {

@@ -32,7 +32,7 @@ public class MaterialSystem_Config
 	public float GammaTVExponent;
 	public bool GammaTVEnabled;
 
-	public GraphicsAPIVersion Driver = GraphicsAPIVersion.OpenGL46; // todo; get this some other way?
+	public GraphicsDriver Driver = GraphicsDriver.OpenGL46; // todo; get this some other way?
 
 	public int AASamples;
 	public int ForceAnisotropicLevel;

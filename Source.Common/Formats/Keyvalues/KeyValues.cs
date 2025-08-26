@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Source.Common.Formats.Keyvalues;
 
 
-[DebuggerDisplay("Type = {Type}, Count = {Count}, Value = {Value}")]
+[DebuggerDisplay("Name = {Name}, Type = {Type}, Count = {Count}, Value = {Value}")]
 public class KeyValues : LinkedList<KeyValues>
 {
 	public enum Types
@@ -31,7 +31,7 @@ public class KeyValues : LinkedList<KeyValues>
 	public string Name = "";
 	public Types Type;
 	public object? Value;
-	public string StringValue;
+	public string RawValue;
 
 	bool useEscapeSequences;
 
@@ -140,7 +140,7 @@ public class KeyValues : LinkedList<KeyValues>
 	}
 
 	private void DetermineValueType(string input) {
-		StringValue = input;
+		RawValue = input;
 
 		// Try Int32
 		if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i32)) {
@@ -244,7 +244,7 @@ public class KeyValues : LinkedList<KeyValues>
 		return null;
 	}
 
-	public string GetString() => StringValue ?? "";
+	public string GetString() => Value is string str ? (str ?? "") : "";
 	public string? GetString(string key) => FindKey(key)?.GetString();
 
 	public void SetString(string keyName, ReadOnlySpan<char> value) {
@@ -256,7 +256,7 @@ public class KeyValues : LinkedList<KeyValues>
 			if (value == null)
 				value = "";
 			dat.Value = new string(value);
-
+			dat.Type = Types.String;
 		}
 	}
 	public void SetInt(string keyName, int value) {

@@ -56,9 +56,9 @@ public enum CompiledVtfFlags : uint
 	// Clamp to border color on all texture coordinates
 	Border = 0x20000000,
 
-	StreamableCourse = 0x40000000,
+	StreamableCoarse = 0x40000000,
 	StreamableFine = 0x80000000,
-	Streamable = (StreamableCourse | StreamableFine)
+	Streamable = (StreamableCoarse | StreamableFine)
 }
 
 public enum VersionedVtfFlags : ulong
@@ -142,7 +142,7 @@ public interface IVTFTexture : IDisposable
 	void ComputeMipLevelDimensions(int level, out int width, out int height, out int depth);
 	int ComputeMipSize(int mipLevel);
 	void ComputeMipLevelSubRect(Rectangle srcRect, int mipLevel, out Rectangle subRect);
-	int ComputeFaceSize(int startingMipLevle = 0);
+	int ComputeFaceSize(int startingMipLevel = 0);
 	int ComputeTotalSize();
 
 	Span<byte> ImageData();
@@ -180,6 +180,8 @@ public interface IVTFTexture : IDisposable
 			throw new NotImplementedException("No VTF factory available");
 		return OnRequestSize.Invoke(majorVersion, minorVersion);
 	}
+
+	uint GetResourceTypes(Span<ResourceEntryType> arrRsrcTypes);
 }
 // Factory methods
 public delegate IVTFTexture CreateVTFTextureDelegate();
@@ -261,7 +263,6 @@ public enum HeaderDetails : short {
 
 public struct ResourceEntryInfo
 {
-	public static ref ResourceEntryInfo NULL => ref Unsafe.NullRef<ResourceEntryInfo>();
 	public ResourceEntryType Tag;
 	public byte Flags;
 	public uint Offset;
@@ -271,7 +272,7 @@ public struct ResourceEntryInfo
 	}
 }
 
-public enum ResourceEntryType
+public enum ResourceEntryType : uint
 {
 	/// <summary>
 	/// Equiv of VTF_LEGACY_RSRC_LOW_RES_IMAGE
@@ -291,6 +292,10 @@ public enum ResourceEntryType
 	/// Equiv of VTF_RSRC_TEXTURE_CRC (i think?)
 	/// </summary>
 	CRC = 0x00435243,
+	/// <summary>
+	/// Equiv of VTF_RSRC_TEXTURE_CRC (i think?)
+	/// </summary>
+	TextureStreamSettings = ('S' << 16) + ('T' << 8) + 'R',
 	/// <summary>
 	/// Equiv of VTF_RSRC_TEXTURE_LOD_SETTINGS (i think?)
 	/// </summary>

@@ -8,65 +8,21 @@ public class MeshMgr
 {
 	internal MaterialSystem MaterialSystem;
 
-	public VertexFormat ComputeVertexFormat(int flags, int texCoordArraySize, Span<int> texCoordDimensions, int numBonesWeights, int userDataSize) {
-		VertexFormat fmt = (VertexFormat)(flags & ~VertexFormatFlags.VertexFormatUseExactFormat);
-		if (true) {
-			fmt &= ~VertexFormat.Compressed;
-		}
-
-		Assert(numBonesWeights <= 4);
-		if (numBonesWeights > 0) {
-			fmt |= VERTEX_BONEWEIGHT(2);
-		}
-
-		Assert(userDataSize <= 4);
-		fmt |= VERTEX_USERDATA_SIZE(userDataSize);
-
-		texCoordArraySize = Math.Min(texCoordArraySize, IMesh.VERTEX_MAX_TEXTURE_COORDINATES);
-		for (int i = 0; i < texCoordArraySize; i++) {
-			if (texCoordDimensions != null) {
-				Assert(texCoordDimensions[i] >= 0 && texCoordDimensions[i] <= 4);
-				fmt |= VERTEX_TEXCOORD_SIZE(i, texCoordDimensions[i]);
-			}
-			else {
-				fmt |= VERTEX_TEXCOORD_SIZE(i, 2);
-			}
-		}
-
-		return fmt;
-	}
-
 	internal void Flush() {
-		if (IsPC()) {
-			BufferedMesh.HandleLateCreation();
+		if (IsPC()) 
 			BufferedMesh.Flush();
-		}
 	}
 
-	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh vertexOverride, IMesh indexOverride) {
+	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride) {
 		Assert(material == null || ((IMaterialInternal)material).IsRealTimeVersion());
 
-		if(BufferedMode != buffered && BufferedMode) {
+		if (BufferedMode != buffered && BufferedMode) {
 			BufferedMesh.SetMesh(null);
 		}
 		BufferedMode = buffered;
 
 		IMaterialInternal matInternal = (IMaterialInternal)material!;
-		bool needTempMesh = ShaderAPI.IsInSelectionMode();
-
-		BaseMeshGl46 mesh;
-		if (needTempMesh) {
-			Assert(vertexOverride == null);
-
-			if(indexOverride  != null) {
-				// not doing all that right now
-				AssertMsg(false, "TODO");
-			}
-			mesh = DynamicTempMesh;
-		}
-		else {
-			mesh = DynamicMesh;
-		}
+		Mesh mesh = DynamicMesh;
 
 		if (BufferedMode) {
 			Assert(!BufferedMesh.WasNotRendered());
@@ -74,35 +30,23 @@ public class MeshMgr
 			mesh = BufferedMesh;
 		}
 
-		if(vertexOverride == null) {
-			VertexFormat materialFormat = matInternal.GetVertexFormat() & ~VertexFormat.Compressed;
-			VertexFormat fmt = (vertexFormat != 0) ? vertexFormat : materialFormat;
-			if(vertexFormat != 0) {
-				int nVertexFormatBoneWeights = vertexFormat.NumBoneWeights();
-				if (hwSkinBoneCount < nVertexFormatBoneWeights) {
-					hwSkinBoneCount = nVertexFormatBoneWeights;
-				}
-			}
-
-			fmt &= (VertexFormat)~VertexFormatFlags.VertexBoneWeightMask;
-			if(hwSkinBoneCount > 0) {
-				fmt |= VERTEX_BONEWEIGHT(2);
-				fmt |= (VertexFormat)VertexFormatFlags.VertexFormatBoneIndex;
-			}
-
+		if (vertexOverride == null) {
+			VertexFormat fmt = matInternal.GetVertexFormat();
 			mesh.SetVertexFormat(fmt);
 		}
 		else {
-			BaseMeshGl46 gl46Mesh = (BaseMeshGl46)vertexOverride;
-			mesh.SetVertexFormat(gl46Mesh.GetVertexFormat());
+			Mesh vertexMesh = (Mesh)vertexOverride;
+			mesh.SetVertexFormat(vertexMesh.GetVertexFormat());
 		}
 
 		mesh.SetMaterial(matInternal);
-		if(mesh == DynamicMesh) {
-			BaseMeshGl46? baseVertex = (BaseMeshGl46?)vertexOverride;
-			if (baseVertex != null) DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
-			BaseMeshGl46? baseIndex = (BaseMeshGl46?)vertexOverride;
-			if (baseIndex != null) DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
+		if (mesh == DynamicMesh) {
+			Mesh? baseVertex = (Mesh?)vertexOverride;
+			if (baseVertex != null)
+				DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
+			Mesh? baseIndex = (Mesh?)vertexOverride;
+			if (baseIndex != null)
+				DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
 		}
 
 		return mesh;
@@ -110,18 +54,10 @@ public class MeshMgr
 
 	internal IShaderAPI ShaderAPI;
 
-	BufferedMeshGl46 BufferedMesh;
-	DynamicMeshGl46 DynamicMesh;
-	DynamicMeshGl46 DynamicFlexMesh;
-	VertexBufferGl46 DynamicVertexBuffer;
-	IndexBufferGl46 DynamicIndexBuffer;
-	TempMeshGl46 DynamicTempMesh;
 	bool BufferedMode;
 	bool UsingFatVertices;
 
-	VertexBufferGl46? CurrentVertexBuffer;
 	VertexFormat CurrentVertexFormat;
-	IndexBufferBase? CurrentIndexBuffer;
 	int IndexBufferOffset;
 	MaterialPrimitiveType PrimitiveTYpe;
 	int FirstIndex;
@@ -133,27 +69,78 @@ public class MeshMgr
 
 	// We can't rely on imported engineAPI.New<>() calls here because it makes the dependency injection
 	// system crash and burn
-	private TMesh InitMesh<TMesh>() where TMesh : BaseMeshGl46, new() {
+	private TMesh InitMesh<TMesh>() where TMesh : Mesh, new() {
 		TMesh ret = new TMesh();
 		ret.ShaderAPI = MaterialSystem.ShaderAPI;
 		ret.ShaderUtil = MaterialSystem;
+		ret.MeshMgr = MaterialSystem.MeshMgr;
+		ret.ShaderDevice = MaterialSystem.ShaderDevice;
 		return ret;
 	}
 
+
+	List<VertexBuffer> DynamicVertexBuffers = [];
+	IndexBuffer? DynamicIndexBuffer;
+
+	BufferedMesh BufferedMesh;
+	DynamicMesh DynamicMesh;
+
 	internal void Init() {
-		BufferedMesh = InitMesh<BufferedMeshGl46>();
-		DynamicMesh = InitMesh<DynamicMeshGl46>();
-		DynamicFlexMesh = InitMesh<DynamicMeshGl46>();
-		DynamicVertexBuffer = new VertexBufferGl46();
-		DynamicIndexBuffer = new IndexBufferGl46();
-		DynamicTempMesh = InitMesh<TempMeshGl46>();
+		BufferedMesh = InitMesh<BufferedMesh>();
+		DynamicMesh = InitMesh<DynamicMesh>();
+		DynamicMesh.Init(0);
+		CreateDynamicIndexBuffer();
+		CreateZeroVertexBuffer();
+		BufferedMode = true;
 	}
 
-	internal int VertexFormatSize(VertexFormat vertexFormat) {
-		throw new NotImplementedException();
+	private void CreateDynamicIndexBuffer() {
+		DestroyDynamicIndexBuffer();
+		DynamicIndexBuffer = new IndexBuffer(IMesh.INDEX_BUFFER_SIZE, true);
+	}
+	private void DestroyDynamicIndexBuffer() {
+		DynamicIndexBuffer?.Dispose();
+		DynamicIndexBuffer = null;
 	}
 
-	internal IndexBufferGl46 GetDynamicIndexBuffer() {
-		throw new NotImplementedException();
+	private void CreateZeroVertexBuffer() {
+		// Todo...
+	}
+
+
+	public const int VERTEX_BUFFER_SIZE = 32768;
+	public const int MAX_QUAD_INDICES = 16384;
+
+	internal VertexBuffer FindOrCreateVertexBuffer(int dynamicBufferID, VertexFormat vertexFormat) {
+		int vertexSize = VertexFormatSize(vertexFormat);
+
+		while (DynamicVertexBuffers.Count <= dynamicBufferID) {
+			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
+			VertexBuffer vertexBuffer = new VertexBuffer();
+			vertexBuffer.VertexSize = 0;
+			int initVertexSize = bufferMemory / VERTEX_BUFFER_SIZE, initVertexCount = VERTEX_BUFFER_SIZE;
+			vertexBuffer.BufferSize = initVertexSize * initVertexCount;
+			DynamicVertexBuffers.Add(vertexBuffer);
+		}
+
+		VertexBuffer buffer = DynamicVertexBuffers[dynamicBufferID];
+
+		if (buffer.VertexSize != vertexSize) {
+			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
+			buffer.VertexSize = vertexSize;
+			buffer.ChangeConfiguration(vertexFormat, vertexSize, bufferMemory);
+		}
+
+		return DynamicVertexBuffers[dynamicBufferID];
+	}
+
+	internal unsafe int VertexFormatSize(VertexFormat vertexFormat) {
+		MeshDesc desc = new();
+		VertexBuffer.ComputeVertexDescription(null, vertexFormat, ref desc.Vertex);
+		return desc.Vertex.ActualVertexSize;
+	}
+
+	internal IndexBuffer GetDynamicIndexBuffer() {
+		return DynamicIndexBuffer!;
 	}
 }
