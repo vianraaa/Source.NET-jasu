@@ -4,6 +4,7 @@ using Source.Common.Bitmap;
 using Source.Common.Engine;
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -231,7 +232,7 @@ public sealed class VTFTexture : IVTFTexture
 		return GetImageData(frame, face, mipLevel);
 	}
 
-	private nint GetImageOffset(int frame, int face, int mipLevel, ImageFormat format) {
+	public nint GetImageOffset(int frame, int face, int mipLevel, ImageFormat format) {
 		Assert(frame < FrameCount);
 		Assert(face < FaceCount);
 		Assert(mipLevel < MipCount);
@@ -546,8 +547,8 @@ public sealed class VTFTexture : IVTFTexture
 			for (int frame = 0; frame < FrameCount; frame++) {
 				for (int face = 0; face < facesToRead; face++) {
 					Span<byte> mipBits = GetImageData(frame, face, mip);
-					Span<byte> mipSpan = mipBits[..mipSize];
-					stream.Read(mipSpan);
+					int bytesRead = stream.Read(mipBits);
+					Debug.Assert(mipBits.Length == bytesRead);
 				}
 			}
 		}
@@ -558,7 +559,8 @@ public sealed class VTFTexture : IVTFTexture
 	private Span<byte> GetImageData(int frame, int face, int mip) {
 		Assert(ImageData != null);
 		nint offset = GetImageOffset(frame, face, mip, Format);
-		return ImageData.AsSpan()[(int)offset..];
+		nint size = ComputeMipSize(mip, Format);
+		return ImageData.AsSpan()[(int)offset..(int)(offset + size)];
 	}
 
 	private bool AllocateImageData(nint imageSize) {

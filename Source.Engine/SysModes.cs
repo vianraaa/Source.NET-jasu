@@ -129,7 +129,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 			materials.SwapBuffers();
 		}
 		Msg("Are we live?\n");
-		Debugger.Break();
+		// Debugger.Break();
 	}
 
 	IVTFTexture? backgroundTexture;

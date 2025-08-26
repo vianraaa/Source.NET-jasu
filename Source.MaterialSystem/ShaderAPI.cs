@@ -555,8 +555,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		if (info.SrcFormat.IsCompressed()) {
 			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
+			vtf.ComputeMipLevelDimensions(info.Level, out int w, out int h, out _);
+			glGetError();
 			fixed (byte* bytes = data)
-				glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
+				glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, w, h, ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
+			// Msg("err: " + glGetErrorName() + "\n");
 		}
 		else {
 			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);

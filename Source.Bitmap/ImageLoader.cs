@@ -105,7 +105,7 @@ public static class ImageLoader
 					width = 4;
 				if (height < 4 && height > 0)
 					height = 4;
-				if (depth < 4 && depth > 0)
+				if (depth < 4 && depth > 1)
 					depth = 4;
 
 				int numBlocks = (width * height) >> 4;
