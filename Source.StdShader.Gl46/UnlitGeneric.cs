@@ -124,6 +124,6 @@ public class UnlitGeneric : BaseVSShader
 	}
 	public override void SpecifyVertexFormat(ref VertexFormat vertexFormat) {
 		// We just need a few things
-		vertexFormat = VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color;
+		vertexFormat = VertexFormat.Position | VertexFormat.TexCoord | VertexFormat.Color;
 	}
 }

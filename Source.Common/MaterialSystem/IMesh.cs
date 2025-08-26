@@ -277,12 +277,13 @@ public unsafe struct VertexBuilder
 		if (++CurrentVertex > VertexCount)
 			VertexCount = CurrentVertex;
 
-		CurrPosition += Desc.PositionSize;
-		CurrNormal += Desc.PositionSize;
-		CurrColor += Desc.ColorSize;
+		// If this cast isn't done, it increments way too far
+		CurrPosition = (float*)((byte*)CurrPosition + Desc.PositionSize);
+		CurrNormal = (float*)((byte*)CurrNormal + Desc.NormalSize);
+		CurrColor = CurrColor + Desc.ColorSize;
 
 		for (int i = 0; i < 8; i++) {
-			CurrTexCoord[i] += Desc.TexCoordSize[i];
+			CurrTexCoord[i] = (float*)((byte*)CurrTexCoord[i] + Desc.TexCoordSize[i]);
 		}
 	}
 

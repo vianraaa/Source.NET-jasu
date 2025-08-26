@@ -120,6 +120,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	private unsafe void CreateMatrixStacks() {
 		uboMatrices = glCreateBuffer();
+		glObjectLabel(GL_BUFFER, uboMatrices, "ShaderAPI Shared Matrix UBO");
 		glNamedBufferData(uboMatrices, sizeof(Matrix4x4) * 3, null, GL_DYNAMIC_DRAW);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboMatrices);
 	}
@@ -571,6 +572,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		for (int i = 0; i < count; i++) {
 			ShaderAPITextureHandle_t handle = textureHandles[i];
+			glObjectLabel(GL_TEXTURE, (uint)handle, $"ShaderAPI Texture '{debugName}' [frame {i}]");
 			glTextureStorage2D((uint)handle, mipCount, ImageLoader.GetGLImageFormat(imageFormat), width, height);
 		}
 	}

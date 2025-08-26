@@ -50,8 +50,10 @@ public unsafe class VertexBuffer : IDisposable
 
 	public void RecomputeVAO() {
 		// Unlike the VBO, we do not need to destroy everything when the state changes
-		if (this.vao == -1)
+		if (this.vao == -1) {
 			this.vao = (int)glCreateVertexArray();
+			glObjectLabel(GL_VERTEX_ARRAY, (uint)this.vao, "MaterialSystem VertexBuffer");
+		}
 
 		// But we need a VBO first
 		if (this.vbo == -1)
@@ -76,7 +78,14 @@ public unsafe class VertexBuffer : IDisposable
 			int elementSize = count * (int)type.SizeOf();
 			glEnableVertexArrayAttrib(vao, elementAttribute);
 			// type is relative to OpenGL's enumeration
-			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)sizeof1vertex);
+			switch (type) {
+				case VertexAttributeType.Float:
+					glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)sizeof1vertex);
+					break;
+				default:
+					glVertexArrayAttribIFormat(vao, elementAttribute, count, (int)type, (uint)sizeof1vertex);
+					break;
+			}
 
 			bindings[bindingsPtr++] = elementAttribute;
 			sizeof1vertex += elementSize;
