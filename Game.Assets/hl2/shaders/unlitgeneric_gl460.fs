@@ -10,5 +10,5 @@ out vec4 fragColor;
 void main()
 {
     vec4 texelColor = texture(basetexture, f_TexCoord);
-    fragColor = texelColor * f_Color;
+    fragColor = texelColor; // f_Color multiply later. Requires a flags check
 }

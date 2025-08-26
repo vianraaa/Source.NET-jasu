@@ -282,13 +282,11 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 public enum MatrixStackFlags : uint
 {
-	Dirty = 1 << 0,
-	Identity = 1 << 1
+	Dirty = 1 << 0
 }
 public struct MatrixStackItem
 {
 	public Matrix4x4 Matrix;
-	public MatrixStackFlags Flags;
 }
 
 public struct RenderTargetStackElement

@@ -76,7 +76,7 @@ public unsafe class VertexBuffer : IDisposable
 			int elementSize = count * (int)type.SizeOf();
 			glEnableVertexArrayAttrib(vao, elementAttribute);
 			// type is relative to OpenGL's enumeration
-			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)elementSize);
+			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)sizeof1vertex);
 
 			bindings[bindingsPtr++] = elementAttribute;
 			sizeof1vertex += elementSize;
@@ -86,7 +86,7 @@ public unsafe class VertexBuffer : IDisposable
 		glVertexArrayVertexBuffer(vao, 0, (uint)vbo, 0, sizeof1vertex);
 
 		Assert(bindingsPtr < bindings.Length);
-		for (int i = 0; i < bindings.Length; i++) {
+		for (int i = 0; i < bindingsPtr; i++) {
 			// Bind every enabled element to the 0th buffer (we don't use other buffers)
 			glVertexArrayAttribBinding(vao, bindings[i], 0);
 		}

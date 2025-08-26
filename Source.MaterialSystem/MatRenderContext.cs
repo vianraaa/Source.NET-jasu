@@ -18,11 +18,12 @@ public class MatRenderContext : IMatRenderContextInternal
 		this.materials = materials;
 		RenderTargetStack = new RefStack<RenderTargetStackElement>();
 		MatrixStacks = new RefStack<MatrixStackItem>[(int)MaterialMatrixMode.Count];
+		MatrixStacksDirtyStates = new bool[(int)MaterialMatrixMode.Count];
 		for (int i = 0; i < MatrixStacks.Length; i++) {
 			MatrixStacks[i] = new();
 			ref MatrixStackItem item = ref MatrixStacks[i].Push();
+			MatrixStacksDirtyStates[i] = true;
 			item.Matrix = Matrix4x4.Identity;
-			item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
 		}
 		RenderTargetStackElement initialElement = new() {
 			RenderTargets = [null, null, null, null],
@@ -37,12 +38,11 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 	RefStack<RenderTargetStackElement> RenderTargetStack;
 	RefStack<MatrixStackItem>[] MatrixStacks;
+	bool[] MatrixStacksDirtyStates;
 	MaterialMatrixMode matrixMode;
 	ShaderViewport viewport = new(0, 0, 0, 0, 0, 1);
-	bool dirtyViewState;
-	bool dirtyViewProjState;
-	public ref MatrixStackItem CurMatrixItem => ref MatrixStacks[(int)matrixMode].Peek();
-	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Peek();
+	public ref MatrixStackItem CurMatrixItem => ref MatrixStacks[(int)matrixMode].Top();
+	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Top();
 
 	public void BeginRender() {
 
@@ -102,7 +102,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void LoadIdentity() {
 		ref MatrixStackItem item = ref CurMatrixItem;
 		item.Matrix = Matrix4x4.Identity;
-		item.Flags = MatrixStackFlags.Dirty | MatrixStackFlags.Identity;
+		MatrixStacksDirtyStates[(int)matrixMode] = true;
 		CurrentMatrixChanged();
 	}
 
@@ -118,13 +118,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	private void CurrentMatrixChanged() {
-		if (matrixMode == MaterialMatrixMode.View) {
-			dirtyViewState = true;
-			dirtyViewProjState = true;
-		}
-		else if (matrixMode == MaterialMatrixMode.Projection) {
-			dirtyViewProjState = true;
-		}
+		MatrixStacksDirtyStates[(int)matrixMode] = true;
 	}
 
 	public void Viewport(int x, int y, int width, int height) {
@@ -248,14 +242,13 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	public void ForceSyncMatrix(MaterialMatrixMode mode) {
 		ref MatrixStackItem top = ref MatrixStacks[(int)mode].Top();
-		if((top.Flags & MatrixStackFlags.Dirty) > 0) {
+		if(MatrixStacksDirtyStates[(int)matrixMode] ) {
 			bool setMode = matrixMode != mode;
 			if (setMode)
 				shaderAPI.MatrixMode(mode);
 
-			if ((top.Flags & MatrixStackFlags.Identity) == 0) {
-				Matrix4x4 transposeTop = Matrix4x4.Transpose(top.Matrix);
-				shaderAPI.LoadMatrix(in transposeTop);
+			if (!top.Matrix.IsIdentity) {
+				shaderAPI.LoadMatrix(in top.Matrix);
 			}
 			else {
 				shaderAPI.LoadIdentity();
@@ -264,7 +257,7 @@ public class MatRenderContext : IMatRenderContextInternal
 			if (setMode)
 				shaderAPI.MatrixMode(mode);
 
-			top.Flags &= ~MatrixStackFlags.Dirty;
+			MatrixStacksDirtyStates[(int)matrixMode] = false;
 		}
 	}
 
@@ -272,9 +265,9 @@ public class MatRenderContext : IMatRenderContextInternal
 		if(!ShouldValidateMatrices() && AllowLazyMatrixSync()) {
 			for (int i = 0; i < (int)MaterialMatrixMode.Count; i++) {
 				ref MatrixStackItem top = ref MatrixStacks[i].Top();
-				if((top.Flags & MatrixStackFlags.Dirty) > 0) {
+				if(MatrixStacksDirtyStates[i]) {
 					shaderAPI.MatrixMode((MaterialMatrixMode)i);
-					if((top.Flags & MatrixStackFlags.Identity) == 0) {
+					if(!top.Matrix.IsIdentity) {
 						Matrix4x4 transposeTop = Matrix4x4.Transpose(top.Matrix);
 						shaderAPI.LoadMatrix(in transposeTop);
 					}
@@ -282,7 +275,7 @@ public class MatRenderContext : IMatRenderContextInternal
 						shaderAPI.LoadIdentity();
 					}
 
-					top.Flags &= ~MatrixStackFlags.Dirty;
+					MatrixStacksDirtyStates[i] = false;
 				}
 			}
 		}

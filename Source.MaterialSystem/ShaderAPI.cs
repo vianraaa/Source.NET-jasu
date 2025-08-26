@@ -411,11 +411,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		currentMode = mode;
 	}
 
-	public unsafe void LoadMatrix(in Matrix4x4 transposeTop) {
-		int m4x4 = sizeof(Matrix4x4);
-		int loc = (int)currentMode * m4x4;
-		fixed (Matrix4x4* pM4x4 = &transposeTop)
-			glNamedBufferSubData(uboMatrices, loc, m4x4, pM4x4);
+	public unsafe void LoadMatrix(in Matrix4x4 m4x4) {
+		int szm4x4 = sizeof(Matrix4x4);
+		int loc = (int)currentMode * szm4x4;
+		Matrix4x4 transposed = Matrix4x4.Transpose(m4x4);
+		glNamedBufferSubData(uboMatrices, loc, szm4x4, &transposed);
 	}
 
 	public void LoadIdentity() {
@@ -496,7 +496,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		textureModifyTarget = textureHandle;
 	}
 
-	public struct TextureLoadInfo {
+	public struct TextureLoadInfo
+	{
 		public ShaderAPITextureHandle_t Handle;
 		public int Width;
 		public int Height;
@@ -534,7 +535,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (info.SrcFormat.IsCompressed()) {
 			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
 			fixed (byte* bytes = data)
-			glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
+				glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
 		}
 		else {
 			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
