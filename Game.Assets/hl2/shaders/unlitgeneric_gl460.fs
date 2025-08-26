@@ -9,7 +9,7 @@ out vec4 fragColor;
 
 void main()
 {
-    vec4 texelColor = texture(basetexture, f_TexCoord);
+    vec4 texelColor = texture(basetexture, vs_TexCoord);
     //fragColor = texelColor; // f_Color multiply later. Requires a flags check
-    fragColor = vec4(f_TexCoord.x, f_TexCoord.y, 1.0, 1.0);
+    fragColor = vec4(vs_TexCoord.x, vs_TexCoord.y, 1.0, 1.0);
 }
