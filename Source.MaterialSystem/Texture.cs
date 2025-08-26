@@ -14,6 +14,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -544,6 +545,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	private IVTFTexture? LoadTextureBitsFromFile(Span<char> cacheFileName, out string? resolvedFilename) {
 		resolvedFilename = null;
 
+		uint stripFlags;
 		IVTFTexture? vtfTexture = StreamingVTF;
 		if (vtfTexture == null) {
 			vtfTexture = GetScratchVTFTexture();
@@ -553,7 +555,11 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			if (!GetFileHandle(out fileHandle, cacheFileName, out resolvedFilename))
 				return HandleFileLoadFailedTexture(vtfTexture);
 
-			vtfTexture!.Unserialize(fileHandle.Stream, false);
+			TextureLODControlSettings settings = CachedFileLodSettings;
+			if (!SLoadTextureBitsFromFile(ref vtfTexture, fileHandle, Flags, ref settings, DesiredDimensionLimit, ref StreamingMips, GetName(), cacheFileName, out DimsMapping, out DimsActual, out DimsAllocated, out stripFlags)) {
+				fileHandle.Dispose();
+				return HandleFileLoadFailedTexture(vtfTexture);
+			}
 
 			fileHandle?.Dispose();
 		}
@@ -573,6 +579,29 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		}
 
 		return vtfTexture;
+	}
+
+	private bool SLoadTextureBitsFromFile(ref IVTFTexture vtfTexture, IFileHandle fileHandle, uint flags, 
+										  ref TextureLODControlSettings settings, ushort desiredDimensionLimit, 
+										  ref ushort streamingMips, ReadOnlySpan<char> name, Span<char> cacheFileName, 
+										  out TexDimensions dimsMapping, out TexDimensions dimsActual, out TexDimensions dimsAllocated, 
+										  out uint stripFlags) {
+		// TODO; finish the complexities of texture loading
+		vtfTexture!.Unserialize(fileHandle.Stream, false);
+
+		dimsMapping = new() {
+			Width = (ushort)vtfTexture.Width(),
+			Height = (ushort)vtfTexture.Height(),
+			Depth = (ushort)vtfTexture.Depth(),
+			MipCount = (ushort)vtfTexture.MipCount()
+		};
+
+		uint fullFlags = (uint)vtfTexture.Flags() | flags;
+
+		int nMipSkipCount = ComputeMipSkipCount(name, dimsMapping, false, vtfTexture, fullFlags, DesiredDimensionLimit, ref StreamingMips, out settings, out dimsActual, out dimsAllocated, out stripFlags);
+
+
+		return true;
 	}
 
 	private bool ConvertToActualFormat(IVTFTexture vtfTexture) {
@@ -625,15 +654,15 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		if ((srcFormat == ImageFormat.UVWQ8888) || (srcFormat == ImageFormat.UV88) ||
 			(srcFormat == ImageFormat.UVLX8888) || (srcFormat == ImageFormat.RGBA16161616) ||
-			(srcFormat == ImageFormat.RGBA16161616F)) 
-			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat, false);  
-		else if ((Flags & (uint)(CompiledVtfFlags.EightBitAlpha | CompiledVtfFlags.OneBitAlpha)) != 0) 
+			(srcFormat == ImageFormat.RGBA16161616F))
+			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat, false);
+		else if ((Flags & (uint)(CompiledVtfFlags.EightBitAlpha | CompiledVtfFlags.OneBitAlpha)) != 0)
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGRA8888);
-		else if (srcFormat == ImageFormat.I8) 
+		else if (srcFormat == ImageFormat.I8)
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.I8);
-		else 
+		else
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGR888);
-		
+
 		return dstFormat;
 	}
 
@@ -668,8 +697,185 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 	}
 
-	private void ComputeActualSize(bool ignorePicmip = false, IVTFTexture? vtfTexture = null, bool textureMigration = false) {
+	private int ComputeActualSize(bool ignorePicmip = false, IVTFTexture? vtfTexture = null, bool textureMigration = false) {
+		uint stripFlags = 0;
+		return ComputeMipSkipCount(GetName(), DimsMapping, ignorePicmip, vtfTexture, Flags, DesiredDimensionLimit, ref StreamingMips, out CachedFileLodSettings, out DimsActual, out DimsAllocated, out stripFlags);
+	}
 
+	private unsafe int ComputeMipSkipCount(ReadOnlySpan<char> readOnlySpan, TexDimensions mappingDims, bool ignorePicmip, IVTFTexture? vtfTexture, uint flags, ushort desiredDimensionLimit, ref ushort streamingMips, out TextureLODControlSettings cachedFileLodSettings, out TexDimensions dimsActual, out TexDimensions dimsAllocated, out uint outStripFlags) {
+		TexDimensions actualDims = mappingDims, allocatedDims = new();
+
+		bool bTextureMigration = (Flags & (uint)CompiledVtfFlags.Streamable) != 0;
+		uint stripFlags = 0;
+
+		int nClampX = actualDims.Width;  // no clamping (clamp to texture dimensions)
+		int nClampY = actualDims.Height;
+		int nClampZ = actualDims.Depth;
+
+		// TODO: LOD controls
+
+		// In case clamp values exceed texture dimensions, then fix up
+		// the clamping values
+		nClampX = Math.Min(nClampX, (int)actualDims.Width);
+		nClampY = Math.Min(nClampY, (int)actualDims.Height);
+
+		//
+		// Honor dimension limit restrictions
+		//
+		if (DesiredDimensionLimit > 0) {
+			while (nClampX > DesiredDimensionLimit ||
+					nClampY > DesiredDimensionLimit) {
+				nClampX >>= 1;
+				nClampY >>= 1;
+			}
+		}
+
+		//
+		// Unless ignoring picmip, reflect the global picmip level in clamp dimensions
+		//
+		if (!ignorePicmip) {
+			// If picmip requests texture degradation, then honor it
+			// for loddable textures only
+			/*if ((Flags & (uint)CompiledVtfFlags.NoLOD) == 0 &&
+				  (g_config.skipMipLevels > 0)) {
+				for (int iDegrade = 0; iDegrade < g_config.skipMipLevels; ++iDegrade) {
+					// don't go lower than 4, or dxt textures won't work properly
+					if (nClampX > 4 &&
+						 nClampY > 4) {
+						nClampX >>= 1;
+						nClampY >>= 1;
+					}
+				}
+			}
+
+			// If picmip requests quality upgrade, then always honor it
+			if (g_config.skipMipLevels < 0) {
+				for (int iUpgrade = 0; iUpgrade < -g_config.skipMipLevels; ++iUpgrade) {
+					if (nClampX < actualDims.m_nWidth &&
+						 nClampY < actualDims.m_nHeight) {
+						nClampX <<= 1;
+						nClampY <<= 1;
+					}
+					else
+						break;
+				}
+			}*/
+			Assert(false);
+		}
+
+		//
+		// Now use hardware settings to clamp our "clamping dimensions"
+		//
+		int hwWidth = materials.HardwareConfig.MaxTextureWidth();
+		int hwHeight = materials.HardwareConfig.MaxTextureHeight();
+		int hwDepth = materials.HardwareConfig.MaxTextureDepth();
+
+		nClampX = Math.Min(nClampX, Math.Max(hwWidth, 4));
+		nClampY = Math.Min(nClampY, Math.Max(hwHeight, 4));
+		nClampZ = Math.Min(nClampZ, Math.Max(hwDepth, 1));
+
+		// In case clamp values exceed texture dimensions, then fix up
+		// the clamping values.
+		nClampX = Math.Min(nClampX, actualDims.Width);
+		nClampY = Math.Min(nClampY, actualDims.Height);
+		nClampZ = Math.Min(nClampZ, actualDims.Depth);
+
+		//
+		// Clamp to the determined dimensions
+		//
+		int numMipsSkipped = 0; // will compute now when clamping how many mips we drop
+		while ((actualDims.Width > nClampX) ||
+				(actualDims.Height > nClampY) ||
+				(actualDims.Depth > nClampZ)) {
+			actualDims.Width >>= 1;
+			actualDims.Height >>= 1;
+			actualDims.Depth = (ushort)Math.Max(1, actualDims.Depth >> 1);
+
+			++numMipsSkipped;
+		}
+
+		Assert(actualDims.Width > 0 && actualDims.Height > 0 && actualDims.Depth > 0);
+
+		// Now that we've got the actual size, we can figure out the mip count
+		actualDims.MipCount = ComputeActualMipCount(actualDims, Flags);
+
+		// If we're streaming, cut down what we're loading.
+		// We can only stream things that have a mipmap pyramid (not just a single mipmap).
+		bool bHasSetAllocation = false;
+		if ((Flags & (uint)CompiledVtfFlags.Streamable) == (uint)CompiledVtfFlags.StreamableCoarse) {
+			if (actualDims.MipCount > 1) {
+				allocatedDims.Width = actualDims.Width;
+				allocatedDims.Height = actualDims.Height;
+				allocatedDims.Depth = actualDims.Depth;
+				allocatedDims.MipCount = actualDims.MipCount;
+				const int STREAMING_START_MIPMAP = 3;
+
+				for (int i = 0; i < STREAMING_START_MIPMAP; ++i) {
+					// Stop when width or height is at 4 pixels (or less). We could do better, 
+					// but some textures really can't function if they're less than 4 pixels (compressed textures, for example).
+					if (allocatedDims.Width <= 4 || allocatedDims.Height <= 4)
+						break;
+
+					allocatedDims.Width >>= 1;
+					allocatedDims.Height >>= 1;
+					allocatedDims.Depth = (ushort)Math.Max(1, allocatedDims.Depth >> 1);
+					allocatedDims.MipCount = (ushort)Math.Max(1, allocatedDims.MipCount - 1);
+
+					++numMipsSkipped;
+				}
+
+				bHasSetAllocation = true;
+			}
+			else {
+				// Clear out that we're streaming, this isn't a texture we can stream.
+				stripFlags |= (uint)CompiledVtfFlags.StreamableCoarse;
+			}
+		}
+
+		if (!bHasSetAllocation) {
+			allocatedDims.Width = actualDims.Width;
+			allocatedDims.Height = actualDims.Height;
+			allocatedDims.Depth = actualDims.Depth;
+			allocatedDims.MipCount = actualDims.MipCount;
+		}
+
+		dimsActual = actualDims;
+		dimsAllocated = allocatedDims;
+		outStripFlags = stripFlags;
+		cachedFileLodSettings = default;
+
+		// Returns the number we skipped
+		return numMipsSkipped;
+	}
+
+	private ushort ComputeActualMipCount(TexDimensions actualDims, uint flags) {
+		if ((flags & (uint)CompiledVtfFlags.EnvMap) > 0) {
+			if (materials.HardwareConfig.SupportsMipmappedCubemaps()) {
+				return 1;
+			}
+		}
+
+		if ((flags & (uint)CompiledVtfFlags.NoMip) != 0) {
+			return 1;
+		}
+
+		// Unless ALLMIPS is set, we stop mips at 32x32
+		const int nMaxMipSize = 32;
+		if ((false && (Flags & (uint)CompiledVtfFlags.AllMips) == 0) || (true && (Flags & (uint)CompiledVtfFlags.Border) > 0))
+			{
+				int nNumMipLevels = 1;
+				int h = actualDims.Width;
+				int w = actualDims.Height;
+				while (Math.Min(w, h) > nMaxMipSize) {
+					++nNumMipLevels;
+
+					w >>= 1;
+					h >>= 1;
+				}
+				return (ushort)nNumMipLevels;
+			}
+
+		return (ushort)ImageLoader.GetNumMipMapLevels(actualDims.Width, actualDims.Height, actualDims.Depth);
 	}
 
 	private IVTFTexture? ReconstructProceduralBits() {

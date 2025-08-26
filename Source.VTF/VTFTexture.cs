@@ -149,7 +149,11 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public Span<byte> GetResourceData(uint type) {
-		throw new NotImplementedException();
+		return GetResourceData((ResourceEntryType)type);
+	}
+
+	private Span<byte> GetResourceData(ResourceEntryType type) {
+		throw new Exception();
 	}
 
 	public bool HasResourceEntry(uint type) {
