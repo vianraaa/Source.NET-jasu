@@ -179,7 +179,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	private unsafe uint ShaderCombobulator() {
 		// Determines the shader program used given the current shader handles.
 		// If one does not exist, it is created.
-		Span<nint> hashedData = stackalloc nint[sizeof(nint) * 2];
+		Span<nint> hashedData = stackalloc nint[2];
 		hashedData[0] = activeVertexShader.Handle;
 		hashedData[1] = activePixelShader.Handle;
 		ulong hash;

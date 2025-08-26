@@ -78,14 +78,9 @@ public unsafe class VertexBuffer : IDisposable
 			int elementSize = count * (int)type.SizeOf();
 			glEnableVertexArrayAttrib(vao, elementAttribute);
 			// type is relative to OpenGL's enumeration
-			switch (type) {
-				case VertexAttributeType.Float:
-					glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, false, (uint)sizeof1vertex);
-					break;
-				default:
-					glVertexArrayAttribIFormat(vao, elementAttribute, count, (int)type, (uint)sizeof1vertex);
-					break;
-			}
+			// TODO: normalization ternary is kinda gross but acceptable for now...
+			glVertexArrayAttribFormat(vao, elementAttribute, count, (int)type, i == VertexElement.Color ? true : false, (uint)sizeof1vertex);
+
 
 			bindings[bindingsPtr++] = elementAttribute;
 			sizeof1vertex += elementSize;

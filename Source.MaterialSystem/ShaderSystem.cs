@@ -244,7 +244,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0) {
 		if (textureVar.GetVarType() != MaterialVarType.String) {
-			if (textureVar.GetVarType() != MaterialVarType.Texture) 
+			if (textureVar.GetVarType() != MaterialVarType.Texture)
 				textureVar.SetTextureValue(MaterialSystem.TextureSystem.ErrorTexture());
 			return;
 		}
@@ -256,7 +256,7 @@ public class ShaderSystem : IShaderSystemInternal
 		ITextureInternal texture = (ITextureInternal)MaterialSystem.FindTexture(name, textureGroupName, false, additionalCreationFlags);
 
 		if (texture == null) {
-			if (!MaterialSystem.ShaderDevice.IsUsingGraphics()) 
+			if (!MaterialSystem.ShaderDevice.IsUsingGraphics())
 				Warning("Shader_t::LoadTexture: texture \"{name}.vtf\" doesn't exist\n");
 			texture = MaterialSystem.TextureSystem.ErrorTexture();
 		}
@@ -342,10 +342,13 @@ public class ShaderSystem : IShaderSystemInternal
 				fixed (byte* infoPtr = infoLog) {
 					glGetShaderInfoLog(shader, logLength, null, infoPtr);
 				}
-				glDeleteShader(shader);
 				error = Encoding.ASCII.GetString(infoLog);
-				return false;
 			}
+			else
+				error = "UNKNOWN FAILURE";
+
+			glDeleteShader(shader);
+			return false;
 		}
 
 		error = null;
@@ -363,10 +366,13 @@ public class ShaderSystem : IShaderSystemInternal
 				fixed (byte* infoPtr = infoLog) {
 					glGetProgramInfoLog(program, logLength, null, infoPtr);
 				}
-				glDeleteProgram(program);
 				error = Encoding.ASCII.GetString(infoLog);
-				return false;
 			}
+			else
+				error = "UNKNOWN FAILURE";
+
+			glDeleteProgram(program);
+			return false;
 		}
 
 		error = null;
@@ -385,10 +391,11 @@ public class ShaderSystem : IShaderSystemInternal
 		Span<byte> source = stackalloc byte[(int)handle.Stream.Length];
 		int read = handle.Stream.Read(source);
 		uint pShader = 0;
-			pShader = glCreateShader(GL_VERTEX_SHADER);
+		pShader = glCreateShader(GL_VERTEX_SHADER);
 		int len = source.Length;
 		fixed (byte* pSrc = source)
 			glShaderSource(pShader, 1, &pSrc, &len);
+		glCompileShader(pShader);
 
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Vertex shader compilation error.\n");
@@ -417,6 +424,7 @@ public class ShaderSystem : IShaderSystemInternal
 		int len = source.Length;
 		fixed (byte* pSrc = source)
 			glShaderSource(pShader, 1, &pSrc, &len);
+		glCompileShader(pShader);
 
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Pixel shader compilation error.\n");
