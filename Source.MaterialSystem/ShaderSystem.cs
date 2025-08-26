@@ -58,8 +58,6 @@ public class ShaderSystem : IShaderSystemInternal
 
 	public void ResetShaderState() {
 
-		SetVertexShader(VertexShaderHandle.INVALID);
-		SetPixelShader(PixelShaderHandle.INVALID);
 	}
 
 	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
@@ -305,25 +303,6 @@ public class ShaderSystem : IShaderSystemInternal
 
 	}
 
-	int vertexShaderIndex;
-	int pixelShaderIndex;
-
-	internal void SetVertexShader(in VertexShaderHandle vertexShader) {
-		if (vertexShader == VertexShaderHandle.INVALID) {
-			SetVertexShaderState(0);
-			return;
-		}
-
-		int vshIndex = vertexShaderIndex;
-		Assert(vshIndex >= 0);
-		if (vshIndex < 0)
-			vshIndex = 0;
-	}
-
-	internal void SetPixelShader(in PixelShaderHandle pixelShader) {
-
-	}
-
 	public void Init() {
 
 	}
@@ -436,4 +415,5 @@ public class ShaderSystem : IShaderSystemInternal
 		pshs[symbol] = psh;
 		return psh;
 	}
+
 }
