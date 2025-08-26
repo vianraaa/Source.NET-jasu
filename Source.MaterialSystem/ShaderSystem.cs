@@ -331,7 +331,28 @@ public class ShaderSystem : IShaderSystemInternal
 	Dictionary<ulong, VertexShaderHandle> vshs = [];
 	Dictionary<ulong, PixelShaderHandle> pshs = [];
 
-	internal static unsafe bool IsValidShader(uint program, [NotNullWhen(false)] out string? error) {
+	internal static unsafe bool IsValidShader(uint shader, [NotNullWhen(false)] out string? error) {
+		int status = 0;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+		if (status != GL_TRUE) {
+			int logLength = 0;
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+			if (logLength > 0) {
+				byte[] infoLog = new byte[logLength];
+				fixed (byte* infoPtr = infoLog) {
+					glGetShaderInfoLog(shader, logLength, null, infoPtr);
+				}
+				glDeleteShader(shader);
+				error = Encoding.ASCII.GetString(infoLog);
+				return false;
+			}
+		}
+
+		error = null;
+		return true;
+	}
+
+	internal static unsafe bool IsValidProgram(uint program, [NotNullWhen(false)] out string? error) {
 		int status = 0;
 		glGetProgramiv(program, GL_LINK_STATUS, &status);
 		if (status != GL_TRUE) {
@@ -351,6 +372,7 @@ public class ShaderSystem : IShaderSystemInternal
 		error = null;
 		return true;
 	}
+
 	public unsafe VertexShaderHandle LoadVertexShader(ReadOnlySpan<char> name) {
 		ulong symbol = name.Hash();
 		if (vshs.TryGetValue(symbol, out VertexShaderHandle value))
@@ -363,8 +385,10 @@ public class ShaderSystem : IShaderSystemInternal
 		Span<byte> source = stackalloc byte[(int)handle.Stream.Length];
 		int read = handle.Stream.Read(source);
 		uint pShader = 0;
+			pShader = glCreateShader(GL_VERTEX_SHADER);
+		int len = source.Length;
 		fixed (byte* pSrc = source)
-			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+			glShaderSource(pShader, 1, &pSrc, &len);
 
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Vertex shader compilation error.\n");
@@ -389,8 +413,10 @@ public class ShaderSystem : IShaderSystemInternal
 		Span<byte> source = stackalloc byte[(int)handle.Stream.Length];
 		int read = handle.Stream.Read(source);
 		uint pShader = 0;
+		pShader = glCreateShader(GL_FRAGMENT_SHADER);
+		int len = source.Length;
 		fixed (byte* pSrc = source)
-			pShader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &pSrc);
+			glShaderSource(pShader, 1, &pSrc, &len);
 
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Pixel shader compilation error.\n");

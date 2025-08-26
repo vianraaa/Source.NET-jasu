@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using K4os.Hash.xxHash;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using OpenGL;
 
@@ -27,6 +29,7 @@ using System.Threading.Tasks;
 
 using static Source.Common.Engine.IEngine;
 using static Source.MaterialSystem.ShaderAPIGl46;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 
@@ -52,9 +55,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	[Imported] public IShaderSystem ShaderManager;
 
 	public GraphicsDriver GetDriver() => Driver;
-
-	uint glPipeline;
-
+	
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
 
@@ -68,15 +69,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ClearColor4ub(0, 0, 0, 1);
 		ClearBuffers(true, true, true, -1, -1);
 
-		CreateShaderPipeline();
-
 		return true;
-	}
-
-	private unsafe void CreateShaderPipeline() {
-		fixed (uint* pipelinePtr = &glPipeline)
-			glGenProgramPipelines(1, pipelinePtr);
-		glBindProgramPipeline(glPipeline);
 	}
 
 	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil, int renderTargetWidth = -1, int renderTargetHeight = -1) {
@@ -96,20 +89,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void ClearColor3ub(byte r, byte g, byte b) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
 	public void ClearColor4ub(byte r, byte g, byte b, byte a) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
 
+	VertexShaderHandle activeVertexShader = VertexShaderHandle.INVALID;
+	PixelShaderHandle activePixelShader = PixelShaderHandle.INVALID;
+	bool pipelineChanged = false;
 	public void BindVertexShader(in VertexShaderHandle vertexShader) {
-		if (!vertexShader.IsValid()) {
-			Warning("WARNING: Attempted to bind an invalid vertex shader!\n");
-			return;
-		}
-		glUseProgramStages(glPipeline, GL_VERTEX_SHADER_BIT, (uint)vertexShader.Handle);
+		activeVertexShader = vertexShader;
+		pipelineChanged = true;
 	}
 
 	public void BindPixelShader(in PixelShaderHandle pixelShader) {
-		if (!pixelShader.IsValid()) {
-			Warning("WARNING: Attempted to bind an invalid pixel shader!\n");
-			return;
-		}
-		glUseProgramStages(glPipeline, GL_FRAGMENT_SHADER_BIT, (uint)pixelShader.Handle);
+		activePixelShader = pixelShader;
+		pipelineChanged = true;
 	}
 
 	public void CallCommitFuncs(CommitFuncType func, bool usingFixedFunction, bool force = false) {
@@ -167,13 +157,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		// todo
 	}
 
-	public void SetVertexShaderIndex(int value) {
-		// ShaderManager()->SetVertexShaderIndex( vshIndex );
-	}
-	public void SetPixelShaderIndex(int value) {
-		// ShaderManager()->SetPixelShaderIndex( vshIndex );
-	}
-
 	Mesh? RenderMesh;
 	IMaterialInternal? Material;
 
@@ -181,10 +164,47 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (IsDeactivated())
 			return;
 
+		if (pipelineChanged)
+			glUseProgram(ShaderCombobulator());
+
+		pipelineChanged = false;
+
 		if (RenderMesh != null)
 			RenderMesh.RenderPass();
 		else
 			MeshMgr.RenderPassWithVertexAndIndexBuffers();
+	}
+
+	Dictionary<ulong, uint> shaderCombinations = [];
+	private unsafe uint ShaderCombobulator() {
+		// Determines the shader program used given the current shader handles.
+		// If one does not exist, it is created.
+		Span<nint> hashedData = stackalloc nint[sizeof(nint) * 2];
+		hashedData[0] = activeVertexShader.Handle;
+		hashedData[1] = activePixelShader.Handle;
+		ulong hash;
+		fixed (nint* data = hashedData)
+			hash = XXH64.DigestOf(data, hashedData.Length * sizeof(nint), 0);
+
+		if (shaderCombinations.TryGetValue(hash, out var program))
+			return program; // We have already linked a program for this shader combination
+
+		// We need to create a program then
+		program = glCreateProgram();
+		glAttachShader(program, (uint)activeVertexShader.Handle);
+		glAttachShader(program, (uint)activePixelShader.Handle);
+		glLinkProgram(program);
+		// Even invalid program states should be hashed... for now.
+		// Maybe a time based thing for invalid programs, to try allowing for the shader developer to recover, etc...
+		shaderCombinations[hash] = program;
+
+		if(!ShaderSystem.IsValidProgram(program, out string? error)) {
+			Warning("WARNING: Shader combobulation linker error.\n");
+			Warning(error);
+			return 0;
+		}
+
+		return program;
 	}
 
 	private bool IsDeactivated() {

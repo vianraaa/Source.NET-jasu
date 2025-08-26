@@ -1,7 +1,7 @@
 #version 460
 
-in vec2 f_TexCoord;
-in vec4 f_Color;
+in vec2 vs_TexCoord;
+in vec4 vs_Color;
 
 uniform sampler2D basetexture;
 
