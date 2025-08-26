@@ -263,7 +263,6 @@ public enum HeaderDetails : short {
 
 public struct ResourceEntryInfo
 {
-	public static ref ResourceEntryInfo NULL => ref Unsafe.NullRef<ResourceEntryInfo>();
 	public ResourceEntryType Tag;
 	public byte Flags;
 	public uint Offset;
@@ -293,6 +292,10 @@ public enum ResourceEntryType : uint
 	/// Equiv of VTF_RSRC_TEXTURE_CRC (i think?)
 	/// </summary>
 	CRC = 0x00435243,
+	/// <summary>
+	/// Equiv of VTF_RSRC_TEXTURE_CRC (i think?)
+	/// </summary>
+	TextureStreamSettings = ('S' << 16) + ('T' << 8) + 'R',
 	/// <summary>
 	/// Equiv of VTF_RSRC_TEXTURE_LOD_SETTINGS (i think?)
 	/// </summary>

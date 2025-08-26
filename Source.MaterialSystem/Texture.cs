@@ -604,6 +604,8 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		return true;
 	}
 
+	unsafe byte* ImageData;
+
 	private bool ConvertToActualFormat(IVTFTexture vtfTexture) {
 		if (!materials.ShaderDevice.IsUsingGraphics())
 			return false;

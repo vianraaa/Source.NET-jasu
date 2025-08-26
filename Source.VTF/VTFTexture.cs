@@ -119,7 +119,10 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	public void ConvertImageFormat(ImageFormat format, bool normalToDUDV) {
-		Dbg.Msg("no convertimageformat yet\n");
+		if (ImageData == null)
+			return;
+
+
 	}
 
 	int IVTFTexture.Depth() => Depth;
@@ -163,13 +166,11 @@ public sealed class VTFTexture : IVTFTexture
 	int IVTFTexture.Height() => Height;
 
 	Span<byte> IVTFTexture.ImageData() {
-		throw new NotImplementedException();
+		return GetImageData(0, 0, 0);
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel) {
-		Assert(ImageData != null);
-		nint offset = GetImageOffset(frame, face, mipLevel, Format);
-		return ImageData.AsSpan()[(int)offset..];
+		return GetImageData(frame, face, mipLevel);
 	}
 
 	private nint GetImageOffset(int frame, int face, int mipLevel, ImageFormat format) {
@@ -218,7 +219,7 @@ public sealed class VTFTexture : IVTFTexture
 				return ref searchResource;
 		}
 
-		return ref ResourceEntryInfo.NULL;
+		return ref Unsafe.NullRef<ResourceEntryInfo>();
 	}
 
 	public void ImageFileInfo(int frame, int face, int mipLevel, out int startLocation, out int sizeInBytes) {
@@ -409,9 +410,105 @@ public sealed class VTFTexture : IVTFTexture
 		if (headerOnly)
 			return true;
 
+		ref ResourceEntryInfo lowResDataInfo = ref FindResourceEntryInfo(ResourceEntryType.LowResThumbnail);
+		if (!Unsafe.IsNullRef(ref lowResDataInfo)) {
+			stream.Seek(lowResDataInfo.Offset, SeekOrigin.Begin);
+			if (!LoadLowResData(stream))
+				return false;
+		}
+
+		// TODO: LoadNewResources
+
+		ref ResourceEntryInfo imageDataInfo = ref FindResourceEntryInfo(ResourceEntryType.HighResImageData);
+		if (!Unsafe.IsNullRef(ref imageDataInfo)) {
+			stream.Seek(imageDataInfo.Offset, SeekOrigin.Begin);
+			if (!LoadImageData(stream, header, skipMipLevels))
+				return false;
+		}
+		else
+			return false;
+
 		return true;
 	}
 
+	private bool LoadImageData(Stream stream, VTFFileHeader header, int skipMipLevels) {
+		if(skipMipLevels > 0) {
+			if(header.NumMipLevels < skipMipLevels) {
+				Warning("Warning! Encountered old format VTF file; please rebuild it!\n");
+				return false;
+			}
+
+			ComputeMipLevelDimensions(skipMipLevels, out Width, out Height, out Depth);
+			MipCount -= skipMipLevels;
+		}
+
+		nint imageSize = ComputeFaceSize();
+		imageSize *= FaceCount * FrameCount;
+
+		int facesToRead = FaceCount;
+		if (IsCubeMap())
+			throw new NotImplementedException("No cubemap support yet");
+
+		if (!AllocateImageData(imageSize))
+			return false;
+
+		bool mipDataPresent = true;
+		int firstAvailableMip = 0;
+		int lastAvailableMip = MipCount - 1;
+
+		Span<byte> data = GetResourceData(ResourceEntryType.TextureLOD);
+		if (data != null) {
+			ref TextureStreamSettings_t streamSettings = ref MemoryMarshal.Cast<byte, TextureStreamSettings_t>(data)[0];
+			firstAvailableMip = Math.Max(0, streamSettings.FirstAvailableMip - skipMipLevels);
+			lastAvailableMip = Math.Max(0, streamSettings.LastAvailableMip - skipMipLevels);
+			mipDataPresent = false;
+		}
+
+		// Not doing streamable textures right now
+
+		Assert(firstAvailableMip >= 0 && firstAvailableMip <= lastAvailableMip && lastAvailableMip < MipCount);
+
+		FinestMipmapLevel = firstAvailableMip;
+		CoarsestMipmapLevel = lastAvailableMip;
+
+		for (int mip = MipCount; --mip >= 0;) {
+			if (header.NumMipLevels - skipMipLevels <= mip)
+				continue;
+
+			int mipSize = ComputeMipSize(mip);
+
+			if (mip > lastAvailableMip || mip < firstAvailableMip) {
+				if (mipDataPresent)
+					for (int frame = 0; frame < FrameCount; frame++)
+						for (int face = 0; face < facesToRead; face++)
+							stream.Seek(mipSize, SeekOrigin.Current);
+				continue;
+			}
+
+			for (int frame = 0; frame < FrameCount; frame++) {
+				for (int face = 0; face < facesToRead; face++) {
+					Span<byte> mipBits = GetImageData(frame, face, mip);
+					stream.Read(mipBits[..mipSize]);
+				}
+			}
+		}
+
+		return stream.Position <= stream.Length;
+	}
+
+	private Span<byte> GetImageData(int frame, int face, int mip) {
+		Assert(ImageData != null);
+		nint offset = GetImageOffset(frame, face, mip, Format);
+		return ImageData.AsSpan()[(int)offset..];
+	}
+
+	private bool AllocateImageData(nint imageSize) {
+		throw new NotImplementedException();
+	}
+
+	private bool LoadLowResData(Stream stream) {
+		return true; // not reading that right now
+	}
 
 	private int ComputeMipCount() {
 		return ImageLoader.GetNumMipMapLevels(Width, Height, Depth);
