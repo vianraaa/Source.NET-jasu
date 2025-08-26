@@ -91,6 +91,8 @@ public abstract class BaseShader : IShader
 
 	protected virtual void RecomputeShaderUniforms(in VertexShaderHandle vsh, in PixelShaderHandle psh) {
 		Assert(ShaderAPI!);
+		ShaderAPI!.BindVertexShader(in vsh);
+		ShaderAPI!.BindPixelShader(in psh);
 		for (int i = 0; i < Params!.Length; i++) {
 			IMaterialVar? var = Params[i];
 			if (var == null) continue;
@@ -99,19 +101,11 @@ public abstract class BaseShader : IShader
 			ReadOnlySpan<char> name = var.GetName();
 			name = name[0] == '$' ? name[1..] : name;
 
-			GPU.Location = ShaderAPI!.LocateVertexShaderUniform(in vsh, name);
-			if (GPU.Location >= 0)
-				GPU.Shader = ShaderType.Vertex;
-			else {
-				GPU.Location = ShaderAPI!.LocatePixelShaderUniform(in psh, name);
-				if (GPU.Location >= 0)
-					GPU.Shader = ShaderType.Pixel;
-				else {
-					// Cannot find the shader location :(
-					continue;
-				}
-			}
-			GPU.Program = GPU.Shader == ShaderType.Vertex ? vsh.Handle : psh.Handle;
+			GPU.Location = ShaderAPI!.LocateShaderUniform(name);
+			if (GPU.Location < 0) 
+				continue;
+
+			GPU.Program = ShaderAPI!.GetCurrentProgram();
 		}
 	}
 

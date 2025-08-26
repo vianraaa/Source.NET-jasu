@@ -26,7 +26,6 @@ public enum MaterialVarType : ushort
 
 public struct MaterialVarGPU {
 	public nint Program;
-	public ShaderType Shader;
 	public int Location;
 }
 

@@ -92,6 +92,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	VertexShaderHandle activeVertexShader = VertexShaderHandle.INVALID;
 	PixelShaderHandle activePixelShader = PixelShaderHandle.INVALID;
 	bool pipelineChanged = false;
+	uint lastShader;
 	public void BindVertexShader(in VertexShaderHandle vertexShader) {
 		activeVertexShader = vertexShader;
 		pipelineChanged = true;
@@ -160,14 +161,23 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	Mesh? RenderMesh;
 	IMaterialInternal? Material;
 
+	uint CombobulateShadersIfChanged() {
+		uint program;
+		if (pipelineChanged) {
+			program = ShaderCombobulator();
+			lastShader = program;
+			glUseProgram(program);
+		}
+
+		pipelineChanged = false;
+		return lastShader;
+	}
+
 	internal void RenderPass() {
 		if (IsDeactivated())
 			return;
 
-		if (pipelineChanged)
-			glUseProgram(ShaderCombobulator());
-
-		pipelineChanged = false;
+		CombobulateShadersIfChanged();
 
 		if (RenderMesh != null)
 			RenderMesh.RenderPass();
@@ -447,61 +457,46 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return 0;
 	}
 
-	public unsafe int LocateVertexShaderUniform(in VertexShaderHandle vertexShader, ReadOnlySpan<char> name) {
-		if (!vertexShader.IsValid()) {
+	public unsafe int LocateShaderUniform(ReadOnlySpan<char> name) {
+		if (!activeVertexShader.IsValid()) {
 			Warning("WARNING: Attempted to locate uniform on an invalid vertex shader!\n");
 			return -1;
 		}
-		Span<byte> bytes = stackalloc byte[name.Length * 2];
-		int byteLen = Encoding.ASCII.GetBytes(name, bytes);
-		int loc;
-		fixed (byte* uniformName = bytes)
-			loc = glGetUniformLocation((uint)vertexShader.Handle, uniformName);
-		return loc;
-	}
-
-	public unsafe int LocatePixelShaderUniform(in PixelShaderHandle pixelShader, ReadOnlySpan<char> name) {
-		if (!pixelShader.IsValid()) {
+		if (!activePixelShader.IsValid()) {
 			Warning("WARNING: Attempted to locate uniform on an invalid pixel shader!\n");
 			return -1;
 		}
+		uint shader = CombobulateShadersIfChanged();
 		Span<byte> bytes = stackalloc byte[name.Length * 2];
 		int byteLen = Encoding.ASCII.GetBytes(name, bytes);
 		int loc;
 		fixed (byte* uniformName = bytes)
-			loc = glGetUniformLocation((uint)pixelShader.Handle, uniformName);
+			loc = glGetUniformLocation(shader, uniformName);
 		return loc;
 	}
 
-	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, int integer) {
+	public nint GetCurrentProgram() => (nint)CombobulateShadersIfChanged();
+
+	public void SetShaderUniform(int uniform, int integer) {
 		throw new NotImplementedException();
 	}
 
-	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, float fl) {
+	public void SetShaderUniform(int uniform, float fl) {
 		throw new NotImplementedException();
 	}
 
-	public void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, ReadOnlySpan<float> flConsts) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, int integer) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, float fl) {
-		throw new NotImplementedException();
-	}
-
-	public void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, ReadOnlySpan<float> flConsts) {
+	public void SetShaderUniform(int uniform, ReadOnlySpan<float> flConsts) {
 		throw new NotImplementedException();
 	}
 
 	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t textureHandle) {
+		CombobulateShadersIfChanged();
 		if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE)
 			return; // TODO: can we UNSET the sampler???
 
-		glProgramUniform1i((uint)hardwareTarget.Program, hardwareTarget.Location, textureHandle);
+		glActiveTexture(GL_TEXTURE0 + 0);
+		glBindTexture(GL_TEXTURE_2D, (uint)textureHandle);
+		glProgramUniform1i((uint)hardwareTarget.Program, hardwareTarget.Location, 0);
 	}
 
 	public bool CanDownloadTextures() {

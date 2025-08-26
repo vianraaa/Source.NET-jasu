@@ -128,8 +128,6 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 			renderUtils.DrawScreenSpaceRectangle(material, 0, 0, w, h, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
 			materials.SwapBuffers();
 		}
-		Msg("Are we live?\n");
-		// Debugger.Break();
 	}
 
 	IVTFTexture? backgroundTexture;

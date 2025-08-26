@@ -81,20 +81,16 @@ public interface IShaderDynamicAPI
 	void BindVertexShader(in VertexShaderHandle vertexShader);
 	void BindPixelShader(in PixelShaderHandle pixelShader);
 
-	int LocateVertexShaderUniform(in VertexShaderHandle vertexShader, ReadOnlySpan<char> name);
-	int LocatePixelShaderUniform(in PixelShaderHandle pixelShader, ReadOnlySpan<char> name);
+	int LocateShaderUniform(ReadOnlySpan<char> name);
 
-	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, int integer);
-	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, float fl);
-	void SetVertexShaderUniform(in VertexShaderHandle vertexShader, int uniform, ReadOnlySpan<float> flConsts);
-
-	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, int integer);
-	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, float fl);
-	void SetPixelShaderUniform(in PixelShaderHandle pixelShader, int uniform, ReadOnlySpan<float> flConsts);
+	void SetShaderUniform(int uniform, int integer);
+	void SetShaderUniform(int uniform, float fl);
+	void SetShaderUniform(int uniform, ReadOnlySpan<float> flConsts);
 
 	void MatrixMode(MaterialMatrixMode i);
 	void LoadMatrix(in Matrix4x4 transposeTop);
 	void LoadIdentity();
 	int GetCurrentNumBones();
 	GraphicsDriver GetDriver();
+	nint GetCurrentProgram();
 }
