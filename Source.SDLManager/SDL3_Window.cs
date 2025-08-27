@@ -61,11 +61,6 @@ public unsafe class SDL3_Window
 	private readonly IServiceProvider systems;
 	public SDL3_Window(IServiceProvider systems) {
 		this.systems = systems;
-		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(System.Environment.ProcessPath), "N/A", "N/A");
-		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
-			throw new Exception("Couldn't initialize SDL3's video subsystem.");
-		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
-			throw new Exception("Couldn't initialize SDL3's audio subsystem.");
 	}
 
 	public Vector2 Position {

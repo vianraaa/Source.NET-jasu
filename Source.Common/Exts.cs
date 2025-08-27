@@ -447,10 +447,8 @@ public static class ReflectionUtils
 	}
 
 	public static bool IsOkAssembly(Assembly assembly) {
-		// ugh
-		if (assembly.GetName().Name!.StartsWith("System."))
-			return false;
-		if (assembly.GetName().Name == "Steamworks.NET")
+		// ugh, what a hack - but for now, this is the only way to get things sanely. Need a better way.
+		if (!assembly.GetName().Name!.StartsWith("Source") && !assembly.GetName().Name!.StartsWith("Game"))
 			return false;
 
 		return true;

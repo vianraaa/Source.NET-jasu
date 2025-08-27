@@ -27,8 +27,18 @@ public unsafe class SDL3_OpenGL46_Context(nint window, nint ctx) : IGraphicsCont
 	}
 }
 
-public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherManager, IGraphicsProvider
+public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 {
+	readonly IServiceProvider services;
+	public SDL3_LauncherManager(IServiceProvider services) {
+		this.services = services;
+
+		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(System.Environment.ProcessPath), "N/A", "N/A");
+		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
+			throw new Exception("Couldn't initialize SDL3's video subsystem.");
+		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
+			throw new Exception("Couldn't initialize SDL3's audio subsystem.");
+	}
 	SDL3_Window window;
 	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
 		IMaterialSystem materials = services.GetRequiredService<IMaterialSystem>();
@@ -112,25 +122,27 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 	public bool PrepareContext(GraphicsDriver driver) {
 		if (driver.HasFlag(GraphicsDriver.OpenGL)) {
-			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24))
-				Error("Bad set attribute...");
-			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8))
-				Error("Bad set attribute...");
-			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1)) 
-				Error("Can't double buffer?");
-
 			switch ((driver & ~GraphicsDriver.OpenGL)) {
 				default:
-					Warning("Cannot support this OpenGL version");
+					Error("Cannot support this OpenGL version");
 					return false;
 				case (GraphicsDriver)460: {
 						if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4))
-							Error("Bad set attribute...");
+							Error($"GL Context: Bad major version... {SDL3.SDL_GetError()}");
 						if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6))
-							Error("Bad set attribute...");
-						return true;
+							Error($"GL Context: Bad minor version... {SDL3.SDL_GetError()}");
 					}
+					break;
 			}
+
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24))
+				Error("GL Context: Bad depth request...");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8))
+				Error("GL Context: Bad stencil request...");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1))
+				Error("GL Context: Can't double buffer?");
+
+			return true;
 		}
 		return false;
 	}
