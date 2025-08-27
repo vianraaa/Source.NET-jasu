@@ -93,4 +93,6 @@ public interface IShaderDynamicAPI
 	int GetCurrentNumBones();
 	GraphicsDriver GetDriver();
 	nint GetCurrentProgram();
+	void EnableDepthWrites(bool v);
+	void EnableDepthTest(bool v);
 }

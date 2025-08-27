@@ -7,6 +7,7 @@ using Source.Common.Launcher;
 
 using System.Collections.Concurrent;
 using System.Numerics;
+using System.Reflection;
 
 namespace Source.SDLManager;
 
@@ -60,6 +61,7 @@ public unsafe class SDL3_Window
 	private readonly IServiceProvider systems;
 	public SDL3_Window(IServiceProvider systems) {
 		this.systems = systems;
+		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(System.Environment.ProcessPath), "N/A", "N/A");
 		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
 			throw new Exception("Couldn't initialize SDL3's video subsystem.");
 		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
@@ -302,6 +304,7 @@ public unsafe class SDL3_Window
 	}
 
 	public SDL3_Window Create(string title, int width, int height, SDL_WindowFlags flags) {
+		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1);
 		window = SDL3.SDL_CreateWindow(title, width, height, flags);
 
 		return this;

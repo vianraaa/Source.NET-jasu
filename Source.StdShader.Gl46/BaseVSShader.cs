@@ -101,6 +101,13 @@ public abstract class BaseVSShader : BaseShader
 			return;
 		}
 
+		int flags = Params![(int)ShaderMaterialVars.Flags].GetIntValue();
+
+		if((flags & (int)MaterialVarFlags.IgnoreZ) > 0) {
+			ShaderAPI.EnableDepthTest(false);
+			ShaderAPI.EnableDepthWrites(false);
+		}
+
 		if (bBaseTexture) {
 			BindTexture(in shaderParams[baseTextureVar].GPU, baseTextureVar, frameVar);
 			//SetVertexShaderTextureTransform(baseTextureTransformVar);

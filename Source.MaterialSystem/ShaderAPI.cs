@@ -55,7 +55,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	[Imported] public IShaderSystem ShaderManager;
 
 	public GraphicsDriver GetDriver() => Driver;
-	
+
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
 
@@ -208,7 +208,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		// Maybe a time based thing for invalid programs, to try allowing for the shader developer to recover, etc...
 		shaderCombinations[hash] = program;
 
-		if(!ShaderSystem.IsValidProgram(program, out string? error)) {
+		if (!ShaderSystem.IsValidProgram(program, out string? error)) {
 			Warning("WARNING: Shader combobulation linker error.\n");
 			Warning(error);
 			return 0;
@@ -430,7 +430,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			throw new Exception();
 		}
 
-		glFlush();
 		Device!.SwapBuffers();
 	}
 
@@ -616,5 +615,16 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public int GetCurrentDynamicVBSize() {
 		return (1024 + 512) * 1024; // See if it's still needed to use smaller sizes at certain points... how would this even work, I wonder
+	}
+
+	public void EnableDepthWrites(bool v) {
+		if (v)
+			glEnable(GL_DEPTH_TEST);
+		else
+			glDisable(GL_DEPTH_TEST);
+	}
+
+	public void EnableDepthTest(bool v) {
+		glDepthMask(v);
 	}
 }

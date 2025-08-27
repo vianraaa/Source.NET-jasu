@@ -115,12 +115,9 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 		window = window < 0 ? (nint)this.window.HardwareHandle : window;
 		if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL)) {
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_RED_SIZE, 8);
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_GREEN_SIZE, 8);
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_BLUE_SIZE, 8);
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_ALPHA_SIZE, 8);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24);
 			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
+			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1);
 			switch ((deviceInfo.Driver & ~GraphicsDriver.OpenGL)) {
 				default: 
 					Warning("Cannot support this OpenGL version");
