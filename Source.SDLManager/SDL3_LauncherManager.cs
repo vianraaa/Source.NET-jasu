@@ -110,31 +110,40 @@ public unsafe class SDL3_LauncherManager(IServiceProvider services) : ILauncherM
 
 	}
 
+	public bool PrepareContext(GraphicsDriver driver) {
+		if (driver.HasFlag(GraphicsDriver.OpenGL)) {
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24))
+				Error("Bad set attribute...");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8))
+				Error("Bad set attribute...");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1)) 
+				Error("Can't double buffer?");
+
+			switch ((driver & ~GraphicsDriver.OpenGL)) {
+				default:
+					Warning("Cannot support this OpenGL version");
+					return false;
+				case (GraphicsDriver)460: {
+						if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4))
+							Error("Bad set attribute...");
+						if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6))
+							Error("Bad set attribute...");
+						return true;
+					}
+			}
+		}
+		return false;
+	}
+
 	public IGraphicsContext? CreateContext(in ShaderDeviceInfo deviceInfo, nint window = -1) {
 		IGraphicsContext? gfx = null;
 
 		window = window < 0 ? (nint)this.window.HardwareHandle : window;
 		if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL)) {
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DEPTH_SIZE, 24);
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_STENCIL_SIZE, 8);
-			SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1);
-			switch ((deviceInfo.Driver & ~GraphicsDriver.OpenGL)) {
-				default: 
-					Warning("Cannot support this OpenGL version");
-					return null;
-				case (GraphicsDriver)460: {
-						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 6);
-						SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_PROFILE_MASK, SDL3.SDL_GL_CONTEXT_PROFILE_CORE);
-						nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)window);
-						gfx = new SDL3_OpenGL46_Context(window, ctx);
-						break;
-					}
-			}
-		}
-
-		if (gfx != null)
+			nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)window);
+			gfx = new SDL3_OpenGL46_Context(window, ctx);
 			return gfx;
+		}
 
 		Warning("Cannot support this graphics API\n");
 		return null;

@@ -304,7 +304,6 @@ public unsafe class SDL3_Window
 	}
 
 	public SDL3_Window Create(string title, int width, int height, SDL_WindowFlags flags) {
-		SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1);
 		window = SDL3.SDL_CreateWindow(title, width, height, flags);
 
 		return this;
