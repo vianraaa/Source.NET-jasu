@@ -601,7 +601,7 @@ public sealed class VTFTexture : IVTFTexture
 			return false;
 		}
 
-		if (!ReaderHeaderFromBufferPastBaseHeader(reader, header)) {
+		if (!ReadHeaderFromBufferPastBaseHeader(reader, header)) {
 			Dbg.Warning("*** Encountered VTF file with an invalid full header!\n");
 			return false;
 		}
@@ -622,7 +622,7 @@ public sealed class VTFTexture : IVTFTexture
 
 				break;
 		}
-
+		stream.Seek(header.HeaderSize, SeekOrigin.Begin);
 		return true;
 	}
 
@@ -654,6 +654,7 @@ public sealed class VTFTexture : IVTFTexture
 	private static bool ReadV3(BinaryReader reader, VTFFileHeaderV7_3 header) {
 		reader.ReadInto<sbyte>(header.Pad4);
 		reader.ReadInto(ref header.NumResources);
+		reader.ReadNothing(8);
 		header.ResourcesOffset = reader.BaseStream.Position;
 		return reader.PeekChar() != -1;
 	}
@@ -665,7 +666,7 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 
-	private static bool ReaderHeaderFromBufferPastBaseHeader(BinaryReader reader, VTFFileHeader header) {
+	private static bool ReadHeaderFromBufferPastBaseHeader(BinaryReader reader, VTFFileHeader header) {
 		switch (header.Version[1]) {
 			case 0:
 				if (!ReadV0(reader, header)) return false;
