@@ -8796,7 +8796,7 @@ public unsafe static class Gl46
     /// <param name="program">Specifies the program object containing the uniform variable to be modified.</param>
     /// <param name="location">Specifies the location of the uniform variable to be modified.</param>
     /// <param name="value">Specifies an array of values that will be used to update the specified uniform variable.</param>
-    public static void glProgramUniform1fv(GLuint program, GLint location, GLfloat[] value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform1fv(program, location, value.Length, pValue); } }
+    public static void glProgramUniform1fv(GLuint program, GLint location, ReadOnlySpan<GLfloat> value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform1fv(program, location, value.Length, pValue); } }
 #endif
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -8934,7 +8934,7 @@ public unsafe static class Gl46
     /// <param name="program">Specifies the program object containing the uniform variable to be modified.</param>
     /// <param name="location">Specifies the location of the uniform variable to be modified.</param>
     /// <param name="value">Specifies an array of values that will be used to update the specified uniform variable.</param>
-    public static void glProgramUniform2fv(GLuint program, GLint location, GLfloat[] value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform2fv(program, location, value.Length / 2, pValue); } }
+    public static void glProgramUniform2fv(GLuint program, GLint location, ReadOnlySpan<GLfloat> value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform2fv(program, location, value.Length / 2, pValue); } }
 #endif
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -9076,7 +9076,7 @@ public unsafe static class Gl46
     /// <param name="program">Specifies the program object containing the uniform variable to be modified.</param>
     /// <param name="location">Specifies the location of the uniform variable to be modified.</param>
     /// <param name="value">Specifies an array of values that will be used to update the specified uniform variable.</param>
-    public static void glProgramUniform3fv(GLuint program, GLint location, GLfloat[] value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform3fv(program, location, value.Length / 3, pValue); } }
+    public static void glProgramUniform3fv(GLuint program, GLint location, ReadOnlySpan<GLfloat> value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform3fv(program, location, value.Length / 3, pValue); } }
 #endif
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -9222,7 +9222,7 @@ public unsafe static class Gl46
     /// <param name="program">Specifies the program object containing the uniform variable to be modified.</param>
     /// <param name="location">Specifies the location of the uniform variable to be modified.</param>
     /// <param name="value">Specifies an array of values that will be used to update the specified uniform variable.</param>
-    public static void glProgramUniform4fv(GLuint program, GLint location, GLfloat[] value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform4fv(program, location, value.Length / 4, pValue); } }
+    public static void glProgramUniform4fv(GLuint program, GLint location, ReadOnlySpan<GLfloat> value) { fixed (GLfloat* pValue = &value[0]) { _glProgramUniform4fv(program, location, value.Length / 4, pValue); } }
 #endif
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

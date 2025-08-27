@@ -92,7 +92,6 @@ public abstract class BaseVSShader : BaseShader
 
 		bool bBaseTexture = (baseTextureVar >= 0) && shaderParams[baseTextureVar].IsTexture();
 
-
 		ShaderAPI!.BindVertexShader(in vsh);
 		ShaderAPI!.BindPixelShader(in psh);
 
@@ -101,25 +100,31 @@ public abstract class BaseVSShader : BaseShader
 			return;
 		}
 
-		int flags = Params![(int)ShaderMaterialVars.Flags].GetIntValue();
+		var param = shaderParams[(int)ShaderMaterialVars.Flags];
+		uint flags = (uint)param.GetIntValue();
 
-		if((flags & (int)MaterialVarFlags.IgnoreZ) > 0) {
+		if ((flags & (uint)MaterialVarFlags.IgnoreZ) > 0) {
 			ShaderAPI.EnableDepthTest(false);
 			ShaderAPI.EnableDepthWrites(false);
 		}
 
+		ShaderAPI.EnableAlphaTest(true);
+		ShaderAPI.AlphaFunc(ShaderAlphaFunc.Always, 0.5f);
+
 		if (bBaseTexture) {
-			BindTexture(in shaderParams[baseTextureVar].GPU, baseTextureVar, frameVar);
+			ITexture tex = BindTexture(in shaderParams[baseTextureVar].GPU, baseTextureVar, frameVar);
 			//SetVertexShaderTextureTransform(baseTextureTransformVar);
 		}
 
 		Draw();
 	}
 
-	private void BindTexture(in MaterialVarGPU hardwareTarget, int textureVarIdx, int frameVarIdx) {
+	private ITexture BindTexture(in MaterialVarGPU hardwareTarget, int textureVarIdx, int frameVarIdx) {
 		IMaterialVar textureVar = Params![textureVarIdx];
 		IMaterialVar? frameVar = frameVarIdx != -1 ? Params[frameVarIdx] : null;
-		ShaderSystem.BindTexture(hardwareTarget, textureVar.GetTextureValue()!, frameVar?.GetIntValue() ?? 0);
+		var tex = textureVar.GetTextureValue()!;
+		ShaderSystem.BindTexture(in hardwareTarget, tex, frameVar?.GetIntValue() ?? 0);
+		return tex;
 	}
 
 	private void Draw(bool makeActualDrawCall = true) {

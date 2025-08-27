@@ -3,7 +3,13 @@
 in vec2 vs_TexCoord;
 in vec4 vs_Color;
 
+layout(std140, binding = 1) uniform source_pixel_sharedUBO {
+    int alphaTest;
+    float alphaTestRef;
+};
+
 uniform sampler2D basetexture;
+uniform uint flags;
 
 out vec4 fragColor;
 

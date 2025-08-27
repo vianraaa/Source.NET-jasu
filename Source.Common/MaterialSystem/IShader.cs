@@ -95,4 +95,8 @@ public interface IShaderDynamicAPI
 	nint GetCurrentProgram();
 	void EnableDepthWrites(bool v);
 	void EnableDepthTest(bool v);
+	void EnableBlending(bool v);
+	void BlendFunc(ShaderBlendFactor srcAlpha, ShaderBlendFactor dstAlpha);
+	void EnableAlphaTest(bool v);
+	void AlphaFunc(ShaderAlphaFunc always, float v);
 }

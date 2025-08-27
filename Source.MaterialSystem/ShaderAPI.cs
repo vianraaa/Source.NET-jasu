@@ -60,6 +60,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		AcquireInternalRenderTargets();
 
 		CreateMatrixStacks();
+		CreateShaderSharedUBOs();
 
 		ShaderManager.Init();
 		MeshMgr.Init();
@@ -191,9 +192,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	private unsafe uint ShaderCombobulator() {
 		// Determines the shader program used given the current shader handles.
 		// If one does not exist, it is created.
-		Span<nint> hashedData = stackalloc nint[2];
-		hashedData[0] = activeVertexShader.Handle;
-		hashedData[1] = activePixelShader.Handle;
+		Span<nint> hashedData = [activeVertexShader.Handle, activePixelShader.Handle];
 		ulong hash;
 		fixed (nint* data = hashedData)
 			hash = XXH64.DigestOf(data, hashedData.Length * sizeof(nint), 0);
@@ -477,17 +476,22 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public nint GetCurrentProgram() => (nint)CombobulateShadersIfChanged();
+	uint GetCurrentProgramInternal() => CombobulateShadersIfChanged();
 
 	public void SetShaderUniform(int uniform, int integer) {
-		throw new NotImplementedException();
+		glProgramUniform1i(GetCurrentProgramInternal(), uniform, integer);
+	}
+
+	public void SetShaderUniform(int uniform, uint integer) {
+		glProgramUniform1ui(GetCurrentProgramInternal(), uniform, integer);
 	}
 
 	public void SetShaderUniform(int uniform, float fl) {
-		throw new NotImplementedException();
+		glProgramUniform1f(GetCurrentProgramInternal(), uniform, fl);
 	}
 
 	public void SetShaderUniform(int uniform, ReadOnlySpan<float> flConsts) {
-		throw new NotImplementedException();
+		glProgramUniform1fv(GetCurrentProgramInternal(), uniform, flConsts);
 	}
 
 	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t textureHandle) {
@@ -628,5 +632,21 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public void EnableDepthTest(bool v) {
 		glDepthMask(v);
+	}
+
+	public void EnableBlending(bool v) {
+		throw new NotImplementedException();
+	}
+
+	public void BlendFunc(ShaderBlendFactor srcAlpha, ShaderBlendFactor dstAlpha) {
+		throw new NotImplementedException();
+	}
+
+	public void EnableAlphaTest(bool enable) {
+
+	}
+
+	public void AlphaFunc(ShaderAlphaFunc func, float refV) {
+
 	}
 }
