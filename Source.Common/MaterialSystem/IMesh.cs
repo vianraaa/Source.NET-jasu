@@ -326,16 +326,17 @@ public struct IndexBuilder
 	// Used to make sure Begin/End calls and BeginModify/EndModify calls match.
 	public bool Modify;
 
-	public unsafe void AttachBegin(IMesh mesh, int maxIndexCount, ref IndexDesc desc) {
+	// What the hell, this needs MeshDesc.... okay....
+	public unsafe void AttachBegin(IMesh mesh, int maxIndexCount, ref MeshDesc desc) {
 		IndexBuffer = mesh;
 		IndexCount = 0;
 		MaxIndexCount = maxIndexCount;
 
 		Modify = false;
 
-		IndexOffset = (int)desc.FirstIndex;
-		Desc.Indices = desc.Indices;
-		Desc.IndexSize = desc.IndexSize;
+		IndexOffset = (int)desc.Vertex.FirstVertex;
+		Desc.Indices = desc.Index.Indices;
+		Desc.IndexSize = desc.Index.IndexSize;
 		Reset();
 	}
 
@@ -477,7 +478,7 @@ public unsafe struct MeshBuilder : IDisposable
 		}
 
 		Mesh.LockMesh(maxVertexCount, maxIndexCount, ref Desc);
-		IndexBuilder.AttachBegin(Mesh, maxIndexCount, ref Desc.Index);
+		IndexBuilder.AttachBegin(Mesh, maxIndexCount, ref Desc);
 		VertexBuilder.AttachBegin(Mesh, maxVertexCount, ref Desc.Vertex);
 
 		Reset();

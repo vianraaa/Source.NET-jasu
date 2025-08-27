@@ -9,8 +9,9 @@ public class MeshMgr
 	internal MaterialSystem MaterialSystem;
 
 	internal void Flush() {
-		if (IsPC()) 
+		if (IsPC()) {
 			BufferedMesh.Flush();
+		}
 	}
 
 	public IMesh GetDynamicMesh(IMaterial? material, VertexFormat vertexFormat, int hwSkinBoneCount, bool buffered, IMesh? vertexOverride, IMesh? indexOverride) {

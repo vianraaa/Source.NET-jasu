@@ -2,6 +2,7 @@
 
 using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
@@ -19,7 +20,7 @@ using System.Threading.Tasks;
 namespace Source.Engine;
 
 
-public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials, RenderUtils renderUtils) : IVideoMode
+public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials, RenderUtils renderUtils, ICommandLine CommandLine) : IVideoMode
 {
 	VMode mode = new();
 	bool Windowed;
@@ -99,6 +100,7 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 	}
 
 	public void DrawStartupGraphic() {
+		bool debugstartup = CommandLine.FindParm("-debugstartupscreen") > 0;
 		SetupStartupGraphic();
 
 		if (backgroundTexture == null)
@@ -130,18 +132,65 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		int lw = loadingTexture!.Width();
 		int lh = loadingTexture!.Height();
 
-		renderContext.Viewport(0, 0, w, h);
-		renderContext.DepthRange(0, 1);
-		// SetToneMappingScaleLinear - what does it do... (in this context)
-		// I guess it just sets it to 1, 1, 1 but still, need to review how we'd even replicate tone mapping 
-		float depth = 0.5f;
 
-		for (int i = 0; i < 2; i++) {
-			renderContext.ClearColor3ub(0, 0, 0);
-			renderContext.ClearBuffers(true, true, true);
-			renderUtils.DrawScreenSpaceRectangle(material, 0, 0, w, h, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
-			renderUtils.DrawScreenSpaceRectangle(loadingMaterial, w - lw, h - lh, lw, lh, 0, 0, lw - 1, lh - 1, lw, lh, null, 1, 1, depth);
-			materials.SwapBuffers();
+		if (false && debugstartup) {
+			for (int repeat = 0; repeat < 100000; repeat++) {
+				renderContext.Viewport(0, 0, w, h);
+				renderContext.DepthRange(0, 1);
+				renderContext.ClearColor3ub(0, (byte)((repeat & 0x7) << 3), 0);
+				renderContext.ClearBuffers(true, true, true);
+
+				if (true)  // draw normal BK
+				{
+					float depth = 0.55f;
+					int slide = (repeat) % 200; // 100 down and 100 up
+					if (slide > 100) {
+						slide = 200 - slide;        // aka 100-(slide-100).
+					}
+
+					// stop sliding about
+					slide = 0;
+
+					renderUtils.DrawScreenSpaceRectangle(material, 0, 0 + slide, w, h - 50, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
+					renderUtils.DrawScreenSpaceRectangle(loadingMaterial, w - lw, h - lh + slide / 2, lw, lh, 0, 0, lw - 1, lh - 1, lw, lh, null, 1, 1, depth - 0.1f);
+				}
+
+				if (true) {
+					// draw a grid too
+					int grid_size = 8;
+					float depthacc = 0.0f;
+					float depthinc = 1.0f / ((grid_size * grid_size) + 1);
+
+					for (int x = 0; x < grid_size; x++) {
+						float cornerx = x * 20.0f;
+
+						for (int y = 0; y < grid_size; y++) {
+							float cornery = ((float)y) * 20.0f;
+
+							renderUtils.DrawScreenSpaceRectangle(material, 10 + (int)cornerx, 10 + (int)cornery, 15, 15, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depthacc);
+
+							depthacc += depthinc;
+						}
+					}
+				}
+
+				materials.SwapBuffers();
+			}
+		}
+		else {
+			renderContext.Viewport(0, 0, w, h);
+			renderContext.DepthRange(0, 1);
+			// SetToneMappingScaleLinear - what does it do... (in this context)
+			// I guess it just sets it to 1, 1, 1 but still, need to review how we'd even replicate tone mapping 
+			float depth = 0.5f;
+
+			for (int i = 0; i < 2; i++) {
+				renderContext.ClearColor3ub(0, 0, 0);
+				renderContext.ClearBuffers(true, true, true);
+				renderUtils.DrawScreenSpaceRectangle(material, 0, 0, w, h, 0, 0, tw - 1, th - 1, tw, th, null, 1, 1, depth);
+				renderUtils.DrawScreenSpaceRectangle(loadingMaterial, w - lw, h - lh, lw, lh, 0, 0, lw - 1, lh - 1, lw, lh, null, 1, 1, depth);
+				materials.SwapBuffers();
+			}
 		}
 	}
 
@@ -185,8 +234,8 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		return false;
 	}
 }
-public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem, RenderUtils renderUtils)
-	: VideoMode_Common(services, fileSystem, materials, renderUtils)
+public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem, RenderUtils renderUtils, ICommandLine commandLine)
+	: VideoMode_Common(services, fileSystem, materials, renderUtils, commandLine)
 {
 	bool SetModeOnce;
 	public override bool SetMode(int width, int height, bool windowed) {

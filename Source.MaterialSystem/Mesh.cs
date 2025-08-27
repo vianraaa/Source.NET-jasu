@@ -114,25 +114,19 @@ public unsafe class VertexBuffer : IDisposable
 		Dispose();
 
 		vbo = (int)glCreateBuffer();
-		glNamedBufferStorage((uint)vbo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		SysmemBuffer = glMapNamedBufferRange((uint)vbo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if (SysmemBuffer == null) {
-			Warning("WARNING: RecomputeVBO failure (OpenGL's not happy...)\n");
-			Warning($"    OpenGL error code    : {glGetErrorName()}\n");
-			Warning($"    Vertex buffer object : {vbo}\n");
-			Warning($"    Attempted alloc size : {BufferSize}\n");
-		}
+		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
+		glNamedBufferData((uint)vbo, BufferSize, null, GL_DYNAMIC_DRAW);
 		RecomputeVAO();
 	}
 
 	public byte* Lock(int numVerts, out int baseVertexIndex) {
 		Assert(!Locked);
-		baseVertexIndex = 0;
+		baseVertexIndex = Position / VertexSize;
 		if (SysmemBuffer == null) {
 			RecomputeVBO();
 		}
 		Locked = true;
-		return (byte*)SysmemBuffer;
+		return (byte*)((nint)SysmemBuffer + Position);
 	}
 
 	public void Unlock(int vertexCount) {
@@ -142,8 +136,8 @@ public unsafe class VertexBuffer : IDisposable
 		int lockOffset = NextLockOffset();
 		int bufferSize = vertexCount * VertexSize;
 
-		Position = lockOffset + BufferSize;
-
+		glNamedBufferSubData((uint)vbo, Position, bufferSize, (void*)((nint)SysmemBuffer + Position));
+		Position = lockOffset + bufferSize;
 		Locked = false;
 	}
 
@@ -284,8 +278,8 @@ public unsafe class IndexBuffer : IDisposable
 	public unsafe void RecomputeIBO() {
 		Dispose();
 		ibo = (int)glCreateBuffer();
-		glNamedBufferStorage((uint)ibo, BufferSize, null, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		SysmemBuffer = glMapNamedBufferRange((uint)ibo, 0, BufferSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
+		glNamedBufferData((uint)ibo, BufferSize, null, GL_DYNAMIC_DRAW);
 
 		if (SysmemBuffer == null) {
 			Warning("WARNING: RecomputeIBO failure (OpenGL's not happy...)\n");
@@ -297,18 +291,19 @@ public unsafe class IndexBuffer : IDisposable
 
 	public short* Lock(bool readOnly, int indexCount, out int startIndex, int firstIndex) {
 		Assert(!Locked);
-		startIndex = 0;
+		startIndex = Position;
 		if (SysmemBuffer == null) {
 			RecomputeIBO();
 		}
 		Locked = true;
-		return (short*)SysmemBuffer;
+		return (short*)SysmemBuffer + Position;
 	}
 
 	public void Unlock(int indexCount) {
 		if (!Locked)
 			return;
 
+		glNamedBufferSubData((uint)ibo, Position * 2, indexCount * 2, (void*)((nint)SysmemBuffer + (Position * 2)));
 		Position += indexCount;
 		Locked = false;
 	}
@@ -490,7 +485,7 @@ public unsafe class DynamicMesh : Mesh
 		Lock(vertexCount, false, ref desc.Vertex);
 		int firstIndex = Lock(false, -1, indexCount, ref desc.Index);
 		if (FirstIndex < 0)
-			FirstIndex = firstIndex; // ???????????????
+			FirstIndex = firstIndex;
 	}
 
 	public void Init(int bufferId) {
@@ -816,7 +811,7 @@ public unsafe class Mesh : IMesh
 				uint ibo = IndexBuffer!.IBO();
 				glVertexArrayElementBuffer(vao, ibo);
 				glBindVertexArray(vao);
-				glDrawElements(Mode, pPrim->NumIndices, GL_UNSIGNED_SHORT, (void*)pPrim->FirstIndex);
+				glDrawElements(Mode, pPrim->NumIndices, GL_UNSIGNED_SHORT, (void*)(pPrim->FirstIndex * 2));
 			}
 		}
 	}
