@@ -42,8 +42,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly IFileSystem FileSystem;
 	public readonly TextureManager TextureSystem;
 	public readonly ShaderSystem ShaderSystem;
-	public readonly IShaderDevice ShaderDevice;
-	public readonly ShaderAPIGl46 ShaderAPI;
+	public IShaderDevice ShaderDevice;
+	public ShaderAPIGl46 ShaderAPI;
 	public readonly MeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
 	public readonly MaterialSystem_Config Config;
@@ -79,6 +79,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderSystem.ShaderAPI = ShaderAPI;
 
 		ShaderSystem.LoadAllShaderDLLs();
+		TextureSystem.Init();
 	}
 
 	ILauncherManager launcherMgr;
@@ -296,6 +297,23 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	private IMaterial? GetErrorMaterial() {
 		throw new NotImplementedException();
 	}
+
+	public void RestoreShaderObjects(IServiceProvider services, int changeFlags) {
+		if(services != null) {
+			ShaderAPI = (ShaderAPIGl46)services.GetRequiredService<IShaderAPI>();
+			ShaderDevice = services.GetRequiredService<IShaderDevice>();
+		}
+
+		foreach(var material in Dict) {
+			// material.ReportVarChanged TODO
+		}
+
+		TextureSystem.RestoreRenderTargets();
+		Restore?.Invoke();
+		TextureSystem.RestoreNonRenderTargetTextures();
+	}
+
+	public event Action? Restore;
 
 	public IMaterialInternal errorMaterial;
 }

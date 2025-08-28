@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Source.Common.Mathematics;
 
@@ -11,5 +12,22 @@ public static class MathLib
 
 	public static int Modulo(int a, int b) {
 		return (Math.Abs(a * b) + a) % b;
+	}
+
+	public static Matrix4x4 CreateOpenGLOrthoOffCenter(float left, float right, float bottom, float top, float near, float far) {
+		float m11 = 2.0f / (right - left);
+		float m22 = -2.0f / (top - bottom);
+		float m33 = -2.0f / (far - near);
+
+		float m41 = -(right + left) / (right - left);
+		float m42 = -(top + bottom) / (top - bottom);
+		float m43 = -(far + near) / (far - near);
+
+		return new Matrix4x4(
+			m11, 0, 0, 0,
+			0, m22, 0, 0,
+			0, 0, m33, 0,
+			m41, m42, m43, 1
+		);
 	}
 }

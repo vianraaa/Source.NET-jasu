@@ -10,9 +10,15 @@ using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 
-public interface ITextureRegenerator : IDisposable
+public interface ITextureRegenerator
 {
-	void RegenerateTextureBits();
+	/// <summary>
+	/// This will be called when the texture bits need to be regenerated.
+	/// </summary>
+	/// <param name="texture"></param>
+	/// <param name="vtfTexture"></param>
+	/// <param name="rect"></param>
+	void RegenerateTextureBits(ITexture texture, IVTFTexture vtfTexture, in Rectangle rect);
 }
 
 public interface ITexture : IDisposable

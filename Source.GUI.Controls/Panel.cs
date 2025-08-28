@@ -39,6 +39,14 @@ public class Panel : IPanel
 		flags |= PanelFlags.AutoDeleteEnabled | PanelFlags.PaintBorderEnabled | PanelFlags.PaintBackgroundEnabled | PanelFlags.PaintEnabled;
 		flags |= PanelFlags.AllowChainKeybindingToParent;
 		alpha = 255.0f;
+		visible = true;
+		enabled = true;
+		parent = null;
+		popup = false;
+		isTopmostPopup = false;
+
+		mouseInput = true;
+		kbInput = true;
 	}
 
 	public Panel() {
@@ -225,7 +233,7 @@ public class Panel : IPanel
 	}
 
 	public void PaintTraverse(bool forceRepaint, bool allowForce = true) {
-		throw new NotImplementedException();
+
 	}
 
 	public void PerformApplySchemeSettings() {

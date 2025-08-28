@@ -408,9 +408,6 @@ public class EngineVGui(
 			panel.SetBounds(0, 0, w, h);
 
 		}
-		surface.DrawSetColor(255, 0, 0, 255);
-		surface.DrawFilledRect(256, 256, 512, 384);
-
 		panel.Repaint();
 
 		if ((mode & PaintMode.UIPanels) == PaintMode.UIPanels) {

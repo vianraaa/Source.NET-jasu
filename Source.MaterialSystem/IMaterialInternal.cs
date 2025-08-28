@@ -5,6 +5,7 @@ using Raylib_cs;
 using Source.Common.MaterialSystem;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -26,7 +27,7 @@ public struct MaterialLookup(IMaterialInternal? material, ulong symbol, bool man
 	public readonly bool ManuallyCreated => manuallyCreated;
 }
 
-public class MaterialDict {
+public class MaterialDict : IEnumerable<IMaterialInternal> {
 	Dictionary<ulong, MaterialLookup> Dict = [];
 	public IMaterialInternal? FindMaterial(ReadOnlySpan<char> name, bool manuallyCreated) {
 		MaterialLookup lookup = new(null, name.Hash(), manuallyCreated);
@@ -35,10 +36,21 @@ public class MaterialDict {
 		return null;
 	}
 
-
 	public void AddMaterialToMaterialList(IMaterialInternal material) {
 		MaterialLookup lookup = new(material, material.GetName().Hash(), material.IsManuallyCreated());
 		Dict[lookup.Hash()] = lookup;
+	}
+
+	public IEnumerator<IMaterialInternal> GetEnumerator() {
+		foreach(var kvp in Dict) {
+			if (kvp.Value.Material == null) 
+				continue;
+			yield return kvp.Value.Material;
+		}
+	}
+
+	IEnumerator IEnumerable.GetEnumerator() {
+		return GetEnumerator();
 	}
 }
 

@@ -297,6 +297,14 @@ public unsafe struct VertexBuilder
 
 		memreset(ref Desc);
 	}
+
+	internal void Color4ubv(ReadOnlySpan<byte> rgba) {
+		byte* pDst = CurrColor;
+		*pDst++ = rgba[0];
+		*pDst++ = rgba[1];
+		*pDst++ = rgba[2];
+		*pDst = rgba[3];
+	}
 }
 
 public struct IndexBuilder
@@ -592,10 +600,10 @@ public unsafe struct MeshBuilder : IDisposable
 	public void Color3ub(byte r, byte g, byte b) => throw new NotImplementedException();
 	public void Color3ubv(ReadOnlySpan<float> rgb) => throw new NotImplementedException();
 	public void Color4ub(byte r, byte g, byte b, byte a) => throw new NotImplementedException();
-	public unsafe void Color4ubv(ReadOnlySpan<float> rgba) => VertexBuilder.Color4fv(rgba);
+	public unsafe void Color4ubv(ReadOnlySpan<byte> rgba) => VertexBuilder.Color4ubv(rgba);
 	public unsafe void Color4ubv(in Color rgba) {
 		fixed (Color* ptr = &rgba)
-			VertexBuilder.Color4fv(new(ptr, 4));
+			VertexBuilder.Color4ubv(new(ptr, 4));
 	}
 
 	// specular color setting

@@ -9,6 +9,9 @@ layout(std140, binding = 3) uniform source_pixel_sharedUBO {
     float alphaTestRef;
 };
 
+const int VertexColor = 32;
+const int VertexAlpha = 64;
+
 uniform uint flags;
 uniform sampler2D basetexture;
 
@@ -28,6 +31,22 @@ void main()
             case 7: discard; break;
         }
     }
-    fragColor = texelColor; // f_Color multiply later. Requires a flags check
+
+    vec4 vertexColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+    if((flags & VertexColor) != 0){
+        vertexColor.r = vs_Color.r;
+        vertexColor.g = vs_Color.g;
+        vertexColor.b = vs_Color.b;
+    }
+
+    if((flags & VertexAlpha) != 0){
+        vertexColor.a = vs_Color.a;
+    }
+
+    // Final product: texture color * vertex color if applicable
+    fragColor = texelColor * vertexColor;
+
+    // Gradient for testing
     //fragColor = vec4(vs_TexCoord.x, vs_TexCoord.y, 1.0, 1.0);
 }

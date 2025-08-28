@@ -95,8 +95,21 @@ public sealed class VTFTexture : IVTFTexture
 			depth = 1;
 	}
 
-	public void ComputeMipLevelSubRect(Rectangle srcRect, int mipLevel, out Rectangle subRect) {
-		throw new NotImplementedException();
+	public void ComputeMipLevelSubRect(in Rectangle srcRect, int mipLevel, out Rectangle subRect) {
+		Assert(srcRect.X >= 0 && srcRect.Y >= 0 && (srcRect.X + srcRect.Width <= Width) && (srcRect.Y + srcRect.Height <= Height));
+
+		if (mipLevel == 0) {
+			subRect = srcRect;
+			return;
+		}
+
+		subRect = new();
+
+		float flInvShrink = 1.0f / (float)(1 << mipLevel);
+		subRect.X = (int)(srcRect.X * flInvShrink);
+		subRect.Y = (int)(srcRect.Y * flInvShrink);
+		subRect.Width = (int)MathF.Ceiling((srcRect.X + srcRect.Width) * flInvShrink) - subRect.X;
+		subRect.Height = (int)MathF.Ceiling((srcRect.Y + srcRect.Height) * flInvShrink) - subRect.Y;
 	}
 
 	public int ComputeMipSize(int mipLevel) {
@@ -211,7 +224,7 @@ public sealed class VTFTexture : IVTFTexture
 
 	private Span<byte> GetResourceData(ResourceEntryType type) {
 		ref ResourceEntryInfo info = ref FindResourceEntryInfo(type);
-		if(!Unsafe.IsNullRef(ref info)) {
+		if (!Unsafe.IsNullRef(ref info)) {
 			return ImageData!.AsSpan()[(int)info.Offset..];
 		}
 
@@ -323,8 +336,73 @@ public sealed class VTFTexture : IVTFTexture
 		sizeInBytes = faceSize;
 	}
 
+
+	static bool IsMultipleOf4(int value) => value <= 2 || (value & 0x3) == 0;
 	public bool Init(int width, int height, int depth, ImageFormat format, int flags, int frameCount, int forceMipCount = -1) {
-		throw new NotImplementedException();
+		if (depth == 0) {
+			depth = 1;
+		}
+
+		if ((flags & (int)CompiledVtfFlags.EnvMap) != 0) {
+			if (width != height) {
+				Warning("Height and width must be equal for cubemaps!\n");
+				return false;
+			}
+			if (depth != 1) {
+				Warning("Depth must be 1 for cubemaps!\n");
+				return false;
+			}
+		}
+
+		if (!IsMultipleOf4(width) || !IsMultipleOf4(height) || !IsMultipleOf4(depth)) {
+			Warning("Image dimensions must be multiple of 4!\n");
+			return false;
+		}
+
+		if (format == 0) {
+			format = ImageFormat.RGBA8888;
+		}
+
+		Width = width;
+		Height = height;
+		Depth = depth;
+		Format = format;
+		Flags = flags;
+
+		// THIS CAUSED A BUG!!!  We want all of the mip levels in the vtf file even with nomip in case we have lod.
+		// NOTE: But we don't want more than 1 mip level for procedural textures
+		if ((flags & (uint)(CompiledVtfFlags.NoMip | CompiledVtfFlags.Procedural)) == (uint)(CompiledVtfFlags.NoMip | CompiledVtfFlags.Procedural)) {
+			forceMipCount = 1;
+		}
+
+		if (forceMipCount == -1) 
+			MipCount = ComputeMipCount();
+		else
+			MipCount = forceMipCount;
+	
+		FrameCount = frameCount;
+
+		FaceCount = (flags & (uint)CompiledVtfFlags.EnvMap) != 0 ? 6 : 1;
+
+		// Need to do this because Shutdown deallocates the low-res image
+		LowResImageWidth = LowResImageHeight = 0;
+
+		// Allocate me some bits!
+		nint iMemorySize = ComputeTotalSize();
+		if (!AllocateImageData(iMemorySize))
+			return false;
+
+		// As soon as we have image indicate so in the resources
+		if (iMemorySize != 0)
+			FindOrCreateResourceEntryInfo(ResourceEntryType.HighResImageData);
+		else
+			RemoveResourceEntryInfo(ResourceEntryType.HighResImageData);
+
+		return true;
+	}
+
+	private void RemoveResourceEntryInfo(ResourceEntryType tag) {
+		Resources.RemoveAll(x => x.Tag == tag);
 	}
 
 	public void InitLowResImage(int width, int height, ImageFormat format) {
@@ -355,7 +433,11 @@ public sealed class VTFTexture : IVTFTexture
 	Vector3 IVTFTexture.Reflectivity() => Reflectivity;
 
 	public int RowSizeInBytes(int mipLevel) {
-		throw new NotImplementedException();
+		nint nWidth = (Width >> mipLevel);
+		if (nWidth < 1) {
+			nWidth = 1;
+		}
+		return ImageLoader.SizeInBytes(Format) * (int)nWidth;
 	}
 
 	public bool Serialize(Stream stream) {
@@ -493,8 +575,8 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	private bool LoadImageData(Stream stream, VTFFileHeader header, int skipMipLevels) {
-		if(skipMipLevels > 0) {
-			if(header.NumMipLevels < skipMipLevels) {
+		if (skipMipLevels > 0) {
+			if (header.NumMipLevels < skipMipLevels) {
 				Warning("Warning! Encountered old format VTF file; please rebuild it!\n");
 				return false;
 			}
@@ -710,8 +792,8 @@ public sealed class VTFTexture : IVTFTexture
 	int IVTFTexture.Width() => Width;
 
 	public uint GetResourceTypes(Span<ResourceEntryType> arrRsrcTypes) {
-		if (arrRsrcTypes != null) 
-			for (int i = 0; i < Math.Min(arrRsrcTypes.Length, Resources.Count); i++) 
+		if (arrRsrcTypes != null)
+			for (int i = 0; i < Math.Min(arrRsrcTypes.Length, Resources.Count); i++)
 				arrRsrcTypes[i] = Resources[i].Tag;
 
 		return (uint)Resources.Count;

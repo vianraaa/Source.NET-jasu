@@ -141,7 +141,7 @@ public interface IVTFTexture : IDisposable
 
 	void ComputeMipLevelDimensions(int level, out int width, out int height, out int depth);
 	int ComputeMipSize(int mipLevel);
-	void ComputeMipLevelSubRect(Rectangle srcRect, int mipLevel, out Rectangle subRect);
+	void ComputeMipLevelSubRect(in Rectangle srcRect, int mipLevel, out Rectangle subRect);
 	int ComputeFaceSize(int startingMipLevel = 0);
 	int ComputeTotalSize();
 

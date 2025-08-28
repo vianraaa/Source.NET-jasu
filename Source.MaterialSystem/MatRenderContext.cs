@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
@@ -102,9 +103,10 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void LoadIdentity() {
 		ref MatrixStackItem item = ref CurMatrixItem;
 		item.Matrix = Matrix4x4.Identity;
-		MatrixStacksDirtyStates[(int)matrixMode] = true;
 		CurrentMatrixChanged();
 	}
+
+	private void MarkDirty() => MatrixStacksDirtyStates[(int)matrixMode] = true;
 
 	public void MatrixMode(MaterialMatrixMode mode) {
 		matrixMode = mode;
@@ -118,7 +120,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	private void CurrentMatrixChanged() {
-		MatrixStacksDirtyStates[(int)matrixMode] = true;
+		MarkDirty();
 	}
 
 	public void Viewport(int x, int y, int width, int height) {
@@ -268,8 +270,7 @@ public class MatRenderContext : IMatRenderContextInternal
 				if(MatrixStacksDirtyStates[i]) {
 					shaderAPI.MatrixMode((MaterialMatrixMode)i);
 					if(!top.Matrix.IsIdentity) {
-						Matrix4x4 transposeTop = Matrix4x4.Transpose(top.Matrix);
-						shaderAPI.LoadMatrix(in transposeTop);
+						shaderAPI.LoadMatrix(in top.Matrix);
 					}
 					else {
 						shaderAPI.LoadIdentity();
@@ -284,5 +285,25 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void SyncMatrix(MaterialMatrixMode mode) {
 		if (!ShouldValidateMatrices() && AllowLazyMatrixSync())
 			ForceSyncMatrix(mode);
+	}
+
+	public void Scale(float x, float y, float z) {
+		Matrix4x4 mat = Matrix4x4.CreateScale(x, y, z);
+		MultMatrixLocal(in mat);
+	}
+
+
+	private void MultMatrixLocal(in Matrix4x4 mat) {
+		Matrix4x4 result = Matrix4x4.Multiply(CurMatrixItem.Matrix, mat);
+		ref MatrixStackItem item = ref CurMatrixItem;
+		item.Matrix = result;
+		CurrentMatrixChanged();
+	}
+
+	public void Ortho(double left, double top, double right, double bottom, double near, double far) {
+		ref Matrix4x4 item = ref CurMatrixItem.Matrix;
+		Matrix4x4 matrix = MathLib.CreateOpenGLOrthoOffCenter((float)left, (float)right, (float)bottom, (float)top, (float)near, (float)far);
+		item = Matrix4x4.Multiply(item, matrix);
+		CurrentMatrixChanged();
 	}
 }

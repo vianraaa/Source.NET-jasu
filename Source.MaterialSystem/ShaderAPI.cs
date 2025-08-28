@@ -33,7 +33,8 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 
-public enum UniformBufferBindingLocation {
+public enum UniformBufferBindingLocation
+{
 	SharedMatrices = 0,
 	SharedBaseShader = 1,
 	SharedVertexShader = 2,
@@ -62,6 +63,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	[Imported] public IShaderSystem ShaderManager;
 
 	public GraphicsDriver GetDriver() => Driver;
+	private bool ready;
 
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
@@ -451,7 +453,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public unsafe void LoadMatrix(in Matrix4x4 m4x4) {
 		int szm4x4 = sizeof(Matrix4x4);
 		int loc = (int)currentMode * szm4x4;
-		Matrix4x4 transposed = Matrix4x4.Transpose(m4x4);
+		Matrix4x4 transposed = m4x4; // Matrix4x4.Transpose(m4x4);
 		glNamedBufferSubData(uboMatrices, loc, szm4x4, &transposed);
 	}
 
@@ -480,7 +482,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		uint shader = CombobulateShadersIfChanged();
 
 		// Then get shader ID -> shader uniform lookup table
-		if(!locs.TryGetValue(shader, out var lookup)) 
+		if (!locs.TryGetValue(shader, out var lookup))
 			lookup = locs[shader] = [];
 
 		// Then compute uniform name -> hash symbol
@@ -532,10 +534,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return IsActive();
 	}
 
-	ShaderAPITextureHandle_t textureModifyTarget;
+	ShaderAPITextureHandle_t ModifyTextureHandle;
 
 	public void ModifyTexture(ShaderAPITextureHandle_t textureHandle) {
-		textureModifyTarget = textureHandle;
+		ModifyTextureHandle = textureHandle;
 	}
 
 	public struct TextureLoadInfo
@@ -550,10 +552,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public void TexImageFromVTF(IVTFTexture? vtf, int vtfFrame) {
 		Assert(vtf != null);
-		Assert(textureModifyTarget != INVALID_SHADERAPI_TEXTURE_HANDLE);
+		Assert(ModifyTextureHandle != INVALID_SHADERAPI_TEXTURE_HANDLE);
 
 		ref TextureLoadInfo info = ref (stackalloc TextureLoadInfo[1])[0];
-		info.Handle = textureModifyTarget;
+		info.Handle = ModifyTextureHandle;
 		info.Width = 0;
 		info.Height = 0;
 		info.ZOffset = 0;
@@ -584,8 +586,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		}
 		else {
 			Span<byte> data = vtf.ImageData(vtfFrame, 0, info.Level);
-			fixed (byte* bytes = data)
-				glTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, vtf.Width(), vtf.Height(), ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
+			TexSubImage2D(info.Level, 0, 0, 0, 0, vtf.Width(), vtf.Height(), info.SrcFormat, 0, data);
 		}
 	}
 
@@ -642,5 +643,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public int GetCurrentDynamicVBSize() {
 		return (1024 + 512) * 1024; // See if it's still needed to use smaller sizes at certain points... how would this even work, I wonder
+	}
+
+	public unsafe void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData) {
+		fixed (byte* data = imageData)
+			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageFormat(srcFormat), GL_UNSIGNED_BYTE, data);
 	}
 }

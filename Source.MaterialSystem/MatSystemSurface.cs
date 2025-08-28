@@ -1,9 +1,12 @@
 ﻿using Raylib_cs;
 
+using Source.Common.Commands;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
+using Source.GUI.Controls;
 
 using System.Drawing;
 
@@ -42,7 +45,8 @@ public class MatSystemSurface : ISurface
 	bool fullScreenScissor = false;
 	public int TranslateX;
 	public int TranslateY;
-	public float DrawAlphaMultiplier = 1;
+	public float alphaMultiplier = 1;
+	public int[] SurfaceExtents = new int[4];
 	public Color DrawColor = new(255, 255, 255, 255);
 	public Color DrawTextColor = new(255, 255, 255, 255);
 	public IFont? DrawTextFont = null;
@@ -50,6 +54,7 @@ public class MatSystemSurface : ISurface
 	public int TextPosY;
 	IPanel DefaultEmbeddedPanel;
 	IPanel? EmbeddedPanel;
+	public int BoundTexture;
 
 	IMesh? Mesh;
 	MeshBuilder meshBuilder;
@@ -57,18 +62,12 @@ public class MatSystemSurface : ISurface
 
 	float AlphaMultiplier;
 
-	public MatSystemSurface(IMaterialSystem materials) {
+	readonly ICommandLine CommandLine;
+
+	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine) {
 		this.materials = materials;
-
-		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
-		vmtKeyValues.SetInt("$vertexcolor", 1);
-		vmtKeyValues.SetInt("$vertexalpha", 1);
-		vmtKeyValues.SetInt("$ignorez", 1);
-		vmtKeyValues.SetInt("$no_fullbright", 1);
-
-		White.Init(materials, "VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
-
-		// TODO: fullscreen buffer
+		this.CommandLine = commandLine;
+		materials.Restore += Init;
 
 		DrawColor[0] = DrawColor[1] = DrawColor[2] = DrawColor[3] = 25; ;
 		TranslateX = TranslateY = 0;
@@ -82,6 +81,18 @@ public class MatSystemSurface : ISurface
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
 	}
 
+	private void Init() {
+		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
+		vmtKeyValues.SetInt("$vertexcolor", 1);
+		vmtKeyValues.SetInt("$vertexalpha", 1);
+		vmtKeyValues.SetInt("$ignorez", 1);
+		vmtKeyValues.SetInt("$no_fullbright", 1);
+
+		White.Init(materials, "VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
+
+		// TODO: fullscreen buffer
+	}
+
 	private void InitInput() {
 		EnableInput(true);
 	}
@@ -90,7 +101,7 @@ public class MatSystemSurface : ISurface
 
 
 	private void EnableInput(bool v) {
-		throw new NotImplementedException();
+
 	}
 
 	private void InitCursors() {
@@ -106,13 +117,72 @@ public class MatSystemSurface : ISurface
 
 	public void InternalSetMaterial(IMaterial? material = null) {
 		if (material == null)
-			material = (IMaterial)White;
+			material = White.Get();
 
 		using MatRenderContextPtr renderContext = new(materials);
 		Mesh = renderContext.GetDynamicMesh(true, null, null, material);
 	}
 
+	bool checkedCommandLine;
 
+	float pixelOffsetX;
+	float pixelOffsetY;
+
+	public void StartDrawing() {
+		if (!checkedCommandLine) {
+			checkedCommandLine = true;
+
+			ReadOnlySpan<char> pX = CommandLine.ParmValue("-pixel_offset_x", null);
+			if (pX != null)
+				pixelOffsetX = float.TryParse(pX, out pixelOffsetX) ? pixelOffsetX : 0;
+
+
+			ReadOnlySpan<char> pY = CommandLine.ParmValue("-pixel_offset_y", null);
+			if (pY != null)
+				pixelOffsetY = float.TryParse(pY, out pixelOffsetY) ? pixelOffsetY : 0;
+		}
+
+		InDrawing = true;
+		BoundTexture = -1;
+
+		using MatRenderContextPtr renderContext = new (materials);
+		renderContext.GetViewport(out int x, out int y, out int width, out int height);
+
+		SurfaceExtents[0] = 0;
+		SurfaceExtents[1] = 0;
+		SurfaceExtents[2] = width;
+		SurfaceExtents[3] = height;
+
+		renderContext.MatrixMode(MaterialMatrixMode.Projection);
+		renderContext.PushMatrix();
+		renderContext.LoadIdentity();
+		renderContext.Scale(1, -1, 1);
+
+		renderContext.Ortho(pixelOffsetX, pixelOffsetY, width + pixelOffsetX, height + pixelOffsetY, -1.0f, 1.0f);
+
+		// make sure there is no translation and rotation laying around
+		renderContext.MatrixMode(MaterialMatrixMode.Model);
+		renderContext.PushMatrix();
+		renderContext.LoadIdentity();
+
+		// Always enable scissoring (translate to origin because of the glTranslatef call above..)
+		EnableScissor(true);
+
+		TranslateX = 0;
+		TranslateY = 0;
+
+		renderContext.MatrixMode(MaterialMatrixMode.View);
+		renderContext.PushMatrix();
+		renderContext.LoadIdentity();
+
+		// Are we ready to go?
+		DrawSetColor(255, 0, 0, 255);
+		DrawFilledRect(256, 256, 512, 384);
+	}
+
+	private void EnableScissor(bool v) {
+		
+	}
 
 	public bool ClipRect(in SurfaceVertex inUL, in SurfaceVertex inLR, out SurfaceVertex outUL, out SurfaceVertex outLR) {
 		if (scissor) {
@@ -325,7 +395,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	public int GetPopupCount() {
-		throw new NotImplementedException();
+		return 0; // PopupList.Count;
 	}
 
 	public void GetProportionalBase(out int width, out int height) {
@@ -395,8 +465,112 @@ public class MatSystemSurface : ISurface
 	public void PaintTraverse(IPanel panel) {
 
 	}
+
+	IPanel? RestrictedPanel;
+
 	public void PaintTraverseEx(IPanel panel, bool paintPopups) {
 		// todo: painting panels
+		if (!panel.IsVisible())
+			return;
+
+		using MatRenderContextPtr renderContext = new(materials);
+		bool topLevelDraw = false;
+		if (InDrawing == false) {
+			topLevelDraw = true;
+			StartDrawing();
+
+			// clear z + stencil buffer
+			// NOTE: Stencil is used to get 3D painting in vgui panels working correctly 
+			renderContext.ClearBuffers(false, true, true);
+			// TODO!!!
+			// renderContext.SetStencilEnable(true);
+			// renderContext.SetStencilFailOperation(STENCILOPERATION_KEEP);
+			// renderContext.SetStencilZFailOperation(STENCILOPERATION_KEEP);
+			// renderContext.SetStencilPassOperation(STENCILOPERATION_REPLACE);
+			// renderContext.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_GREATEREQUAL);
+			// renderContext.SetStencilReferenceValue(0);
+			// renderContext.SetStencilTestMask(0xFFFFFFFF);
+			// renderContext.SetStencilWriteMask(0xFFFFFFFF);
+		}
+
+		float oldZPos = zPos;
+		zPos = 0;
+		if (panel == GetEmbeddedPanel()) {
+			if (RestrictedPanel != null) {
+				RestrictedPanel.GetParent()!.PaintTraverse(true);
+			}
+			else {
+				panel.PaintTraverse(true);
+			}
+		}
+		else {
+			if (!paintPopups || !panel.IsPopup())
+				panel.PaintTraverse(true);
+		}
+
+		if (paintPopups) {
+			int popups = GetPopupCount();
+			if (popups > 254) 
+				Warning("Too many popups! Rendering will be bad!\n");
+
+			int stencilRef = 254;
+			for (int i = popups - 1; i >= 0; --i) {
+				IPanel? popupPanel = GetPopup(i);
+
+				if (popupPanel == null)
+					continue;
+
+				if (popupPanel.IsFullyVisible())
+					continue;
+
+				if (!IsPanelUnderRestrictedPanel(popupPanel))
+					continue;
+
+				bool isTopmostPopup = popupPanel.IsTopmostPopup();
+
+				// renderContext.SetStencilReferenceValue(isTopmostPopup ? 255 : stencilRef);
+				--stencilRef;
+
+				zPos = ((float)(i) / (float)popups);
+				popupPanel.PaintTraverse(true);
+			}
+		}
+
+		zPos = oldZPos;
+
+		if (topLevelDraw) {
+			// renderContext.SetStencilEnable(false);
+			FinishDrawing();
+		}
+	}
+
+	private bool IsPanelUnderRestrictedPanel(IPanel? panel) {
+		if (RestrictedPanel == null)
+			return true;
+
+		while(panel != null) {
+			if (panel == RestrictedPanel)
+				return true;
+			panel = panel.GetParent();
+		}
+
+		return false;
+	}
+
+	private void FinishDrawing() {
+		EnableScissor(false);
+		using MatRenderContextPtr renderContext = new(materials);
+		renderContext.MatrixMode(MaterialMatrixMode.Projection);
+		renderContext.PopMatrix();
+		
+		renderContext.MatrixMode(MaterialMatrixMode.Model);
+		renderContext.PopMatrix();
+		
+		renderContext.MatrixMode(MaterialMatrixMode.View);
+		renderContext.PopMatrix();
+
+		Assert(InDrawing);
+		InDrawing = false;
 	}
 
 	public void PopMakeCurrent(IPanel panel) {

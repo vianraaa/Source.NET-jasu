@@ -15,6 +15,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -117,7 +118,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	public void SetTextureGenerator(ITextureRegenerator textureRegen) {
-		throw new NotImplementedException();
+		TextureRegenerator = textureRegen;
 	}
 
 	public void SwapContents(ITexture other) {
@@ -881,11 +882,97 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private IVTFTexture? ReconstructProceduralBits() {
-		throw new NotImplementedException();
+		IVTFTexture texture = GetScratchVTFTexture();
+		texture.Init(DimsActual.Width, DimsActual.Height, DimsActual.Depth, ComputeActualFormat(ImageFormat), (int)Flags, FrameCount);
+
+		if(TextureRegenerator != null) {
+			Rectangle rect = new();
+			rect.X = rect.Y = 0;
+			rect.Width = DimsActual.Width;
+			rect.Height = DimsActual.Height;
+			TextureRegenerator.RegenerateTextureBits(this, texture, in rect);
+		}
+		else { // TODO
+			//materials.TextureSystem.GenerateErrorTexture(this, texture);
+		}
+		return texture;
 	}
 
 	private void ReconstructPartialTexture(Rectangle rect) {
+		Rectangle vtfRect;
+		IVTFTexture vtfTexture = ReconstructPartialProceduralBits(in rect, out vtfRect);
+		Assert(vtfTexture.Depth() == 1);
+		if (!HasBeenAllocated()) {
+			if (!AllocateShaderAPITextures())
+				return;
+		}
+		GetDownloadFaceCount(out int firstFace, out int faceCount);
 
+		// Blit down portions of the various VTF frames into the board memory
+		int stride;
+		Rectangle mipRect;
+		for (int frame = 0; frame < FrameCount; ++frame) {
+			Modify(frame);
+
+			for (int iFace = 0; iFace < faceCount; ++iFace) {
+				for (int iMip = 0; iMip < DimsActual.MipCount; ++iMip) {
+					vtfTexture.ComputeMipLevelSubRect(in vtfRect, iMip, out mipRect);
+					stride = vtfTexture.RowSizeInBytes(iMip);
+					Span<byte> bits = vtfTexture.ImageData(frame, iFace + firstFace, iMip, mipRect.X, mipRect.Y, 0);
+					materials.ShaderAPI.TexSubImage2D(
+						iMip,
+						iFace,
+						mipRect.X,
+						mipRect.Y,
+						0,
+						mipRect.Width,
+						mipRect.Height,
+						vtfTexture.Format(),
+						stride,
+						bits);
+				}
+			}
+		}
+	}
+
+	private IVTFTexture ReconstructPartialProceduralBits(in Rectangle rect, out Rectangle vtfRect) {
+		throw new NotImplementedException();
+	}
+
+	internal void InitProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat format, CompiledVtfFlags flags, ITextureRegenerator? generator) {
+		Assert((flags & (CompiledVtfFlags.RenderTarget | CompiledVtfFlags.DepthRenderTarget)) == 0);
+
+		SetName(textureName);
+
+		// Eliminate flags that are inappropriate...
+		flags &= ~CompiledVtfFlags.HintDXT5 | CompiledVtfFlags.OneBitAlpha | CompiledVtfFlags .EightBitAlpha | CompiledVtfFlags.RenderTarget | CompiledVtfFlags.DepthRenderTarget;
+
+		// Insert required flags
+		flags |= CompiledVtfFlags.Procedural;
+		int nAlphaBits = ImageLoader.ImageFormatInfo(format).AlphaBits;
+		if (nAlphaBits > 1) {
+			flags |= CompiledVtfFlags.EightBitAlpha;
+		}
+		else if (nAlphaBits == 1) {
+			flags |= CompiledVtfFlags.OneBitAlpha;
+		}
+
+		// Procedural textures are always one frame only
+		Init(w, h, d, format, (int)flags, 1);
+
+		SetTextureRegenerator(generator);
+
+		TextureGroupName = new(textureGroup);
+	}
+
+	ITextureRegenerator? TextureRegenerator;
+
+	private void SetTextureRegenerator(ITextureRegenerator? generator) {
+		TextureRegenerator = generator;
+	}
+
+	public void OnRestore() {
+		throw new NotImplementedException();
 	}
 
 	Vector3 Reflectivity;

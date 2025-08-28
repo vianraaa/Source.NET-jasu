@@ -10,5 +10,6 @@ public interface ITextureInternal : ITexture
 	}
 
 	void Bind(Sampler sampler, int frame);
+	void OnRestore();
 	void Precache();
 }

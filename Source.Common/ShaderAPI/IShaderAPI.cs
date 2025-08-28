@@ -1,4 +1,5 @@
-﻿using Source.Common.MaterialSystem;
+﻿using Source.Common.Bitmap;
+using Source.Common.MaterialSystem;
 
 using System;
 using System.Collections.Generic;
@@ -38,4 +39,5 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void BeginFrame();
 	void EndFrame();
 	int GetCurrentDynamicVBSize();
+	void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData);
 }

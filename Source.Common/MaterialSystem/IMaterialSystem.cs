@@ -142,6 +142,7 @@ public enum RenderTargetSizeMode
 
 public interface IMaterialSystem
 {
+	event Action Restore;
 	IMatRenderContext GetRenderContext();
 	void ModInit();
 	void ModShutdown();
@@ -153,6 +154,7 @@ public interface IMaterialSystem
 	IMaterial CreateMaterial(ReadOnlySpan<char> name, KeyValues keyValues);
 	bool CanUseEditorMaterials();
 	IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
+	void RestoreShaderObjects(IServiceProvider services, int changeFlags);
 }
 
 public interface IMatRenderContext
@@ -180,6 +182,8 @@ public interface IMatRenderContext
 	bool InFlashlightMode();
 	IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null);
 	void GetRenderTargetDimensions(out int screenWidth, out int screenHeight);
+	void Scale(float x, float y, float z);
+	void Ortho(double left, double top, double right, double bottom, double near, double far);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -272,5 +276,13 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) {
 		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);
+	}
+
+	public void Scale(float x, float y, float z) {
+		ctx.Scale(x, y, z);
+	}
+
+	public void Ortho(double left, double top, double right, double bottom, double near, double far) {
+		ctx.Ortho(left, top, right, bottom, near, far);
 	}
 }

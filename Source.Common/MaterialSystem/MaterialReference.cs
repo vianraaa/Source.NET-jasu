@@ -16,6 +16,7 @@ public abstract class Reference<T> where T : class
 	public static implicit operator T?(Reference<T> reference) => reference.reference;
 
 	public bool IsValid() => reference != null;
+	public T? Get() => reference!;
 }
 
 public class MaterialReference : Reference<IMaterial> {
