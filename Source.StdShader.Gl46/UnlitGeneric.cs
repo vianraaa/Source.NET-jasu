@@ -122,8 +122,4 @@ public class UnlitGeneric : BaseVSShader
 			ENVMAPMASKFRAME, ENVMAPMASKSCALE, ENVMAPTINT, ALPHATESTREFERENCE,
 			DETAILBLENDMODE, OUTLINE, OUTLINECOLOR, OUTLINESTART0, OUTLINEEND1, SEPARATEDETAILUVS);
 	}
-	public override void SpecifyVertexFormat(ref VertexFormat vertexFormat) {
-		// We just need a few things
-		vertexFormat = VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color;
-	}
 }

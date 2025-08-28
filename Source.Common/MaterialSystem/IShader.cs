@@ -28,8 +28,7 @@ public interface IShader
 	string? GetFallbackShader(IMaterialVar[] vars);
 	void InitShaderParams(IMaterialVar[] vars, IShaderAPI shaderAPI, ReadOnlySpan<char> materialName);
 	void InitShaderInstance(IMaterialVar[] shaderParams, IShaderAPI shaderAPI, IShaderInit shaderManager, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	void DrawElements(IMaterialVar[] shaderParams, IShaderDynamicAPI shaderAPI, VertexCompressionType none);
-	void SpecifyVertexFormat(ref VertexFormat vertexFormat);
+	void DrawElements(IMaterialVar[] shaderParams, IShaderShadow? shadow, IShaderDynamicAPI? shaderAPI, VertexCompressionType none);
 }
 
 public interface IShaderInit {
@@ -93,10 +92,4 @@ public interface IShaderDynamicAPI
 	int GetCurrentNumBones();
 	GraphicsDriver GetDriver();
 	nint GetCurrentProgram();
-	void EnableDepthWrites(bool v);
-	void EnableDepthTest(bool v);
-	void EnableBlending(bool v);
-	void BlendFunc(ShaderBlendFactor srcAlpha, ShaderBlendFactor dstAlpha);
-	void EnableAlphaTest(bool v);
-	void AlphaFunc(ShaderAlphaFunc always, float v);
 }

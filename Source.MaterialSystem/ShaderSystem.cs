@@ -14,21 +14,6 @@ using System.Text;
 
 namespace Source.MaterialSystem;
 
-public class ShaderRenderState
-{
-	public const int SHADER_OPACITY_ALPHATEST = 0x0010;
-	public const int SHADER_OPACITY_OPAQUE = 0x0020;
-	public const int SHADER_OPACITY_TRANSLUCENT = 0x0040;
-	public const int SHADER_OPACITY_MASK = 0x0070;
-
-	public int Flags;
-	public VertexFormat VertexFormat;
-	public VertexFormat VertexUsage;
-
-	public bool IsTranslucent() => (Flags & SHADER_OPACITY_TRANSLUCENT) != 0;
-	public bool IsAlphaTested() => (Flags & SHADER_OPACITY_ALPHATEST) != 0;
-}
-
 public interface IShaderSystemInternal : IShaderInit, IShaderSystem
 {
 	void LoadAllShaderDLLs();
@@ -36,31 +21,31 @@ public interface IShaderSystemInternal : IShaderInit, IShaderSystem
 	IShader? FindShader(ReadOnlySpan<char> shaderName);
 
 	void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState shaderRenderState, ReadOnlySpan<char> materialName);
+	bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState shaderRenderState, ReadOnlySpan<char> materialName);
 	// void CleanupRenderState(ref ShaderRenderState renderState);
-	void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
+	void DrawElements(IShader shader, IMaterialVar[] parms, in ShadowState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
 	IEnumerable<IShader> GetShaders();
 }
 
 public class ShaderSystem : IShaderSystemInternal
 {
 	List<IShaderDLL> ShaderDLLs = [];
-	ShaderRenderState? RenderState;
+	ShadowState? RenderState;
 	internal MaterialSystem MaterialSystem;
 	internal ShaderAPIGl46 ShaderAPI;
 	internal MaterialSystem_Config Config;
 
-	public void BindTexture(in MaterialVarGPU hardwareTarget, ITexture texture, int frame) {
+	public void BindTexture(Sampler sampler, ITexture texture, int frame) {
 		if (texture == null) return;
 
-		((ITextureInternal)texture).Bind(in hardwareTarget, frame);
+		((ITextureInternal)texture).Bind(sampler, frame);
 	}
 
 	public void ResetShaderState() {
 
 	}
 
-	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShaderRenderState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
+	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShadowState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
 		ShaderAPI.InvalidateDelayedShaderConstraints();
 
 		int materialVarFlags = parms[(int)ShaderMaterialVars.Flags].GetIntValue();
@@ -79,7 +64,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 			PrepForShaderDraw(shader, parms, renderState);
 
-			shader.DrawElements(parms, ShaderAPI, vertexCompression);
+			shader.DrawElements(parms, null, ShaderAPI, vertexCompression);
 			DoneWithShaderDraw();
 		}
 	}
@@ -228,10 +213,11 @@ public class ShaderSystem : IShaderSystemInternal
 		RenderState = null;
 	}
 
-	private void PrepForShaderDraw(IShader shader, Span<IMaterialVar> vars, ShaderRenderState? renderState) {
+	private void PrepForShaderDraw(IShader shader, Span<IMaterialVar> vars, ShadowState? renderState) {
 		Assert(RenderState == null);
 		// LATER; plug into spew?
 		RenderState = renderState;
+		renderState?.Activate(); // Activate the render state, this flushes out UBO's etc
 	}
 
 	public void InitShaderInstance(IShader shader, IMaterialVar[] shaderParams, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
@@ -262,20 +248,25 @@ public class ShaderSystem : IShaderSystemInternal
 		textureVar.SetTextureValue(texture);
 	}
 
-	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShaderRenderState renderState, ReadOnlySpan<char> materialName) {
+	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState renderState, ReadOnlySpan<char> materialName) {
 		Assert(RenderState == null);
 		InitRenderStateFlags(ref renderState, shaderParams);
-		shader.SpecifyVertexFormat(ref renderState.VertexFormat);
+		InitState(shader, shaderParams, ref renderState);
 		return true;
+	}
+
+	private void InitState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState renderState) {
+		PrepForShaderDraw(shader, shaderParams, renderState);
+		shader.DrawElements(shaderParams, renderState, null, VertexCompressionType.None);
+		DoneWithShaderDraw();
 	}
 
 	public const int SNAPSHOT_COUNT_NORMAL = 16;
 	public const int SNAPSHOT_COUNT_EDITOR = 32;
 	public int SnapshotTypeCount() => MaterialSystem.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
 
-	private void InitRenderStateFlags(ref ShaderRenderState renderState, IMaterialVar[] shaderParams) {
-		renderState.Flags = 0;
-		renderState.Flags &= ~ShaderRenderState.SHADER_OPACITY_MASK;
+	private void InitRenderStateFlags(ref ShadowState renderState, IMaterialVar[] shaderParams) {
+
 	}
 
 	public void Draw(bool makeActualDrawCall = true) {

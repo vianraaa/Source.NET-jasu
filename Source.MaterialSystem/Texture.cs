@@ -270,9 +270,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		return (InternalFlags & (int)InternalTextureFlags.Allocated) != 0;
 	}
 
-	public void Bind(in MaterialVarGPU hardwareTarget, int frame) {
+	public void Bind(Sampler sampler, int frame) {
 		if (HasBeenAllocated()) {
-			materials.ShaderAPI.BindTexture(in hardwareTarget, frame, TextureHandles![frame]);
+			materials.ShaderAPI.BindTexture(sampler, frame, TextureHandles![frame]);
 		}
 		else {
 			Warning($"Tried to bind texture {GetName()}, but texture handles are not valid.\n");

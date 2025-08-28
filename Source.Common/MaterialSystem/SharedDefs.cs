@@ -55,6 +55,7 @@ public enum Sampler {
 	Sampler13,
 	Sampler14,
 	Sampler15,
+	MaxSamplers
 }
 
 public enum VertexTextureSampler {

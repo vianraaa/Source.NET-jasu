@@ -9,6 +9,6 @@ public interface ITextureInternal : ITexture
 		return Path.ChangeExtension(new(name), null); // todo.
 	}
 
-	void Bind(in MaterialVarGPU hardwareTarget, int frame);
+	void Bind(Sampler sampler, int frame);
 	void Precache();
 }

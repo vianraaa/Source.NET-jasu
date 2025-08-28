@@ -161,32 +161,6 @@ public enum ShaderTexGenParam
 	CameraSpaceNormal
 }
 
-public enum ShaderDrawBitField
-{
-	Position = 0x0001,
-	Normal = 0x0002,
-	Color = 0x0004,
-	Specular = 0x0008,
-
-	TexCoord0 = 0x0010,
-	TexCoord1 = 0x0020,
-	TexCoord2 = 0x0040,
-	TexCoord3 = 0x0080,
-
-	LightmapTexCoord0 = 0x0100,
-	LightmapTexCoord1 = 0x0200,
-	LightmapTexCoord2 = 0x0400,
-	LightmapTexCoord3 = 0x0800,
-
-	SecondaryTexCoord0 = 0x1000,
-	SecondaryTexCoord1 = 0x2000,
-	SecondaryTexCoord2 = 0x4000,
-	SecondaryTexCoord3 = 0x8000,
-
-	TexCoordMask = TexCoord0 | TexCoord1 | TexCoord2 | TexCoord3,
-	LightmapTexCoordMask = LightmapTexCoord0 | LightmapTexCoord1 | LightmapTexCoord2 | LightmapTexCoord3,
-	SecondaryTexCoordMask = SecondaryTexCoord0 | SecondaryTexCoord1 | SecondaryTexCoord2 | SecondaryTexCoord3
-}
 public enum ShaderFogMode
 {
 	Disabled = 0,
@@ -210,28 +184,17 @@ public enum PolygonOffsetMode
 	ShadowBias = 0x2,
 	Reserved = 0x3
 }
+// We differ from Source heavily here.
+// IShaderShadow becomes an object that every shader instance has.
+// ie. every Material has its own shader object.
+// It will then activate the shader object when its in use.
+// This consists of various GL states and binding of UBOs.
 public interface IShaderShadow
 {
-	// Sets the default *shadow* state
-	void SetDefaultState();
-
-	// Methods related to depth buffering
 	void DepthFunc(ShaderDepthFunc depthFunc);
 	void EnableDepthWrites(bool enable);
 	void EnableDepthTest(bool enable);
 	void EnablePolyOffset(PolygonOffsetMode offsetMode);
-
-	// These methods for controlling stencil are obsolete and stubbed to do nothing.  Stencil
-	// control is via the shaderapi/material system now, not part of the shadow state.
-	// Methods related to stencil
-	void EnableStencil(bool enable);
-	void StencilFunc(ShaderStencilFunc stencilFunc);
-	void StencilPassOp(ShaderStencilOp stencilOp);
-	void StencilFailOp(ShaderStencilOp stencilOp);
-	void StencilDepthFailOp(ShaderStencilOp stencilOp);
-	void StencilReference(int nReference);
-	void StencilMask(int nMask);
-	void StencilWriteMask(int nMask);
 
 	// Suppresses/activates color writing 
 	void EnableColorWrites(bool enable);
@@ -240,7 +203,6 @@ public interface IShaderShadow
 	// Methods related to alpha blending
 	void EnableBlending(bool enable);
 	void BlendFunc(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor);
-	// More below...
 
 	// Alpha testing
 	void EnableAlphaTest(bool enable);
@@ -259,28 +221,13 @@ public interface IShaderShadow
 	// The flags to pass in here come from the VertexFormatFlags_t enum
 	// If pTexCoordDimensions is *not* specified, we assume all coordinates
 	// are 2-dimensional
-	void VertexShaderVertexFormat(uint flags,
-			int texCoordCount, Span<int> texCoordDimensions, int userDataSize);
+	void VertexShaderVertexFormat(VertexFormat format, int texCoordCount, Span<int> texCoordDimensions, int userDataSize);
 
 	// Pixel and vertex shader methods
-	void SetVertexShader(ReadOnlySpan<char> fileName, int nStaticVshIndex);
-	void SetPixelShader(ReadOnlySpan<char> fileName, int nStaticPshIndex = 0);
+	void SetVertexShader(ReadOnlySpan<char> fileName);
+	void SetPixelShader(ReadOnlySpan<char> fileName);
 
-	// Indicates we're going to light the model
-	void EnableLighting(bool enable);
-
-	// Enables specular lighting (lighting has also got to be enabled)
-	void EnableSpecular(bool enable);
-
-	// Convert from linear to gamma color space on writes to frame buffer.
-	void EnableSRGBWrite(bool enable);
-
-	// Convert from gamma to linear on texture fetch.
-	void EnableSRGBRead(Sampler sampler, bool enable);
-
-	// Activate/deactivate skinning. Indexed blending is automatically
-	// enabled if it's available for this hardware. When blending is enabled,
-	// we allocate enough room for 3 weights (max allowed)
+	// Todo.
 	void EnableVertexBlend(bool enable);
 
 	// per texture unit stuff
@@ -294,9 +241,6 @@ public interface IShaderShadow
 	void EnableCustomPixelPipe(bool enable);
 	void CustomTextureStages(int stageCount);
 	void CustomTextureOperation(TextureStage stage, ShaderTexChannel channel, ShaderTexOp op, ShaderTexArg arg1, ShaderTexArg arg2);
-
-	// indicates what per-vertex data we're providing
-	void DrawFlags(ShaderDrawBitField drawFlags);
 
 	// A simpler method of dealing with alpha modulation
 	void EnableAlphaPipe(bool enable);
@@ -326,4 +270,5 @@ public interface IShaderShadow
 	// More alpha blending state
 	void BlendOp(ShaderBlendOp blendOp);
 	void BlendOpSeparateAlpha(ShaderBlendOp blendOp);
+	GraphicsDriver GetDriver();
 }

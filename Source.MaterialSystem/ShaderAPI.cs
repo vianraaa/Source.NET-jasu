@@ -33,6 +33,13 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 
+public enum UniformBufferBindingLocation {
+	SharedMatrices = 0,
+	SharedBaseShader = 1,
+	SharedVertexShader = 2,
+	SharedPixelShader = 3
+}
+
 public struct GfxViewport
 {
 	public int X;
@@ -60,7 +67,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		AcquireInternalRenderTargets();
 
 		CreateMatrixStacks();
-		CreateShaderSharedUBOs();
 
 		ShaderManager.Init();
 		MeshMgr.Init();
@@ -114,7 +120,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		uboMatrices = glCreateBuffer();
 		glObjectLabel(GL_BUFFER, uboMatrices, "ShaderAPI Shared Matrix UBO");
 		glNamedBufferData(uboMatrices, sizeof(Matrix4x4) * 3, null, GL_DYNAMIC_DRAW);
-		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboMatrices);
+		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedMatrices, uboMatrices);
 	}
 
 	private void AcquireInternalRenderTargets() {
@@ -457,21 +463,37 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return 0;
 	}
 
+	Dictionary<uint, Dictionary<ulong, int>> locs = [];
+
 	public unsafe int LocateShaderUniform(ReadOnlySpan<char> name) {
 		if (!activeVertexShader.IsValid()) {
 			Warning("WARNING: Attempted to locate uniform on an invalid vertex shader!\n");
 			return -1;
 		}
+
 		if (!activePixelShader.IsValid()) {
 			Warning("WARNING: Attempted to locate uniform on an invalid pixel shader!\n");
 			return -1;
 		}
+
+		// Combobulate
 		uint shader = CombobulateShadersIfChanged();
+
+		// Then get shader ID -> shader uniform lookup table
+		if(!locs.TryGetValue(shader, out var lookup)) 
+			lookup = locs[shader] = [];
+
+		// Then compute uniform name -> hash symbol
+		// and look up if we've queried for this parameter yet
+		ulong hash = name.Hash();
+		if (lookup.TryGetValue(hash, out int loc))
+			return loc;
+
 		Span<byte> bytes = stackalloc byte[name.Length * 2];
 		int byteLen = Encoding.ASCII.GetBytes(name, bytes);
-		int loc;
 		fixed (byte* uniformName = bytes)
-			loc = glGetUniformLocation(shader, uniformName);
+			lookup[hash] = loc = glGetUniformLocation(shader, uniformName);
+
 		return loc;
 	}
 
@@ -494,14 +516,13 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		glProgramUniform1fv(GetCurrentProgramInternal(), uniform, flConsts);
 	}
 
-	internal void BindTexture(in MaterialVarGPU hardwareTarget, int frame, ShaderAPITextureHandle_t textureHandle) {
+	internal void BindTexture(Sampler sampler, int frame, ShaderAPITextureHandle_t textureHandle) {
 		CombobulateShadersIfChanged();
 		if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE)
 			return; // TODO: can we UNSET the sampler???
 
-		glActiveTexture(GL_TEXTURE0 + 0);
+		glActiveTexture(GL_TEXTURE0 + (int)sampler);
 		glBindTexture(GL_TEXTURE_2D, (uint)textureHandle);
-		glProgramUniform1i((uint)hardwareTarget.Program, hardwareTarget.Location, 0);
 	}
 
 	public bool CanDownloadTextures() {

@@ -92,58 +92,53 @@ public abstract class BaseVSShader : BaseShader
 
 		bool bBaseTexture = (baseTextureVar >= 0) && shaderParams[baseTextureVar].IsTexture();
 
-		ShaderAPI!.BindVertexShader(in vsh);
-		ShaderAPI!.BindPixelShader(in psh);
+		if (IsSnapshotting()) {
+			ShaderShadow.EnableAlphaTest(IsFlagSet(shaderParams, MaterialVarFlags.AlphaTest));
+			if(alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f) 
+				ShaderShadow.AlphaFunc(ShaderAlphaFunc.GreaterEqual, shaderParams[alphaTestReferenceVar].GetFloatValue());
 
-		if (ShaderAPI!.InFlashlightMode()) {
-			Draw(false);
-			return;
+			if (bBaseTexture)
+				ShaderShadow.EnableTexture(Sampler.Sampler0, true);
+
+			if (bBaseTexture)
+				SetDefaultBlendingShadowState(baseTextureVar, true);
+
+			ShaderShadow.SetVertexShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Vertex)}");
+			ShaderShadow.SetPixelShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
+
+			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color, 1, null, 0);
+
+			DevMsg("UnlitGeneric snapshotted!\n");
 		}
-
-		var param = shaderParams[(int)ShaderMaterialVars.Flags];
-		uint flags = (uint)param.GetIntValue();
-
-		if ((flags & (uint)MaterialVarFlags.IgnoreZ) > 0) {
-			ShaderAPI.EnableDepthTest(false);
-			ShaderAPI.EnableDepthWrites(false);
-		}
-
-		ShaderAPI.EnableAlphaTest(true);
-		ShaderAPI.AlphaFunc(ShaderAlphaFunc.Always, 0.5f);
-
-		if (bBaseTexture) {
-			ITexture tex = BindTexture(in shaderParams[baseTextureVar].GPU, baseTextureVar, frameVar);
-			//SetVertexShaderTextureTransform(baseTextureTransformVar);
+		else {
+			if (bBaseTexture) {
+				BindTexture(Sampler.Sampler0, baseTextureVar, frameVar);
+			}
 		}
 
 		Draw();
 	}
 
-	private ITexture BindTexture(in MaterialVarGPU hardwareTarget, int textureVarIdx, int frameVarIdx) {
+	private void SetDefaultBlendingShadowState(int baseTextureVar, bool v) {
+		// Do this later. Just trying to get ShaderShadow back
+	}
+
+	private void BindTexture(Sampler sampler, int textureVarIdx, int frameVarIdx) {
 		IMaterialVar textureVar = Params![textureVarIdx];
 		IMaterialVar? frameVar = frameVarIdx != -1 ? Params[frameVarIdx] : null;
 		var tex = textureVar.GetTextureValue()!;
-		ShaderSystem.BindTexture(in hardwareTarget, tex, frameVar?.GetIntValue() ?? 0);
-		return tex;
+		ShaderSystem.BindTexture(sampler, tex, frameVar?.GetIntValue() ?? 0);
+		ShaderAPI!.SetShaderUniform(ShaderAPI!.LocateShaderUniform(textureVar.GetName()), (int)sampler);
 	}
 
 	private void Draw(bool makeActualDrawCall = true) {
-		ShaderSystem.Draw();
+		if (IsSnapshotting())
+			return;
+		ShaderSystem.Draw(makeActualDrawCall);
 	}
 
 	public void InitUnlitGeneric(int baseTextureVar, int detailVar, int envmapVar, int envmapMaskVar) {
 		IMaterialVar[] shaderParams = Params!;
-
-		vsh = ShaderInit!.LoadVertexShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Vertex)}");
-		psh = ShaderInit!.LoadPixelShader($"unlitgeneric_{ShaderAPI!.GetDriver().Extension(ShaderType.Pixel)}");
-
-		if (!vsh.IsValid() || !psh.IsValid()) {
-			Warning("Invalid shaders, skipping InitUnlitGeneric as it would be pointless to continue.\n");
-			Warning($"   Vertex: {(vsh.IsValid() ? "valid" : "invalid")}, pixel: {(vsh.IsValid() ? "valid" : "invalid")}\n");
-			return;
-		}
-
-		RecomputeShaderUniforms(in vsh, in psh);
 
 		if (baseTextureVar >= 0 && shaderParams[baseTextureVar].IsDefined()) {
 			LoadTexture(baseTextureVar);
@@ -153,7 +148,5 @@ public abstract class BaseVSShader : BaseShader
 					ClearFlags(shaderParams, MaterialVarFlags.BaseAlphaEnvMapMask);
 			}
 		}
-
-		DevMsg("Managed to init an UnlitGeneric shader instance.\n");
 	}
 }

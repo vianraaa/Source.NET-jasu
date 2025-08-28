@@ -69,8 +69,7 @@ public class Material : IMaterialInternal
 			flags |= MaterialFlags.IsManuallyCreated;
 		}
 
-		ShaderRenderState.Flags = 0;
-		ShaderRenderState.VertexFormat = ShaderRenderState.VertexUsage = 0;
+		ShaderRenderState = new(materials.ShaderAPI, materialName);
 	}
 
 	public int MappingWidth;
@@ -566,7 +565,7 @@ public class Material : IMaterialInternal
 	public Span<IMaterialVar> Vars => new Span<IMaterialVar>(ShaderParams)[..VarCount];
 
 	// IMaterialProxy
-	ShaderRenderState ShaderRenderState = new();
+	ShadowState ShaderRenderState;
 	static uint DebugVarsSignature = 0;
 
 	public void DrawMesh(VertexCompressionType vertexCompression) {

@@ -16,6 +16,7 @@ public abstract class BaseShader : IShader
 
 	internal static IMaterialVar[]? Params;
 	internal static IShaderInit? ShaderInit;
+	internal IShaderShadow? ShaderShadow;
 	internal static IShaderDynamicAPI? ShaderAPI;
 	internal static string? TextureGroupName;
 
@@ -89,26 +90,6 @@ public abstract class BaseShader : IShader
 		Params = null;
 	}
 
-	protected virtual void RecomputeShaderUniforms(in VertexShaderHandle vsh, in PixelShaderHandle psh) {
-		Assert(ShaderAPI!);
-		ShaderAPI!.BindVertexShader(in vsh);
-		ShaderAPI!.BindPixelShader(in psh);
-		for (int i = 0; i < Params!.Length; i++) {
-			IMaterialVar? var = Params[i];
-			if (var == null) continue;
-			ref MaterialVarGPU GPU = ref var.GPU;
-
-			ReadOnlySpan<char> name = var.GetName();
-			name = name[0] == '$' ? name[1..] : name;
-
-			GPU.Location = ShaderAPI!.LocateShaderUniform(name);
-			if (GPU.Location < 0) 
-				continue;
-
-			GPU.Program = ShaderAPI!.GetCurrentProgram();
-		}
-	}
-
 	protected virtual void OnInitShaderParams(IMaterialVar[] vars, ReadOnlySpan<char> materialName) {
 
 	}
@@ -121,18 +102,24 @@ public abstract class BaseShader : IShader
 
 	}
 
-	public void DrawElements(IMaterialVar[] vars, IShaderDynamicAPI shaderAPI, VertexCompressionType vertexCompression) {
+	public void DrawElements(IMaterialVar[] vars, IShaderShadow? shadow, IShaderDynamicAPI? shaderAPI, VertexCompressionType vertexCompression) {
 		Assert(Params == null);
 		Params = vars;
+		ShaderShadow = shadow;
 		ShaderAPI = shaderAPI;
 
+		// if(IsSnapshotting())
+			
 		OnDrawElements(vars, shaderAPI, vertexCompression);
 
 		Params = null;
+		ShaderShadow = null;
 		ShaderAPI = null;
 		// MeshBuilder = null
 	}
 
+	[MemberNotNullWhen(true, nameof(ShaderShadow))]
+	protected bool IsSnapshotting() => ShaderShadow != null;
 
 	public bool TextureIsTranslucent(int textureVar = -1, bool isBaseTexture = true) {
 		if (textureVar < 0)
