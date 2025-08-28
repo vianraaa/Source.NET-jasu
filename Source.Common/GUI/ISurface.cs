@@ -47,6 +47,7 @@ public enum SurfaceFontFlags
 	Bitmap = 0x800,
 }
 
+public delegate void VGuiPlayFunc(ReadOnlySpan<char> fileName);
 public interface ISurface
 {
 	void RunFrame();
@@ -153,4 +154,5 @@ public interface ISurface
 	void PaintTraverseEx(IPanel embedded, bool v);
 	void PaintSoftwareCursor();
 	bool HandleInputEvent(in InputEvent ev);
+	void InstallPlaySoundFunc(VGuiPlayFunc func);
 }

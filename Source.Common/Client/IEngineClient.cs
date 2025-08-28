@@ -39,5 +39,6 @@ public enum ClientFrameStage
 /// </summary>
 public interface IEngineClient
 {
-	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding);
+	ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding);
+	void GetUILanguage(Span<char> dest);
 }

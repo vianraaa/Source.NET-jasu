@@ -18,7 +18,7 @@ public interface IScheme {
 }
 
 public interface ISchemeManager {
-	IScheme LoadSchemeFromFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag);
+	IScheme? LoadSchemeFromFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag);
 	void ReloadSchemes();
 	void ReloadFonts();
 	IScheme GetDefaultScheme();

@@ -9,7 +9,7 @@ using Source.GUI.Controls;
 using System.Drawing;
 
 using static Source.Dbg;
-namespace Source.MaterialSystem;
+namespace Source.MaterialSystem.Surface;
 
 
 public struct PaintState
@@ -64,7 +64,7 @@ public class MatSystemSurface : ISurface
 
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine) {
 		this.materials = materials;
-		this.CommandLine = commandLine;
+		CommandLine = commandLine;
 
 		DrawColor[0] = DrawColor[1] = DrawColor[2] = DrawColor[3] = 25; ;
 		TranslateX = TranslateY = 0;
@@ -139,7 +139,7 @@ public class MatSystemSurface : ISurface
 		InDrawing = true;
 		BoundTexture = -1;
 
-		using MatRenderContextPtr renderContext = new (materials);
+		using MatRenderContextPtr renderContext = new(materials);
 		renderContext.GetViewport(out int x, out int y, out int width, out int height);
 
 		SurfaceExtents[0] = 0;
@@ -171,7 +171,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	private void EnableScissor(bool v) {
-		
+
 	}
 
 	public bool ClipRect(in SurfaceVertex inUL, in SurfaceVertex inLR, out SurfaceVertex outUL, out SurfaceVertex outLR) {
@@ -503,7 +503,7 @@ public class MatSystemSurface : ISurface
 
 		if (paintPopups) {
 			int popups = GetPopupCount();
-			if (popups > 254) 
+			if (popups > 254)
 				Warning("Too many popups! Rendering will be bad!\n");
 
 			int stencilRef = 254;
@@ -524,7 +524,7 @@ public class MatSystemSurface : ISurface
 				// renderContext.SetStencilReferenceValue(isTopmostPopup ? 255 : stencilRef);
 				--stencilRef;
 
-				zPos = ((float)(i) / (float)popups);
+				zPos = i / (float)popups;
 				popupPanel.PaintTraverse(true);
 			}
 		}
@@ -541,7 +541,7 @@ public class MatSystemSurface : ISurface
 		if (RestrictedPanel == null)
 			return true;
 
-		while(panel != null) {
+		while (panel != null) {
 			if (panel == RestrictedPanel)
 				return true;
 			panel = panel.GetParent();
@@ -555,10 +555,10 @@ public class MatSystemSurface : ISurface
 		using MatRenderContextPtr renderContext = new(materials);
 		renderContext.MatrixMode(MaterialMatrixMode.Projection);
 		renderContext.PopMatrix();
-		
+
 		renderContext.MatrixMode(MaterialMatrixMode.Model);
 		renderContext.PopMatrix();
-		
+
 		renderContext.MatrixMode(MaterialMatrixMode.View);
 		renderContext.PopMatrix();
 
@@ -674,4 +674,8 @@ public class MatSystemSurface : ISurface
 	public void PaintSoftwareCursor() {
 
 	}
+
+	event VGuiPlayFunc? play;
+
+	public void InstallPlaySoundFunc(VGuiPlayFunc func) => play += func;
 }

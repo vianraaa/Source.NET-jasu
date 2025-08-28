@@ -57,6 +57,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Usings", "0. Usings", "{
 		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.GUI", "Source.GUI\Source.GUI.csproj", "{F20219E0-0216-4E2B-B10F-358FA3FB57D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,10 @@ Global
 		{DACE2A97-2C34-44CA-82F6-B77501B89E3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DACE2A97-2C34-44CA-82F6-B77501B89E3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DACE2A97-2C34-44CA-82F6-B77501B89E3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F20219E0-0216-4E2B-B10F-358FA3FB57D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F20219E0-0216-4E2B-B10F-358FA3FB57D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F20219E0-0216-4E2B-B10F-358FA3FB57D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F20219E0-0216-4E2B-B10F-358FA3FB57D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -149,5 +155,6 @@ Global
 		{179B81DE-0D2C-48EF-B2EB-24982AD76C37} = {6C519EE4-0567-4180-A0F3-C4D73222A263}
 		{CF27A735-D0E1-4FD4-93F2-06CD5E4EFC9D} = {6C519EE4-0567-4180-A0F3-C4D73222A263}
 		{DACE2A97-2C34-44CA-82F6-B77501B89E3C} = {4B578BC3-0E56-46A4-9316-23258535813E}
+		{F20219E0-0216-4E2B-B10F-358FA3FB57D5} = {7717E508-10C7-4CBC-B833-4933D7D8E2F3}
 	EndGlobalSection
 EndGlobal

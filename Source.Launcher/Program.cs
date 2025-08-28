@@ -45,25 +45,32 @@ public class Bootloader : IDisposable
 		bool needsRestart;
 		do {
 			engineAPI = new EngineBuilder(commandLine)
+				// These assemblies have no reference to them, so they must be manually loaded.
+				.WithAssembly("Source.GUI")
 				.WithAssembly("Source.VTF")
+				// Base file system implementation
 				.WithComponent<IFileSystem, BaseFileSystem>()
-
+				// SDL3 specific components. This provides ILauncherManager and IGraphicsProvider (the current implementation merges both classes)
 				.WithComponent<SDL3_LauncherManager>()
 				.WithResolvedComponent<ILauncherManager, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
 				.WithResolvedComponent<IGraphicsProvider, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
-
+				// SDL3 input system
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
+				// Rendering abstraction
 				.WithComponent<IMaterialSystem, MaterialSystem.MaterialSystem>()
-
+				// Our game DLL's. Server/game impl, client impl, UI impl.
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()
 				.WithGameUIDLL<GameUI>()
-
+				// Shaders we want to load
 				.WithStdShader<StdShaderGl46>()
-
+				// Let the engine builder take over and inject engine-specific dependencies
 				.Build(dedicated: false);
+			// Generate our startup information
 			PreInit();
+			// Run the game
 			var res = engineAPI.Run();
+			// If the engine requested a restart, re-loop
 			needsRestart = res == IEngineAPI.Result.InitRestart || res == IEngineAPI.Result.RunRestart;
 		} while (needsRestart);
 	}

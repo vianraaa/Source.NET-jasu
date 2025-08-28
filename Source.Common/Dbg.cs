@@ -359,12 +359,12 @@ public static class Dbg
 
 	[Conditional("DBGFLAG_ASSERT")]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void AssertMsg([DoesNotReturnIf(false)] bool exp, string msg,
+	public static void AssertMsg([DoesNotReturnIf(false)] bool exp, ReadOnlySpan<char> msg,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
 		[CallerFilePath] string? ____fileP = null,
 		[CallerLineNumber] int ____lineNum = -1,
 		params object?[] args
-	) => _AssertMsg(exp, $"Assertion Failed: {string.Format(msg, args)}", ____fileP ?? "<nofile>", ____lineNum, false);
+	) => _AssertMsg(exp, $"Assertion Failed: {new(msg)}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

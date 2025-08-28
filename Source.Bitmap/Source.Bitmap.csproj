@@ -9,7 +9,7 @@
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dependencies\Raylib-cs\OpenGL46.csproj" />
+    <ProjectReference Include="..\Dependencies\OpenGL\OpenGL46.csproj" />
     <ProjectReference Include="..\Source.Common\Source.Common.csproj" />
   </ItemGroup>
 

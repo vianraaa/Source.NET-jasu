@@ -10,6 +10,7 @@ using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
+using Source.MaterialSystem.Surface;
 
 using System.Numerics;
 using System.Reflection.Emit;

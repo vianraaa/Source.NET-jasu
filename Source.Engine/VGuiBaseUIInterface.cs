@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -140,7 +141,9 @@ public class EngineVGui(
 
 	Common Common;
 	IGameUI staticGameUIFuncs;
-	ISurface surface;
+	ISurface matSystemSurface;
+	IEngineClient engineClient;
+	ISchemeManager vguiScheme;
 	StaticPanel staticPanel;
 	EnginePanel staticClientDLLPanel;
 	EnginePanel staticClientDLLToolsPanel;
@@ -250,15 +253,29 @@ public class EngineVGui(
 		throw new NotImplementedException();
 	}
 
+	public void VGui_PlaySound(ReadOnlySpan<char> fileName) {
+
+	}
+
 	public void Init() {
 		// Load gameui
 		Common = engineAPI.GetRequiredService<Common>();
-		surface = engineAPI.GetRequiredService<ISurface>();
+		matSystemSurface = engineAPI.GetRequiredService<ISurface>();
 		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
+		engineClient = engineAPI.GetRequiredService<IEngineClient>();
+		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
 		// IGameConsole, but later.
-		// todo: language string
-		// todo: IMatSystemSurface, InstallPlaySoundFunc
-		// todo: scheme loading
+
+		Span<char> lang = stackalloc char[64];
+		engineClient.GetUILanguage(lang);
+
+		matSystemSurface.InstallPlaySoundFunc(VGui_PlaySound);
+
+		ReadOnlySpan<char> str = "Resource/SourceScheme.res";
+		if(vguiScheme.LoadSchemeFromFile(str, "Tracker") == null) {
+			Sys.Error($"Error loading file {str}\n");
+			return;
+		}
 
 		// Ideal hierarchy:
 		
@@ -283,7 +300,7 @@ public class EngineVGui(
 		staticPanel.SetCursor(CursorCode.None);
 		staticPanel.SetZPos(0);
 		staticPanel.SetVisible(true);
-		staticPanel.SetParent(surface.GetEmbeddedPanel());
+		staticPanel.SetParent(matSystemSurface.GetEmbeddedPanel());
 
 		staticClientDLLPanel = engineAPI.New<EnginePanel>(staticPanel, "staticClientDLLPanel");
 		staticClientDLLPanel.SetBounds(0, 0, w, h);
@@ -369,7 +386,7 @@ public class EngineVGui(
 		staticClientDLLPanel.SetVisible(false);
 		staticGameUIPanel.SetMouseInputEnabled(true);
 
-		surface.SetCursor(CursorCode.Arrow);
+		matSystemSurface.SetCursor(CursorCode.Arrow);
 		SetEngineVisible(false);
 		staticGameUIFuncs.OnGameUIActivated();
 	}
@@ -394,7 +411,7 @@ public class EngineVGui(
 		if (staticPanel == null)
 			return;
 
-		IPanel embedded = surface.GetEmbeddedPanel();
+		IPanel embedded = matSystemSurface.GetEmbeddedPanel();
 		if (embedded == null)
 			return;
 
@@ -416,7 +433,7 @@ public class EngineVGui(
 			staticClientDLLPanel.SetVisible(false);
 			staticClientDLLToolsPanel.SetVisible(false);
 
-			surface.PaintTraverseEx(embedded, true);
+			matSystemSurface.PaintTraverseEx(embedded, true);
 
 			staticClientDLLPanel.SetVisible(saveVisible);
 			staticClientDLLToolsPanel.SetVisible(saveToolsVisible);
@@ -428,19 +445,19 @@ public class EngineVGui(
 
 			IPanel? saveParent = staticClientDLLPanel.GetParent();
 			staticClientDLLPanel.SetParent(null);
-			surface.PaintTraverseEx(staticClientDLLPanel, true);
+			matSystemSurface.PaintTraverseEx(staticClientDLLPanel, true);
 			staticClientDLLPanel.SetParent(saveParent);
 
 			IPanel? saveToolParent = staticClientDLLToolsPanel.GetParent();
 			staticClientDLLToolsPanel.SetParent(null);
-			surface.PaintTraverseEx(staticClientDLLToolsPanel, true);
+			matSystemSurface.PaintTraverseEx(staticClientDLLToolsPanel, true);
 			staticClientDLLToolsPanel.SetParent(saveParent);
 
 			embedded.SetVisible(saveVisible);
 		}
 
 		if ((mode & PaintMode.Cursor) == PaintMode.Cursor) {
-			surface.PaintSoftwareCursor();
+			matSystemSurface.PaintSoftwareCursor();
 		}
 	}
 }
