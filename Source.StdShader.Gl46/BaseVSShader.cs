@@ -2,6 +2,8 @@
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
+using System.Security.Cryptography;
+
 using static Source.StdShader.Gl46.UnlitGeneric;
 
 namespace Source.StdShader.Gl46;
@@ -119,8 +121,35 @@ public abstract class BaseVSShader : BaseShader
 		Draw();
 	}
 
-	private void SetDefaultBlendingShadowState(int baseTextureVar, bool v) {
-		// Do this later. Just trying to get ShaderShadow back
+	private void SetDefaultBlendingShadowState(int baseTextureVar, bool isBaseTexture) {
+		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0)
+			throw new Exception();
+		else
+			SetNormalBlendingShadowState(baseTextureVar, isBaseTexture);
+	}
+
+	private void SetNormalBlendingShadowState(int textureVar, bool isBaseTexture) {
+		Assert(IsSnapshotting());
+
+		bool isTranslucent = (CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0;
+		isTranslucent |= TextureIsTranslucent(textureVar, isBaseTexture) && (CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0;
+
+		if (isTranslucent) {
+			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.OneMinusSrcAlpha);
+		}
+		else {
+			DisableAlphaBlending();
+		}
+	}
+
+	private void EnableAlphaBlending(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
+		ShaderShadow!.EnableBlending(true);
+		ShaderShadow!.BlendFunc(srcFactor, dstFactor);
+		ShaderShadow!.EnableDepthWrites(false);
+	}
+
+	private void DisableAlphaBlending() {
+		ShaderShadow!.EnableBlending(false);
 	}
 
 	private void BindTexture(Sampler sampler, int textureVarIdx, int frameVarIdx) {

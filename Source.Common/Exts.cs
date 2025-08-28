@@ -185,6 +185,13 @@ public static class UnmanagedUtils
 		return hash;
 	}
 
+	public static unsafe ulong Hash<T>(this ref T target, bool invariant = true) where T : unmanaged {
+		fixed(T* ptr = &target) {
+			Span<byte> data = new(ptr, Unsafe.SizeOf<T>());
+			return XXH64.DigestOf(data);
+		}
+	}
+
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {
 		fixed (T* ptr = array) {
 			for (int i = 0, c = array.Length; i < c; i++)

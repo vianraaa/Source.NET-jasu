@@ -84,6 +84,7 @@ using GLint64 = System.Int64;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Linq;
+using Source.Common.ShaderAPI;
 
 #endif
 
@@ -99,10 +100,44 @@ namespace OpenGL;
 [SuppressUnmanagedCodeSecurity]
 public unsafe static class Gl46
 {
-    /// <summary>
-    /// The null pointer, just like in C/C++.
-    /// </summary>
-    public static readonly void* NULL = (void*)0;
+	public static int GLEnum(this ShaderBlendOp op) {
+		return op switch {
+			ShaderBlendOp.Add => GL_FUNC_ADD,
+			ShaderBlendOp.Subtract => GL_FUNC_SUBTRACT,
+			ShaderBlendOp.RevSubtract => GL_FUNC_REVERSE_SUBTRACT,
+			ShaderBlendOp.Min => GL_MIN,
+			ShaderBlendOp.Max => GL_MAX,
+			_ => throw new NotImplementedException()
+		};
+	}
+	public static int GLEnum(this ShaderBlendFactor factor) {
+		return factor switch {
+			ShaderBlendFactor.Zero => GL_ZERO,
+			ShaderBlendFactor.One => GL_ONE,
+			ShaderBlendFactor.SrcColor => GL_SRC_COLOR,
+			ShaderBlendFactor.OneMinusSrcColor => GL_ONE_MINUS_SRC_COLOR,
+			ShaderBlendFactor.SrcAlpha => GL_SRC_ALPHA,
+			ShaderBlendFactor.OneMinusSrcAlpha => GL_ONE_MINUS_SRC_ALPHA,
+			ShaderBlendFactor.DstAlpha => GL_DST_ALPHA,
+			ShaderBlendFactor.OneMinusDstAlpha => GL_ONE_MINUS_DST_ALPHA,
+			ShaderBlendFactor.DstColor => GL_DST_COLOR,
+			ShaderBlendFactor.OneMinusDstColor => GL_ONE_MINUS_DST_COLOR,
+			ShaderBlendFactor.SrcAlphaSat => GL_SRC_ALPHA_SATURATE,
+			_ => throw new NotImplementedException()
+		};
+	}
+	public static bool Both(this ShaderBlendFactor factor) {
+		return factor switch {
+			ShaderBlendFactor.BothInvSrcAlpha => true,
+			ShaderBlendFactor.BothSrcAlpha => true,
+			_ => false
+		};
+	}
+
+	/// <summary>
+	/// The null pointer, just like in C/C++.
+	/// </summary>
+	public static readonly void* NULL = (void*)0;
 
     /// <summary>
     /// Useful helper function for getting the major OpenGL version of the project as defined by the preprocessor.

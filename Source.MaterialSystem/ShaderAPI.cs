@@ -643,31 +643,4 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public int GetCurrentDynamicVBSize() {
 		return (1024 + 512) * 1024; // See if it's still needed to use smaller sizes at certain points... how would this even work, I wonder
 	}
-
-	public void EnableDepthWrites(bool v) {
-		if (v)
-			glEnable(GL_DEPTH_TEST);
-		else
-			glDisable(GL_DEPTH_TEST);
-	}
-
-	public void EnableDepthTest(bool v) {
-		glDepthMask(v);
-	}
-
-	public void EnableBlending(bool v) {
-		throw new NotImplementedException();
-	}
-
-	public void BlendFunc(ShaderBlendFactor srcAlpha, ShaderBlendFactor dstAlpha) {
-		throw new NotImplementedException();
-	}
-
-	public void EnableAlphaTest(bool enable) {
-
-	}
-
-	public void AlphaFunc(ShaderAlphaFunc func, float refV) {
-
-	}
 }

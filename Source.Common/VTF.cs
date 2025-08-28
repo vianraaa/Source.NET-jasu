@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Source.Common;
 
-
+[Flags]
 public enum CompiledVtfFlags : uint
 {
 	// flags from the *.txt config file

@@ -122,7 +122,7 @@ public enum StencilComparisonFunction
 }
 
 
-
+[Flags]
 public enum MaterialVarFlags
 {
 	Debug = (1 << 0),
@@ -158,7 +158,7 @@ public enum MaterialVarFlags
 	AllowAlphaToCoverage = (1 << 29),
 	IgnoreAlphaModulation = (1 << 30)
 }
-
+[Flags]
 public enum MaterialVarFlags2
 {
 	// NOTE: These are for $flags2!!!!!

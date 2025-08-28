@@ -10,12 +10,39 @@ using System.Threading.Tasks;
 
 namespace Source.MaterialSystem;
 
+/// <summary>
+/// A basic representation of the OpenGL state machine
+/// </summary>
+public struct GraphicsBoardState
+{
+	public bool Blending;
+	public ShaderBlendFactor SourceBlend;
+	public ShaderBlendFactor DestinationBlend;
+	public ShaderBlendOp BlendOperation;
 
+	public bool DepthTest;
+	public bool DepthWrite;
+}
+
+/// <summary>
+/// Shared uniforms between both types of shaders.
+/// </summary>
+public struct SourceSharedShadowState
+{
+
+}
+
+/// <summary>
+/// Uniforms for the vertex shader the ShadowState represents.
+/// </summary>
 public struct SourceVertexSharedShadowState
 {
 
 }
 
+/// <summary>
+/// Uniforms for the pixel shader the ShadowState represents.
+/// </summary>
 public unsafe struct SourcePixelSharedShadowState
 {
 	public int IsAlphaTesting;
@@ -23,17 +50,20 @@ public unsafe struct SourcePixelSharedShadowState
 	public float AlphaTestRef;
 }
 
-public struct SourceSharedShadowState
-{
-	
-}
-
+/// <summary>
+/// A shader state. Represents the board (GL state machine) and shader uniforms together.
+/// During shader initialization/recomputes, this state is recalculated based on input variables, etc.
+/// </summary>
 public class ShadowState : IShaderShadow
 {
 	internal readonly ShaderSystem Shaders;
 	internal readonly ShaderAPIGl46 ShaderAPI;
 
-	public uint UBO;
+	public uint BASE_UBO;
+	public uint VERTEX_UBO;
+	public uint PIXEL_UBO;
+
+	public GraphicsBoardState State;
 	public SourceSharedShadowState Base;
 	public SourceVertexSharedShadowState Vertex;
 	public SourcePixelSharedShadowState Pixel;
@@ -41,15 +71,31 @@ public class ShadowState : IShaderShadow
 	public VertexShaderHandle VertexShader;
 	public PixelShaderHandle PixelShader;
 
+	private static unsafe int SizeAligned<T>(int alignment = 16) where T : unmanaged {
+		var size = sizeof(T);
+		var a = alignment - (size % alignment);
+		return size + a;
+	}
+
 	public unsafe ShadowState(ShaderAPIGl46 shaderAPI, ReadOnlySpan<char> name = default) {
 		ShaderAPI = shaderAPI;
 		Shaders = (ShaderSystem)shaderAPI.ShaderManager;
-		UBO = glCreateBuffer();
-		glObjectLabel(GL_BUFFER, UBO, $"ShaderAPI ShadowState UBO '{name}'");
-		glNamedBufferData(UBO, sizeof(SourceSharedShadowState) + sizeof(SourceVertexSharedShadowState) + sizeof(SourcePixelSharedShadowState), null, GL_DYNAMIC_DRAW);
+
+		BASE_UBO = glCreateBuffer();
+		glObjectLabel(GL_BUFFER, BASE_UBO, $"ShaderAPI ShadowState[base] '{name}'");
+		glNamedBufferData(BASE_UBO, SizeAligned<SourceSharedShadowState>(), null, GL_DYNAMIC_DRAW);
+
+		VERTEX_UBO = glCreateBuffer();
+		glObjectLabel(GL_BUFFER, VERTEX_UBO, $"ShaderAPI ShadowState[vertex] '{name}'");
+		glNamedBufferData(VERTEX_UBO, SizeAligned<SourceVertexSharedShadowState>(), null, GL_DYNAMIC_DRAW);
+
+		PIXEL_UBO = glCreateBuffer();
+		glObjectLabel(GL_BUFFER, PIXEL_UBO, $"ShaderAPI ShadowState[pixel] '{name}'");
+		glNamedBufferData(PIXEL_UBO, SizeAligned<SourcePixelSharedShadowState>(), null, GL_DYNAMIC_DRAW);
 	}
 
 	bool needsBufferUpload = true;
+	ulong lastBoardUploadHash;
 	internal VertexFormat VertexFormat;
 
 	public unsafe void Dispose() {
@@ -58,27 +104,34 @@ public class ShadowState : IShaderShadow
 			return;
 		}
 
-		glDeleteBuffers(UBO);
+		glDeleteBuffers(BASE_UBO, VERTEX_UBO, PIXEL_UBO);
 	}
-
-	private unsafe int LOC_BASE => 0;
-	private unsafe int LOC_VERTEX => sizeof(SourceSharedShadowState);
-	private unsafe int LOC_PIXEL => sizeof(SourceSharedShadowState) + sizeof(SourceVertexSharedShadowState);
 
 	public unsafe void Activate() {
 		ReuploadBuffers(); // Reupload UBO's, if needed
-		
-		// Set GL states
-		// TODO; Can we trust the driver will be smart enough not to update states when needed or should we do that
+
+		// Set GL states. We compare our last upload state to the current desired state and adjust if it differs.
+		ulong currHash = State.Hash();
+		if (currHash != lastBoardUploadHash) {
+			glToggle(GL_BLEND, State.Blending);
+
+			glBlendFunc(State.SourceBlend.GLEnum(), State.DestinationBlend.GLEnum());
+			glBlendEquation(State.BlendOperation.GLEnum());
+
+			glToggle(GL_DEPTH_TEST, State.DepthTest);
+			glDepthMask(State.DepthWrite);
+
+			lastBoardUploadHash = currHash;
+		}
 
 		// Set VSH and PSH. Shader API can bind these whenever it needs to
 		ShaderAPI!.BindVertexShader(in VertexShader);
 		ShaderAPI!.BindPixelShader(in PixelShader);
 
 		// Bind UBO binding locations to their respective ranges in our UBO object
-		glBindBufferRange(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedBaseShader, UBO, LOC_BASE, sizeof(SourceSharedShadowState));
-		glBindBufferRange(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedVertexShader, UBO, LOC_VERTEX, sizeof(SourceVertexSharedShadowState));
-		glBindBufferRange(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedPixelShader, UBO, LOC_PIXEL, sizeof(SourcePixelSharedShadowState));
+		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedBaseShader, BASE_UBO);
+		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedVertexShader, VERTEX_UBO);
+		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedPixelShader, PIXEL_UBO);
 
 		// And now the shader shadow state is activated
 	}
@@ -91,9 +144,9 @@ public class ShadowState : IShaderShadow
 		fixed (SourceSharedShadowState* pBase = &Base)
 		fixed (SourceVertexSharedShadowState* pVertex = &Vertex)
 		fixed (SourcePixelSharedShadowState* pPixel = &Pixel) {
-			glNamedBufferSubData(UBO, LOC_BASE, sizeof(SourceSharedShadowState), pBase);
-			glNamedBufferSubData(UBO, LOC_VERTEX, sizeof(SourceVertexSharedShadowState), pVertex);
-			glNamedBufferSubData(UBO, LOC_PIXEL, sizeof(SourcePixelSharedShadowState), pPixel);
+			glNamedBufferData(BASE_UBO, SizeAligned<SourceSharedShadowState>(), pBase, GL_DYNAMIC_DRAW);
+			glNamedBufferData(VERTEX_UBO, SizeAligned<SourceVertexSharedShadowState>(), pVertex, GL_DYNAMIC_DRAW);
+			glNamedBufferData(PIXEL_UBO, SizeAligned<SourcePixelSharedShadowState>(), pPixel, GL_DYNAMIC_DRAW);
 		}
 
 		needsBufferUpload = false;
@@ -104,11 +157,11 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void EnableDepthWrites(bool enable) {
-		throw new NotImplementedException();
+		State.DepthWrite = enable;
 	}
 
 	public void EnableDepthTest(bool enable) {
-		throw new NotImplementedException();
+		State.DepthTest = enable;
 	}
 
 	public void EnablePolyOffset(PolygonOffsetMode offsetMode) {
@@ -124,11 +177,12 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void EnableBlending(bool enable) {
-		throw new NotImplementedException();
+		State.Blending = enable;
 	}
 
 	public void BlendFunc(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
-		throw new NotImplementedException();
+		State.SourceBlend = srcFactor;
+		State.DestinationBlend = dstFactor;
 	}
 
 	public void EnableAlphaTest(bool enable) {
@@ -190,7 +244,7 @@ public class ShadowState : IShaderShadow
 	bool[] samplerState = new bool[(int)Sampler.MaxSamplers];
 
 	public void EnableTexture(Sampler sampler, bool enable) {
-		if((int)sampler < 16) {
+		if ((int)sampler < 16) {
 			samplerState[(int)sampler] = enable;
 		}
 		else {
