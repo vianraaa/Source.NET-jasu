@@ -43,6 +43,7 @@ public class KeyValues : LinkedList<KeyValues>
 	}
 
 	public bool LoadFromStream(Stream? stream) {
+		Clear();
 		if (stream == null) return false;
 
 		using StreamReader reader = new StreamReader(stream);
@@ -284,5 +285,9 @@ public class KeyValues : LinkedList<KeyValues>
 	}
 	public double GetDouble() {
 		return Convert.ToDouble(Value);
+	}
+
+	public void UsesEscapeSequences(bool value) {
+		useEscapeSequences = value;
 	}
 }

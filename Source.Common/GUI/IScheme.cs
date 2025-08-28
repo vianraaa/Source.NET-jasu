@@ -28,6 +28,6 @@ public interface ISchemeManager {
 	int GetProportionalScaledValue(int normalized);
 	int GetProportionalNormalizedValue(int scaled);
 
-	IScheme LoadSchemeFromFileEx(IPanel sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag);
+	IScheme? LoadSchemeFromFileEx(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag);
 	bool DeleteImage(ReadOnlySpan<char> imageName);
 }
