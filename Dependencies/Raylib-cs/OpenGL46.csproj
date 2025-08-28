@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<EnableDefaultItems>false</EnableDefaultItems>
+		<AssemblyName>OpenGL46</AssemblyName>
+		<RootNamespace>OpenGL46</RootNamespace>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<LangVersion>12</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Include="Gl46.cs" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);OGL_WRAPPER_API_BOTH;OGL_P_CORE;OGL_V_4_6</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Source.Common\Source.Common.csproj" />
+	</ItemGroup>
+</Project>

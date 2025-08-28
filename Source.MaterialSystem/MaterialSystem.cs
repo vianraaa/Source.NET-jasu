@@ -2,8 +2,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Raylib_cs;
-
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Filesystem;
@@ -96,7 +94,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 	unsafe static void raylibSpew(int logLevel, sbyte* text, sbyte* args) {
-		var message = Logging.GetLogMessage((nint)text, (nint)args);
+		//var message = Logging.GetLogMessage((nint)text, (nint)args);
 
 		/*Dbg._SpewMessage((TraceLogLevel)logLevel switch {
 			TraceLogLevel.Info => SpewType.Message,

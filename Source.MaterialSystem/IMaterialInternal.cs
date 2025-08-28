@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.HighPerformance;
 
-using Raylib_cs;
-
 using Source.Common.MaterialSystem;
 
 using System;

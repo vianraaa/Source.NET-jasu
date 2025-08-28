@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using OpenGL;
 
-using Raylib_cs;
-
 using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
@@ -428,7 +426,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal unsafe void GL_LoadExtensions(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
-		Gl46.Import((name) => (nint)loadExts((byte*)new Utf8Buffer(name).AsPointer()));
+		Gl46.Import((name) => {
+			byte[] data = Encoding.UTF8.GetBytes(name);
+			fixed (byte* ptr = data)
+				return (nint)loadExts(ptr);
+		});
 	}
 
 	public bool IsActive() => Device != null;

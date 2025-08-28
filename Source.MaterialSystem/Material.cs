@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.HighPerformance;
 
-using Raylib_cs;
-
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
