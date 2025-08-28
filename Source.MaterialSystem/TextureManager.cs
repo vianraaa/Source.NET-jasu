@@ -1,39 +1,13 @@
 ﻿using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem.TextureRegenerators;
 
 using Steamworks;
 
 using System.Drawing;
 
 namespace Source.MaterialSystem;
-
-
-
-public class SolidTexture(Color Color) : ITextureRegenerator
-{
-	public void RegenerateTextureBits(ITexture texture, IVTFTexture vtfTexture, in System.Drawing.Rectangle rect) {
-		int nMipCount = texture.IsMipmapped() ? vtfTexture.MipCount() : 1;
-		for (int iFrame = 0; iFrame < vtfTexture.FrameCount(); ++iFrame) {
-			for (int iFace = 0; iFace < vtfTexture.FaceCount(); ++iFace) {
-				for (int iMip = 0; iMip < nMipCount; ++iMip) {
-					vtfTexture.ComputeMipLevelDimensions(iMip, out int width, out int height, out int depth);
-					for (int z = 0; z < depth; ++z) {
-						using PixelWriter pixelWriter = new PixelWriter();
-						pixelWriter.SetPixelMemory(vtfTexture.Format(), vtfTexture.ImageData(iFrame, iFace, iMip, 0, 0, z), vtfTexture.RowSizeInBytes(iMip));
-
-						for (int y = 0; y < height; ++y) {
-							pixelWriter.Seek(0, y);
-							for (int x = 0; x < width; ++x) {
-								pixelWriter.WritePixel(Color.R, Color.G, Color.B, Color.A);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
 
 public class TextureManager : ITextureManager
 {
@@ -59,7 +33,7 @@ public class TextureManager : ITextureManager
 	public void Init() {
 		Color color = new();
 
-		white = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.BGRX8888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
+		white = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
 		color.R = color.G = color.B = color.A = 255;
 		CreateSolidTexture(white, color);
 	}

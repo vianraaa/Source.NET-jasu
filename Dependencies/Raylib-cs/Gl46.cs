@@ -6087,11 +6087,12 @@ public unsafe static class Gl46
 
 #endif
 
-    // OpenGL 3.1
+
+	// OpenGL 3.1
 
 #if OGL_V_3_1 || OGL_V_3_2 || OGL_V_3_3 || OGL_V_4_0 || OGL_V_4_1 || OGL_V_4_2 || OGL_V_4_3 || OGL_V_4_4 || OGL_V_4_5 || OGL_V_4_6
 
-    public const GLenum GL_SAMPLER_2D_RECT = 0x8B63;
+	public const GLenum GL_SAMPLER_2D_RECT = 0x8B63;
     public const GLenum GL_SAMPLER_2D_RECT_SHADOW = 0x8B64;
     public const GLenum GL_SAMPLER_BUFFER = 0x8DC2;
     public const GLenum GL_INT_SAMPLER_2D_RECT = 0x8DCD;

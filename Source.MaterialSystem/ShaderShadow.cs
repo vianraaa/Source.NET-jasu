@@ -77,9 +77,21 @@ public class ShadowState : IShaderShadow
 		return size + a;
 	}
 
+	string? name;
 	public unsafe ShadowState(ShaderAPIGl46 shaderAPI, ReadOnlySpan<char> name = default) {
 		ShaderAPI = shaderAPI;
 		Shaders = (ShaderSystem)shaderAPI.ShaderManager;
+		this.name = name == null ? null : new(name);
+
+		if (shaderAPI.IsActive()) {
+			CreateShaderObjects();
+		}
+	}
+
+	bool createdShaderObjects = false;
+	private unsafe void CreateShaderObjects() {
+		if (createdShaderObjects)
+			return;
 
 		BASE_UBO = glCreateBuffer();
 		glObjectLabel(GL_BUFFER, BASE_UBO, $"ShaderAPI ShadowState[base] '{name}'");
@@ -92,6 +104,8 @@ public class ShadowState : IShaderShadow
 		PIXEL_UBO = glCreateBuffer();
 		glObjectLabel(GL_BUFFER, PIXEL_UBO, $"ShaderAPI ShadowState[pixel] '{name}'");
 		glNamedBufferData(PIXEL_UBO, SizeAligned<SourcePixelSharedShadowState>(), null, GL_DYNAMIC_DRAW);
+
+		createdShaderObjects = true;
 	}
 
 	bool needsBufferUpload = true;
@@ -108,6 +122,7 @@ public class ShadowState : IShaderShadow
 	}
 
 	public unsafe void Activate() {
+		CreateShaderObjects(); // Recreate UBO's, if we were lazy-loaded
 		ReuploadBuffers(); // Reupload UBO's, if needed
 
 		// Set GL states. We compare our last upload state to the current desired state and adjust if it differs.
@@ -136,7 +151,7 @@ public class ShadowState : IShaderShadow
 		// And now the shader shadow state is activated
 	}
 
-	public unsafe void ReuploadBuffers() {
+	private unsafe void ReuploadBuffers() {
 		if (!needsBufferUpload)
 			return;
 

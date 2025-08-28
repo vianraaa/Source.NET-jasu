@@ -181,10 +181,11 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public void PopMatrix() {
+		shaderAPI.PopMatrix(); // We need to tell ShaderAPI *NOW* so it can flush primitives trigger matrix sync etc
+		// ^^ is NOT source behavior. But I think, for all intents and purposes, it will act as such (we'll see if I eat my words on that)
 		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
 		curStack.Pop();
 		CurrentMatrixChanged();
-		shaderAPI.PopMatrix();
 	}
 
 	public IShaderAPI GetShaderAPI() {

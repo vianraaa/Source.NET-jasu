@@ -67,22 +67,14 @@ public class MatSystemSurface : ISurface
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine) {
 		this.materials = materials;
 		this.CommandLine = commandLine;
-		materials.Restore += Init;
 
 		DrawColor[0] = DrawColor[1] = DrawColor[2] = DrawColor[3] = 25; ;
 		TranslateX = TranslateY = 0;
 		// Scissor rect...
 		AlphaMultiplier = 1;
 
-		InitInput();
-		InitCursors();
-
-		DefaultEmbeddedPanel = new MatEmbeddedPanel();
-		SetEmbeddedPanel(DefaultEmbeddedPanel);
-	}
-
-	private void Init() {
 		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
+		vmtKeyValues.SetString("$basetexture", "white");
 		vmtKeyValues.SetInt("$vertexcolor", 1);
 		vmtKeyValues.SetInt("$vertexalpha", 1);
 		vmtKeyValues.SetInt("$ignorez", 1);
@@ -90,7 +82,11 @@ public class MatSystemSurface : ISurface
 
 		White.Init(materials, "VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
 
-		// TODO: fullscreen buffer
+		InitInput();
+		InitCursors();
+
+		DefaultEmbeddedPanel = new MatEmbeddedPanel();
+		SetEmbeddedPanel(DefaultEmbeddedPanel);
 	}
 
 	private void InitInput() {
@@ -174,10 +170,6 @@ public class MatSystemSurface : ISurface
 		renderContext.MatrixMode(MaterialMatrixMode.View);
 		renderContext.PushMatrix();
 		renderContext.LoadIdentity();
-
-		// Are we ready to go?
-		DrawSetColor(255, 0, 0, 255);
-		DrawFilledRect(256, 256, 512, 384);
 	}
 
 	private void EnableScissor(bool v) {
@@ -479,9 +471,12 @@ public class MatSystemSurface : ISurface
 			topLevelDraw = true;
 			StartDrawing();
 
-			// clear z + stencil buffer
-			// NOTE: Stencil is used to get 3D painting in vgui panels working correctly 
 			renderContext.ClearBuffers(false, true, true);
+
+			// Can comment this out later, this is just to test if ISurface is rendering.
+			DrawSetColor(255, 0, 0, 255);
+			DrawFilledRect(256, 256, 512, 384);
+
 			// TODO!!!
 			// renderContext.SetStencilEnable(true);
 			// renderContext.SetStencilFailOperation(STENCILOPERATION_KEEP);

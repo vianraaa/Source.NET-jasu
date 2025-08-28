@@ -6,7 +6,8 @@ using System.Runtime.CompilerServices;
 
 namespace Source.Common.MaterialSystem;
 [Flags]
-public enum PixelWriterUsing {
+public enum PixelWriterUsing
+{
 	Float = 0x01,
 	Float16 = 0x02,
 	SwapBytes = 0x04
@@ -28,6 +29,7 @@ public unsafe struct PixelWriterState
 	public uint AMask;
 
 	internal void SetFormat(ImageFormat format, uint rowSize) {
+		Format = format;
 		switch (format) {
 			case ImageFormat.R32F:
 				Size = 4;
@@ -80,7 +82,7 @@ public unsafe struct PixelWriterState
 				AMask = 0xFF;
 				break;
 
-			case ImageFormat.BGRA8888: 
+			case ImageFormat.BGRA8888:
 				Size = 4;
 				RShift = 16;
 				GShift = 8;
@@ -180,10 +182,10 @@ public unsafe struct PixelWriterState
 
 			case ImageFormat.RGBA16161616:
 				Size = 8;
-					RShift = 0;
-					GShift = 16;
-					BShift = 32;
-					AShift = 48;
+				RShift = 0;
+				GShift = 16;
+				BShift = 32;
+				AShift = 48;
 				RMask = 0xFFFF;
 				GMask = 0xFFFF;
 				BMask = 0xFFFF;
@@ -209,7 +211,7 @@ public unsafe struct PixelWriterState
 						Msg($"PixelWriter.SetPixelMemory:  Unsupported image format {format}\n");
 						format_error_printed[(int)format] = true;
 					}
-					Size = 0; 
+					Size = 0;
 					RShift = 0;
 					GShift = 0;
 					BShift = 0;
@@ -225,7 +227,7 @@ public unsafe struct PixelWriterState
 	static bool[] format_error_printed = new bool[(int)ImageFormat.Count];
 }
 
-public ref struct PixelWriter 
+public ref struct PixelWriter
 {
 	Span<byte> Base;
 	PixelWriterState State;
@@ -274,28 +276,63 @@ public ref struct PixelWriter
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private unsafe void WritePixelNoAdvance(int r, int g, int b, int a) {
 		if (State.Size <= 0) return;
-		long val = ((long)(r & State.RMask)) << State.RShift;
-		val |= ((long)(g & State.GMask)) << State.GShift;
-		val |= (State.BShift > 0) ? (((long)(b & State.BMask)) << State.BShift) : (((long)(b & State.BMask)) >> -State.BShift);
-		val |= ((long)(a & State.AMask)) << State.AShift;
+
+		uint rmask = State.RMask, gmask = State.GMask, bmask = State.BMask, amask = State.AMask;
+		short rshift = State.RShift, gshift = State.GShift, bshift = State.BShift, ashift = State.AShift;
 
 		fixed (byte* pBits = Base) {
 			byte* bits = pBits + State.Bits;
-			switch (State.Size) {
-				case 6: {
-						((uint*)bits)[0] = (uint)(val & 0xffffffff);
-						((ushort*)bits)[2] = (ushort)((val >> 32) & 0xffff);
+			if (State.Size < 5) {
+				uint val = (uint)((r & rmask) << rshift);
+				val |= (uint)((g & gmask) << gshift);
+				val |= (uint)((bshift > 0) ? ((b & bmask) << bshift) : ((b & bmask) >> -bshift));
+				val |= (uint)((a & amask) << ashift);
 
+				switch (State.Size) {
+					default:
+						Assert(0);
 						return;
-					}
-				case 8: {
-						((uint*)bits)[0] = (uint)(val & 0xffffffff);
-						((uint*)bits)[1] = (uint)((val >> 32) & 0xffffffff);
+					case 1: {
+							bits[0] = (byte)(val & 0xff);
+							return;
+						}
+					case 2: {
+							((ushort*)bits)[0] = (ushort)(val & 0xffff);
+							return;
+						}
+					case 3: {
+							((ushort*)bits)[0] = (ushort)(val & 0xffff);
+							bits[2] = (byte)((val >> 16) & 0xff);
+							return;
+						}
+					case 4: {
+							((uint*)bits)[0] = val;
+							return;
+						}
+				}
+			}
+			else {
+				long val = (r & rmask) << rshift;
+				val |= (g & gmask) << gshift;
+				val |= (bshift > 0) ? ((b & bmask) << bshift) : ((b & bmask) >> -bshift);
+				val |= (a & amask) << ashift;
+
+				switch (State.Size) {
+					case 6: {
+							((uint*)bits)[0] = (uint)(val & 0xffffffff);
+							((ushort*)bits)[2] = (ushort)((val >> 32) & 0xffff);
+
+							return;
+						}
+					case 8: {
+							((uint*)bits)[0] = (uint)(val & 0xffffffff);
+							((uint*)bits)[1] = (uint)((val >> 32) & 0xffffffff);
+							return;
+						}
+					default:
+						Assert(0);
 						return;
-					}
-				default:
-					Assert(0);
-					return;
+				}
 			}
 		}
 	}
