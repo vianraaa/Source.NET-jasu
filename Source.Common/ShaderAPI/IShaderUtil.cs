@@ -10,4 +10,5 @@ public interface IShaderUtil
 	bool OnFlushBufferedPrimitives();
 	void SyncMatrices();
 	void SyncMatrix(MaterialMatrixMode mode);
+	void RestoreShaderObjects(IServiceProvider services, int changeFlags = 0);
 }

@@ -201,7 +201,15 @@ public sealed class VTFTexture : IVTFTexture
 	int IVTFTexture.FaceCount() => FaceCount;
 
 	public int FaceSizeInBytes(int mipLevel) {
-		throw new NotImplementedException();
+		nint nWidth = Width >> mipLevel;
+		if (nWidth < 1) {
+			nWidth = 1;
+		}
+		nint nHeight = Height >> mipLevel;
+		if (nHeight < 1) {
+			nHeight = 1;
+		}
+		return (int)(ImageLoader.SizeInBytes(Format) * nWidth * nHeight);
 	}
 
 	public int FileSize(int mipSkipCount = 0) {
@@ -268,7 +276,16 @@ public sealed class VTFTexture : IVTFTexture
 	}
 
 	Span<byte> IVTFTexture.ImageData(int frame, int face, int mipLevel, int x, int y, int z = 0) {
-		throw new NotImplementedException();
+		ComputeMipLevelDimensions(mipLevel, out int width, out int height, out int depth);
+		Assert((x >= 0) && (x <= width) && (y >= 0) && (y <= height) && (z >= 0) && (z <= depth));
+
+		nint faceBytes = FaceSizeInBytes(mipLevel);
+		nint rowBytes = RowSizeInBytes(mipLevel);
+		nint texelBytes = ImageLoader.SizeInBytes(Format);
+
+		Span<byte> mipBits = GetImageData(frame, face, mipLevel);
+		mipBits = mipBits[(int)(z * faceBytes + y * rowBytes + x * texelBytes)..];
+		return mipBits;
 	}
 
 

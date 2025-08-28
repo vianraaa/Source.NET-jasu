@@ -882,6 +882,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private IVTFTexture? ReconstructProceduralBits() {
+		bool ignorePicmip = (Flags & (uint)(CompiledVtfFlags.StagingMemory | CompiledVtfFlags.IgnorePicmip)) != 0;
+		ComputeActualSize(ignorePicmip);
+
 		IVTFTexture texture = GetScratchVTFTexture();
 		texture.Init(DimsActual.Width, DimsActual.Height, DimsActual.Depth, ComputeActualFormat(ImageFormat), (int)Flags, FrameCount);
 
@@ -972,7 +975,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	public void OnRestore() {
-		throw new NotImplementedException();
+
 	}
 
 	Vector3 Reflectivity;

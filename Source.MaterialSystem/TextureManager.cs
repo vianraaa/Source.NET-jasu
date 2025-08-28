@@ -124,4 +124,13 @@ public class TextureManager : ITextureManager
 			if (!tex.Value.IsRenderTarget())
 				RestoreTexture(tex.Value);
 	}
+
+	internal void AllocateStandardRenderTargets() {
+		MaterialSystem.BeginRenderTargetAllocation();
+		MaterialSystem.EndRenderTargetAllocation();
+	}
+
+	internal void FreeStandardRenderTargets() {
+
+	}
 }

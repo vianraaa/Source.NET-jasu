@@ -4,6 +4,11 @@ using Source.Common.ShaderAPI;
 
 namespace Source.MaterialSystem;
 
+public enum DeviceState {
+	OK,
+	NeedsReset
+}
+
 public class MeshMgr
 {
 	internal MaterialSystem MaterialSystem;
@@ -143,5 +148,9 @@ public class MeshMgr
 
 	internal IndexBuffer GetDynamicIndexBuffer() {
 		return DynamicIndexBuffer!;
+	}
+
+	internal void RestoreBuffers() {
+		Init();
 	}
 }

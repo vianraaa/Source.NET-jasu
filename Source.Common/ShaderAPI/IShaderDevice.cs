@@ -61,6 +61,8 @@ public interface IShaderDevice
 	bool IsDeactivated();
 	bool IsUsingGraphics();
 	void Present();
+	void ReacquireResources();
+	void ReleaseResources();
 }
 public struct ShaderDisplayMode
 {

@@ -81,7 +81,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return true;
 	}
 
+	DeviceState DeviceState = DeviceState.OK;
+
 	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil, int renderTargetWidth = -1, int renderTargetHeight = -1) {
+		if (IsDeactivated())
+			return;
+
 		FlushBufferedPrimitives();
 		uint flags = 0;
 
@@ -227,7 +232,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	private bool IsDeactivated() {
-		return false;
+		return DeviceState != DeviceState.OK;
 	}
 
 	internal void InvalidateDelayedShaderConstraints() {
@@ -648,5 +653,38 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public unsafe void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData) {
 		fixed (byte* data = imageData)
 			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageFormat(srcFormat), GL_UNSIGNED_BYTE, data);
+	}
+
+	public void ReacquireResources() {
+		ReacquireResourcesInternal();
+	}
+
+	int releaseResourcesCount = 0;
+
+	private void ReacquireResourcesInternal(bool resetState = false, bool forceReacquire = false, ReadOnlySpan<char> forceReason = default) {
+		if (--releaseResourcesCount != 0) {
+			Warning($"ReacquireResources has no effect, now at level {releaseResourcesCount}.\n");
+			DevWarning("ReacquireResources being discarded is a bug: use IsDeactivated to check for a valid device.\n");
+			Assert(false);
+			if (releaseResourcesCount < 0)
+				releaseResourcesCount = 0;
+			return;
+		}
+
+		if (resetState) {
+			ResetRenderState();
+		}
+
+		RestoreShaderObjects();
+		MeshMgr.RestoreBuffers();
+		ShaderUtil.RestoreShaderObjects(services);
+	}
+
+	private void RestoreShaderObjects() {
+
+	}
+
+	public void ReleaseResources() {
+
 	}
 }

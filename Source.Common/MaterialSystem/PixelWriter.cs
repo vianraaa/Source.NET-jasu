@@ -5,7 +5,12 @@ using System;
 using System.Runtime.CompilerServices;
 
 namespace Source.Common.MaterialSystem;
-
+[Flags]
+public enum PixelWriterUsing {
+	Float = 0x01,
+	Float16 = 0x02,
+	SwapBytes = 0x04
+}
 public unsafe struct PixelWriterState
 {
 	public ImageFormat Format;
@@ -23,8 +28,201 @@ public unsafe struct PixelWriterState
 	public uint AMask;
 
 	internal void SetFormat(ImageFormat format, uint rowSize) {
-		throw new NotImplementedException();
+		switch (format) {
+			case ImageFormat.R32F:
+				Size = 4;
+				RShift = 0;
+				GShift = 0;
+				BShift = 0;
+				AShift = 0;
+				RMask = 0xFFFFFFFF;
+				GMask = 0x0;
+				BMask = 0x0;
+				AMask = 0x0;
+				Flags |= (int)PixelWriterUsing.Float;
+				break;
+
+			case ImageFormat.RGBA32323232F:
+				Size = 16;
+				RShift = 0;
+				GShift = 32;
+				BShift = 64;
+				AShift = 96;
+				RMask = 0xFFFFFFFF;
+				GMask = 0xFFFFFFFF;
+				BMask = 0xFFFFFFFF;
+				AMask = 0xFFFFFFFF;
+				Flags |= (int)PixelWriterUsing.Float;
+				break;
+
+			case ImageFormat.RGBA16161616F:
+				Size = 8;
+				RShift = 0;
+				GShift = 16;
+				BShift = 32;
+				AShift = 48;
+				RMask = 0xFFFF;
+				GMask = 0xFFFF;
+				BMask = 0xFFFF;
+				AMask = 0xFFFF;
+				Flags |= (int)PixelWriterUsing.Float | (int)PixelWriterUsing.Float16;
+				break;
+
+			case ImageFormat.RGBA8888:
+				Size = 4;
+				RShift = 0;
+				GShift = 8;
+				BShift = 16;
+				AShift = 24;
+				RMask = 0xFF;
+				GMask = 0xFF;
+				BMask = 0xFF;
+				AMask = 0xFF;
+				break;
+
+			case ImageFormat.BGRA8888: 
+				Size = 4;
+				RShift = 16;
+				GShift = 8;
+				BShift = 0;
+				AShift = 24;
+				RMask = 0xFF;
+				GMask = 0xFF;
+				BMask = 0xFF;
+				AMask = 0xFF;
+				break;
+
+			case ImageFormat.BGRX8888:
+				Size = 4;
+				RShift = 16;
+				GShift = 8;
+				BShift = 0;
+				AShift = 24;
+				RMask = 0xFF;
+				GMask = 0xFF;
+				BMask = 0xFF;
+				AMask = 0x00;
+				break;
+
+			case ImageFormat.BGRA4444:
+				Size = 2;
+				RShift = 4;
+				GShift = 0;
+				BShift = -4;
+				AShift = 8;
+				RMask = 0xF0;
+				GMask = 0xF0;
+				BMask = 0xF0;
+				AMask = 0xF0;
+				break;
+
+			case ImageFormat.BGR888:
+				Size = 3;
+				RShift = 16;
+				GShift = 8;
+				BShift = 0;
+				AShift = 0;
+				RMask = 0xFF;
+				GMask = 0xFF;
+				BMask = 0xFF;
+				AMask = 0x00;
+				break;
+
+			case ImageFormat.BGR565:
+				Size = 2;
+				RShift = 8;
+				GShift = 3;
+				BShift = -3;
+				AShift = 0;
+				RMask = 0xF8;
+				GMask = 0xFC;
+				BMask = 0xF8;
+				AMask = 0x00;
+				break;
+
+			case ImageFormat.BGRA5551:
+			case ImageFormat.BGRX5551:
+				Size = 2;
+				RShift = 7;
+				GShift = 2;
+				BShift = -3;
+				AShift = 8;
+				RMask = 0xF8;
+				GMask = 0xF8;
+				BMask = 0xF8;
+				AMask = 0x80;
+				break;
+
+			case ImageFormat.A8:
+				Size = 1;
+				RShift = 0;
+				GShift = 0;
+				BShift = 0;
+				AShift = 0;
+				RMask = 0x00;
+				GMask = 0x00;
+				BMask = 0x00;
+				AMask = 0xFF;
+				break;
+
+			case ImageFormat.UVWQ8888:
+				AssertMsg(false, "What????");
+				Size = 4;
+				RShift = 0;
+				GShift = 8;
+				BShift = 16;
+				AShift = 24;
+				RMask = 0xFF;
+				GMask = 0xFF;
+				BMask = 0xFF;
+				AMask = 0xFF;
+				break;
+
+			case ImageFormat.RGBA16161616:
+				Size = 8;
+					RShift = 0;
+					GShift = 16;
+					BShift = 32;
+					AShift = 48;
+				RMask = 0xFFFF;
+				GMask = 0xFFFF;
+				BMask = 0xFFFF;
+				AMask = 0xFFFF;
+				break;
+
+			case ImageFormat.I8:
+				// whatever goes into R is considered the intensity.
+				Size = 1;
+				RShift = 0;
+				GShift = 0;
+				BShift = 0;
+				AShift = 0;
+				RMask = 0xFF;
+				GMask = 0x00;
+				BMask = 0x00;
+				AMask = 0x00;
+				break;
+			// FIXME: Add more color formats as need arises
+			default: {
+					if (!format_error_printed[(int)format]) {
+						Assert(0);
+						Msg($"PixelWriter.SetPixelMemory:  Unsupported image format {format}\n");
+						format_error_printed[(int)format] = true;
+					}
+					Size = 0; 
+					RShift = 0;
+					GShift = 0;
+					BShift = 0;
+					AShift = 0;
+					RMask = 0x00;
+					GMask = 0x00;
+					BMask = 0x00;
+					AMask = 0x00;
+				}
+				break;
+		}
 	}
+	static bool[] format_error_printed = new bool[(int)ImageFormat.Count];
 }
 
 public ref struct PixelWriter 

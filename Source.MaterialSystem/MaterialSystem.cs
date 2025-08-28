@@ -184,8 +184,22 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		if (!ShaderAPI.SetMode(window, in info))
 			return false;
 
+		TextureSystem.FreeStandardRenderTargets();
+		TextureSystem.AllocateStandardRenderTargets();
+
+		if (!previouslyUsingGraphics) {
+			TextureSystem.RestoreRenderTargets();
+			TextureSystem.RestoreNonRenderTargetTextures();
+		}
+
+
+
 		launcherMgr.RenderedSize(true, ref width, ref height);
 		return true;
+	}
+
+	private void AllocateStandardTextures() {
+
 	}
 
 	private void ConvertModeStruct(MaterialSystem_Config config, out ShaderDeviceInfo mode) {
@@ -311,6 +325,20 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		TextureSystem.RestoreRenderTargets();
 		Restore?.Invoke();
 		TextureSystem.RestoreNonRenderTargetTextures();
+	}
+	bool AllocatingRenderTargets;
+	internal void BeginRenderTargetAllocation() {
+
+	}
+
+	internal void EndRenderTargetAllocation() {
+		ShaderAPI.FlushBufferedPrimitives();
+		AllocatingRenderTargets = false;
+
+		if (ShaderAPI.CanDownloadTextures()) {
+			ShaderDevice.ReleaseResources();
+			ShaderDevice.ReacquireResources();
+		}
 	}
 
 	public event Action? Restore;
