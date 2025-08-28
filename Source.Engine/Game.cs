@@ -36,10 +36,10 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 
 	public bool CreateGameWindow(int width, int height, bool windowed) {
 		GameMessageHandlers = [
-			new(InputEventType.AppActivated, HandleMsg_ActivateApp),
-			new(InputEventType.WindowMove, HandleMsg_WindowMove),
-			new(InputEventType.Close, HandleMsg_Close),
-			new(InputEventType.Quit, HandleMsg_Close),
+			new(InputEventType.App_AppActivated, HandleMsg_ActivateApp),
+			new(InputEventType.App_WindowMove, HandleMsg_WindowMove),
+			new(InputEventType.App_Close, HandleMsg_Close),
+			new(InputEventType.System_Quit, HandleMsg_Close),
 		];
 
 		if (launcherManager == null) {

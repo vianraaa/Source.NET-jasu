@@ -1,5 +1,6 @@
 ﻿using Raylib_cs;
 
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.MaterialSystem;
@@ -50,12 +51,50 @@ public class MatSystemSurface : ISurface
 	IPanel DefaultEmbeddedPanel;
 	IPanel? EmbeddedPanel;
 
+	IMesh? Mesh;
+	MeshBuilder meshBuilder;
+	MaterialReference White = new();
+
+	float AlphaMultiplier;
+
 	public MatSystemSurface(IMaterialSystem materials) {
 		this.materials = materials;
 
-		// TODO; allocate a white material
+		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
+		vmtKeyValues.SetInt("$vertexcolor", 1);
+		vmtKeyValues.SetInt("$vertexalpha", 1);
+		vmtKeyValues.SetInt("$ignorez", 1);
+		vmtKeyValues.SetInt("$no_fullbright", 1);
+
+		White.Init(materials, "VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
+
+		// TODO: fullscreen buffer
+
+		DrawColor[0] = DrawColor[1] = DrawColor[2] = DrawColor[3] = 25; ;
+		TranslateX = TranslateY = 0;
+		// Scissor rect...
+		AlphaMultiplier = 1;
+
+		InitInput();
+		InitCursors();
+
 		DefaultEmbeddedPanel = new MatEmbeddedPanel();
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
+	}
+
+	private void InitInput() {
+		EnableInput(true);
+	}
+
+
+
+
+	private void EnableInput(bool v) {
+		throw new NotImplementedException();
+	}
+
+	private void InitCursors() {
+
 	}
 
 	public bool FullyTransparent => DrawColor.A <= 0;
@@ -65,9 +104,15 @@ public class MatSystemSurface : ISurface
 		vertex.TexCoord = new(u, v);
 	}
 
-	//public void InternalSetMaterial(IMaterial? material = null) {
-		// todo
-	//}
+	public void InternalSetMaterial(IMaterial? material = null) {
+		if (material == null)
+			material = (IMaterial)White;
+
+		using MatRenderContextPtr renderContext = new(materials);
+		Mesh = renderContext.GetDynamicMesh(true, null, null, material);
+	}
+
+
 
 	public bool ClipRect(in SurfaceVertex inUL, in SurfaceVertex inLR, out SurfaceVertex outUL, out SurfaceVertex outLR) {
 		if (scissor) {
@@ -94,26 +139,35 @@ public class MatSystemSurface : ISurface
 		return true;
 	}
 
+
 	public void DrawQuad(in SurfaceVertex ul, in SurfaceVertex lr, in Color color) {
-		/*Rlgl.Begin(DrawMode.Quads);
+		if (Mesh == null)
+			return;
 
-		Rlgl.Normal3f(0, 0, 1);
-		Rlgl.Color4ub(color);
+		meshBuilder.Begin(Mesh, MaterialPrimitiveType.Quads, 1);
 
-		Rlgl.TexCoord2f(ul.TexCoord.X, ul.TexCoord.Y);
-		Rlgl.Vertex3f(ul.Position.X, ul.Position.Y, zPos);
+		meshBuilder.Position3f(ul.Position.X, ul.Position.Y, zPos);
+		meshBuilder.Color4ubv(color);
+		meshBuilder.TexCoord2f(0, ul.TexCoord.X, ul.TexCoord.Y);
+		meshBuilder.AdvanceVertex();
 
-		Rlgl.TexCoord2f(ul.TexCoord.X, lr.TexCoord.Y);
-		Rlgl.Vertex3f(ul.Position.X, lr.Position.Y, zPos);
+		meshBuilder.Position3f(lr.Position.X, ul.Position.Y, zPos);
+		meshBuilder.Color4ubv(color);
+		meshBuilder.TexCoord2f(0, lr.Position.X, ul.TexCoord.Y);
+		meshBuilder.AdvanceVertex();
 
-		Rlgl.TexCoord2f(lr.TexCoord.X, lr.TexCoord.Y);
-		Rlgl.Vertex3f(lr.Position.X, lr.Position.Y, zPos);
+		meshBuilder.Position3f(lr.Position.X, lr.Position.Y, zPos);
+		meshBuilder.Color4ubv(color);
+		meshBuilder.TexCoord2f(0, lr.TexCoord.X, lr.TexCoord.Y);
+		meshBuilder.AdvanceVertex();
 
-		Rlgl.TexCoord2f(lr.TexCoord.X, ul.TexCoord.Y);
-		Rlgl.Vertex3f(lr.Position.X, ul.Position.Y, zPos);
+		meshBuilder.Position3f(ul.Position.X, lr.Position.Y, zPos);
+		meshBuilder.Color4ubv(color);
+		meshBuilder.TexCoord2f(0, ul.TexCoord.X, lr.TexCoord.Y);
+		meshBuilder.AdvanceVertex();
 
-		Rlgl.End();*/
-		// TODO!!!! ^^ FIX AND USE CMESHBUILDER ETC
+		meshBuilder.End();
+		Mesh.Draw();
 	}
 
 	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
@@ -166,7 +220,7 @@ public class MatSystemSurface : ISurface
 		if (!ClipRect(in rect[0], in rect[1], out clippedRect[0], out clippedRect[1]))
 			return;
 
-		// InternalSetMaterial();
+		InternalSetMaterial();
 		DrawQuad(in clippedRect[0], in clippedRect[1], in DrawColor);
 	}
 

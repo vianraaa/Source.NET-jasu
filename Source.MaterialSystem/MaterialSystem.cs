@@ -22,7 +22,7 @@ namespace Source.MaterialSystem;
 
 public class MaterialSystem : IMaterialSystem, IShaderUtil
 {
-	MaterialDict Dict = [];
+	MaterialDict Dict = new();
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<ISurface, MatSystemSurface>();
@@ -210,23 +210,19 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		mode.UsingMultipleWindows = config.UsingMultipleWindows();
 	}
 
-	public IMaterial CreateMaterial(string materialName, KeyValues keyValues) {
+	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues keyValues) => CreateMaterial(materialName, textureGroup, keyValues);
+	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, KeyValues keyValues) => CreateMaterial(materialName, TEXTURE_GROUP_OTHER, keyValues);
+
+	public IMaterialInternal CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues keyValues) {
 		IMaterialInternal material;
 		lock (this) {
-			material = new Material(this, materialName, TextureGroup.Other, keyValues);
+			material = new Material(this, materialName, textureGroup, keyValues);
 		}
 
-		AddMaterialToMaterialList(material);
+		Dict.AddMaterialToMaterialList(material);
 		return material;
 	}
 
-	private void AddMaterialToMaterialList(IMaterialInternal material) {
-		Dict[material] = new() {
-			material = material,
-			symbol = material.GetName().GetHashCode(),
-			manuallyCreated = material.IsManuallyCreated()
-		};
-	}
 
 	public IMaterial? GetCurrentMaterial() {
 		return GetRenderContext().GetCurrentMaterial();
@@ -263,8 +259,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public void SyncMatrix(MaterialMatrixMode mode) => GetRenderContextInternal().SyncMatrix(mode);
 
 	public ITexture FindTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroupName, bool complain, int additionalCreationFlags) {
-		ITextureInternal texture = TextureSystem.FindOrLoadTexture(textureName, textureGroupName, additionalCreationFlags);
-		Assert(texture);
+		ITextureInternal? texture = TextureSystem.FindOrLoadTexture(textureName, textureGroupName, additionalCreationFlags);
+		Assert(texture != null);
 		if(texture != null && texture.IsError()) {
 			if (complain) {
 				DevWarning($"Texture '{textureName}' not found.\n");
@@ -275,6 +271,30 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
 		return "GAME";
+	}
+
+	public IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
+		IMaterialInternal? material = Dict.FindMaterial(materialName, true);
+		if(keyValues != null) {
+			if(material != null) {
+				keyValues = null;
+			}
+			else {
+				material = CreateMaterial(materialName, textureGroupName, keyValues);
+			}
+
+			return material;
+		}
+		else {
+			if (material == null)
+				return GetErrorMaterial();
+
+			return material;
+		}
+	}
+
+	private IMaterial? GetErrorMaterial() {
+		throw new NotImplementedException();
 	}
 
 	public IMaterialInternal errorMaterial;

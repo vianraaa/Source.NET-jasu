@@ -1,4 +1,6 @@
-﻿using Raylib_cs;
+﻿using CommunityToolkit.HighPerformance;
+
+using Raylib_cs;
 
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
@@ -75,7 +77,7 @@ public class Material : IMaterialInternal
 	public int MappingWidth;
 	public int MappingHeight;
 
-	public string GetName() {
+	public ReadOnlySpan<char> GetName() {
 		return name;
 	}
 
@@ -137,9 +139,9 @@ public class Material : IMaterialInternal
 	public IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true) {
 		Span<char> lowercased = stackalloc char[varName.Length];
 		varName.ToLowerInvariant(lowercased);
-		string sym = string.Intern(new(lowercased));
+		ReadOnlySpan<char> lowercasedROS = lowercased; // Need to make a version of that that works on Span...
 		foreach (var shaderParam in Vars) {
-			if (string.Intern(new(shaderParam.GetName())) == sym) {
+			if (shaderParam.GetName().Hash() == lowercasedROS.Hash()) {
 				found = true;
 				return shaderParam;
 			}
@@ -147,7 +149,7 @@ public class Material : IMaterialInternal
 		found = false;
 		if (complain) {
 			if (complainCount < 100) {
-				Warning("No such variable \"%s\" for material \"%s\"\n", sym, GetName());
+				Warning($"No such variable \"{varName}\" for material \"{GetName()}\"\n");
 				complainCount++;
 			}
 		}

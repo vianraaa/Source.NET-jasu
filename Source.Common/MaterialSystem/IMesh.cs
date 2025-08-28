@@ -592,7 +592,11 @@ public unsafe struct MeshBuilder : IDisposable
 	public void Color3ub(byte r, byte g, byte b) => throw new NotImplementedException();
 	public void Color3ubv(ReadOnlySpan<float> rgb) => throw new NotImplementedException();
 	public void Color4ub(byte r, byte g, byte b, byte a) => throw new NotImplementedException();
-	public void Color4ubv(ReadOnlySpan<float> rgba) => throw new NotImplementedException();
+	public unsafe void Color4ubv(ReadOnlySpan<float> rgba) => VertexBuilder.Color4fv(rgba);
+	public unsafe void Color4ubv(in Color rgba) {
+		fixed (Color* ptr = &rgba)
+			VertexBuilder.Color4fv(new(ptr, 4));
+	}
 
 	// specular color setting
 	public void Specular3f(float r, float g, float b) => throw new NotImplementedException();

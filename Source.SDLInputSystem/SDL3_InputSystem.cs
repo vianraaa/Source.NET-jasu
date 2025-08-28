@@ -284,7 +284,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 						break;
 
 					case WindowEventType.AppQuit:
-						PostEvent(InputEventType.Quit, LastSampleTick, 0, 0, 0);
+						PostEvent(InputEventType.System_Quit, LastSampleTick, 0, 0, 0);
 						break;
 				}
 			}

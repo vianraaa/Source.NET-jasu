@@ -1,4 +1,6 @@
-﻿using Source.Common.Bitmap;
+﻿using CommunityToolkit.HighPerformance;
+
+using Source.Common.Bitmap;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.ShaderAPI;
 
@@ -147,8 +149,10 @@ public interface IMaterialSystem
 	void EndFrame();
 	void SwapBuffers();
 	bool SetMode(nint v, MaterialSystem_Config config);
-	IMaterial CreateMaterial(string v, KeyValues keyValues);
+	IMaterial CreateMaterial(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
+	IMaterial CreateMaterial(ReadOnlySpan<char> name, KeyValues keyValues);
 	bool CanUseEditorMaterials();
+	IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
 }
 
 public interface IMatRenderContext
