@@ -315,7 +315,7 @@ public class ShaderSystem : IShaderSystemInternal
 				error = Encoding.ASCII.GetString(infoLog);
 			}
 			else
-				error = "UNKNOWN FAILURE";
+				error = "UNKNOWN FAILURE!!!";
 
 			glDeleteShader(shader);
 			return false;
@@ -370,6 +370,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Vertex shader compilation error.\n");
 			Warning(error);
+			Warning("\n");
 			return VertexShaderHandle.INVALID;
 		}
 
@@ -399,6 +400,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if (!IsValidShader(pShader, out string? error)) {
 			Warning("WARNING: Pixel shader compilation error.\n");
 			Warning(error);
+			Warning("\n");
 			return PixelShaderHandle.INVALID;
 		}
 

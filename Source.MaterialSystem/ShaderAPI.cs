@@ -226,6 +226,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (!ShaderSystem.IsValidProgram(program, out string? error)) {
 			Warning("WARNING: Shader combobulation linker error.\n");
 			Warning(error);
+			Warning("\n");
 			return 0;
 		}
 

@@ -131,7 +131,10 @@ public class Panel : IPanel
 	public ReadOnlySpan<char> GetClassName() => GetType().Name;
 
 	public void GetClipRect(out int x0, out int y0, out int x1, out int y1) {
-		throw new NotImplementedException();
+		x0 = ClipRectX;
+		y0 = ClipRectY;
+		x1 = ClipRectW;
+		y1 = ClipRectH;
 	}
 
 	public IPanel GetCurrentKeyFocus() {
