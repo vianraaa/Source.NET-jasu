@@ -679,7 +679,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	public void SwapBuffers(IPanel panel) {
-		throw new NotImplementedException();
+
 	}
 
 	public void UnlockCursor() {
