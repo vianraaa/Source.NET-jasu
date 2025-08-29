@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,62 +51,172 @@ public class KeyValues : LinkedList<KeyValues>
 		return ReadKV(reader);
 	}
 
-	private void SkipWhitespace(StreamReader reader) {
+	// Returns true if we did anything at all to skip whitespace.
+	private bool SkipWhitespace(StreamReader reader) {
+		bool didAnything = false;
 		while (true) {
 			int c = reader.Peek();
 			if (c == -1)
-				return;
+				break;
 			if (!char.IsWhiteSpace((char)c))
-				return;
+				break;
 			reader.Read();
+			didAnything = true;
 		}
+
+		return didAnything;
 	}
 
 	public override string ToString() {
 		return $"{Type}<{Value}> #{Count}";
 	}
 
-	private bool ReadKV(StreamReader reader) {
+	// Returns true if we can read something. False if we can't.
+	private bool SkipUntilParseableTextOrEOF(StreamReader reader) {
 		// We read either
 		//    1. A quote mark, in which case we need to read up to a quote
 		//    2. Anything else, we read until whitespace
-		SkipWhitespace(reader);
-		SkipComments(reader);
 
-		string key = (char)reader.Peek() == '"' ? ReadQuoteTerminatedString(reader, useEscapeSequences) : ReadWhitespaceTerminatedString(reader);
+		while (true) {
+			if (reader.Peek() == -1)
+				return false;
+			// If no whitespace was skipped and no comments were skipped, continue
+			if (!SkipWhitespace(reader) && !SkipComments(reader))
+				return true;
+		}
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="reader"></param>
+	/// <param name="condition"></param>
+	/// <param name="match">If [$CONDITION], this value will be true, and if [!$CONDITION], this value will be false.</param>
+	/// <returns></returns>
+	private bool ReadConditional(StreamReader reader, Span<char> condition, out bool match) {
+		// Zero out if it's existing memory
+		for (int si = 0; si < condition.Length; si++)
+			condition[si] = '\0';
+
+		if (reader.Peek() != '[') {
+			match = false;
+			return false;
+		}
+
+		reader.Read();
+		// Determine if we're inverted.
+		char c = (char)reader.Read();
+		match = true;
+		if (c == '!') {
+			match = false;
+			c = (char)reader.Read();
+		}
+
+		if (c != '$') {
+			Warning("ReadConditional failed.\n");
+			return false;
+		}
+
+		int i = -1;
+		while (++i < condition.Length) {
+			char readIn = (char)reader.Read();
+			if (readIn == ']')
+				break;
+			condition[i] = readIn;
+		}
+		return true;
+	}
+
+	private bool HandleConditional(ReadOnlySpan<char> condition, bool mustMatch) {
+		int realStrLength = condition.IndexOf('\0');
+		if(realStrLength == -1) {
+			Debug.Assert(false, "String overflow!!!");
+			return false;
+		}
+		condition = condition[..realStrLength];
+
+		switch (condition) {
+#if WIN32
+			case "WIN32": return mustMatch;
+			case "WINDOWS": return mustMatch;
+			case "X360": return !mustMatch;
+			case "OSX": return !mustMatch;
+			case "POSIX": return !mustMatch;
+			case "LINUX": return !mustMatch;
+#elif OSX
+			case "WIN32": return !mustMatch;
+			case "WINDOWS": return !mustMatch;
+			case "X360": return !mustMatch;
+			case "OSX": return mustMatch;
+			case "POSIX": return !mustMatch;
+			case "LINUX": return !mustMatch;
+#elif LINUX
+			case "WIN32": return !mustMatch;
+			case "WINDOWS": return !mustMatch;
+			case "X360": return !mustMatch;
+			case "OSX": return !mustMatch;
+			case "POSIX": return mustMatch;
+			case "LINUX": return mustMatch;
+#else
+#error Please define how KeyValues.HandleConditional should work on this platform.
+#endif
+		}
+		// Other platforms are not applicable and we should just throw them away
+		return !mustMatch;
+	}
+
+	private bool ReadKV(StreamReader reader) {
+		SkipUntilParseableTextOrEOF(reader);
+
+		bool quoteTerminated = (char)reader.Peek() == '"';
+
+		string key = quoteTerminated ? ReadQuoteTerminatedString(reader, useEscapeSequences) : ReadWhitespaceTerminatedString(reader);
 		Name = key;
+
+		SkipUntilParseableTextOrEOF(reader);
+
+		Span<char> conditional = stackalloc char[16];
+		bool isBlockConditional = ReadConditional(reader, conditional, out bool mustMatch);
+		bool matches = isBlockConditional ? HandleConditional(conditional, mustMatch) : true;
+
+		SkipUntilParseableTextOrEOF(reader);
+
 		// Determine what we're reading next.
 		// If we run into a {, we read another KVObject and set our value to that.
 		// If we run into a ", we read another string-based value terminated by quotes.
 		// If we run into anything else, we read another string-based value, terminated by space or EOF.
 		// The value will then be set based on the string. int.TryParse will try to make it an int, same for double, and Color.
 		// We then will leave.
-		SkipWhitespace(reader);
-		SkipComments(reader);
 
 		char nextAction = (char)reader.Peek();
+		string value;
 		switch (nextAction) {
 			case '{':
 				// Ok, now we need to read every single key value until we hit a }
-				ReadKVPairs(reader);
+				ReadKVPairs(reader, matches);
 				Type = Types.None;
 				break;
 			case '"':
-				string value1 = ReadQuoteTerminatedString(reader, useEscapeSequences);
-				DetermineValueType(value1);
-				break;
+				value = ReadQuoteTerminatedString(reader, useEscapeSequences);
+				goto valueTypeSpecific;
 			default:
-				string value2 = ReadWhitespaceTerminatedString(reader);
-				DetermineValueType(value2);
-				break;
+				value = ReadWhitespaceTerminatedString(reader);
+				goto valueTypeSpecific;
 		}
 
 		return true;
+
+	valueTypeSpecific:
+
+		DetermineValueType(value);
+		SkipUntilParseableTextOrEOF(reader);
+		bool isValueConditional = ReadConditional(reader, conditional, out bool valueMustMatch);
+		bool valueMatches = isValueConditional ? HandleConditional(conditional, valueMustMatch) : true;
+		return valueMatches;
 	}
 
-	private void ReadKVPairs(StreamReader reader) {
+	private void ReadKVPairs(StreamReader reader, bool matches) {
 		int rd = reader.Read();
-		Dbg.Assert(rd == '"', "invalid kvpairs");
 
 		while (true) {
 			SkipWhitespace(reader);
@@ -116,17 +227,23 @@ public class KeyValues : LinkedList<KeyValues>
 			SkipComments(reader);
 			// Start reading keyvalues.
 			KeyValues kvpair = new();
-			kvpair.ReadKV(reader);
-			AddLast(kvpair);
+			;
+			if (kvpair.ReadKV(reader) && matches) // When conditional, stil need to waste time on parsing, but we throw it away after
+					                              // There's definitely a better way to handle this, but it would need more testing scenarios
+												  // The ReadKV call can also determine its condition and will return false if it doesnt want to be added.
+				AddLast(kvpair);
 		}
 	}
 
-	private void SkipComments(StreamReader reader) {
+	// Returns true if we did anything at all to skip comments.
+	private bool SkipComments(StreamReader reader) {
+		bool didAnything = false;
 		if (reader.Peek() == '/') {
 			// We need to check the stream for another /
-			reader.BaseStream.Seek(1, SeekOrigin.Current);
+			reader.Read();
 			if (reader.Peek() == '/') { // We got //, its a comment
 										// We read until the end of the line.
+				didAnything = true;
 				while (true) {
 					char c = (char)reader.Read();
 					if (c == '\n')
@@ -134,10 +251,12 @@ public class KeyValues : LinkedList<KeyValues>
 				}
 			}
 			else {
-				// Go back, the / is fine.
-				reader.BaseStream.Seek(-1, SeekOrigin.Current);
+				// What...
+				throw new InvalidOperationException("Expected comment");
 			}
 		}
+
+		return didAnything;
 	}
 
 	private void DetermineValueType(string input) {
@@ -184,7 +303,7 @@ public class KeyValues : LinkedList<KeyValues>
 
 	private string ReadQuoteTerminatedString(StreamReader reader, bool useEscapeSequences) {
 		int rd = reader.Read();
-		Dbg.Assert(rd == '"', "invalid quote-terminated string");
+		Debug.Assert(rd == '"', "invalid quote-terminated string");
 		Span<char> work = stackalloc char[1024];
 		int i, len;
 		bool lastCharacterWasEscape = false;
