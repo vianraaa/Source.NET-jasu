@@ -96,7 +96,7 @@ public abstract class BaseVSShader : BaseShader
 
 		if (IsSnapshotting()) {
 			ShaderShadow.EnableAlphaTest(IsFlagSet(shaderParams, MaterialVarFlags.AlphaTest));
-			if(alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f) 
+			if (alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f)
 				ShaderShadow.AlphaFunc(ShaderAlphaFunc.GreaterEqual, shaderParams[alphaTestReferenceVar].GetFloatValue());
 
 			if (bBaseTexture)
@@ -109,6 +109,7 @@ public abstract class BaseVSShader : BaseShader
 			ShaderShadow.SetPixelShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
 
 			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color, 1, null, 0);
+			SetStandardShaderUniforms();
 
 			DevMsg("UnlitGeneric snapshotted!\n");
 		}
@@ -119,6 +120,14 @@ public abstract class BaseVSShader : BaseShader
 		}
 
 		Draw();
+	}
+
+	private void SetStandardShaderUniforms() {
+		for (int i = 0; i < StandardParams.Length; i++) {
+			var v = Params![i];
+			if (v.IsDefined())
+				ShaderShadow!.SetShaderUniform(v);
+		}
 	}
 
 	private void SetDefaultBlendingShadowState(int baseTextureVar, bool isBaseTexture) {

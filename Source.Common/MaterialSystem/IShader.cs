@@ -92,4 +92,6 @@ public interface IShaderDynamicAPI
 	int GetCurrentNumBones();
 	GraphicsDriver GetDriver();
 	nint GetCurrentProgram();
+
+	void SetShaderUniform(IMaterialVar variable);
 }

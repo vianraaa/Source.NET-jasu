@@ -117,4 +117,5 @@ public interface IFileSystem : IBaseFileSystem
 	void CreateDirHierarchy(ReadOnlySpan<char> path) => CreateDirHierarchy(path, null);
 	bool IsDirectory(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID);
 	bool IsDirectory(ReadOnlySpan<char> fileName) => IsDirectory(fileName, null);
+	void GetLocalCopy(ReadOnlySpan<char> path);
 }

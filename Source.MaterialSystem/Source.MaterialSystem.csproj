@@ -19,4 +19,7 @@
 	<ItemGroup>
 	  <Folder Include="Meshes\" />
 	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="SharpFont" Version="4.0.1" />
+	</ItemGroup>
 </Project>

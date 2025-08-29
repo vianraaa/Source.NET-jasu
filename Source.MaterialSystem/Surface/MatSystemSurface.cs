@@ -1,4 +1,6 @@
-﻿using Source.Common.Commands;
+﻿using Source.Common;
+using Source.Common.Commands;
+using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
@@ -10,7 +12,6 @@ using System.Drawing;
 
 using static Source.Dbg;
 namespace Source.MaterialSystem.Surface;
-
 
 public struct PaintState
 {
@@ -61,9 +62,15 @@ public class MatSystemSurface : ISurface
 	float AlphaMultiplier;
 
 	readonly ICommandLine CommandLine;
+	readonly IFileSystem FileSystem;
+	readonly FontManager FontManager;
+	readonly ClientGlobalVariables globals;
 
-	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine) {
+	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine, IFileSystem fileSystem, ClientGlobalVariables globals) {
 		this.materials = materials;
+		this.FileSystem = fileSystem;
+		this.FontManager = new FontManager(materials, fileSystem);
+		this.globals = globals;
 		CommandLine = commandLine;
 
 		DrawColor[0] = DrawColor[1] = DrawColor[2] = DrawColor[3] = 25; ;
@@ -72,7 +79,7 @@ public class MatSystemSurface : ISurface
 		AlphaMultiplier = 1;
 
 		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
-		vmtKeyValues.SetString("$basetexture", "error");
+		vmtKeyValues.SetString("$basetexture", "white");
 		vmtKeyValues.SetInt("$vertexcolor", 1);
 		vmtKeyValues.SetInt("$vertexalpha", 1);
 		vmtKeyValues.SetInt("$ignorez", 1);
@@ -252,7 +259,7 @@ public class MatSystemSurface : ISurface
 	}
 
 	public IFont CreateFont() {
-		throw new NotImplementedException();
+		return FontManager.CreateFont();
 	}
 
 	public int CreateNewTextureID(bool procedural = false) {
@@ -474,7 +481,10 @@ public class MatSystemSurface : ISurface
 
 			// Can comment this out later, this is just to test if ISurface is rendering.
 			DrawSetColor(255, 0, 0, 255);
-			DrawFilledRect(256, 256, 512, 384);
+			for (int i = 0; i < 24; i++) {
+				int offset = (int)(float)(Math.Sin((globals.CurTime + (i / 3d) * 10)) * 128);
+				DrawFilledRect(256 + offset, 64 + (i * 32), 512 + offset, 78 + (i * 32));
+			}
 
 			// TODO!!!
 			// renderContext.SetStencilEnable(true);
@@ -680,8 +690,34 @@ public class MatSystemSurface : ISurface
 
 	public void InstallPlaySoundFunc(VGuiPlayFunc func) => play += func;
 
-	public bool AddBitmapFontFile(ReadOnlySpan<char> fontFile) {
-		throw new NotImplementedException();
+	List<string> BitmapFontFileNames = [];
+
+	public bool AddBitmapFontFile(ReadOnlySpan<char> fontFileName) {
+		bool found = false;
+		found = FileSystem.FileExists(fontFileName, null);
+		if (!found) {
+			Msg($"Couldn't find bitmap font file '{fontFileName}'\n");
+			return false;
+		}
+		Span<char> path = stackalloc char[MAX_PATH];
+		fontFileName.CopyTo(path);
+
+		// only add if it's not already in the list
+		((ReadOnlySpan<char>)path).ToLowerInvariant(path);
+		ulong sym = path.Hash();
+
+		int i;
+		for (i = 0; i < BitmapFontFileNames.Count; i++) {
+			if (BitmapFontFileNames[i].Hash() == sym)
+				break;
+		}
+		if (i < BitmapFontFileNames.Count) {
+			BitmapFontFileNames.Add(new string(path));
+
+			FileSystem.GetLocalCopy(path);
+		}
+
+		return true;
 	}
 
 	public void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile) {

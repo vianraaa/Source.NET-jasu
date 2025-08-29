@@ -689,4 +689,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void ReleaseResources() {
 
 	}
+
+	public void SetShaderUniform(IMaterialVar textureVar) {
+		int uniform = LocateShaderUniform(textureVar.GetName());
+		switch (textureVar.GetVarType()) {
+			case MaterialVarType.Float: SetShaderUniform(uniform, textureVar.GetFloatValue()); break;
+			case MaterialVarType.Int: SetShaderUniform(uniform, textureVar.GetIntValue()); break;
+		}
+	}
 }

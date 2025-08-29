@@ -248,6 +248,7 @@ public interface IShaderShadow
 	void FogMode(ShaderFogMode fogMode);
 
 	void SetDiffuseMaterialSource(ShaderMaterialSource materialSource);
+	void SetShaderUniform(IMaterialVar textureVar);
 
 	// Indicates the morph format for use with a vertex shader
 	// The flags to pass in here come from the MorphFormatFlags_t enum

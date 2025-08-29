@@ -20,7 +20,7 @@ public abstract class BaseShader : IShader
 	internal static IShaderDynamicAPI? ShaderAPI;
 	internal static string? TextureGroupName;
 
-	static ShaderParamInfo[] StandardParams = [
+	internal static ShaderParamInfo[] StandardParams = [
 		new(){ Name = "$flags",                    Help = "flags",            Type = ShaderParamType.Integer,DefaultValue =  "0", Flags = ShaderParamFlags.NotEditable },
 		new(){ Name = "$flags_defined",            Help = "flags_defined",    Type = ShaderParamType.Integer, DefaultValue = "0", Flags =ShaderParamFlags.NotEditable },
 		new(){ Name = "$flags2",                   Help = "flags2",           Type = ShaderParamType.Integer, DefaultValue = "0", Flags =ShaderParamFlags.NotEditable },

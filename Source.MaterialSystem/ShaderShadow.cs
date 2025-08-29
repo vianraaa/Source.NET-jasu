@@ -71,6 +71,7 @@ public class ShadowState : IShaderShadow
 	public VertexShaderHandle VertexShader;
 	public PixelShaderHandle PixelShader;
 
+	public void SetShaderUniform(IMaterialVar textureVar) => ShaderAPI.SetShaderUniform(textureVar);
 	private static unsafe int SizeAligned<T>(int alignment = 16) where T : unmanaged {
 		var size = sizeof(T);
 		var a = alignment - (size % alignment);

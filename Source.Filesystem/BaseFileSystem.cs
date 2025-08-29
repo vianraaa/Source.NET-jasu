@@ -481,4 +481,8 @@ public class BaseFileSystem : IFileSystem
 	public bool ReadFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> path, Span<char> buf, int startingByte) {
 		throw new Exception();
 	}
+
+	public void GetLocalCopy(ReadOnlySpan<char> path) {
+
+	}
 }
