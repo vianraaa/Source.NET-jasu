@@ -112,7 +112,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		throw new NotImplementedException();
 	}
 
-	public nint GetWindowHandle() => (nint)window.HardwareHandle;
+	public IWindow GetWindow() => window;
 	public void PumpWindowsMessageLoop() => window?.PumpMessages();
 	public int GetEvents(WindowEvent[] eventBuffer, int length) => window.GetEvents(eventBuffer, length);
 
@@ -147,13 +147,14 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		return false;
 	}
 
-	public IGraphicsContext? CreateContext(in ShaderDeviceInfo deviceInfo, nint window = -1) {
+	public IGraphicsContext? CreateContext(in ShaderDeviceInfo deviceInfo, IWindow? window = null) {
 		IGraphicsContext? gfx = null;
 
-		window = window < 0 ? (nint)this.window.HardwareHandle : window;
+		window = window == null ? this.window : window;
 		if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL)) {
-			nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)window);
-			gfx = new SDL3_OpenGL46_Context(window, ctx);
+			nint handle = (nint)((SDL3_Window)window).HardwareHandle;
+			nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)handle);
+			gfx = new SDL3_OpenGL46_Context(handle, ctx);
 			return gfx;
 		}
 

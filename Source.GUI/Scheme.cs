@@ -1,10 +1,17 @@
-﻿using Source.Common.Formats.Keyvalues;
+﻿using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+using Source.Common.Launcher;
 
 namespace Source.GUI;
 
 public class Scheme : IScheme
 {
+	[Imported] ISystem System;
+	IPanel SizingPanel;
+	KeyValues Data;
+	KeyValues BaseSettings;
+	KeyValues Colors;
 	public IBorder? GetBorder(ReadOnlySpan<char> borderName) {
 		throw new NotImplementedException();
 	}
@@ -45,7 +52,24 @@ public class Scheme : IScheme
 		throw new NotImplementedException();
 	}
 
-	internal void LoadFromFile(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag, KeyValues data) {
-		throw new NotImplementedException();
+	internal void LoadFromFile(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> inTag, KeyValues inKeys) {
+		Data = inKeys;
+		BaseSettings = Data.FindKey("BaseSettings", true)!;
+		Colors = Data.FindKey("Colors", true)!;
+
+		KeyValues name = Data.FindKey("Name", true)!;
+		name.SetString("Name", inTag);
+
+		LoadFonts();
+		LoadBorders();
+	}
+
+	private void LoadBorders() {
+
+	}
+
+	private void LoadFonts() {
+		Span<char> language = stackalloc char[64];
+		bool valid = System.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
 	}
 }

@@ -2,6 +2,7 @@
 
 using Source.Common.Bitmap;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.Launcher;
 using Source.Common.ShaderAPI;
 
 using System;
@@ -149,7 +150,7 @@ public interface IMaterialSystem
 	void BeginFrame(double frameTime);
 	void EndFrame();
 	void SwapBuffers();
-	bool SetMode(nint v, MaterialSystem_Config config);
+	bool SetMode(IWindow window, MaterialSystem_Config config);
 	IMaterial CreateMaterial(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
 	IMaterial CreateMaterial(ReadOnlySpan<char> name, KeyValues keyValues);
 	bool CanUseEditorMaterials();

@@ -1,6 +1,4 @@
-﻿using Source.Common.ShaderAPI;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,20 +6,6 @@ using System.Threading.Tasks;
 
 namespace Source.Common.Launcher;
 
-
-public interface IGraphicsContext {
-	nint HardwareHandle { get; }
-
-	void MakeCurrent();
-	void SetSwapInterval(float swapInterval);
-	void SwapBuffers();
-}
-public interface IGraphicsProvider {
-	bool PrepareContext(GraphicsDriver driver);
-	IGraphicsContext? CreateContext(in ShaderDeviceInfo driver, nint window = -1);
-
-	unsafe delegate* unmanaged[Cdecl]<byte*, void*> GL_LoadExtensionsPtr();
-}
 public interface ILauncherManager
 {
 	bool CreateGameWindow(string title, bool windowed, int width, int height);
@@ -43,7 +27,7 @@ public interface ILauncherManager
 	void RenderedSize(bool set, ref int width, ref int height);
 	void DisplayedSize(out int width, out int height);
 
-	nint GetWindowHandle();
+	IWindow GetWindow();
 	int GetEvents(WindowEvent[] eventBuffer, int length);
 	void CenterWindow(int v2, int v3);
 }

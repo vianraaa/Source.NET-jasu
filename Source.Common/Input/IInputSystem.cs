@@ -1,10 +1,12 @@
-﻿namespace Source.Common.Input;
+﻿using Source.Common.Launcher;
+
+namespace Source.Common.Input;
 
 public interface IInputSystem
 {
 	public static IInputSystem? _;
 
-	public void AttachToWindow(nint window);
+	public void AttachToWindow(IWindow window);
 	public void DetachFromWindow();
 
 	public void EnableInput(bool enabled);

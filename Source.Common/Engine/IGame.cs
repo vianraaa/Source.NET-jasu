@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common.Launcher;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,13 +12,13 @@ public interface IGame
 {
 	bool CreateGameWindow(int width, int height, bool windowed);
 	void DestroyGameWindow();
-	void SetGameWindow(nint hWnd);
+	void SetGameWindow(IWindow window);
 	bool InputAttachToGameWindow();
 	void InputDetachFromGameWindow();
 
 	void PlayStartupVideos();
 	nint GetMainWindow();
-	nint GetMainDeviceWindow();
+	IWindow GetMainDeviceWindow();
 
 	nint GetMainWindowAddress();
 	void GetDesktopInfo(out int width, out int height, out int refreshrate);

@@ -11,7 +11,7 @@
 		<Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/ShaderUsings.cs" />
 	</ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dependencies\Raylib-cs\OpenGL46.csproj" />
+    <ProjectReference Include="..\Dependencies\OpenGL\OpenGL46.csproj" />
     <ProjectReference Include="..\Source.Common\Source.Common.csproj" />
   </ItemGroup>
 

@@ -33,7 +33,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	InputState QueuedInputState => InputStates[(int)InputStateType.Queued];
 	InputState CurrentInputState => InputStates[(int)InputStateType.Current];
 
-	public nint Window;
+	public IWindow? Window;
 	public bool InputEnabled;
 	public bool PumpEnabled;
 	public bool IsPolling;
@@ -44,7 +44,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 
 	ILauncherManager launcherMgr;
 
-	public void AttachToWindow(nint window) {
+	public void AttachToWindow(IWindow window) {
 		Window = window;
 		launcherMgr ??= services.GetRequiredService<ILauncherManager>();
 		ClearInputState();
@@ -55,7 +55,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	}
 
 	public void DetachFromWindow() {
-		Window = 0;
+		Window = null;
 	}
 
 	public void EnableInput(bool enabled) => InputEnabled = enabled;

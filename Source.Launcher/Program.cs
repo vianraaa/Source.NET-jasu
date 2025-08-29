@@ -54,6 +54,7 @@ public class Bootloader : IDisposable
 				.WithComponent<SDL3_LauncherManager>()
 				.WithResolvedComponent<ILauncherManager, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
 				.WithResolvedComponent<IGraphicsProvider, SDL3_LauncherManager>(x => x.GetRequiredService<SDL3_LauncherManager>())
+				.WithComponent<ISystem, SDL3_System>()
 				// SDL3 input system
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
 				// Rendering abstraction

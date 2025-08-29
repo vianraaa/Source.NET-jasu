@@ -58,7 +58,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		if (!launcherManager.CreateGameWindow(windowName, windowed, width, height))
 			return false;
 
-		SetGameWindow(launcherManager.GetWindowHandle());
+		SetGameWindow(launcherManager.GetWindow());
 		AttachToWindow();
 
 		return true;
@@ -70,7 +70,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		inputSystem.EnableMessagePump(false);
 	}
 
-	nint window;
+	IWindow window;
 
 	public void DestroyGameWindow() {
 		throw new NotImplementedException();
@@ -112,7 +112,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		throw new NotImplementedException();
 	}
 
-	public nint GetMainDeviceWindow() {
+	public IWindow GetMainDeviceWindow() {
 		return window;
 	}
 
@@ -148,8 +148,8 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		throw new NotImplementedException();
 	}
 
-	public void SetGameWindow(nint hWnd) {
-		window = hWnd;
+	public void SetGameWindow(IWindow window) {
+		this.window = window;
 	}
 
 	public void SetWindowSize(int w, int h) {

@@ -174,7 +174,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	ThreadLocal<MatRenderContext> matContext;
 	public IMatRenderContext GetRenderContext() => matContext!.Value!;
 
-	public bool SetMode(nint window, MaterialSystem_Config config) {
+	public bool SetMode(IWindow window, MaterialSystem_Config config) {
 		int width = config.VideoMode.Width;
 		int height = config.VideoMode.Height;
 

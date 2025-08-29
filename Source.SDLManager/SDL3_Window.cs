@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace Source.SDLManager;
 
-public unsafe class SDL3_Window
+public unsafe class SDL3_Window : IWindow
 {
 	private SDL_Window* window;
 	internal SDL_Window* HardwareHandle => window;

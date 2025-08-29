@@ -394,7 +394,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	}
 
-	internal bool SetMode(nint window, in ShaderDeviceInfo info) {
+	internal bool SetMode(IWindow window, in ShaderDeviceInfo info) {
 		ShaderDeviceInfo actualInfo = info;
 		if (!InitDevice(window, in actualInfo)) {
 			return false;
@@ -410,7 +410,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	internal IGraphicsContext? Device;
 	internal GraphicsDriver Driver;
 
-	public bool InitDevice(nint window, in ShaderDeviceInfo deviceInfo) {
+	public bool InitDevice(IWindow window, in ShaderDeviceInfo deviceInfo) {
 		IGraphicsProvider graphics = services.GetRequiredService<IGraphicsProvider>();
 		Device = graphics.CreateContext(in deviceInfo, window);
 		if (Device == null)
