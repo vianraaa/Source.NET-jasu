@@ -17,6 +17,7 @@
 		<ProjectReference Include="..\Source.SDLInputSystem\Source.SDLInputSystem.csproj" />
 		<ProjectReference Include="..\Source.SDLManager\Source.SDLManager.csproj" />
 		<ProjectReference Include="..\Source.MaterialSystem\Source.MaterialSystem.csproj" />
+		<ProjectReference Include="..\Source.SDLSystem\Source.SDLSystem.csproj" />
 		<ProjectReference Include="..\Source.StdShader.Gl46\Source.StdShader.Gl46.csproj" />
 		<ProjectReference Include="..\Source.VTF\Source.VTF.csproj" />
 	</ItemGroup>
