@@ -481,9 +481,9 @@ public class MatSystemSurface : ISurface
 
 			// Can comment this out later, this is just to test if ISurface is rendering.
 			DrawSetColor(255, 0, 0, 255);
-			for (int i = 0; i < 24; i++) {
-				int offset = (int)(float)(Math.Sin((globals.CurTime + (i / 3d) * 10)) * 128);
-				DrawFilledRect(256 + offset, 64 + (i * 32), 512 + offset, 78 + (i * 32));
+			for (int i = 0; i < 128; i++) {
+				int offset = (int)(float)(Math.Sin((globals.CurTime + (i / 3d) * 0.2d)) * 128);
+				DrawFilledRect(256 + offset, 64 + (i * 6), 512 + offset, 70 + (i * 6));
 			}
 
 			// TODO!!!
