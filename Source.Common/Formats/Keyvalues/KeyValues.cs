@@ -2,6 +2,7 @@
 using Source.Common.Filesystem;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -16,7 +17,7 @@ namespace Source.Common.Formats.Keyvalues;
 
 
 [DebuggerDisplay("Name = {Name}, Type = {Type}, Count = {Count}, Value = {Value}")]
-public class KeyValues : LinkedList<KeyValues>
+public class KeyValues : IEnumerable<KeyValues>
 {
 	public enum Types
 	{
@@ -32,19 +33,25 @@ public class KeyValues : LinkedList<KeyValues>
 	public string Name = "";
 	public Types Type;
 	public object? Value;
-	public string RawValue;
+	public string? RawValue;
 
-	bool useEscapeSequences;
+	bool useEscapeSequences = false;
+	bool evaluateConditionals = false;
+
+	LinkedListNode<KeyValues> node;
+	LinkedList<KeyValues> children = [];
 
 	public KeyValues() {
-
+		node = new(this);
 	}
-	public KeyValues(string name) {
-		Name = name;
+
+	public KeyValues(ReadOnlySpan<char> name) : base() {
+		node = new(this);
+		Name = new(name);
 	}
 
 	public bool LoadFromStream(Stream? stream) {
-		Clear();
+		// Clear();
 		if (stream == null) return false;
 
 		using StreamReader reader = new StreamReader(stream);
@@ -68,7 +75,7 @@ public class KeyValues : LinkedList<KeyValues>
 	}
 
 	public override string ToString() {
-		return $"{Type}<{Value}> #{Count}";
+		return $"{Type}<{Value}>";
 	}
 
 	// Returns true if we can read something. False if we can't.
@@ -231,7 +238,7 @@ public class KeyValues : LinkedList<KeyValues>
 			if (kvpair.ReadKV(reader) && matches) // When conditional, stil need to waste time on parsing, but we throw it away after
 					                              // There's definitely a better way to handle this, but it would need more testing scenarios
 												  // The ReadKV call can also determine its condition and will return false if it doesnt want to be added.
-				AddLast(kvpair);
+				children.AddLast(kvpair.node);
 		}
 	}
 
@@ -348,7 +355,7 @@ public class KeyValues : LinkedList<KeyValues>
 
 
 	public KeyValues? FindKey(string searchStr, bool create = false) {
-		foreach (var child in this) {
+		foreach (var child in this.children) {
 			if (child.Name == searchStr)
 				return child;
 		}
@@ -357,7 +364,7 @@ public class KeyValues : LinkedList<KeyValues>
 			KeyValues newKey = new(searchStr);
 			newKey.useEscapeSequences = useEscapeSequences;
 
-			AddLast(newKey);
+			children.AddLast(newKey.node);
 			return newKey;
 		}
 
@@ -394,7 +401,7 @@ public class KeyValues : LinkedList<KeyValues>
 		return LoadFromStream(fileSystem.Open(path, FileOpenOptions.Read, null)?.Stream);
 	}
 
-	public LinkedListNode<KeyValues>? GetFirstSubKey() => First;
+	public KeyValues? GetFirstSubKey() => children.First?.Value;
 
 	public int GetInt() {
 		return Convert.ToInt32(Value);
@@ -409,4 +416,15 @@ public class KeyValues : LinkedList<KeyValues>
 	public void UsesEscapeSequences(bool value) {
 		useEscapeSequences = value;
 	}
+
+	public KeyValues? GetNextKey() {
+		return node.Next?.Value;
+	}
+
+	public IEnumerator<KeyValues> GetEnumerator() {
+		foreach(var key in children)
+			yield return key;
+	}
+
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

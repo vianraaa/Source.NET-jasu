@@ -231,7 +231,8 @@ public class MatSystemSurface : ISurface
 	}
 
 	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
-		throw new NotImplementedException();
+
+		return false;
 	}
 
 	public void AddPanel(IPanel panel) {

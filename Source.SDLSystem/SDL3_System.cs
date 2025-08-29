@@ -2,6 +2,10 @@
 using Source.Common.Input;
 using Source.Common.Launcher;
 
+#if WIN32
+using Microsoft.Win32;
+#endif
+
 namespace Source.SDLManager;
 
 public unsafe class SDL3_System : ISystem
@@ -62,8 +66,20 @@ public unsafe class SDL3_System : ISystem
 		throw new NotImplementedException();
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "WIN32 constant handle thsi")]
 	public bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value) {
-		throw new NotImplementedException();
+#if WIN32
+		string path = new(key);
+		string fullPath = Path.GetDirectoryName(path)!;
+		string valueName = Path.GetFileName(path);
+		string? regValue = Registry.GetValue(fullPath, valueName, null) as string;
+		if(regValue == null) {
+			return false;
+		}
+
+		regValue.CopyTo(value);
+		return true;
+#endif
 	}
 
 	public bool GetShortcutTarget(ReadOnlySpan<char> linkFileName, Span<char> targetPath, Span<char> arguments) {

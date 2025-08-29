@@ -331,11 +331,11 @@ public class Material : IMaterialInternal
 		bool parsingOverrides = overrideKeyValues != null;
 		var var = overrideKeyValues != null ? overrideKeyValues.GetFirstSubKey() : keyValues.GetFirstSubKey();
 
-		ReadOnlySpan<char> matName = var != null ? var.Value.GetString() : "Unknown";
+		ReadOnlySpan<char> matName = var != null ? var.GetString() : "Unknown";
 		while (var != null) {
 			bool processThisOne = true;
 			bool isConditionalVar;
-			ReadOnlySpan<char> varName = GetVarName(var.Value);
+			ReadOnlySpan<char> varName = GetVarName(var);
 
 			if (findContext == (int)MaterialFindContext.IsOnAModel && varName != null && varName.Length > 0) {
 				if (varName.Contains("$ignorez", StringComparison.OrdinalIgnoreCase)) {
@@ -346,9 +346,9 @@ public class Material : IMaterialInternal
 
 			if (
 				ShouldSkipVar(var, out isConditionalVar) ||
-				(var.Value.Name[0] == '%') ||
-				ParseMaterialFlag(var.Value, vars[(int)ShaderMaterialVars.Flags], vars[(int)ShaderMaterialVars.FlagsDefined], parsingOverrides, ref flagMask, ref overrideMask) ||
-				ParseMaterialFlag(var.Value, vars[(int)ShaderMaterialVars.Flags2], vars[(int)ShaderMaterialVars.FlagsDefined2], parsingOverrides, ref flagMask, ref overrideMask)
+				(var.Name[0] == '%') ||
+				ParseMaterialFlag(var, vars[(int)ShaderMaterialVars.Flags], vars[(int)ShaderMaterialVars.FlagsDefined], parsingOverrides, ref flagMask, ref overrideMask) ||
+				ParseMaterialFlag(var, vars[(int)ShaderMaterialVars.Flags2], vars[(int)ShaderMaterialVars.FlagsDefined2], parsingOverrides, ref flagMask, ref overrideMask)
 				)
 				processThisOne = false;
 
@@ -357,7 +357,7 @@ public class Material : IMaterialInternal
 				if (varIdx >= 0) {
 					if (vars[varIdx] != null && (!isConditionalVar)) {
 						if (!overrides[varIdx] || parsingOverrides) {
-							Dbg.Warning($"Error! Variable \"{var.Value.Name}\" is multiply defined in material \"{GetName()}\"!\n");
+							Dbg.Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
 						}
 						goto nextVar;
 					}
@@ -366,19 +366,19 @@ public class Material : IMaterialInternal
 					int i;
 					for (i = numParams; i < varCount; ++i) {
 						Dbg.Assert(vars[i] != null);
-						if (vars[i].GetName().Equals(var.Value.Name, StringComparison.OrdinalIgnoreCase))
+						if (vars[i].GetName().Equals(var.Name, StringComparison.OrdinalIgnoreCase))
 							break;
 					}
 
 					if (i != varCount) {
 						if (!overrides[varIdx] || parsingOverrides) {
-							Dbg.Warning($"Error! Variable \"{var.Value.Name}\" is multiply defined in material \"{GetName()}\"!\n");
+							Dbg.Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
 						}
 						goto nextVar;
 					}
 				}
 
-				newVar = CreateMaterialVarFromKeyValue(this, var.Value);
+				newVar = CreateMaterialVarFromKeyValue(this, var);
 				if (newVar == null)
 					goto nextVar;
 
@@ -393,7 +393,7 @@ public class Material : IMaterialInternal
 			}
 
 		nextVar:
-			var = var.Next;
+			var = var.GetNextKey();
 			if (var != null && parsingOverrides) {
 				var = keyValues.GetFirstSubKey();
 				parsingOverrides = false;
@@ -533,7 +533,7 @@ public class Material : IMaterialInternal
 		return 0;
 	}
 
-	private bool ShouldSkipVar(LinkedListNode<KeyValues> var, out bool isConditionalVar) {
+	private bool ShouldSkipVar(KeyValues var, out bool isConditionalVar) {
 		isConditionalVar = false; // TODO
 		return false;
 	}

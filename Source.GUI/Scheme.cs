@@ -7,7 +7,8 @@ namespace Source.GUI;
 
 public class Scheme : IScheme
 {
-	[Imported] ISystem System;
+	[Imported] public ISystem System;
+	[Imported] public ISurface Surface;
 	IPanel SizingPanel;
 	KeyValues Data;
 	KeyValues BaseSettings;
@@ -71,5 +72,17 @@ public class Scheme : IScheme
 	private void LoadFonts() {
 		Span<char> language = stackalloc char[64];
 		bool valid = System.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
+		if (!valid) 
+			"english".CopyTo(language);
+		
+		for(var kv = Data.FindKey("CustomFontFiles", true)!.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			ReadOnlySpan<char> fontFile = kv.GetString();
+			if (fontFile != null && fontFile.Length > 0) {
+				Surface.AddCustomFontFile(null, fontFile);
+			}
+			else {
+
+			}
+		}
 	}
 }
