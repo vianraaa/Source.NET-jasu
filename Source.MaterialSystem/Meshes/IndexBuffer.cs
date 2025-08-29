@@ -39,12 +39,29 @@ public unsafe class IndexBuffer : IDisposable
 
 	public short* Lock(bool readOnly, int indexCount, out int startIndex, int firstIndex) {
 		Assert(!Locked);
-		startIndex = Position;
+		if (Dynamic) {
+			if (Flush || !HasEnoughRoom(indexCount)) {
+				if (SysmemBuffer != null)
+					LateCreateShouldDiscard = true;
+
+				Flush = false;
+				Position = 0;
+			}
+		}
+		else {
+
+		}
+
+		int position = Position;
+		if (firstIndex >= 0)
+			position = firstIndex;
+
+		startIndex = position;
 		if (SysmemBuffer == null) {
 			RecomputeIBO();
 		}
 		Locked = true;
-		return (short*)SysmemBuffer + Position;
+		return (short*)SysmemBuffer + position;
 	}
 
 	public void Unlock(int indexCount) {

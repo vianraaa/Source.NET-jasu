@@ -28,7 +28,8 @@ public unsafe class VertexBuffer : IDisposable
 	internal uint VAO() => vao > 0 ? (uint)vao : throw new NullReferenceException("Vertex Array Object was null");
 	internal uint VBO() => vbo > 0 ? (uint)vbo : throw new NullReferenceException("Vertex Buffer Object was null");
 
-	public VertexBuffer() {
+	public VertexBuffer(bool dynamic) {
+		Dynamic = dynamic;
 	}
 
 	public VertexBuffer(VertexFormat format, int vertexSize, int vertexCount, bool dynamic) {
@@ -115,6 +116,23 @@ public unsafe class VertexBuffer : IDisposable
 
 	public byte* Lock(int numVerts, out int baseVertexIndex) {
 		Assert(!Locked);
+
+		if(numVerts > VertexCount) {
+			baseVertexIndex = 0;
+			return null;
+		}
+		if (Dynamic) {
+			if(Flush || !HasEnoughRoom(numVerts)) {
+				if (SysmemBuffer != null)
+					LateCreateShouldDiscard = true;
+
+				Flush = false;
+				Position = 0;
+			}
+		}
+		else {
+			Position = 0;
+		}
 		baseVertexIndex = Position / VertexSize;
 		if (SysmemBuffer == null) {
 			RecomputeVBO();
