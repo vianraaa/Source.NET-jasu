@@ -1,6 +1,39 @@
 ﻿using Source.Common.Formats.Keyvalues;
 
 namespace Source.Common.GUI;
+
+public enum PaintBackgroundType
+{
+	Filled = 0,
+	Textured = 1,
+	Box = 2, 
+	BoxFade = 3
+}
+
+
+public enum PinCorner
+{
+	TopLeft = 0,
+	TopRight,
+	BottomLEft,
+	BottomRight,
+
+	CenterTop,
+	CenterRight,
+	CenterBottom,
+	CenterLeft,
+
+	Last
+};
+
+public enum AutoResize
+{
+	None = 0,
+	Right,
+	Down,
+	DownAndRight,
+}
+
 public interface IPanel
 {
 	// methods
@@ -77,4 +110,5 @@ public interface IPanel
 	// Used by the drag/drop manager to always draw on top
 	bool IsTopmostPopup();
 	void SetTopmostPopup(bool state);
+	void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false);
 }

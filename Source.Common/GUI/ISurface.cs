@@ -157,4 +157,6 @@ public interface ISurface
 	void InstallPlaySoundFunc(VGuiPlayFunc func);
 	bool AddBitmapFontFile(ReadOnlySpan<char> fontFile);
 	void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile);
+	float DrawGetAlphaMultiplier();
+	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
 }

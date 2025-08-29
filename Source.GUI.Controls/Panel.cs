@@ -1,5 +1,8 @@
 ﻿using Source.Common.Engine;
 using Source.Common.GUI;
+using Source.Common.MaterialSystem;
+
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.GUI.Controls;
 
@@ -32,22 +35,22 @@ public class Panel : IPanel
 	[Imported] public readonly ISchemeManager SchemeManager;
 
 	public void Init(int x, int y, int w, int h) {
-		panelName = null;
-		tooltipText = null;
+		PanelName = null;
+		TooltipText = null;
 		SetPos(x, y);
 		SetSize(w, h);
-		flags |= PanelFlags.NeedsLayout | PanelFlags.NeedsSchemeUpdate | PanelFlags.NeedsDefaultSettingsApplied;
-		flags |= PanelFlags.AutoDeleteEnabled | PanelFlags.PaintBorderEnabled | PanelFlags.PaintBackgroundEnabled | PanelFlags.PaintEnabled;
-		flags |= PanelFlags.AllowChainKeybindingToParent;
-		alpha = 255.0f;
-		visible = true;
-		enabled = true;
-		parent = null;
-		popup = false;
-		isTopmostPopup = false;
+		Flags |= PanelFlags.NeedsLayout | PanelFlags.NeedsSchemeUpdate | PanelFlags.NeedsDefaultSettingsApplied;
+		Flags |= PanelFlags.AutoDeleteEnabled | PanelFlags.PaintBorderEnabled | PanelFlags.PaintBackgroundEnabled | PanelFlags.PaintEnabled;
+		Flags |= PanelFlags.AllowChainKeybindingToParent;
+		Alpha = 255.0f;
+		Visible = true;
+		Enabled = true;
+		Parent = null;
+		Popup = false;
+		TopmostPopup = false;
 
-		mouseInput = true;
-		kbInput = true;
+		MouseInput = true;
+		KbInput = true;
 	}
 
 	public Panel() {
@@ -75,27 +78,37 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	Panel? parent;
+	Panel? Parent;
 
-	string? panelName;
-	string? tooltipText;
-	short x, y;
-	short w, h;
-	short minW, minH;
-	short insetX, insetY, insetW, insetH;
-	short clipRectX, clipRectY, clipRectW, clipRectH;
-	short absX, absY;
-	short zpos;
+	string? PanelName;
+	string? TooltipText;
+	short X, Y;
+	short W, H;
+	short MinW, MinH;
+	short InsetX, InsetY, InsetW, InsetH;
+	short ClipRectX, ClipRectY, ClipRectW, ClipRectH;
+	short AbsX, AbsY;
+	short ZPos;
 
-	bool visible;
-	bool enabled;
-	bool popup;
-	bool mouseInput;
-	bool kbInput;
-	bool isTopmostPopup;
-	float alpha;
-	PanelFlags flags;
-	List<Panel> children = [];
+	bool Visible;
+	bool Enabled;
+	bool Popup;
+	bool MouseInput;
+	bool KbInput;
+	bool TopmostPopup;
+	float Alpha;
+	IBorder? Border;
+	PanelFlags Flags;
+	readonly List<Panel> Children = [];
+
+	IPanel? SkipChild;
+
+	Color BgColor;
+	Color FgColor;
+
+	PaintBackgroundType PaintBackgroundType;
+	public PaintBackgroundType GetPaintBackgroundType() => PaintBackgroundType;
+	public void SetPaintBackgroundType(PaintBackgroundType type) => PaintBackgroundType = type;
 
 	public void DeletePanel() {
 		throw new NotImplementedException();
@@ -106,14 +119,14 @@ public class Panel : IPanel
 	}
 
 	public Panel GetChild(int index) {
-		return children[index];
+		return Children[index];
 	}
 
 	public int GetChildCount() {
-		return children.Count;
+		return Children.Count;
 	}
 
-	public IEnumerable<IPanel> GetChildren() => children;
+	public IEnumerable<IPanel> GetChildren() => Children;
 
 	public ReadOnlySpan<char> GetClassName() => GetType().Name;
 
@@ -130,24 +143,24 @@ public class Panel : IPanel
 	}
 
 	public void GetMinimumSize(out int wide, out int tall) {
-		wide = minW;
-		tall = minH;
+		wide = MinW;
+		tall = MinH;
 	}
 
 	public ReadOnlySpan<char> GetName() {
-		if (panelName != null)
-			return panelName;
+		if (PanelName != null)
+			return PanelName;
 
 		return "";
 	}
 
 	public IPanel? GetParent() {
-		return parent;
+		return Parent;
 	}
 
 	public void GetPos(out int x, out int y) {
-		x = this.x;
-		y = this.y;
+		x = this.X;
+		y = this.Y;
 	}
 
 	public IScheme? GetScheme() {
@@ -155,22 +168,24 @@ public class Panel : IPanel
 	}
 
 	public void GetSize(out int wide, out int tall) {
-		wide = w;
-		tall = h;
+		wide = W;
+		tall = H;
 	}
 
 	public int GetTabPosition() {
 		throw new NotImplementedException();
 	}
 
+	public void SetSkipChildDuringPainting(Panel child) => SkipChild = child;
+
 	public int GetZPos() {
-		return zpos;
+		return ZPos;
 	}
 
 	public bool HasParent(IPanel potentialParent) {
-		IPanel? parent = this.parent;
+		IPanel? parent = this.Parent;
 
-		while(parent != null) {
+		while (parent != null) {
 			if (parent == potentialParent)
 				return true;
 			parent = parent.GetParent();
@@ -195,22 +210,22 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public bool IsKeyboardInputEnabled() => kbInput;
+	public bool IsKeyboardInputEnabled() => KbInput;
 
-	public bool IsMouseInputEnabled() => mouseInput;
+	public bool IsMouseInputEnabled() => MouseInput;
 
 	public bool IsPopup() {
-		return popup;
+		return Popup;
 	}
 
 	public bool IsProportional() {
 		throw new NotImplementedException();
 	}
 
-	public bool IsTopmostPopup() => isTopmostPopup;
+	public bool IsTopmostPopup() => TopmostPopup;
 
 	public bool IsVisible() {
-		return visible;
+		return Visible;
 	}
 
 	public IPanel IsWithinTraverse(int x, int y, bool traversePopups) {
@@ -230,11 +245,213 @@ public class Panel : IPanel
 	}
 
 	public virtual void OnSizeChanged(int newWide, int newTall) {
+		InvalidateLayout();
+	}
+
+	public void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false) {
+		Flags |= PanelFlags.NeedsLayout;
+
+		if (reloadScheme) {
+			// make all our children reload the scheme
+			Flags |= PanelFlags.NeedsSchemeUpdate;
+
+			for (int i = 0; i < GetChildCount(); i++) {
+				IPanel? panel = GetChild(i);
+				if (panel != null) {
+					panel.InvalidateLayout(layoutNow, true);
+				}
+			}
+
+			PerformApplySchemeSettings();
+		}
+
+		if (layoutNow) {
+			InternalPerformLayout();
+			Repaint();
+		}
+	}
+
+	private void InternalPerformLayout() {
+		if (Flags.HasFlag(PanelFlags.NeedsSchemeUpdate))
+			return;
+
+		Flags |= PanelFlags.InPerformLayout;
+		Flags &= ~PanelFlags.NeedsLayout;
+		PerformLayout();
+		Flags &= ~PanelFlags.InPerformLayout;
+	}
+
+	public virtual void PerformLayout() {
 
 	}
 
-	public void PaintTraverse(bool forceRepaint, bool allowForce = true) {
+	public void PaintTraverse(bool repaint, bool allowForce = true) {
+		if (!IsVisible())
+			return;
 
+		float oldAlphaMultiplier = Surface.DrawGetAlphaMultiplier();
+		float newAlphaMultiplier = oldAlphaMultiplier * Alpha * 1.0f / 255.0f;
+
+		if (!repaint && allowForce && Flags.HasFlag(PanelFlags.NeedsRepaint)) {
+			repaint = true;
+			Flags &= ~PanelFlags.NeedsRepaint;
+		}
+
+		bool bPushedViewport = false;
+
+		Span<int> clipRect = stackalloc int[4];
+		GetClipRect(out clipRect[0], out clipRect[1], out clipRect[2], out clipRect[3]);
+		if ((clipRect[2] <= clipRect[0]) || (clipRect[3] <= clipRect[1])) 
+			repaint = false;
+		
+		Surface.DrawSetAlphaMultiplier(newAlphaMultiplier);
+
+		bool bBorderPaintFirst = Border != null ? Border.PaintFirst() : false;
+
+		if (bBorderPaintFirst && repaint && Flags.HasFlag(PanelFlags.PaintBorderEnabled) && (Border != null)) {
+			Surface.PushMakeCurrent(this, false);
+			PaintBorder();
+			Surface.PopMakeCurrent(this);
+		}
+
+		if (repaint) {
+			if (Flags.HasFlag(PanelFlags.PaintBackgroundEnabled)) {
+				Surface.PushMakeCurrent(this, false);
+				PaintBackground();
+				Surface.PopMakeCurrent(this);
+			}
+
+			if (Flags.HasFlag(PanelFlags.PaintEnabled)) {
+				Surface.PushMakeCurrent(this, true);
+				Paint();
+				Surface.PopMakeCurrent(this);
+			}
+		}
+
+		for (int i = 0, childCount = Children.Count; i < childCount; i++) {
+			IPanel child = Children[i];
+			bool bVisible = child.IsVisible();
+
+			if (Surface.ShouldPaintChildPanel(child)) {
+				if (bVisible) {
+					child.PaintTraverse(repaint, allowForce);
+				}
+			}
+			else {
+				Surface.Invalidate(child);
+
+				if (bVisible) 
+					child.PaintTraverse(false, false);
+			}
+		}
+
+		if (repaint) {
+			if (!bBorderPaintFirst && Flags.HasFlag(PanelFlags.PaintBorderEnabled) && (Border != null)) {
+				Surface.PushMakeCurrent(this, false);
+				PaintBorder();
+				Surface.PopMakeCurrent(this);
+			}
+
+			if (Flags.HasFlag(PanelFlags.PostChildPaintEnabled)) {
+				Surface.PushMakeCurrent(this, false);
+				PostChildPaint();
+				Surface.PopMakeCurrent(this);
+			}
+		}
+
+		Surface.DrawSetAlphaMultiplier(oldAlphaMultiplier);
+
+		Surface.SwapBuffers(this);
+
+		if (bPushedViewport) {
+			// surface()->PopFullscreenViewport();
+			// ^^ todo: later
+		}
+	}
+
+	public virtual void PostChildPaint() {
+
+	}
+
+	public virtual void Paint() {
+
+	}
+
+	public void GetBgColor(in Color c) => BgColor = c;
+	public void GetFgColor(in Color c) => FgColor = c;
+	public Color GetBgColor() => BgColor;
+	public Color GetFgColor() => FgColor;
+
+	public virtual void PaintBackground() {
+		GetSize(out int wide, out int tall);
+		if (SkipChild != null && SkipChild.IsVisible()) {
+			if (GetPaintBackgroundType() == PaintBackgroundType.Box) {
+				GetCornerTextureSize(out int cornerWide, out int cornerTall);
+
+				Color col = GetBgColor();
+				DrawHollowBox(0, 0, wide, tall, col, 1.0f);
+
+				wide -= 2 * cornerWide;
+				tall -= 2 * cornerTall;
+
+				FillRectSkippingPanel(GetBgColor(), cornerWide, cornerTall, wide, tall, SkipChild);
+			}
+			else {
+				FillRectSkippingPanel(GetBgColor(), 0, 0, wide, tall, SkipChild);
+			}
+		}
+		else {
+			Color col = GetBgColor();
+
+			switch (PaintBackgroundType) {
+				default:
+				case PaintBackgroundType.Filled: {
+						Surface.DrawSetColor(col);
+						Surface.DrawFilledRect(0, 0, wide, tall);
+					}
+					break;
+				case PaintBackgroundType.Textured: {
+						DrawTexturedBox(0, 0, wide, tall, col, 1.0f);
+					}
+					break;
+				case PaintBackgroundType.Box: {
+						DrawBox(0, 0, wide, tall, col, 1.0f);
+					}
+					break;
+				case PaintBackgroundType.BoxFade: {
+						DrawBoxFade(0, 0, wide, tall, col, 1.0f, 255, 0, true);
+					}
+					break;
+			}
+		}
+	}
+
+	private void DrawBox(int v1, int v2, int wide, int tall, Color col, float v3) {
+		throw new NotImplementedException();
+	}
+
+	private void DrawBoxFade(int v1, int v2, int wide, int tall, Color col, float v3, int v4, int v5, bool v6) {
+		throw new NotImplementedException();
+	}
+
+	private void DrawTexturedBox(int v1, int v2, int wide, int tall, Color col, float v3) {
+		throw new NotImplementedException();
+	}
+
+	private void FillRectSkippingPanel(in Color color, int cornerWide, int cornerTall, int wide, int tall, IPanel skipChild) {
+		throw new NotImplementedException();
+	}
+
+	private void DrawHollowBox(int v1, int v2, int wide, int tall, Color col, float v3) {
+		throw new NotImplementedException();
+	}
+
+	private void GetCornerTextureSize(out int cornerWide, out int cornerTall) {
+		throw new NotImplementedException();
+	}
+
+	private void PaintBorder() {
+		Border!.Paint(this);
 	}
 
 	public void PerformApplySchemeSettings() {
@@ -275,44 +492,44 @@ public class Panel : IPanel
 	}
 
 	public void SetKeyboardInputEnabled(bool state) {
-		kbInput = state;
+		KbInput = state;
 	}
 
 	public void SetMinimumSize(int wide, int tall) {
-		minW = (short)wide;
-		minH = (short)tall;
+		MinW = (short)wide;
+		MinH = (short)tall;
 
-		int currentWidth = w;
+		int currentWidth = W;
 		if (currentWidth < wide)
 			currentWidth = wide;
 
-		int currentHeight = h;
+		int currentHeight = H;
 		if (currentHeight < tall)
 			currentHeight = tall;
 
-		if (currentWidth != w || currentHeight != h)
+		if (currentWidth != W || currentHeight != H)
 			SetSize(currentWidth, currentHeight);
 	}
 
 	public void SetMouseInputEnabled(bool state) {
-		mouseInput = state;
+		MouseInput = state;
 	}
 
 	public void SetName(ReadOnlySpan<char> panelName) {
-		if (this.panelName != null && panelName != null && !panelName.Equals(this.panelName, StringComparison.Ordinal))
+		if (this.PanelName != null && panelName != null && !panelName.Equals(this.PanelName, StringComparison.Ordinal))
 			return;
 
-		if (this.panelName != null)
+		if (this.PanelName != null)
 			panelName = null;
 
 		if (panelName != null)
-			this.panelName = new(panelName);
+			this.PanelName = new(panelName);
 	}
 
 	public void SetParent(IPanel? newParent) {
-		parent?.children.Remove(this);
+		Parent?.Children.Remove(this);
 
-		parent = (Panel)newParent!;
+		Parent = (Panel)newParent!;
 	}
 
 	public void SetPopup(bool state) {
@@ -320,21 +537,21 @@ public class Panel : IPanel
 	}
 
 	public void SetPos(int x, int y) {
-		this.x = (short)x;
-		this.y = (short)y;
+		this.X = (short)x;
+		this.Y = (short)y;
 	}
 
 	public void SetSize(int wide, int tall) {
-		if (wide < minW)
-			wide = minW;
-		if (tall < minH)
-			tall = minH;
+		if (wide < MinW)
+			wide = MinW;
+		if (tall < MinH)
+			tall = MinH;
 
-		if (w == wide && h == tall)
+		if (W == wide && H == tall)
 			return;
 
-		w = (short)wide;
-		h = (short)tall;
+		W = (short)wide;
+		H = (short)tall;
 
 		OnSizeChanged(wide, tall);
 	}
@@ -344,20 +561,20 @@ public class Panel : IPanel
 	}
 
 	public void SetVisible(bool state) {
-		if (visible == state)
+		if (Visible == state)
 			return;
-		
+
 		// need to tell the surface later... UGH... HOW DO WE GET THE SURFACE RELIABLY HERE??
-		visible = state;
+		Visible = state;
 	}
 
 	public void SetZPos(int z) {
-		zpos = (short)z;
-		if(parent != null) {
-			int childCount = parent.GetChildCount();
+		ZPos = (short)z;
+		if (Parent != null) {
+			int childCount = Parent.GetChildCount();
 			int i;
-			for(i = 0; i < childCount; i++) {
-				if (parent.GetChild(i) == this)
+			for (i = 0; i < childCount; i++) {
+				if (Parent.GetChild(i) == this)
 					break;
 			}
 
@@ -367,20 +584,20 @@ public class Panel : IPanel
 			while (true) {
 				Panel? prevChild = null, nextChild = null;
 				if (i > 0)
-					prevChild = parent.GetChild(i - 1);
+					prevChild = Parent.GetChild(i - 1);
 				if (i < (childCount - 1))
-					nextChild = parent.GetChild(i + 1);
+					nextChild = Parent.GetChild(i + 1);
 
-				if(i > 0 && prevChild != null && prevChild.zpos > zpos) {
+				if (i > 0 && prevChild != null && prevChild.ZPos > ZPos) {
 					// Swap with lower
-					parent.children[i] = prevChild;
-					parent.children[i - 1] = this;
+					Parent.Children[i] = prevChild;
+					Parent.Children[i - 1] = this;
 				}
-				else if(i < (childCount - 1) && nextChild != null && nextChild.zpos < zpos) {
-					parent.children[i] = nextChild;
-					parent.children[i + 1] = this;
+				else if (i < (childCount - 1) && nextChild != null && nextChild.ZPos < ZPos) {
+					Parent.Children[i] = nextChild;
+					Parent.Children[i + 1] = this;
 				}
-				else 
+				else
 					break;
 			}
 		}
@@ -394,11 +611,11 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public void SetPanelBorderEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintEnabled : flags &= ~PanelFlags.PaintEnabled;
-	public void SetPaintBackgroundEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintBackgroundEnabled : flags &= ~PanelFlags.PaintBackgroundEnabled;
-	public void SetPaintBorderEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintBorderEnabled : flags &= ~PanelFlags.PaintBorderEnabled;
-	public void SetPaintEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PaintEnabled : flags &= ~PanelFlags.PaintEnabled;
-	public void SetPostChildPaintEnabled(bool enabled) => flags = enabled ? flags |= PanelFlags.PostChildPaintEnabled : flags &= ~PanelFlags.PostChildPaintEnabled;
+	public void SetPanelBorderEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintEnabled : Flags &= ~PanelFlags.PaintEnabled;
+	public void SetPaintBackgroundEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintBackgroundEnabled : Flags &= ~PanelFlags.PaintBackgroundEnabled;
+	public void SetPaintBorderEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintBorderEnabled : Flags &= ~PanelFlags.PaintBorderEnabled;
+	public void SetPaintEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintEnabled : Flags &= ~PanelFlags.PaintEnabled;
+	public void SetPostChildPaintEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PostChildPaintEnabled : Flags &= ~PanelFlags.PostChildPaintEnabled;
 
 	IPanel IPanel.GetChild(int index) => GetChild(index);
 }

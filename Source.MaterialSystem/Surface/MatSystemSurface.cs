@@ -479,12 +479,12 @@ public class MatSystemSurface : ISurface
 
 			renderContext.ClearBuffers(false, true, true);
 
-			// Can comment this out later, this is just to test if ISurface is rendering.
-			DrawSetColor(255, 0, 0, 255);
-			for (int i = 0; i < 128; i++) {
-				int offset = (int)(float)(Math.Sin((globals.CurTime + (i / 3d) * 0.2d)) * 128);
-				DrawFilledRect(256 + offset, 64 + (i * 6), 512 + offset, 70 + (i * 6));
-			}
+			//  Can comment this out later, this is just to test if ISurface is rendering.
+			//  DrawSetColor(255, 0, 0, 255);
+			//  for (int i = 0; i < 128; i++) {
+			//  	int offset = (int)(float)(Math.Sin((globals.CurTime + (i / 3d) * 0.2d)) * 128);
+			//  	DrawFilledRect(256 + offset, 64 + (i * 6), 512 + offset, 70 + (i * 6));
+			//  }
 
 			// TODO!!!
 			// renderContext.SetStencilEnable(true);
@@ -722,5 +722,13 @@ public class MatSystemSurface : ISurface
 
 	public void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile) {
 		throw new NotImplementedException();
+	}
+
+	public float DrawGetAlphaMultiplier() {
+		return AlphaMultiplier;
+	}
+
+	public void DrawSetAlphaMultiplier(float alpha) {
+		AlphaMultiplier = alpha;
 	}
 }
