@@ -31,8 +31,8 @@ public enum PanelFlags
 
 public class Panel : IPanel
 {
-	[Imported] public readonly ISurface Surface;
-	[Imported] public readonly ISchemeManager SchemeManager;
+	[Imported] public ISurface Surface;
+	[Imported] public ISchemeManager SchemeManager;
 
 	public void Init(int x, int y, int w, int h) {
 		PanelName = null;

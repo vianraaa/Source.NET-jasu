@@ -1,5 +1,6 @@
 ﻿using Source.Common;
 using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -66,7 +67,7 @@ public class MatSystemSurface : ISurface
 	readonly FontManager FontManager;
 	readonly ClientGlobalVariables globals;
 
-	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine, IFileSystem fileSystem, ClientGlobalVariables globals) {
+	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine, IFileSystem fileSystem, ClientGlobalVariables globals, IServiceProvider services) {
 		this.materials = materials;
 		this.FileSystem = fileSystem;
 		this.FontManager = new FontManager(materials, fileSystem);
@@ -90,7 +91,7 @@ public class MatSystemSurface : ISurface
 		InitInput();
 		InitCursors();
 
-		DefaultEmbeddedPanel = new MatEmbeddedPanel();
+		DefaultEmbeddedPanel = services.New<MatEmbeddedPanel>();
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
 	}
 
