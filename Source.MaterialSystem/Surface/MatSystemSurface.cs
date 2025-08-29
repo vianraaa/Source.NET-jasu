@@ -679,4 +679,12 @@ public class MatSystemSurface : ISurface
 	event VGuiPlayFunc? play;
 
 	public void InstallPlaySoundFunc(VGuiPlayFunc func) => play += func;
+
+	public bool AddBitmapFontFile(ReadOnlySpan<char> fontFile) {
+		throw new NotImplementedException();
+	}
+
+	public void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile) {
+		throw new NotImplementedException();
+	}
 }

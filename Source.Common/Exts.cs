@@ -9,6 +9,7 @@ using Source.Common.Commands;
 using Source.Common.Engine;
 
 using System;
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -168,20 +169,25 @@ public static class UnmanagedUtils
 		if (str == null || str.Length == 0)
 			return 0;
 
-		ReadOnlySpan<char> target;
-		if (invariant) {
-			Span<char> lowerBuffer = stackalloc char[str.Length];
-			str.ToLowerInvariant(lowerBuffer);
-			target = lowerBuffer;
-		}
-		else {
-			target = str;
-		}
+		ulong hash;
 
-		Span<byte> utf8 = stackalloc byte[target.Length * 4]; // worst case UTF-8 size
-		int written = Encoding.UTF8.GetBytes(target, utf8);
-		ulong hash = XXH64.DigestOf(utf8[0..written]);
-		//DevMsg($"{target} == {hash}\n");
+		if (invariant) {
+			bool veryLarge = str.Length > 1024;
+			if (veryLarge) {
+				char[] lowerBuffer = ArrayPool<char>.Shared.Rent(str.Length);
+				str.ToLowerInvariant(lowerBuffer);
+				hash = XXH64.DigestOf(MemoryMarshal.Cast<char, byte>(lowerBuffer));
+				ArrayPool<char>.Shared.Return(lowerBuffer, true);
+			}
+			else {
+				Span<char> lowerBuffer = stackalloc char[str.Length];
+				str.ToLowerInvariant(lowerBuffer);
+				hash = XXH64.DigestOf(MemoryMarshal.Cast<char, byte>(lowerBuffer));
+			}
+		}
+		else 
+			hash = XXH64.DigestOf(MemoryMarshal.Cast<char, byte>(str));
+
 		return hash;
 	}
 
@@ -193,9 +199,16 @@ public static class UnmanagedUtils
 	}
 
 	public static unsafe ulong Hash<T>(this Span<T> target) where T : unmanaged {
-		fixed (T* ptr = target) {
-			Span<byte> data = new(ptr, Unsafe.SizeOf<T>());
-			return XXH64.DigestOf(data);
+		if (target == null) return 0;
+		ReadOnlySpan<byte> data = MemoryMarshal.Cast<T, byte>(target);
+		return XXH64.DigestOf(data);
+	}
+
+	public static unsafe ulong Hash(this string target) {
+		fixed (char* ptr = target) {
+			ReadOnlySpan<char> data = new(ptr, target.Length);
+			ReadOnlySpan<byte> conv = MemoryMarshal.Cast<char, byte>(data);
+			return XXH64.DigestOf(conv);
 		}
 	}
 

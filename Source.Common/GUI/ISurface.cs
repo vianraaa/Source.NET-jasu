@@ -155,4 +155,6 @@ public interface ISurface
 	void PaintSoftwareCursor();
 	bool HandleInputEvent(in InputEvent ev);
 	void InstallPlaySoundFunc(VGuiPlayFunc func);
+	bool AddBitmapFontFile(ReadOnlySpan<char> fontFile);
+	void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile);
 }

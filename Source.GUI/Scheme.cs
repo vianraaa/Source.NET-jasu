@@ -7,6 +7,8 @@ using Source.Common.Launcher;
 using System;
 using System.Globalization;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Source.GUI;
 
 public class Scheme : IScheme
@@ -17,6 +19,17 @@ public class Scheme : IScheme
 	KeyValues Data;
 	KeyValues BaseSettings;
 	KeyValues Colors;
+
+	public string fileName;
+	public string tag;
+
+	struct FontAlias {
+		public ulong TrueFontSymbol;
+		public IFont Font;
+		public bool Proportional;
+	}
+	Dictionary<ulong, FontAlias> FontAliases = [];
+
 	public IBorder? GetBorder(ReadOnlySpan<char> borderName) {
 		throw new NotImplementedException();
 	}
@@ -64,6 +77,9 @@ public class Scheme : IScheme
 
 		KeyValues name = Data.FindKey("Name", true)!;
 		name.SetString("Name", inTag);
+
+		if (inTag != null)
+			tag = new(inTag);
 
 		LoadFonts();
 		LoadBorders();
@@ -121,6 +137,48 @@ public class Scheme : IScheme
 				}
 			}
 		}
+
+		for (KeyValues? kv = Data.FindKey("BitmapFontFiles", true)!.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			ReadOnlySpan<char> fontFile = kv.GetString();
+			if (fontFile != null && fontFile[0] != 0) {
+				bool success = Surface.AddBitmapFontFile(fontFile);
+				if (success) 
+					Surface.SetBitmapFontName(kv.Name, fontFile);
+			}
+		}
+
+		// create the fonts
+		for (KeyValues? kv = Data.FindKey("Fonts", true)!.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			for (int i = 0; i < 2; i++) {
+				// create the base font
+				bool proportionalFont = i > 0;
+				ReadOnlySpan<char> fontName = GetMungedFontName(kv.Name, tag, proportionalFont);
+				IFont font = Surface.CreateFont();
+
+				FontAlias alias = new();
+				alias.TrueFontSymbol = kv.Name.Hash();
+				alias.Font = font;
+				alias.Proportional = proportionalFont;
+				FontAliases[alias.TrueFontSymbol] = alias;
+			}
+		}
+
+		// load in the font glyphs
+		ReloadFontGlyphs();
+	}
+
+	static char[] mungeBuffer = new char[64];
+	private ReadOnlySpan<char> GetMungedFontName(ReadOnlySpan<char> fontName, ReadOnlySpan<char> scheme, bool proportional) {
+		if(scheme != null) 
+			sprintf(mungeBuffer, $"{fontName}{scheme}-{(proportional ? "p" : "no")}");
+		else 
+			sprintf(mungeBuffer, $"{fontName}-{(proportional ? "p" : "no")}");
+
+		return mungeBuffer;
+	}
+
+	private void ReloadFontGlyphs() {
+
 	}
 
 	record struct FontRange {
