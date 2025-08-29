@@ -71,6 +71,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		ShaderManager.Init();
 		MeshMgr.Init();
+		Device!.SetSwapInterval(0);
+
 
 		InitRenderState();
 
