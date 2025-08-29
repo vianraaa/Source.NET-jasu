@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.Common.MaterialSystem.TextureRegenerators;
-
+﻿namespace Source.Common.MaterialSystem.TextureRegenerators;
 public class SolidTexture(Color Color) : ITextureRegenerator
 {
 	public void RegenerateTextureBits(ITexture texture, IVTFTexture vtfTexture, in System.Drawing.Rectangle rect) {

@@ -22,8 +22,8 @@ public class TextureManager : ITextureManager
 		return null;
 	}
 
-	private ITexture error;
-	private ITexture white;
+	private ITexture errorTexture;
+	private ITexture whiteTexture;
 
 	const int ERROR_TEXTURE_SIZE = 32;
 	const int WHITE_TEXTURE_SIZE = 1;
@@ -32,13 +32,25 @@ public class TextureManager : ITextureManager
 
 	public void Init() {
 		Color color = new();
+		Color color2 = new();
 
-		white = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
+		errorTexture = CreateProceduralTexture("error", TEXTURE_GROUP_OTHER, ERROR_TEXTURE_SIZE, ERROR_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
+		color.R = color.G = color.B = 0; color.A = 128;
+		color2.R = color2.B = color2.A = 255; color2.G = 0;
+		CreateCheckerboardTexture(errorTexture, 4, color, color2);
+
+		whiteTexture = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
 		color.R = color.G = color.B = color.A = 255;
-		CreateSolidTexture(white, color);
+		CreateSolidTexture(whiteTexture, color);
+
+
 	}
 
-	private void CreateSolidTexture(ITexture tex, Color color) => tex.SetTextureGenerator(new SolidTexture(color));
+	private void CreateCheckerboardTexture(ITexture errorTexture, int checkerSize, Color color1, Color color2)
+		=> errorTexture.SetTextureGenerator(new CheckerboardTexture(checkerSize, color1, color2));
+
+	private void CreateSolidTexture(ITexture tex, Color color) 
+		=> tex.SetTextureGenerator(new SolidTexture(color));
 
 	public ITexture? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
 		Texture newTexture = new(MaterialSystem);

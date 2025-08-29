@@ -274,7 +274,7 @@ public class EngineVGui(
 		ReadOnlySpan<char> str = "Resource/SourceScheme.res";
 		if(vguiScheme.LoadSchemeFromFile(str, "Tracker") == null) {
 			Sys.Error($"Error loading file {str}\n");
-			return;
+			// return;
 		}
 
 		// Ideal hierarchy:

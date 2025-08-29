@@ -72,7 +72,7 @@ public class MatSystemSurface : ISurface
 		AlphaMultiplier = 1;
 
 		KeyValues vmtKeyValues = new KeyValues("UnlitGeneric");
-		vmtKeyValues.SetString("$basetexture", "white");
+		vmtKeyValues.SetString("$basetexture", "error");
 		vmtKeyValues.SetInt("$vertexcolor", 1);
 		vmtKeyValues.SetInt("$vertexalpha", 1);
 		vmtKeyValues.SetInt("$ignorez", 1);
@@ -213,7 +213,7 @@ public class MatSystemSurface : ISurface
 
 		meshBuilder.Position3f(lr.Position.X, ul.Position.Y, zPos);
 		meshBuilder.Color4ubv(color);
-		meshBuilder.TexCoord2f(0, lr.Position.X, ul.TexCoord.Y);
+		meshBuilder.TexCoord2f(0, lr.TexCoord.X, ul.TexCoord.Y);
 		meshBuilder.AdvanceVertex();
 
 		meshBuilder.Position3f(lr.Position.X, lr.Position.Y, zPos);
@@ -275,7 +275,7 @@ public class MatSystemSurface : ISurface
 		Span<SurfaceVertex> rect = stackalloc SurfaceVertex[2];
 		Span<SurfaceVertex> clippedRect = stackalloc SurfaceVertex[2];
 		InitVertex(ref rect[0], x0, y0, 0, 0);
-		InitVertex(ref rect[1], x1, y1, 0, 0);
+		InitVertex(ref rect[1], x1, y1, 1, 1);
 
 		if (!ClipRect(in rect[0], in rect[1], out clippedRect[0], out clippedRect[1]))
 			return;

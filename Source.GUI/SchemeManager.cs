@@ -62,7 +62,7 @@ public class SchemeManager(IFileSystem fileSystem, IServiceProvider services) : 
 	readonly List<Scheme> Schemes = [];
 
 	private IScheme? FindLoadedScheme(ReadOnlySpan<char> fileName) {
-		throw new NotImplementedException();
+		return null;
 	}
 
 	public void ReloadFonts() {

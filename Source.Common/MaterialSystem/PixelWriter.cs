@@ -3,6 +3,7 @@
 using System.Drawing;
 using System;
 using System.Runtime.CompilerServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.Common.MaterialSystem;
 [Flags]
@@ -28,8 +29,9 @@ public unsafe struct PixelWriterState
 	public uint BMask;
 	public uint AMask;
 
-	internal void SetFormat(ImageFormat format, uint rowSize) {
+	internal void SetFormat(ImageFormat format, uint stride) {
 		Format = format;
+		BytesPerRow = (int)stride;
 		switch (format) {
 			case ImageFormat.R32F:
 				Size = 4;
@@ -252,8 +254,8 @@ public ref struct PixelWriter
 	}
 
 
-	public void SetPixelMemory(ImageFormat format, in Span<byte> memory, int rowSize) {
-		State.SetFormat(format, (uint)rowSize);
+	public void SetPixelMemory(ImageFormat format, in Span<byte> memory, int stride) {
+		State.SetFormat(format, (uint)stride);
 		Base = memory;
 	}
 
