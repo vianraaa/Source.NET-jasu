@@ -123,7 +123,7 @@ public class MeshMgr
 
 		while (DynamicVertexBuffers.Count <= dynamicBufferID) {
 			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
-			VertexBuffer vertexBuffer = new VertexBuffer();
+			VertexBuffer vertexBuffer = new VertexBuffer(true);
 			vertexBuffer.VertexSize = 0;
 			int initVertexSize = bufferMemory / VERTEX_BUFFER_SIZE, initVertexCount = VERTEX_BUFFER_SIZE;
 			vertexBuffer.BufferSize = initVertexSize * initVertexCount;
