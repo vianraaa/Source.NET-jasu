@@ -1,0 +1,315 @@
+﻿using Source.Common.Engine;
+using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
+
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+
+namespace Source.MaterialSystem.Meshes;
+
+public struct PrimList
+{
+	public int FirstIndex;
+	public int NumIndices;
+}
+
+public unsafe class Mesh : IMesh
+{
+	public IShaderAPI ShaderAPI;
+	public IShaderUtil ShaderUtil;
+	public MeshMgr MeshMgr;
+	public IShaderDevice ShaderDevice;
+
+	protected VertexBuffer VertexBuffer;
+	protected IndexBuffer IndexBuffer;
+
+	protected VertexFormat LastVertexFormat;
+	protected VertexFormat VertexFormat;
+	protected IMaterialInternal Material;
+	protected MaterialPrimitiveType Type = MaterialPrimitiveType.Triangles;
+	protected bool IsDrawing;
+
+	protected static PrimList* s_Prims;
+	protected static int s_PrimsCount;
+	protected static uint s_FirstVertex;
+	protected static uint s_NumVertices;
+
+
+	protected int Mode = ComputeMode(MaterialPrimitiveType.Triangles);
+	protected int TotalVertices;
+	protected int TotalIndices;
+	protected int FirstVertex;
+	protected int FirstIndex;
+
+	public VertexBuffer GetVertexBuffer() => throw new Exception();
+	public IndexBuffer GetIndexBuffer() => throw new Exception();
+
+	public virtual void BeginCastBuffer(VertexFormat format) {
+		throw new NotImplementedException();
+	}
+	public void DrawMesh() {
+		Assert(!IsDrawing);
+		IsDrawing = true;
+
+		ShaderAPI.DrawMesh(this);
+
+		IsDrawing = false;
+	}
+
+	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat) {
+		if (ShaderDevice.IsDeactivated()) {
+			ResetMeshRenderState();
+			return false;
+		}
+
+		LastVertexFormat = vertexFormat;
+
+		SetVertexStreamState(vertexOffsetInBytes);
+		SetIndexStreamState(firstIndex);
+
+		return true;
+	}
+
+	// What do these do...
+	private void SetVertexStreamState(int vertexOffsetInBytes) {
+
+	}
+
+	private void SetIndexStreamState(object firstIndex) {
+
+	}
+
+	private void ResetMeshRenderState() {
+		throw new NotImplementedException();
+	}
+
+	public virtual void BeginCastBuffer(MaterialIndexFormat format) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void Draw(int firstIndex = -1, int indexCount = 0) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void EndCastBuffer() {
+		throw new NotImplementedException();
+	}
+
+	public virtual int GetRoomRemaining() {
+		throw new NotImplementedException();
+	}
+
+	public virtual VertexFormat GetVertexFormat() {
+		return VertexFormat;
+	}
+
+	public virtual int IndexCount() {
+		throw new NotImplementedException();
+	}
+
+	public virtual MaterialIndexFormat IndexFormat() {
+		throw new NotImplementedException();
+	}
+
+	public virtual bool IsDynamic() {
+		throw new NotImplementedException();
+	}
+
+	public void HandleLateCreation() {
+		VertexBuffer?.HandleLateCreation();
+		IndexBuffer?.HandleLateCreation();
+	}
+
+	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
+		if (VertexBuffer == null) {
+			// todo:
+			throw new NotImplementedException();
+		}
+
+		byte* vertexMemory = VertexBuffer.Lock(vertexCount, out desc.FirstVertex);
+		VertexBuffer.ComputeVertexDescription(vertexMemory, VertexFormat, ref desc);
+
+		return true;
+	}
+
+	public virtual int Lock(bool readOnly, int firstIndex, int indexCount, ref IndexDesc desc) {
+		if (ShaderDevice.IsDeactivated() || indexCount == 0) {
+			Assert(false);
+			return 0;
+		}
+
+		desc.Indices = (ushort*)IndexBuffer.Lock(readOnly, indexCount, out int startIndex, firstIndex);
+		if (desc.Indices == null) {
+			desc.IndexSize = 0;
+			Assert(false);
+			Warning("Failed to lock index buffer...\n");
+			return 0;
+		}
+
+		desc.IndexSize = 1;
+		return startIndex;
+	}
+
+	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void MarkAsDrawn() {
+		throw new NotImplementedException();
+	}
+
+	public virtual void ModifyBegin(int firstVertex, int vertexCount, int firstIndex, int indexCount, ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void ModifyEnd(ref MeshDesc desc) {
+		throw new NotImplementedException();
+	}
+
+	public virtual void SetColorMesh(IMesh colorMesh, int vertexOffset) {
+		throw new NotImplementedException();
+	}
+
+	public virtual MaterialPrimitiveType GetPrimitiveType() {
+		return Type;
+	}
+
+	public virtual void SetPrimitiveType(MaterialPrimitiveType type) {
+		if (!ShaderUtil.OnSetPrimitiveType(this, type))
+			return;
+
+		Type = type;
+		Mode = ComputeMode(type);
+	}
+
+	public virtual bool Unlock(int vertexCount, ref VertexDesc desc) {
+		VertexBuffer.Unlock(vertexCount);
+		return true;
+	}
+
+	public virtual bool Unlock(int indexCount, ref IndexDesc desc) {
+		IndexBuffer.Unlock(indexCount);
+		return true;
+	}
+
+	int NumVertices;
+	int NumIndices;
+
+	public virtual void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		Unlock(vertexCount, ref desc.Vertex);
+		if (Type != MaterialPrimitiveType.Points)
+			Unlock(indexCount, ref desc.Index);
+
+		NumVertices = vertexCount;
+		NumIndices = indexCount;
+	}
+
+	public virtual int VertexCount() {
+		return NumVertices;
+	}
+
+	public virtual void SetMaterial(IMaterialInternal matInternal) {
+		Material = matInternal;
+	}
+
+	public virtual void SetVertexFormat(VertexFormat fmt) {
+		VertexFormat = fmt;
+	}
+
+	public virtual unsafe void RenderPass() {
+		HandleLateCreation();
+		Assert(Type != MaterialPrimitiveType.Heterogenous);
+
+		for (int iPrim = 0; iPrim < s_PrimsCount; iPrim++) {
+			PrimList* pPrim = &s_Prims[iPrim];
+
+			if (pPrim->NumIndices == 0)
+				continue;
+
+			if (Type == MaterialPrimitiveType.Points || Type == MaterialPrimitiveType.InstancedQuads) {
+				throw new NotImplementedException();
+			}
+			else {
+				int numPrimitives = NumPrimitives(s_NumVertices, pPrim->NumIndices);
+
+				CheckIndices(pPrim, numPrimitives);
+				uint vao = VertexBuffer!.VAO();
+				uint ibo = IndexBuffer!.IBO();
+				glVertexArrayElementBuffer(vao, ibo);
+				glBindVertexArray(vao);
+				glDrawElements(Mode, pPrim->NumIndices, GL_UNSIGNED_SHORT, (void*)(pPrim->FirstIndex * 2));
+			}
+		}
+	}
+
+	public static int ComputeMode(MaterialPrimitiveType type) {
+		switch (type) {
+			case MaterialPrimitiveType.Points: return GL_POINTS;
+			case MaterialPrimitiveType.Lines: return GL_LINES;
+			case MaterialPrimitiveType.Triangles: return GL_TRIANGLES;
+			case MaterialPrimitiveType.TriangleStrip: return GL_TRIANGLE_STRIP;
+			default: throw new Exception();
+		}
+	}
+
+	private int NumPrimitives(uint vertexCount, int indexCount) {
+		switch (Mode) {
+			case GL_POINTS: return (int)vertexCount;
+			case GL_LINES: return indexCount / 2;
+			case GL_TRIANGLES: return indexCount / 3;
+			case GL_TRIANGLE_STRIP: return indexCount - 2;
+			default: Assert(0); return 0;
+		}
+	}
+
+	private void CheckIndices(PrimList* pPrim, int numPrimitives) {
+		int indexCount = 0;
+		if (Mode == GL_TRIANGLES) {
+			indexCount = numPrimitives * 3;
+		}
+		else if (Mode == GL_TRIANGLE_STRIP) {
+			indexCount = numPrimitives + 2;
+		}
+
+		if (indexCount != 0) {
+			// TODO: Should index buffer be global? Why the hell was it global before??
+			Assert(pPrim->FirstIndex >= 0 && pPrim->FirstIndex < IndexBuffer.IndexCount);
+
+			for (int j = 0; j < indexCount; j++) { // TODO
+												   //uint index = IndexBuffer.GetShadowIndex(j + pPrim->FirstIndex);
+
+				//if (index >= s_FirstVertex && index < s_FirstVertex + s_NumVertices) {
+				//	continue;
+				//}
+
+				//Assert(false);
+			}
+		}
+	}
+
+	internal bool HasColorMesh() {
+		return false;
+	}
+
+	internal bool HasFlexMesh() {
+		return false;
+	}
+
+	public virtual bool NeedsVertexFormatReset(VertexFormat fmt) {
+		return VertexFormat != fmt;
+	}
+
+	public virtual bool HasEnoughRoom(int vertexCount, int indexCount) => true;
+
+	public virtual void PreLock() {
+		throw new NotImplementedException();
+	}
+
+	public virtual void UseVertexBuffer(VertexBuffer vertexBuffer) {
+		VertexBuffer = vertexBuffer;
+	}
+
+	public virtual void UseIndexBuffer(IndexBuffer indexBuffer) {
+		IndexBuffer = indexBuffer;
+	}
+}

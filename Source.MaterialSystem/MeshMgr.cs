@@ -1,6 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
+using Source.MaterialSystem.Meshes;
 
 namespace Source.MaterialSystem;
 

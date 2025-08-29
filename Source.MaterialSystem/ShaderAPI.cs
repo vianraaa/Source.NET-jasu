@@ -12,6 +12,7 @@ using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
+using Source.MaterialSystem.Meshes;
 
 using Steamworks;
 
