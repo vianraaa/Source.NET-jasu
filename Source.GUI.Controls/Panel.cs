@@ -633,4 +633,11 @@ public class Panel : IPanel
 	public void SetPostChildPaintEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PostChildPaintEnabled : Flags &= ~PanelFlags.PostChildPaintEnabled;
 
 	IPanel IPanel.GetChild(int index) => GetChild(index);
+
+	public int GetX() => X;
+	public int GetY() => Y;
+	public int GetWide() => W;
+	public int GetTall() => H;
+	public void SetWide(int wide) => SetSize(wide, GetTall());
+	public void SetTall(int tall) => SetSize(GetWide(), tall);
 }

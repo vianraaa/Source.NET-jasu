@@ -1,6 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.Launcher;
 using Source.GUI.Controls;
 
 namespace Game.UI;
@@ -21,6 +22,27 @@ public class GameMenu : Menu {
 		item.SetUserData(userData);
 		return base.AddMenuItem(item);
 	}
+	public void UpdateMenuItemState(bool isInGame, bool isMultiplayer) {
+		for (int i = 0; i < GetChildCount(); i++) {
+			Panel child = GetChild(i);
+			if (child is MenuItem menuItem) {
+				bool shouldBeVisible = true;
+				// filter the visibility
+				KeyValues? kv = menuItem.GetUserData();
+				if (kv == null)
+					continue;
+
+				if (!isInGame && kv.GetInt("OnlyInGame") != 0) 
+					shouldBeVisible = false;
+				else if (isMultiplayer && kv.GetInt("notmulti") != 0) 
+					shouldBeVisible = false;
+
+				menuItem.SetVisible(shouldBeVisible);
+			}
+		}
+
+		InvalidateLayout();
+	}
 }
 
 public class BasePanel : Panel {
@@ -31,7 +53,14 @@ public class BasePanel : Panel {
 	public BasePanel() : base(null, "BaseGameUIPanel") {
 		CreateGameMenu();
 		CreateGameLogo();
+
+		SetMenuAlpha(255);
 	}
+
+	private void SetMenuAlpha(int alpha) {
+		GameMenu.SetAlpha(alpha);
+	}
+
 	private void CreateGameMenu() {
 		KeyValues datafile = new KeyValues("GameMenu");
 		datafile.UsesEscapeSequences(true);

@@ -9,6 +9,7 @@ public class MenuItem : Button {
 		Alignment = Alignment.West;
 		SetParent(parent);
 	}
+	public KeyValues? GetUserData() => userData;
 	public void SetUserData(KeyValues? kv) {
 		userData = null;
 		userData = kv?.MakeCopy();

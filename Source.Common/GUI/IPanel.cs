@@ -41,6 +41,12 @@ public interface IPanel
 	void GetPos(out int x, out int y);
 	void SetSize(int wide, int tall);
 	void GetSize(out int wide, out int tall);
+	int GetWide();
+	int GetTall();
+	void SetWide(int wide);
+	void SetTall(int tall);
+	int GetX();
+	int GetY();
 	void SetMinimumSize(int wide, int tall);
 	void GetMinimumSize(out int wide, out int tall);
 	void SetZPos(int z);

@@ -386,7 +386,22 @@ public class KeyValues : IEnumerable<KeyValues>
 			dat.Type = Types.String;
 		}
 	}
-	public void SetInt(string keyName, int value) {
+	public int GetInt(ReadOnlySpan<char> key, int defaultValue = default) {
+		var keyob = FindKey(key);
+
+		if (keyob == null) 
+			return defaultValue;
+
+		return keyob.Value is int i 
+			? i 
+			: keyob.Value is string str 
+				? int.TryParse(str, out int r) 
+					? r 
+					: defaultValue 
+				: defaultValue;
+	}
+
+	public void SetInt(ReadOnlySpan<char> keyName, int value) {
 		KeyValues? dat = FindKey(keyName, true);
 		if (dat != null) {
 			dat.Value = value;
