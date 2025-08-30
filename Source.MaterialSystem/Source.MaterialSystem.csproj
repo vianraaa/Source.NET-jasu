@@ -5,6 +5,9 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);DBGFLAG_ASSERT</DefineConstants>
+	</PropertyGroup>
 	<ItemGroup>
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 		<Compile Include="..\Usings\MaterialUsings.cs" Link="Usings/MaterialUsings.cs" />
