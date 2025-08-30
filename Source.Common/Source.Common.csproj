@@ -10,6 +10,10 @@
 		<DefineConstants>$(DefineConstants);DBGFLAG_ASSERT</DefineConstants>
 	</PropertyGroup>
 	
+	<ItemGroup>
+		<ResourceCompile Include="assetdialog.rc" />
+	</ItemGroup>
+	
 	<ItemGroup> <Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/Globals/GlobalUsings.cs" /> </ItemGroup>
 	<ItemGroup> <Compile Include="..\Usings\MaterialUsings.cs" Link="Usings/Globals/MaterialUsings.cs" /> </ItemGroup>
 	<ItemGroup> <Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/Globals/ShaderUsings.cs" /> </ItemGroup>
@@ -20,5 +24,18 @@
 		<PackageReference Include="Pastel" Version="6.0.1" />
 		<PackageReference Include="Snappier" Version="1.2.0" />
 		<PackageReference Include="Steamworks.NET" Version="20.1.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="assertdialog.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>assertdialog.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Update="assertdialog.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>assertdialog.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 </Project>

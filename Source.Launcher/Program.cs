@@ -69,7 +69,7 @@ public class Bootloader : IDisposable
 				.Build(dedicated: false);
 			// Generate our startup information
 			PreInit();
-			AssertMsg(false, "Test");
+			// AssertMsg(false, "Test");
 			// Run the game
 			var res = engineAPI.Run();
 			// If the engine requested a restart, re-loop
@@ -108,6 +108,7 @@ public class Bootloader : IDisposable
 internal class Program
 {
 	static void Main(string[] _) {
+		Platform.Initialize();
 		using (Bootloader bootloader = new())
 			bootloader.Boot();
 	}

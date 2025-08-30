@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common;
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -25,6 +27,7 @@ public static class Platform
 		return stopwatch;
 	});
 
+	public static ReadOnlySpan<char> GetCommandLine() => Environment.CommandLine;
 	public static double Time => __timer.Value.Elapsed.TotalSeconds;
 
 #if WIN32
@@ -37,5 +40,9 @@ public static class Platform
 		fixed (char* cbuf = buf)
 			OutputDebugStringW(cbuf);
 #endif
+	}
+
+	public static void Initialize() {
+		ThreadUtils.SetMainThread();
 	}
 }

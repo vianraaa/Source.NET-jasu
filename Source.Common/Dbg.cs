@@ -1,12 +1,17 @@
-﻿using Source.Common;
+﻿#define DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
+using Source.Common;
 
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using static Source.Dbg;
 
 namespace Source;
 
@@ -152,13 +157,13 @@ public static class Dbg
 		while (!reader.Overflowed()) {
 			Span<char> target = new(piece, 2048);
 			writer = sprintf(target, ref reader, args);
-			
+
 			ret = writeOnePiece();
 			SpewInfo.Value = null;
 			if (!handleOnePiece(ret))
 				return ret;
 		}
-		
+
 		return ret;
 	}
 	public static bool FindSpewGroup(string groupName, [NotNullWhen(true)] out SpewGroup? group) {
@@ -312,28 +317,37 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, object?[] parms, string file, int line, bool fatal) {
 		if (!exp)
 			_AssertMsg(true, string.Format(message, parms), file, line, fatal);
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, string file, int line, bool fatal) {
 		if (exp) {
 
 		}
 		else {
 			_SpewInfo(SpewType.Assert, file, line);
-			Debug.Assert(false, message);
+			if (!AssertDialog.ShouldUseNewAssertDialog() || AssertDialog.DoNewAssertDialog(file, line, message))
+				Debugger.Break();
+
+
 			if (fatal)
 				_ExitOnFatalAssert(file, line);
 		}
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	public static void _ExitOnFatalAssert(string file, int line) {
 		_SpewMessage("Fatal assert failed: {0}, line {1}.  Application exiting.\n", file, line);
 		if (!Debugger.IsAttached) {
@@ -345,7 +359,9 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert([DoesNotReturnIf(false)] bool exp,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -354,7 +370,9 @@ public static class Dbg
 	) => _AssertMsg(exp, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert(object? exp,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -363,7 +381,9 @@ public static class Dbg
 	) => _AssertMsg(exp != null, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertMsg([DoesNotReturnIf(false)] bool exp, ReadOnlySpan<char> msg,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -373,7 +393,9 @@ public static class Dbg
 	) => _AssertMsg(exp, $"Assertion Failed: {new(msg)}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+#if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
+#endif
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertEquals<T>(T? i1, T? i2,
 		[CallerFilePath] string? ____fileP = null,

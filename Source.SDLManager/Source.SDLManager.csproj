@@ -11,6 +11,8 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<PackageReference Include="PInvoke.Gdi32" Version="0.7.124" />
+		<PackageReference Include="PInvoke.User32" Version="0.7.124" />
 		<PackageReference Include="ppy.SDL3-CS" Version="2025.703.0" />
 	</ItemGroup>
 

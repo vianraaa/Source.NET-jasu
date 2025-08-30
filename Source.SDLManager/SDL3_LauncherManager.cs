@@ -10,6 +10,21 @@ using System.Runtime.InteropServices;
 
 namespace Source.SDLManager;
 
+internal static class SDL3_State {
+	static bool ready = false;
+	internal static void InitializeIfRequired() {
+		if (ready) return;
+
+		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(Environment.ProcessPath), "N/A", "N/A");
+		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
+			throw new Exception("Couldn't initialize SDL3's video subsystem.");
+		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
+			throw new Exception("Couldn't initialize SDL3's audio subsystem.");
+
+		ready = true;
+	}
+}
+
 public unsafe class SDL3_OpenGL46_Context(nint window, nint ctx) : IGraphicsContext
 {
 	public nint HardwareHandle => ctx;
@@ -32,12 +47,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	readonly IServiceProvider services;
 	public SDL3_LauncherManager(IServiceProvider services) {
 		this.services = services;
-
-		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(System.Environment.ProcessPath), "N/A", "N/A");
-		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
-			throw new Exception("Couldn't initialize SDL3's video subsystem.");
-		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO))
-			throw new Exception("Couldn't initialize SDL3's audio subsystem.");
+		SDL3_State.InitializeIfRequired();
 	}
 	SDL3_Window window;
 	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
