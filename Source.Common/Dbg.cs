@@ -312,12 +312,14 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, object?[] parms, string file, int line, bool fatal) {
 		if (!exp)
 			_AssertMsg(true, string.Format(message, parms), file, line, fatal);
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, string file, int line, bool fatal) {
 		if (exp) {
 
@@ -331,6 +333,7 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	public static void _ExitOnFatalAssert(string file, int line) {
 		_SpewMessage("Fatal assert failed: {0}, line {1}.  Application exiting.\n", file, line);
 		if (!Debugger.IsAttached) {
@@ -342,6 +345,7 @@ public static class Dbg
 	}
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert([DoesNotReturnIf(false)] bool exp,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -350,6 +354,7 @@ public static class Dbg
 	) => _AssertMsg(exp, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Assert(object? exp,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -358,6 +363,7 @@ public static class Dbg
 	) => _AssertMsg(exp != null, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertMsg([DoesNotReturnIf(false)] bool exp, ReadOnlySpan<char> msg,
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
@@ -367,6 +373,7 @@ public static class Dbg
 	) => _AssertMsg(exp, $"Assertion Failed: {new(msg)}", ____fileP ?? "<nofile>", ____lineNum, false);
 
 	[Conditional("DBGFLAG_ASSERT")]
+	[DebuggerHidden]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertEquals<T>(T? i1, T? i2,
 		[CallerFilePath] string? ____fileP = null,
