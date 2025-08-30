@@ -5,7 +5,7 @@ namespace Source.GUI.Controls;
 
 public class MenuItem : Button {
 	KeyValues? userData;
-	public MenuItem(Panel parent, ReadOnlySpan<char> name) : base(parent, name){
+	public MenuItem(Panel parent, string name) : base(parent, name){
 		Alignment = Alignment.West;
 		SetParent(parent);
 	}

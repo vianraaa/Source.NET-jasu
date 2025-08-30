@@ -5,7 +5,7 @@ namespace Source.GUI.Controls;
 public class Label : Panel {
 	protected Alignment Alignment;
 
-	public Label(Panel? parent, ReadOnlySpan<char> panelName) : base(parent, panelName) {
+	public Label(Panel? parent, string panelName) : base(parent, panelName) {
 
 	}
 

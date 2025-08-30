@@ -7,7 +7,7 @@ namespace Game.UI;
 
 public class GameMenuItem : MenuItem
 {
-	public GameMenuItem(Panel panel, ReadOnlySpan<char> name) : base(panel, name) {
+	public GameMenuItem(Panel panel, string name) : base(panel, name) {
 
 	}
 }
