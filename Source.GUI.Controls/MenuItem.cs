@@ -1,0 +1,16 @@
+﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.GUI;
+
+namespace Source.GUI.Controls;
+
+public class MenuItem : Button {
+	KeyValues? userData;
+	public MenuItem(Panel parent, ReadOnlySpan<char> name) : base(parent, name){
+		Alignment = Alignment.West;
+		SetParent(parent);
+	}
+	public void SetUserData(KeyValues? kv) {
+		userData = null;
+		userData = kv?.MakeCopy();
+	}
+}

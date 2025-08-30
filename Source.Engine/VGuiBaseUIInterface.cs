@@ -12,6 +12,7 @@ using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
+using Source.Engine.Server;
 using Source.GUI.Controls;
 
 using System.Runtime.InteropServices;
@@ -93,7 +94,7 @@ public class StaticPanel(Panel? parent, string name) : Panel(parent, name) {
 public class EngineVGui(
 	Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface, 
 	IMaterialSystem materials, ILauncherManager launcherMgr, 
-	ICommandLine CommandLine, IFileSystem fileSystem
+	ICommandLine CommandLine, IFileSystem fileSystem, GameServer sv
 	) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
@@ -246,9 +247,6 @@ public class EngineVGui(
 	public void FinishCustomProgress() { }
 	public void ShowErrorMessage() { }
 
-	public object? GetPanel(VGuiPanelType type) {
-		throw new NotImplementedException();
-	}
 	public bool IsGameUIVisible() {
 		throw new NotImplementedException();
 	}
@@ -371,6 +369,7 @@ public class EngineVGui(
 
 		// cacheusedmaterials
 		// localization files
+		staticGameUIFuncs.Initialize(engineAPI);
 		staticGameUIFuncs.Start();
 
 		ActivateGameUI();
@@ -458,6 +457,29 @@ public class EngineVGui(
 
 		if ((mode & PaintMode.Cursor) == PaintMode.Cursor) {
 			matSystemSurface.PaintSoftwareCursor();
+		}
+	}
+
+	IPanel IEngineVGui.GetPanel(VGuiPanelType type) => GetRootPanel(type);
+
+	private IPanel GetRootPanel(VGuiPanelType type) {
+		if (sv.IsDedicated()) 
+			return null;
+
+		switch (type) {
+			default:
+			case VGuiPanelType.Root:
+				return staticPanel;
+			case VGuiPanelType.ClientDll:
+				return staticClientDLLPanel;
+			case VGuiPanelType.GameUIDll:
+				return staticGameUIPanel;
+			case VGuiPanelType.Tools:
+				return staticEngineToolsPanel;
+			case VGuiPanelType.GameDll:
+				return staticGameDLLPanel;
+			case VGuiPanelType.ClientDllTools:
+				return staticClientDLLToolsPanel;
 		}
 	}
 }

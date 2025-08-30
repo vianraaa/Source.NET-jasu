@@ -1,4 +1,6 @@
-﻿namespace Source.Engine;
+﻿using Source.Common.GUI;
+
+namespace Source.Engine;
 
 public enum VGuiPanelType {
 	Root,
@@ -17,6 +19,6 @@ public enum PaintMode {
 }
 public interface IEngineVGui
 {
-	public object? GetPanel(VGuiPanelType type);
+	public IPanel GetPanel(VGuiPanelType type);
 	public bool IsGameUIVisible();
 }

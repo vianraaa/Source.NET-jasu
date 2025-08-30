@@ -111,4 +111,7 @@ public interface IPanel
 	bool IsTopmostPopup();
 	void SetTopmostPopup(bool state);
 	void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false);
+
+	float GetAlpha();
+	void SetAlpha(float alpha);
 }

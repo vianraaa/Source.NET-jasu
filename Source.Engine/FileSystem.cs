@@ -51,10 +51,10 @@ public class FileSystem(IFileSystem fileSystem) {
 		bool lowViolence = initInfo.LowViolence;
 		bool firstGamePath = true;
 		foreach(KeyValues cur in searchPaths!) {
-			string location = cur.GetString();
+			ReadOnlySpan<char> location = cur.GetString();
 			string lBaseDir = baseDir;
 			if(location.Contains(GAMEINFOPATH_TOKEN, StringComparison.OrdinalIgnoreCase)) {
-				location = location.Substring(GAMEINFOPATH_TOKEN.Length);
+				location = location[GAMEINFOPATH_TOKEN.Length..];
 				lBaseDir = initInfo.DirectoryName;
 			}
 			else if (location.Contains(BASESOURCEPATHS_TOKEN, StringComparison.OrdinalIgnoreCase)) {
@@ -62,7 +62,7 @@ public class FileSystem(IFileSystem fileSystem) {
 				continue;
 			}
 
-			string absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, location));
+			string absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, new string(location)));
 			// TODO; theres a lot of weird logic here I don't fully understand yet.
 			// So just do what we can here
 			string[] pathIDs = cur.Name.Split('+');

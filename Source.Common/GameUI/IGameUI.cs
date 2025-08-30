@@ -1,4 +1,5 @@
-﻿using Source.Common.GUI;
+﻿using Source.Common.Engine;
+using Source.Common.GUI;
 
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Source.Common.GameUI;
 
 public interface IGameUI
 {
+	public void Initialize(IEngineAPI engineAPI);
 	public void PostInit();
 	public void Start();
 	public void Shutdown();

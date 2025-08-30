@@ -33,6 +33,7 @@ public class Panel : IPanel
 {
 	[Imported] public ISurface Surface;
 	[Imported] public ISchemeManager SchemeManager;
+	[Imported] public IEngineAPI EngineAPI;
 
 	public void Init(int x, int y, int w, int h) {
 		PanelName = null;
@@ -52,6 +53,13 @@ public class Panel : IPanel
 		MouseInput = true;
 		KbInput = true;
 	}
+
+	public void MakeReadyForUse() {
+
+	}
+	public float GetAlpha() => Alpha;
+	public void SetAlpha(float value) => Alpha = value;
+
 
 	public Panel() {
 		Init(0, 0, 64, 24);
@@ -286,6 +294,10 @@ public class Panel : IPanel
 
 	public virtual void PerformLayout() {
 
+	}
+
+	public void AddActionSignalTarget(Panel? messageTarget) {
+		// What does this do...?
 	}
 
 	public void PaintTraverse(bool repaint, bool allowForce = true) {

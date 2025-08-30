@@ -116,7 +116,8 @@ public class Scheme : IScheme
 							KeyValues? pRange = data.FindKey("range");
 							if (pRange != null) {
 								useRange = true;
-								string[] parts = pRange.GetString().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+								// TODO: scanf or some other faster/less allocationy way to do this...
+								string[] parts = new string(pRange.GetString()).Split(' ', StringSplitOptions.RemoveEmptyEntries);
 								if (
 									parts.Length >= 2 &&
 									int.TryParse(parts[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rangeMin) &&

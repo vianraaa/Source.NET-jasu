@@ -1,17 +1,7 @@
-﻿using Source.Common.Client;
-using Source.Common.Filesystem;
-
-using System;
+﻿using Source.Common.Filesystem;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.Common.Formats.Keyvalues;
 
@@ -48,6 +38,12 @@ public class KeyValues : IEnumerable<KeyValues>
 	public KeyValues(ReadOnlySpan<char> name) : base() {
 		node = new(this);
 		Name = new(name);
+	}
+	public KeyValues(ReadOnlySpan<char> name, ReadOnlySpan<char> firstKey, ReadOnlySpan<char> firstValue) : base() {
+		node = new(this);
+		Name = new(name);
+
+		SetString(firstKey, firstValue);
 	}
 
 	public bool LoadFromStream(Stream? stream) {
@@ -354,9 +350,9 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 
-	public KeyValues? FindKey(string searchStr, bool create = false) {
+	public KeyValues? FindKey(ReadOnlySpan<char> searchStr, bool create = false) {
 		foreach (var child in this.children) {
-			if (child.Name == searchStr)
+			if (searchStr.Equals(child.Name, StringComparison.InvariantCulture))
 				return child;
 		}
 
@@ -371,10 +367,14 @@ public class KeyValues : IEnumerable<KeyValues>
 		return null;
 	}
 
-	public string GetString() => Value is string str ? (str ?? "") : "";
-	public string? GetString(string key) => FindKey(key)?.GetString();
+	public ReadOnlySpan<char> GetString() => Value is string str ? (str ?? "") : "";
+	public ReadOnlySpan<char> GetString(ReadOnlySpan<char> key, ReadOnlySpan<char> defaultValue = default) {
+		var keyob = FindKey(key);
+		if (keyob == null) return defaultValue;
+		return keyob.Value is string str ? (str ?? "") : "";
+	}
 
-	public void SetString(string keyName, ReadOnlySpan<char> value) {
+	public void SetString(ReadOnlySpan<char> keyName, ReadOnlySpan<char> value) {
 		KeyValues? dat = FindKey(keyName, true);
 		if (dat != null) {
 			if (dat.Type == Types.String && value.Equals(dat.Value?.ToString(), StringComparison.Ordinal))
@@ -417,6 +417,10 @@ public class KeyValues : IEnumerable<KeyValues>
 		useEscapeSequences = value;
 	}
 
+	public void UsesConditionals(bool value) {
+		evaluateConditionals = value;
+	}
+
 	public KeyValues? GetNextKey() {
 		return node.Next?.Value;
 	}
@@ -427,4 +431,31 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+	public KeyValues MakeCopy() {
+		KeyValues newKeyValue = new(Name);
+
+		newKeyValue.UsesEscapeSequences(useEscapeSequences);
+		newKeyValue.UsesConditionals(evaluateConditionals);
+
+		newKeyValue.Type = Type;
+		switch (Type) {
+			case Types.String: break;
+			case Types.Int: break;
+			case Types.Double: break;
+			case Types.Pointer: break;
+			case Types.Color: break;
+			case Types.Uint64: break;
+		}
+
+		CopySubkeys(newKeyValue);
+		return newKeyValue;
+	}
+
+	public void CopySubkeys(KeyValues parent) {
+		for(KeyValues? sub = GetFirstSubKey(); sub != null; sub = sub.GetNextKey()) {
+			KeyValues dat = sub.MakeCopy();
+			parent.children.AddLast(dat.node);
+		}
+	}
 }

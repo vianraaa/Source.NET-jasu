@@ -50,8 +50,11 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		string windowName = "HALF-LIFE 2";
 		{
 			KeyValues modinfo = new();
-			if (modinfo.LoadFromFile(fileSystem, "gameinfo.txt"))
-				windowName = modinfo.GetString("game") ?? windowName;
+			if (modinfo.LoadFromFile(fileSystem, "gameinfo.txt")) {
+				string name = new string(modinfo.GetString("game"));
+				if(!string.IsNullOrEmpty(name))
+					windowName = name;
+			}
 		}
 
 		Console.Title = windowName;
