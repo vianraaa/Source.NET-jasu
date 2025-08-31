@@ -156,7 +156,7 @@ public static class SourceDllMain
 						goto writeHandledType;
 					case (AssertDialogResultType)VIEW_STACK_TRACE:
 						// Special handler; just makes a new window to show the stack trace
-						nint hwnd = CreateWindowEx(0, "Source.NET.SubDialog", "Assertion Stack Traceback", WindowStyles.WS_OVERLAPPEDWINDOW | WindowStyles.WS_CAPTION | WindowStyles.WS_POPUPWINDOW, 0, 0, 800, 600, 0, 0, 0, 0);
+						nint hwnd = CreateWindowEx(0, "Source.NET.SubDialog", "Assertion Stack Traceback", WindowStyles.WS_OVERLAPPEDWINDOW | WindowStyles.WS_CAPTION | WindowStyles.WS_POPUPWINDOW, 0, 0, 800, 600, hWnd, 0, 0, 0);
 						if (hwnd == 0) {
 							Warning("Failed to get window handle\n");
 							break;
@@ -175,6 +175,7 @@ public static class SourceDllMain
 			writeHandledType:
 				outgoing.Type = result;
 				handled = true;
+				DestroyWindow(hWnd);
 				return 1;
 
 			case WindowMessage.WM_CLOSE:
