@@ -812,4 +812,11 @@ public class MatSystemSurface : ISurface
 	public void DrawSetAlphaMultiplier(float alpha) {
 		AlphaMultiplier = alpha;
 	}
+
+	public void OffsetAbsPos(ref int x, ref int y) {
+		if (!ScreenPosOverride.Active)
+			return;
+		x += ScreenPosOverride.X;
+		y += ScreenPosOverride.Y;
+	}
 }

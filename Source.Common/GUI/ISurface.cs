@@ -159,4 +159,5 @@ public interface ISurface
 	void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile);
 	float DrawGetAlphaMultiplier();
 	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
+	void OffsetAbsPos(ref int x, ref int y);
 }

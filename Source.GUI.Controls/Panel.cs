@@ -147,7 +147,9 @@ public class Panel : IPanel
 	}
 
 	public void GetAbsPos(out int x, out int y) {
-		throw new NotImplementedException();
+		x = AbsX;
+		y = AbsY;
+		Surface.OffsetAbsPos(ref x, ref y);
 	}
 
 	public Panel GetChild(int index) {
@@ -689,7 +691,78 @@ public class Panel : IPanel
 	}
 
 	public void Solve() {
-		throw new NotImplementedException();
+		GetPos(out int x, out int y);
+		GetSize(out int w, out int h);
+
+		IPanel? parent = GetParent();
+		if (IsPopup()) {
+			// if we're a popup, draw at the highest level
+			parent = Surface.GetEmbeddedPanel();
+		}
+
+		int pabsX = 0, pabsY = 0;
+		parent?.GetAbsPos(out pabsX, out pabsY);
+
+		// TODO: pin siblings.
+		// Need to look into how those work 
+
+		int absX = x;
+		int absY = y;
+		AbsX = (short)x;
+		AbsY = (short)y;
+
+		// put into parent space
+		int pinsetX = 0, pinsetY = 0, pinsetW = 0, pinsetH = 0;
+		if (parent != null) {
+			parent.GetInset(out pinsetX, out pinsetY, out pinsetW, out pinsetH);
+
+			absX += pabsX + pinsetX;
+			absY += pabsY + pinsetY;
+
+			AbsX = (short)Math.Clamp(absX, short.MinValue, short.MaxValue);
+			AbsY = (short)Math.Clamp(absY, short.MinValue, short.MaxValue);
+		}
+
+		// set initial bounds
+		ClipRectX = AbsX;
+		ClipRectY = AbsY;
+
+		int absX2 = absX + w;
+		int absY2 = absY + h;
+		ClipRectW = (short)Math.Clamp(absX2, short.MinValue, short.MaxValue);
+		ClipRectH = (short)Math.Clamp(absY2, short.MinValue, short.MaxValue);
+
+		// clip to parent, if we're not a popup
+		if (parent != null && !IsPopup()) {
+			parent.GetClipRect(out int pclipX, out int pclipY, out int pclipW, out int pclipH);
+
+			if (ClipRectX < pclipX) {
+				ClipRectX = (short)pclipX;
+			}
+
+			if (ClipRectY < pclipY) {
+				ClipRectY = (short)pclipY;
+			}
+
+			if (ClipRectW > pclipW) {
+				ClipRectW = (short)(pclipW - pinsetW);
+			}
+
+			if (ClipRectH > pclipH) {
+				ClipRectH = (short)(pclipH - pclipH);
+			}
+
+			if (ClipRectX > ClipRectW) {
+				ClipRectW = ClipRectX;
+			}
+
+			if (ClipRectY > ClipRectH) {
+				ClipRectH = ClipRectY;
+			}
+		}
+
+		Assert(ClipRectX <= ClipRectW);
+		Assert(ClipRectY <= ClipRectH);
 	}
 
 	public void Think() {
