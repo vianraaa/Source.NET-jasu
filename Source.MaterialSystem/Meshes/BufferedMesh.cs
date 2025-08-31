@@ -65,6 +65,8 @@ public unsafe class BufferedMesh : Mesh
 		if (!Mesh.HasEnoughRoom(vertexCount, indexCount))
 			ShaderAPI.FlushBufferedPrimitives();
 
+		WasRendered = false;
+
 		Mesh.LockMesh(vertexCount, indexCount, ref desc);
 	}
 
