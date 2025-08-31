@@ -28,7 +28,7 @@ public class Menu : Panel
 	int MenuWide;
 	int NumVisibleLines;
 
-	public Menu(Panel parent, ReadOnlySpan<char> panelName) : base(parent, panelName) {
+	public Menu(Panel parent, string panelName) : base(parent, panelName) {
 		Scroller = new ScrollBar(this, "MenuScrollBar", true);
 		Scroller.SetVisible(false);
 		Scroller.AddActionSignalTarget(this);

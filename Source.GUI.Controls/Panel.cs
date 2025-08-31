@@ -86,6 +86,17 @@ public class Panel : IPanel
 		SetName(panelName);
 		SetParent(parent);
 	}
+	public Panel(Panel? parent, string panelName) {
+		Init(0, 0, 64, 24);
+		SetName(panelName);
+		SetParent(parent);
+	}
+	public Panel(Panel? parent, string panelName, IScheme scheme) {
+		Init(0, 0, 64, 24);
+		SetName(panelName);
+		SetParent(parent);
+		SetScheme(scheme);
+	}
 	public Panel(Panel? parent, ReadOnlySpan<char> panelName, IScheme scheme) {
 		Init(0, 0, 64, 24);
 		SetName(panelName);

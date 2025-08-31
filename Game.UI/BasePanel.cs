@@ -13,7 +13,7 @@ public class GameMenuItem : MenuItem
 	}
 }
 
-public class GameMenu(Panel parent, ReadOnlySpan<char> name) : Menu(parent, name) {
+public class GameMenu(Panel parent, string name) : Menu(parent, name) {
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
 		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName));
 		item.AddActionSignalTarget(target);
@@ -77,7 +77,7 @@ public class BasePanel : Panel {
 	}
 
 	private GameMenu RecursiveLoadGameMenu(KeyValues datafile) {
-		GameMenu menu = EngineAPI.New<GameMenu>(this, datafile.Name);
+		GameMenu menu = EngineAPI.New<GameMenu>(this, new string(datafile.Name));
 		for(KeyValues? dat = datafile.GetFirstSubKey(); dat != null; dat = dat.GetNextKey()) {
 			ReadOnlySpan<char> label = dat.GetString("label", "<unknown>");
 			ReadOnlySpan<char> cmd = dat.GetString("command", null);
