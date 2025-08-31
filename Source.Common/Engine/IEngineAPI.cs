@@ -76,6 +76,7 @@ public static class ImportUtils {
 		});
 
 		ctor ??= type.GetConstructor([]);
+		AssertMsg(ctor != null, "EngineAPI.New<T> constructor is null!");
 		ctor!.Invoke(instance, args);
 		return instance;
 	}

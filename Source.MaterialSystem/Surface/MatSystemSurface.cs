@@ -9,10 +9,17 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.GUI.Controls;
 
+using System.ComponentModel;
 using System.Drawing;
 
 using static Source.Dbg;
 namespace Source.MaterialSystem.Surface;
+
+public struct ScreenOverride {
+	public bool Active;
+	public int X;
+	public int Y;
+}
 
 public struct PaintState
 {
@@ -429,8 +436,32 @@ public class MatSystemSurface : ISurface
 		throw new NotImplementedException();
 	}
 
+	ScreenOverride ScreenPosOverride;
+	ScreenOverride ScreenSizeOverride;
+
+	int[] WorkSpaceInsets = new int[4];
+
 	public void GetWorkspaceBounds(out int x, out int y, out int wide, out int tall) {
-		throw new NotImplementedException();
+		if (ScreenSizeOverride.Active) {
+			x = y = 0;
+			wide = ScreenSizeOverride.X;
+			tall = ScreenSizeOverride.Y;
+			return;
+		}
+
+		x = WorkSpaceInsets[0];
+		y = WorkSpaceInsets[1];
+		EmbeddedPanel!.GetSize(out wide, out tall);
+
+		wide -= WorkSpaceInsets[2];
+		tall -= WorkSpaceInsets[3];
+	}
+
+	public void SetWorkspaceInsets(int left, int top, int right, int bottom) {
+		WorkSpaceInsets[0] = left;
+		WorkSpaceInsets[1] = top;
+		WorkSpaceInsets[2] = right;
+		WorkSpaceInsets[3] = bottom;
 	}
 
 	public bool HasCursorPosFunctions() {

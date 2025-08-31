@@ -5,15 +5,28 @@ using Source.Common.GUI;
 
 namespace Source.GUI;
 
-public class SchemeManager(IFileSystem fileSystem, IServiceProvider services) : ISchemeManager
+public class SchemeManager : ISchemeManager
 {
+	readonly IFileSystem fileSystem;
+	readonly IServiceProvider services;
+	public SchemeManager(IFileSystem fileSystem, IServiceProvider services) {
+		this.services = services;
+		this.fileSystem = fileSystem;
+	}
+
+	public void Init() {
+		Schemes.Add(services.New<Scheme>());
+	}
+
 	public bool DeleteImage(ReadOnlySpan<char> imageName) {
 		throw new NotImplementedException();
 	}
 
 	public IScheme GetDefaultScheme() {
-		throw new NotImplementedException();
+		return Schemes[0];
 	}
+
+	bool initializedFirstScheme;
 
 	public IImage GetImage(ReadOnlySpan<char> imageName, bool hardwareFiltered) {
 		throw new NotImplementedException();
@@ -37,7 +50,7 @@ public class SchemeManager(IFileSystem fileSystem, IServiceProvider services) : 
 
 	public IScheme? LoadSchemeFromFileEx(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag) {
 		IScheme? scheme = FindLoadedScheme(fileName);
-		if(scheme != null) {
+		if (scheme != null) {
 			return scheme;
 		}
 
@@ -45,7 +58,7 @@ public class SchemeManager(IFileSystem fileSystem, IServiceProvider services) : 
 		data.UsesEscapeSequences(true);
 
 		bool result = data.LoadFromFile(fileSystem, fileName, "GAME");
-		if(!result) 
+		if (!result)
 			result = data.LoadFromFile(fileSystem, fileName, null);
 
 		if (!result) {
@@ -53,9 +66,12 @@ public class SchemeManager(IFileSystem fileSystem, IServiceProvider services) : 
 			return null;
 		}
 
-		Scheme newScheme = services.New<Scheme>();
+		Scheme newScheme = initializedFirstScheme ? services.New<Scheme>() : Schemes[0];
 		newScheme.LoadFromFile(sizingPanel, fileName, tag, data);
-		Schemes.Add(newScheme);
+		if (initializedFirstScheme)
+			Schemes.Add(newScheme);
+		initializedFirstScheme = true;
+
 		return newScheme;
 	}
 

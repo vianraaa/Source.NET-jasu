@@ -28,6 +28,17 @@ public class Menu : Panel
 	int MenuWide;
 	int NumVisibleLines;
 
+	public Menu(Panel parent, ReadOnlySpan<char> panelName) : base(parent, panelName) {
+		Scroller = new ScrollBar(this, "MenuScrollBar", true);
+		Scroller.SetVisible(false);
+		Scroller.AddActionSignalTarget(this);
+		SizedForScrollBar = false;
+		SetZPos(1);
+		SetVisible(false);
+		SetParent(parent);
+		recalculateWidth = true;
+	}
+
 	public virtual int AddMenuItem(MenuItem panel) {
 		panel.SetParent(this);
 		MenuItems.Add(panel);
@@ -200,11 +211,13 @@ public class Menu : Panel
 	}
 
 	private void RemoveScrollBar() {
-		throw new NotImplementedException();
+		Scroller.SetVisible(false);
+		SizedForScrollBar = false;
 	}
 
 	private void AddScrollBar() {
-		throw new NotImplementedException();
+		Scroller.SetVisible(true);
+		SizedForScrollBar = true;
 	}
 
 	private void ComputeWorkspaceSize(out int workWide, out int workTall) {

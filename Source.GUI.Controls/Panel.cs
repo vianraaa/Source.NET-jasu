@@ -2,10 +2,21 @@
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
+using System.Runtime.InteropServices;
+
 using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.GUI.Controls;
 
+public struct OverrideableColorEntry
+{
+	public delegate Color ColorFunc(in OverrideableColorEntry self);
+	public string Name;
+	public ColorFunc? Func;
+	public Color ColorFromScript;
+	public bool Overridden;
+	public readonly Color Color() => Func == null ? default : Func(in this);
+}
 
 [Flags]
 public enum PanelFlags
@@ -93,7 +104,7 @@ public class Panel : IPanel
 	short X, Y;
 	short W, H;
 	short MinW, MinH;
-	short InsetX, InsetY, InsetW, InsetH;
+	short InsetLeft, InsetTop, InsetRight, InsetBottom;
 	short ClipRectX, ClipRectY, ClipRectW, ClipRectH;
 	short AbsX, AbsY;
 	short ZPos;
@@ -106,8 +117,10 @@ public class Panel : IPanel
 	bool TopmostPopup;
 	float Alpha;
 	IBorder? Border;
+	IScheme? Scheme;
 	PanelFlags Flags;
 	readonly List<IPanel> Children = [];
+	readonly List<OverrideableColorEntry> OverrideableColorEntries = [];
 
 	IPanel? SkipChild;
 
@@ -150,7 +163,10 @@ public class Panel : IPanel
 	}
 
 	public void GetInset(out int left, out int top, out int right, out int bottom) {
-		throw new NotImplementedException();
+		left = InsetLeft;
+		top = InsetTop;
+		right = InsetRight;
+		bottom = InsetBottom;
 	}
 
 	public void GetMinimumSize(out int wide, out int tall) {
@@ -175,7 +191,12 @@ public class Panel : IPanel
 	}
 
 	public IScheme? GetScheme() {
-		throw new NotImplementedException();
+		if (Scheme != null)
+			return Scheme;
+		if (Parent != null)
+			return Parent.GetScheme();
+
+		return SchemeManager.GetDefaultScheme();
 	}
 
 	public void GetSize(out int wide, out int tall) {
@@ -316,9 +337,9 @@ public class Panel : IPanel
 
 		Span<int> clipRect = stackalloc int[4];
 		GetClipRect(out clipRect[0], out clipRect[1], out clipRect[2], out clipRect[3]);
-		if ((clipRect[2] <= clipRect[0]) || (clipRect[3] <= clipRect[1])) 
+		if ((clipRect[2] <= clipRect[0]) || (clipRect[3] <= clipRect[1]))
 			repaint = false;
-		
+
 		Surface.DrawSetAlphaMultiplier(newAlphaMultiplier);
 
 		bool bBorderPaintFirst = Border != null ? Border.PaintFirst() : false;
@@ -355,7 +376,7 @@ public class Panel : IPanel
 			else {
 				Surface.Invalidate(child);
 
-				if (bVisible) 
+				if (bVisible)
 					child.PaintTraverse(false, false);
 			}
 		}
@@ -477,8 +498,7 @@ public class Panel : IPanel
 		if (Flags.HasFlag(PanelFlags.NeedsSchemeUpdate)) {
 			IScheme? scheme = GetScheme();
 			Assert(scheme != null);
-			if (scheme != null)
-			{
+			if (scheme != null) {
 				ApplySchemeSettings(scheme);
 				ApplyOverridableColors();
 			}
@@ -487,8 +507,15 @@ public class Panel : IPanel
 
 	public void SetBgColor(in Color color) => BgColor = color;
 	public void SetFgColor(in Color color) => FgColor = color;
+
+	// This in theory will replicate the pointer logic?
 	private void ApplyOverridableColors() {
-		throw new NotImplementedException();
+		Span<OverrideableColorEntry> entries = CollectionsMarshal.AsSpan(OverrideableColorEntries);
+		for (int i = 0, c = entries.Length; i < c; i++) {
+			ref OverrideableColorEntry entry = ref entries[i];
+			if (entry.Overridden)
+				entry.Func = (in OverrideableColorEntry e) => e.ColorFromScript;
+		}
 	}
 
 	public Color GetSchemeColor(ReadOnlySpan<char> keyName, IScheme scheme) {

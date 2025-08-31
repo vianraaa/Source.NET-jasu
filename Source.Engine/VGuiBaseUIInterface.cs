@@ -262,6 +262,7 @@ public class EngineVGui(
 		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
 		engineClient = engineAPI.GetRequiredService<IEngineClient>();
 		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
+		vguiScheme.Init();
 		// IGameConsole, but later.
 
 		Span<char> lang = stackalloc char[64];
