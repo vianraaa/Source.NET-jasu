@@ -102,7 +102,20 @@ public class MatSystemSurface : ISurface
 		EnableInput(true);
 	}
 
+	public void InternalThinkTraverse(IPanel panel) {
+		panel.TraverseLevel(1);
+		panel.Think();
+		IList<IPanel> children = (IList<IPanel>)panel.GetChildren(); // Annoying but the internal value is an IList so hopefully this works
 
+		for (int i = 0; i < children.Count(); i++) {
+			var child = children[i];
+			if (child.IsVisible()) {
+				InternalThinkTraverse(child);
+			}
+		}
+
+		panel.TraverseLevel(-1);
+	}
 
 
 	private void EnableInput(bool v) {
@@ -663,7 +676,40 @@ public class MatSystemSurface : ISurface
 	}
 
 	public void SolveTraverse(IPanel panel, bool forceApplySchemeSettings = false) {
-		throw new NotImplementedException();
+		InternalSchemeSettingsTraverse(panel, forceApplySchemeSettings);
+		InternalThinkTraverse(panel);
+		InternalSolveTraverse(panel);
+	}
+
+	private void InternalSchemeSettingsTraverse(IPanel panel, bool forceApplySchemeSettings) {
+		panel.TraverseLevel(1);
+		IList<IPanel> children = (IList<IPanel>)panel.GetChildren();
+
+		for (int i = 0; i < children.Count(); ++i) {
+			IPanel child = children[i];
+			if (forceApplySchemeSettings || child.IsVisible()) {
+				InternalSchemeSettingsTraverse(child, forceApplySchemeSettings);
+			}
+		}
+
+		panel.PerformApplySchemeSettings();
+		panel.TraverseLevel(-1);
+	}
+
+	private void InternalSolveTraverse(IPanel panel) {
+		panel.TraverseLevel(1);
+		panel.Solve();
+
+		IList<IPanel> children = (IList<IPanel>)panel.GetChildren();
+
+		for (int i = 0; i < children.Count(); ++i) {
+			IPanel child = children[i];
+			if (child.IsVisible()) {
+				InternalSolveTraverse(child);
+			}
+		}
+
+		panel.TraverseLevel(-1);
 	}
 
 	public bool SupportsFeature(SurfaceFeature feature) {

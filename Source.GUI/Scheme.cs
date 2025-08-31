@@ -1,4 +1,5 @@
-﻿using Source.Common.Client;
+﻿using Source.Common;
+using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -8,6 +9,7 @@ using System;
 using System.Globalization;
 
 using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.GUI;
 
@@ -23,7 +25,8 @@ public class Scheme : IScheme
 	public string fileName;
 	public string tag;
 
-	struct FontAlias {
+	struct FontAlias
+	{
 		public ulong TrueFontSymbol;
 		public IFont Font;
 		public bool Proportional;
@@ -143,7 +146,7 @@ public class Scheme : IScheme
 			ReadOnlySpan<char> fontFile = kv.GetString();
 			if (fontFile != null && fontFile[0] != 0) {
 				bool success = Surface.AddBitmapFontFile(fontFile);
-				if (success) 
+				if (success)
 					Surface.SetBitmapFontName(kv.Name, fontFile);
 			}
 		}
@@ -170,9 +173,9 @@ public class Scheme : IScheme
 
 	static char[] mungeBuffer = new char[64];
 	private ReadOnlySpan<char> GetMungedFontName(ReadOnlySpan<char> fontName, ReadOnlySpan<char> scheme, bool proportional) {
-		if(scheme != null) 
+		if (scheme != null)
 			sprintf(mungeBuffer, $"{fontName}{scheme}-{(proportional ? "p" : "no")}");
-		else 
+		else
 			sprintf(mungeBuffer, $"{fontName}-{(proportional ? "p" : "no")}");
 
 		return mungeBuffer;
@@ -182,7 +185,8 @@ public class Scheme : IScheme
 
 	}
 
-	record struct FontRange {
+	record struct FontRange
+	{
 		public int Min;
 		public int Max;
 	}
@@ -195,5 +199,38 @@ public class Scheme : IScheme
 			Min = rangeMin,
 			Max = rangeMax
 		};
+	}
+
+	public Color GetColor(ReadOnlySpan<char> colorName, Color defaultColor) {
+		ReadOnlySpan<char> schemeValue = LookupSchemeSetting(colorName);
+		if (schemeValue == null)
+			return defaultColor;
+
+		if (new ScanF(schemeValue, "%d %d %d %d").Read(out int r).Read(out int g).Read(out int b).Read(out int a).ReadArguments >= 3)
+			return new(r, g, b, a);
+
+		return defaultColor;
+	}
+
+	private ReadOnlySpan<char> LookupSchemeSetting(ReadOnlySpan<char> setting) {
+		int res = new ScanF(setting, "%d %d %d %d")
+			.Read(out int r)
+			.Read(out int g)
+			.Read(out int b)
+			.Read(out int a)
+			.ReadArguments;
+
+		if (res >= 3)
+			return setting;
+
+		ReadOnlySpan<char> colStr = Colors.GetString(setting, null);
+		if (colStr != null)
+			return colStr;
+
+		colStr = BaseSettings.GetString(setting, null);
+		if (colStr != null)
+			return LookupSchemeSetting(colStr);
+
+		return setting;
 	}
 }

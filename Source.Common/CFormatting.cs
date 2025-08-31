@@ -24,6 +24,75 @@ public enum VariableType
 	Nothing = 'n'
 }
 
+public ref struct ScanF
+{
+	public readonly CFormatReader Format;
+	ReadOnlySpan<char> input;
+	int readArguments = 0;
+	public readonly int ReadArguments => readArguments;
+	public readonly bool ReadAny => readArguments > 0;
+
+	public ScanF(ReadOnlySpan<char> input, ReadOnlySpan<char> format) {
+		Format = new(format);
+		this.input = input;
+	}
+	// NOTE: Only unsafe because C# can't tell we're never going to lose track of the stack allocated buffer target
+	// (which is needed to read out a literal)
+	private unsafe bool TryReadVariable(Span<char> incoming, out char type, out int len) {
+		type = '\0';
+		len = 0;
+		if (Format.Overflowed() || input.Length <= 0)
+			return false;
+
+		// Read until a variable or overflow
+		Span<char> literalBufferTarget = stackalloc char[64];
+		while (!Format.Overflowed() && input.Length > 0) {
+			int read = Format.ReadLiteral(literalBufferTarget);
+			if (read > 0) {
+				input = input[read..]; // slice so we're aligned
+				continue;
+			}
+
+			break;
+		}
+
+		if (Format.ReadVariable(out type, out int variableIdx)) {
+			readArguments = variableIdx + 1;
+			int writePtr = 0;
+			bool hasWarned = false;
+			while (input.Length > 0) {
+				char c = input[0];
+				input = input[1..];
+				if (writePtr < incoming.Length) // don't overflow but continue to read to not break further arguments
+					incoming[writePtr++] = c;
+				else if (!hasWarned) {
+					Warning($"Overflowed scanf (max: {incoming.Length}). Consider increasing max here! Truncated argument will be provided.\n");
+					hasWarned = true;
+				}
+			}
+			len = writePtr;
+			return true;
+		}
+
+		return false;
+	}
+	public const int DEFAULT_SCANF_MAX = 256;
+	public unsafe ScanF Read(out int i, int max = DEFAULT_SCANF_MAX) {
+		Span<char> incoming = stackalloc char[max];
+		i = default;
+		if (TryReadVariable(incoming, out char type, out int len))
+			switch (type) {
+				case 'd':
+				case (char)VariableType.SignedDecimalInteger:
+					i = int.TryParse(incoming, out int iAttempt) ? iAttempt : default;
+					break;
+				default: throw new NotImplementedException();
+			}
+
+		return this;
+	}
+}
+
 public ref struct CFormatReader
 {
 	int formatReader = 0;
@@ -41,7 +110,7 @@ public ref struct CFormatReader
 	/// Reads one literal into a read target buffer.
 	/// </summary>
 	/// <param name="readTarget">A target buffer</param>
-	/// <returns>How much was written to the target. 0 if any literal was read at all. 0 if a halt break occured due to an incoming variable or end-of-stream.</returns>
+	/// <returns>How much was written to the target. >0 if any literal was read at all. 0 if a halt break occured due to an incoming variable or end-of-stream.</returns>
 	public int ReadLiteral(Span<char> readTarget) {
 		if (haltedAtVariable)
 			return 0;

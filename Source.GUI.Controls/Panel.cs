@@ -55,7 +55,7 @@ public class Panel : IPanel
 	}
 
 	public void MakeReadyForUse() {
-
+		Surface.SolveTraverse(this, true);
 	}
 	public float GetAlpha() => Alpha;
 	public void SetAlpha(float value) => Alpha = value;
@@ -107,7 +107,7 @@ public class Panel : IPanel
 	float Alpha;
 	IBorder? Border;
 	PanelFlags Flags;
-	readonly List<Panel> Children = [];
+	readonly List<IPanel> Children = [];
 
 	IPanel? SkipChild;
 
@@ -127,7 +127,7 @@ public class Panel : IPanel
 	}
 
 	public Panel GetChild(int index) {
-		return Children[index];
+		return (Panel)Children[index];
 	}
 
 	public int GetChildCount() {
@@ -470,7 +470,39 @@ public class Panel : IPanel
 	}
 
 	public void PerformApplySchemeSettings() {
+		if (Flags.HasFlag(PanelFlags.NeedsDefaultSettingsApplied)) {
+			// InternalInitDefaultValues(GetAnimMap());
+		}
+
+		if (Flags.HasFlag(PanelFlags.NeedsSchemeUpdate)) {
+			IScheme? scheme = GetScheme();
+			Assert(scheme != null);
+			if (scheme != null)
+			{
+				ApplySchemeSettings(scheme);
+				ApplyOverridableColors();
+			}
+		}
+	}
+
+	public void SetBgColor(in Color color) => BgColor = color;
+	public void SetFgColor(in Color color) => FgColor = color;
+	private void ApplyOverridableColors() {
 		throw new NotImplementedException();
+	}
+
+	public Color GetSchemeColor(ReadOnlySpan<char> keyName, IScheme scheme) {
+		return scheme.GetColor(keyName, new(255, 255, 255, 255));
+	}
+	public Color GetSchemeColor(ReadOnlySpan<char> keyName, Color defaultColor, IScheme scheme) {
+		return scheme.GetColor(keyName, defaultColor);
+	}
+
+	private void ApplySchemeSettings(IScheme scheme) {
+		SetFgColor(GetSchemeColor("Panel.FgColor", scheme));
+		SetBgColor(GetSchemeColor("Panel.BgColor", scheme));
+
+		Flags &= ~PanelFlags.NeedsSchemeUpdate;
 	}
 
 	public void Repaint() {
@@ -623,7 +655,17 @@ public class Panel : IPanel
 	}
 
 	public void Think() {
-		throw new NotImplementedException();
+		if (IsVisible()) {
+			// TODO: Tooltips layout
+			if ((Flags & PanelFlags.NeedsLayout) != 0)
+				InternalPerformLayout();
+		}
+
+		OnThink();
+	}
+
+	public virtual void OnThink() {
+
 	}
 
 	public void SetPanelBorderEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintEnabled : Flags &= ~PanelFlags.PaintEnabled;
@@ -640,4 +682,8 @@ public class Panel : IPanel
 	public int GetTall() => H;
 	public void SetWide(int wide) => SetSize(wide, GetTall());
 	public void SetTall(int tall) => SetSize(GetWide(), tall);
+
+	public void TraverseLevel(int v) {
+
+	}
 }

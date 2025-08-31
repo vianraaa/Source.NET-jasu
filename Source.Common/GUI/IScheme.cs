@@ -10,6 +10,7 @@ public interface IScheme {
 	IBorder? GetBorderAtIndex(int index);
 	int GetFontCount();
 	IFont? GetFontAtIndex();
+	Color GetColor(ReadOnlySpan<char> colorName, Color defaultColor);
 
 	IEnumerable<IBorder> GetBorders();
 	IEnumerable<IFont> GetFonts();

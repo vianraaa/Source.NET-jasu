@@ -15,7 +15,7 @@ public enum PinCorner
 {
 	TopLeft = 0,
 	TopRight,
-	BottomLEft,
+	BottomLeft,
 	BottomRight,
 
 	CenterTop,
@@ -67,6 +67,11 @@ public interface IPanel
 	void MoveToFront();
 	void MoveToBack();
 	bool HasParent(IPanel potentialParent);
+
+	Color GetBgColor();
+	Color GetFgColor();
+	void SetBgColor(in Color color);
+	void SetFgColor(in Color color);
 	bool IsPopup();
 	void SetPopup(bool state);
 	bool IsFullyVisible();
@@ -120,4 +125,5 @@ public interface IPanel
 
 	float GetAlpha();
 	void SetAlpha(float alpha);
+	void TraverseLevel(int v);
 }
