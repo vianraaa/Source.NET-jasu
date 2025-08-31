@@ -26,6 +26,7 @@ public class MeshMgr
 		if (BufferedMode != buffered && BufferedMode) {
 			BufferedMesh.SetMesh(null);
 		}
+
 		BufferedMode = buffered;
 
 		IMaterialInternal matInternal = (IMaterialInternal)material!;

@@ -8,7 +8,7 @@ public unsafe class BufferedMesh : Mesh
 	ushort LastIndex;
 	ushort ExtraIndices;
 	bool IsFlushing;
-	bool WasRendered;
+	bool WasRendered = true;
 	bool FlushNeeded;
 
 	public void ResetRendered() {

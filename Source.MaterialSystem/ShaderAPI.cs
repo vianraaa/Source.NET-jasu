@@ -691,7 +691,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void ReleaseResources() {
-
+		releaseResourcesCount++;
 	}
 
 	public void SetShaderUniform(IMaterialVar textureVar) {

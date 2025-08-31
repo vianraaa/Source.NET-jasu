@@ -737,10 +737,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		// Unless ignoring picmip, reflect the global picmip level in clamp dimensions
 		//
 		if (!ignorePicmip) {
-			// If picmip requests texture degradation, then honor it
-			// for loddable textures only
-			/*if ((Flags & (uint)CompiledVtfFlags.NoLOD) == 0 &&
-				  (g_config.skipMipLevels > 0)) {
+			/*if ((Flags & (uint)CompiledVtfFlags.NoLOD) == 0 && (g_config.skipMipLevels > 0)) {
 				for (int iDegrade = 0; iDegrade < g_config.skipMipLevels; ++iDegrade) {
 					// don't go lower than 4, or dxt textures won't work properly
 					if (nClampX > 4 &&
@@ -751,7 +748,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 				}
 			}
 
-			// If picmip requests quality upgrade, then always honor it
 			if (g_config.skipMipLevels < 0) {
 				for (int iUpgrade = 0; iUpgrade < -g_config.skipMipLevels; ++iUpgrade) {
 					if (nClampX < actualDims.m_nWidth &&
@@ -762,8 +758,8 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 					else
 						break;
 				}
-			}*/
-			Assert(false);
+			}
+			*/
 		}
 
 		//
