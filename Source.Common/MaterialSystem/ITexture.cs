@@ -35,7 +35,7 @@ public interface ITexture : IDisposable
 	void GetLowResColorSample(float s, float t, Span<float> color);
 	Span<byte> GetResourceData(uint type);
 
-	void SetTextureGenerator(ITextureRegenerator textureRegen);
+	void SetTextureRegenerator(ITextureRegenerator textureRegen);
 
 	// todo: enum for additionalCreationFlags, if applicable?
 	void Download(Rectangle rect = default, int additionalCreationFlags = 0);

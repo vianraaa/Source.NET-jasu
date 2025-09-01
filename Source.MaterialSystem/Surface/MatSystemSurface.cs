@@ -1170,6 +1170,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	internal void DrawSetTextureMaterial(TextureID textureID, IMaterial material) {
-		throw new NotImplementedException();
+		TextureDictionary.BindTextureToMaterial(in textureID, material);
+		DrawSetTexture(in textureID);
 	}
 }

@@ -116,6 +116,43 @@ public class MatSystemTexture(IMaterialSystem materials)
 	public float Wide, Tall, S0, T0, S1, T1;
 	public FontTextureRegen? Regen;
 
+	public void SetMaterial(IMaterial? material) {
+		Material = material;
+
+		if (material == null) {
+			Wide = Tall = 0;
+			S0 = T0 = 0.0f;
+			S1 = T1 = 1.0f;
+			return;
+		}
+
+		Wide = material.GetMappingWidth();
+		Tall = material.GetMappingHeight();
+
+		float flPixelCenterX = 0.0f;
+		float flPixelCenterY = 0.0f;
+
+		if (Wide > 0.0f && Tall > 0.0f) {
+			flPixelCenterX = 0.5f / Wide;
+			flPixelCenterY = 0.5f / Tall;
+		}
+
+		S0 = flPixelCenterX;
+		T0 = flPixelCenterY;
+
+		S1 = 1.0F - flPixelCenterX;
+		T1 = 1.0F - flPixelCenterY;
+
+		if (IsProcedural()) {
+			if (Material!.TryFindVar("$basetexture", out IMaterialVar? var) && var.IsTexture()) {
+				Texture = var.GetTextureValue();
+				if (Texture != null) {
+					CreateRegen(Wide, Tall, Texture.GetImageFormat());
+					Texture.SetTextureRegenerator(Regen);
+				}
+			}
+		}
+	}
 	public void SetMaterial(ReadOnlySpan<char> filename) {
 		IMaterial? material = materials.FindMaterial(filename, TEXTURE_GROUP_VGUI);
 		Material = material;
@@ -147,7 +184,7 @@ public class MatSystemTexture(IMaterialSystem materials)
 				Texture = var.GetTextureValue();
 				if (Texture != null) {
 					CreateRegen(Wide, Tall, Texture.GetImageFormat());
-					Texture.SetTextureGenerator(Regen);
+					Texture.SetTextureRegenerator(Regen);
 				}
 			}
 		}
@@ -234,6 +271,15 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 			tex.Hash = curhash;
 			tex.SetMaterial(filename);
 		}
+	}
+
+	internal void BindTextureToMaterial(in TextureID id, IMaterial material) {
+		if (!IsValidId(id, out MatSystemTexture? tex)) {
+			Msg($"BindTextureToMaterial: Invalid texture id {id}\n");
+			return;
+		}
+
+		tex.SetMaterial(material);
 	}
 
 	internal TextureID CreateTexture(bool procedural) {

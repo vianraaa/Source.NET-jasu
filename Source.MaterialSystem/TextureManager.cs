@@ -47,10 +47,10 @@ public class TextureManager : ITextureManager
 	}
 
 	private void CreateCheckerboardTexture(ITexture errorTexture, int checkerSize, Color color1, Color color2)
-		=> errorTexture.SetTextureGenerator(new CheckerboardTexture(checkerSize, color1, color2));
+		=> errorTexture.SetTextureRegenerator(new CheckerboardTexture(checkerSize, color1, color2));
 
 	private void CreateSolidTexture(ITexture tex, Color color) 
-		=> tex.SetTextureGenerator(new SolidTexture(color));
+		=> tex.SetTextureRegenerator(new SolidTexture(color));
 
 	public ITextureInternal? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
 		Texture newTexture = new(MaterialSystem);

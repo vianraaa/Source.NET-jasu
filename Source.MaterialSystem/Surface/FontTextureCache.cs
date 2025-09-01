@@ -67,8 +67,21 @@ public class Page
 	public short NextY;
 }
 
-public class FontTextureCache(IMaterialSystem materials, IFileSystem fileSystem, ISystem system, FontManager FontManager, MatSystemSurface surface)
+public class FontTextureCache
 {
+	readonly IMaterialSystem materials;
+	readonly IFileSystem fileSystem;
+	readonly ISystem system;
+	readonly FontManager FontManager;
+	readonly MatSystemSurface surface;
+	public FontTextureCache(IMaterialSystem materials, IFileSystem fileSystem, ISystem system, FontManager FontManager, MatSystemSurface surface) {
+		this.materials = materials;
+		this.fileSystem = fileSystem;
+		this.system = system;
+		this.FontManager = FontManager;
+		this.surface = surface;
+		Clear();
+	}
 	static int[] realSizes = [16, 32, 64, 128, 256];
 	public unsafe bool GetTextureForChar(IFont font, FontDrawType drawType, char ch, Span<TextureID> textureID, Span<CharTexCoord> texCoords) {
 		Span<char> inChars = [ch];
@@ -184,7 +197,13 @@ public class FontTextureCache(IMaterialSystem materials, IFileSystem fileSystem,
 	}
 
 	public void Clear() {
+		CharCache.Clear();
+		PageList.Clear();
 
+		for (int i = 0; i < (int)FontPageSize.Count; ++i) 
+			CurrPage[i] = -1;
+		
+		FontPages.Clear();
 	}
 
 	const int TEXTURE_PAGE_WIDTH = 256;
@@ -320,5 +339,5 @@ public class FontTextureCache(IMaterialSystem materials, IFileSystem fileSystem,
 	LinkedList<CacheEntry> CharCache = [];
 	List<Page> PageList = [];
 	nint[] CurrPage = new nint[(int)Surface.FontPageSize.Count];
-	Dictionary<IFont, Page> FontPages;
+	Dictionary<IFont, Page> FontPages = [];
 }
