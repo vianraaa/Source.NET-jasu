@@ -30,4 +30,6 @@ public interface IGameUI
 	public bool IsMainMenuVisible();
 
 	public void SetMainMenuOverride(IPanel panel);
+	bool IsInLevel();
+	bool IsInReplay();
 }

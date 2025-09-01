@@ -104,16 +104,15 @@ public class Menu : Panel
 		LayoutMenuBorder();
 
 		int trueW = GetWide();
-		if (needScrollbar) 
+		if (needScrollbar)
 			trueW -= Scroller!.GetWide();
-		
+
 		int separatorHeight = MENU_SEPARATOR_HEIGHT;
 
 		int menuTall = 0;
 		int totalTall = itop + ibottom;
 		int i;
-		for (i = 0; i < VisibleSortedItems.Count(); i++)
-		{
+		for (i = 0; i < VisibleSortedItems.Count(); i++) {
 			int itemId = VisibleSortedItems[i];
 
 			MenuItem? child = MenuItems[itemId];
@@ -132,7 +131,7 @@ public class Menu : Panel
 			//  }
 
 			child.SetPos(0, menuTall);
-			child.SetTall(MenuItemHeight); 
+			child.SetTall(MenuItemHeight);
 			menuTall += MenuItemHeight;
 			totalTall += MenuItemHeight;
 
@@ -155,55 +154,77 @@ public class Menu : Panel
 		}
 		else if (FixedWidth > 0) {
 			MenuWide = FixedWidth;
-			if (SizedForScrollBar) 
+			if (SizedForScrollBar)
 				MenuWide -= Scroller!.GetWide();
 		}
 
 		SizeMenuItems();
 
 		int extraWidth = 0;
-		if (SizedForScrollBar) 
+		if (SizedForScrollBar)
 			extraWidth = Scroller!.GetWide();
 
 		int mwide = MenuWide + extraWidth;
-		if (mwide > workWide) 
+		if (mwide > workWide)
 			mwide = workWide;
 
 		int mtall = menuTall + itop + ibottom;
-		if (mtall > workTall) 
+		if (mtall > workTall)
 			mtall = workTall;
-		
+
 		SetSize(mwide, mtall);
 
-		if (cascading) 
+		if (cascading)
 			PositionCascadingMenu();
 
-		if (Scroller!.IsVisible()) 
+		if (Scroller!.IsVisible())
 			LayoutScrollBar();
 
-		foreach(var menuItem in MenuItems)
+		foreach (var menuItem in MenuItems)
 			menuItem.InvalidateLayout();
 		Repaint();
 	}
 
 	private void PositionCascadingMenu() {
-		throw new NotImplementedException();
+
 	}
 
 	private void LayoutScrollBar() {
-		throw new NotImplementedException();
+
 	}
 
 	private void SizeMenuItems() {
-		throw new NotImplementedException();
+		GetInset(out int left, out int right, out _, out _);
+
+		foreach (var child in MenuItems)
+			child.SetWide(MenuWide - left - right);
 	}
 
 	private void CalculateWidth() {
-		throw new NotImplementedException();
+		if (!recalculateWidth)
+			return;
+
+		MenuWide = 0;
+		if (FixedWidth == 0) {
+			foreach (var menuItem in MenuItems) {
+				menuItem.GetContentSize(out int wide, out int tall);
+				if (wide > MenuWide - Label.Content) {
+					MenuWide = wide + Label.Content;
+				}
+			}
+		}
+
+		if (MenuWide < MinimumWidth)
+			MenuWide = MinimumWidth;
+
+		recalculateWidth = false;
 	}
 
 	private void LayoutMenuBorder() {
-		throw new NotImplementedException();
+		IScheme? scheme = GetScheme();
+		IBorder? menuBorder = scheme?.GetBorder("MenuBorder");
+		if (menuBorder != null)
+			SetBorder(menuBorder);
 	}
 
 	private void MakeItemsVisibleInScrollRange(int numVisibleLines, int v) {

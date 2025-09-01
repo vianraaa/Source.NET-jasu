@@ -57,6 +57,9 @@ public interface IPanel
 	void SetInset(int left, int top, int right, int bottom);
 	void GetInset(out int left, out int top, out int right, out int bottom);
 
+	public IBorder? GetBorder();
+	public void SetBorder(IBorder? border);
+
 	void SetVisible(bool state);
 	bool IsVisible();
 	void SetParent(IPanel? newParent);

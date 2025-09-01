@@ -34,7 +34,7 @@ public class Scheme : IScheme
 	Dictionary<ulong, FontAlias> FontAliases = [];
 
 	public IBorder? GetBorder(ReadOnlySpan<char> borderName) {
-		throw new NotImplementedException();
+		return null; // todo
 	}
 
 	public IBorder? GetBorderAtIndex(int index) {

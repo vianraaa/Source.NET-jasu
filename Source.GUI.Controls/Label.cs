@@ -9,10 +9,16 @@ public class Label : Panel {
 
 	}
 
+	public const int Content = 8;
+
 	public void SetContentAlignment(Alignment alignment) {
 		Alignment = alignment;
 	}
 
+	public virtual void GetContentSize(out int wide, out int tall) {
+		wide = 0;
+		tall = 0;
+	}
 	public virtual void SetText(ReadOnlySpan<char> text) {
 		// todo
 	}

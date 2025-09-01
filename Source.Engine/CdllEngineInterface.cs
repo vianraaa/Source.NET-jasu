@@ -1,8 +1,10 @@
 ﻿using Source.Common.Client;
+using Source.Engine.Client;
+using Source.Engine.Server;
 
 namespace Source.Engine;
 
-internal class EngineClient : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -14,4 +16,6 @@ internal class EngineClient : IEngineClient
 	public void GetMainMenuBackgroundName(Span<char> dest) {
 		"kagami".CopyTo(dest);
 	}
+
+	public int GetMaxClients() => cl.MaxClients;
 }

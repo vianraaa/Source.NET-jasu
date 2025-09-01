@@ -65,6 +65,9 @@ public class Panel : IPanel
 		KbInput = true;
 	}
 
+	public IBorder? GetBorder() => Border;
+	public void SetBorder(IBorder? border) => Border = border;
+
 	public void MakeReadyForUse() {
 		Surface.SolveTraverse(this, true);
 	}
@@ -278,7 +281,7 @@ public class Panel : IPanel
 	}
 
 	public void MoveToBack() {
-		throw new NotImplementedException();
+		// also todo
 	}
 
 	public void MoveToFront() {
@@ -663,7 +666,7 @@ public class Panel : IPanel
 		throw new NotImplementedException();
 	}
 
-	public void SetVisible(bool state) {
+	public virtual void SetVisible(bool state) {
 		if (Visible == state)
 			return;
 

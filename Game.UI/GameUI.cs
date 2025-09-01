@@ -25,8 +25,11 @@ public class GameUI : IGameUI
 		throw new NotImplementedException();
 	}
 
+	bool ActivatedUI;
 	public void OnGameUIActivated() {
-		// todo
+		ActivatedUI = true;
+		staticPanel.SetVisible(true);
+		staticPanel.OnGameUIActivated();
 	}
 
 	public void OnGameUIHidden() {
@@ -43,9 +46,11 @@ public class GameUI : IGameUI
 
 	BasePanel staticPanel;
 	IEngineVGui enginevguifuncs;
+	ISurface Surface;
 
 	public void Initialize(IEngineAPI engineAPI) {
 		enginevguifuncs = engineAPI.GetRequiredService<IEngineVGui>();
+		Surface = engineAPI.GetRequiredService<ISurface>();
 
 		staticPanel = engineAPI.New<BasePanel>();
 		staticPanel.SetBounds(0, 0, 400, 300);
@@ -65,7 +70,8 @@ public class GameUI : IGameUI
 	}
 
 	public void RunFrame() {
-
+		Surface.GetScreenSize(out int wide, out int tall);
+		staticPanel.SetSize(wide, tall);
 	}
 
 	public void SetMainMenuOverride(IPanel panel) {
@@ -85,6 +91,14 @@ public class GameUI : IGameUI
 	}
 
 	public bool UpdateProgressBar(float progress, ReadOnlySpan<char> statusText) {
+		throw new NotImplementedException();
+	}
+
+	public bool IsInLevel() {
+		return false; // TODO...
+	}
+
+	public bool IsInReplay() {
 		throw new NotImplementedException();
 	}
 }

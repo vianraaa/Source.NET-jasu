@@ -388,7 +388,7 @@ public class EngineVGui(
 
 		indentBuff = indentBuff[..i];
 
-		ConMsg($"{indentBuff}{name}\n");
+		ConMsg($"{indentBuff}{name} visible = {panel.IsVisible()}\n");
 
 		int children = panel.GetChildCount();
 		for (i = 0; i < children; i++) {

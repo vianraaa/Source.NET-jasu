@@ -1,4 +1,5 @@
-﻿using Source.Common.Client;
+﻿using Source.Common;
+using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
@@ -16,6 +17,16 @@ public class GameMenuItem : MenuItem
 	public GameMenuItem(Panel panel, string name) : base(panel, name) {
 
 	}
+}
+
+public enum BackgroundState
+{
+	Initial,
+	Loading,
+	MainMenu,
+	Level,
+	Disconnected,
+	Exiting,      
 }
 
 public class GameMenu(Panel parent, string name) : Menu(parent, name)
@@ -49,6 +60,22 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 
 		InvalidateLayout();
 	}
+
+
+	IPanel? MainMenuOverridePanel;
+
+	public override void SetVisible(bool state) {
+		if (MainMenuOverridePanel != null) {
+			MainMenuOverridePanel.SetVisible(true);
+			if (!state) 
+				MainMenuOverridePanel.MoveToBack();
+		}
+
+		base.SetVisible(true);
+
+		if (!state) 
+			MoveToBack();
+	}
 }
 
 public class BasePanel : Panel
@@ -68,8 +95,32 @@ public class BasePanel : Panel
 		SetMenuAlpha(255);
 	}
 
+	int BackgroundFIllAlpha;
+
 	public override void PaintBackground() {
 		DrawBackgroundImage();
+
+		if(BackgroundFIllAlpha > 0) {
+			Surface.GetScreenSize(out int wide, out int tall);
+			Surface.DrawSetColor(0, 0, 0, BackgroundFIllAlpha);
+			Surface.DrawFilledRect(0, 0, wide, tall);
+		}
+	}
+
+	Vector2 GameMenuPos;
+	int GameMenuInset;
+
+	public override void PerformLayout() {
+		base.PerformLayout();
+
+		Surface.GetScreenSize(out int wide, out int tall);
+		GameMenu.GetSize(out int menuWide, out int menuTall);
+		int idealMenuY = (int)GameMenuPos.Y;
+		if(idealMenuY + menuTall + GameMenuInset > tall) 
+			idealMenuY = tall - menuTall - GameMenuInset;
+
+		int yDiff = idealMenuY - (int)GameMenuPos.Y;
+		GameMenu.SetPos((int)GameMenuPos.X, idealMenuY);
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
@@ -93,7 +144,7 @@ public class BasePanel : Panel
 	private void DrawBackgroundImage() {
 		int alpha = 255;
 
-		Surface.GetScreenSize(out int wide, out int tall);
+		GetSize(out int wide, out int tall);
 
 		TextureID imageID = BackgroundImageID;
 
@@ -135,5 +186,25 @@ public class BasePanel : Panel
 
 	private void CreateGameLogo() {
 
+	}
+
+	bool EverActivated;
+
+	internal void OnGameUIActivated() {
+		// Map load failed?
+
+		if (!EverActivated) {
+			UpdateGameMenus();
+			EverActivated = true;
+		}
+	}
+
+	private void UpdateGameMenus() {
+		bool isInGame = GameUI.IsInLevel();
+		bool isMulti = isInGame && engine.GetMaxClients() > 1;
+		GameMenu.UpdateMenuItemState(isInGame, isMulti);
+
+		InvalidateLayout();
+		GameMenu.SetVisible(true);
 	}
 }
