@@ -207,7 +207,7 @@ public class KeyValues : IEnumerable<KeyValues>
 				goto valueTypeSpecific;
 		}
 
-		return true;
+		return !isBlockConditional || matches;
 
 	valueTypeSpecific:
 
@@ -229,9 +229,9 @@ public class KeyValues : IEnumerable<KeyValues>
 			}
 			SkipComments(reader);
 			// Start reading keyvalues.
-			KeyValues kvpair = new();
-			;
-			if (kvpair.ReadKV(reader) && matches) // When conditional, stil need to waste time on parsing, but we throw it away after
+			KeyValues kvpair = new() { evaluateConditionals = this.evaluateConditionals, useEscapeSequences = this.useEscapeSequences };
+			
+			if (kvpair.ReadKV(reader) && matches) // When conditional, still need to waste time on parsing, but we throw it away after
 					                              // There's definitely a better way to handle this, but it would need more testing scenarios
 												  // The ReadKV call can also determine its condition and will return false if it doesnt want to be added.
 				children.AddLast(kvpair.node);

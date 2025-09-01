@@ -24,18 +24,21 @@ public abstract class BaseFont
 
 public unsafe class FreeTypeFont : BaseFont
 {
-	internal readonly FT_LibraryRec_* lib;
+	internal static readonly FT_LibraryRec_* Library;
+	static FreeTypeFont() {
+		FT_Error error;
+		fixed (FT_LibraryRec_** outRec = &Library)
+			error = FT_Init_FreeType(outRec);
+
+		if (error != 0)
+			throw new Exception("FT_Init_FreeType failed");
+	}
+
 	internal readonly FontManager fontManager;
 	internal readonly ISystem system;
 	public FreeTypeFont(FontManager fontManager, ISystem system) {
 		this.fontManager = fontManager;
 		this.system = system;
-
-		FT_Error error;
-		fixed (FT_LibraryRec_** outRec = &lib)
-			error = FT_Init_FreeType(outRec);
-		if (error != 0)
-			throw new Exception("FT_Init_FreeType failed");
 	}
 	string? Name;
 	ulong Symbol;
@@ -79,16 +82,15 @@ public unsafe class FreeTypeFont : BaseFont
 		Blur = (ushort)blur;
 		ScanLines = (ushort)scanlines;
 
-		ReadOnlySpan<char> systemFont = system.GetSystemFontPath(fontName);
-		Span<byte> newFaceName = stackalloc byte[Encoding.UTF8.GetByteCount(systemFont)];
-		Encoding.UTF8.GetBytes(systemFont, newFaceName);
-
 		FT_Error error;
 
-		fixed (byte* bytes = newFaceName)
+		byte* font = fontManager.GetFontBinary(fontName, out nint length);
+		if (font == null)
+			return false;
+
 		fixed (FT_FaceRec_** facePtr = &face)
-			error = FT_New_Face(lib, bytes, 0, facePtr);
-		if (error != FT_Error.FT_Err_Ok) { Warning($"FreeType error during new face initialization: {error}\n"); return false; }
+			error = FT_New_Memory_Face(Library, font, length, 0, facePtr);
+		if (error != FT_Error.FT_Err_Ok) { DevMsg($"Upcoming error info: {fontName}\n"); Assert(false); Warning($"FreeType error during new face initialization: {error}\n"); return false; }
 
 		error = FT_Set_Pixel_Sizes(face, 0, (uint)tall);
 		if (error != FT_Error.FT_Err_Ok) { Warning($"FreeType error during pixel size set: {error}\n"); return false; }
@@ -183,6 +185,11 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 {
 	List<FontAmalgam> FontAmalgams = [];
 	List<FreeTypeFont> FreeTypeFonts = [];
+
+	Dictionary<ulong, nint> FontBinaries = [];
+	Dictionary<ulong, nint> FontBinaryLengths = [];
+	Dictionary<ulong, string> CustomFontFiles = [];
+
 	internal IFont CreateFont() {
 		FontAmalgam font = new();
 		FontAmalgams.Add(font);
@@ -298,6 +305,15 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		return false;
 	}
 
+	internal byte* GetFontBinary(ReadOnlySpan<char> fontName, out nint length) {
+		if (!FontBinaries.TryGetValue(fontName.Hash(), out nint binary)) {
+			length = 0;
+			return null;
+		}
+		length = FontBinaryLengths[fontName.Hash()];
+		return (byte*)binary;
+	}
+
 	private FreeTypeFont? CreateOrFindFreeTypeFont(ReadOnlySpan<char> fontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags) {
 		FreeTypeFont? foundFont = null;
 		foreach (var font in FreeTypeFonts) {
@@ -307,6 +323,23 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 			}
 		}
 		if (foundFont == null) {
+			if (!FontBinaries.TryGetValue(fontName.Hash(), out nint binary)) {
+				// Load the binary
+				if (!CustomFontFiles.TryGetValue(fontName.Hash(), out string? filePath))
+					filePath = new(system.GetSystemFontPath(fontName)); // If not custom font file, load from the OS
+
+				FileInfo info = new(filePath);
+				if (!info.Exists)
+					return null; // cannot load...
+
+				FileStream file = File.OpenRead(filePath);
+				binary = (nint)NativeMemory.AllocZeroed((nuint)info.Length);
+				using UnmanagedMemoryStream stream = new UnmanagedMemoryStream((byte*)binary, 0, info.Length, FileAccess.Write);
+				file.CopyTo(stream);
+				FontBinaries[fontName.Hash()] = binary;
+				FontBinaryLengths[fontName.Hash()] = (nint)info.Length;
+			}
+
 			FreeTypeFont font = new FreeTypeFont(this, system);
 			if (font.Create(fontName, tall, weight, blur, scanlines, flags)) {
 				foundFont = font;
@@ -316,5 +349,63 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 				return null;
 		}
 		return foundFont;
+	}
+
+	public struct FT_SfntName {
+		public ushort PlatformID;
+		public ushort EncodingID;
+		public ushort LanguageID;
+		public ushort NameID;
+		public byte* String;
+		public uint StringLen;
+	}
+
+	internal bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
+		ReadOnlySpan<char> fontFilepath = fileSystem.RelativePathToFullPath(fontFileName, null, null);
+
+		if (fontFilepath == null) {
+			Warning($"Couldn't find custom font file '{fontFileName}' for font '{(fontName == null ? "" : fontName)}'\n");
+			return false;
+		}
+
+		if (CustomFontFiles.TryGetValue(fontName.Hash(), out string? path))
+			return true; // Already loaded
+
+		FileInfo info = new(new(fontFilepath));
+		if (!info.Exists) {
+			Msg($"Failed to load custom font file '{fontFilepath}'\n");
+			return false;
+		}
+
+		// We now need to resolve fontName if it wasn't provided.
+		if(fontName == null) {
+			// TODO: This means we load the font twice... not ideal..
+			Span<byte> filePathAlloc = stackalloc byte[Encoding.ASCII.GetByteCount(fontFilepath)];
+			Encoding.ASCII.GetBytes(fontFilepath, filePathAlloc);
+			FT_Error err;
+			FT_FaceRec_* face;
+			fixed (byte* filePathAllocPtr = filePathAlloc)
+				err = FT_New_Face(FreeTypeFont.Library, filePathAllocPtr, 0, &face);
+
+			if(err != FT_Error.FT_Err_Ok) {
+				Assert(false);
+				return false;
+			}
+
+			byte* name = face->family_name;
+			nint len = 0;
+			byte* nameReadForLength = name;
+			while(*nameReadForLength != 0) {
+				len++;
+				nameReadForLength++;
+			}
+			string nameManaged = Encoding.ASCII.GetString(name, (int)len);
+			fontName = nameManaged;
+		}
+
+		// Register the custom font file
+		CustomFontFiles[fontName.Hash()] = new(fontFileName);
+
+		return true;
 	}
 }

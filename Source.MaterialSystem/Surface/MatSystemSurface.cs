@@ -275,9 +275,9 @@ public class MatSystemSurface : IMatSystemSurface
 		Mesh.Draw();
 	}
 
-	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
 
-		return false;
+	public bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName) {
+		return FontManager.AddCustomFontFile(fontName, fontFileName);
 	}
 
 	public void AddPanel(IPanel panel) {

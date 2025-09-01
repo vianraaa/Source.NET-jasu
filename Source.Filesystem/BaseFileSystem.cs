@@ -121,7 +121,10 @@ public class BaseFileSystem : IFileSystem
 		if (!FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? winner))
 			return null;
 
-		return winner.Concat(fileName);
+		// TODO: If dest is provided, try writing to it instead of performing this concat?
+		// Also TODO: rework this to be less garbage
+		var concatted = winner.Concat(fileName);
+		return concatted;
 	}
 
 	private static bool boolWin(bool inp) => inp;
