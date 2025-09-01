@@ -1,8 +1,13 @@
-﻿using Source.Common.Engine;
+﻿using Source.Common.Client;
+using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.GameUI;
+using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.GUI.Controls;
+
+using System.Numerics;
 
 namespace Game.UI;
 
@@ -13,7 +18,8 @@ public class GameMenuItem : MenuItem
 	}
 }
 
-public class GameMenu(Panel parent, string name) : Menu(parent, name) {
+public class GameMenu(Panel parent, string name) : Menu(parent, name)
+{
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
 		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName));
 		item.AddActionSignalTarget(target);
@@ -32,9 +38,9 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name) {
 				if (kv == null)
 					continue;
 
-				if (!isInGame && kv.GetInt("OnlyInGame") != 0) 
+				if (!isInGame && kv.GetInt("OnlyInGame") != 0)
 					shouldBeVisible = false;
-				else if (isMultiplayer && kv.GetInt("notmulti") != 0) 
+				else if (isMultiplayer && kv.GetInt("notmulti") != 0)
 					shouldBeVisible = false;
 
 				menuItem.SetVisible(shouldBeVisible);
@@ -45,16 +51,55 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name) {
 	}
 }
 
-public class BasePanel : Panel {
+public class BasePanel : Panel
+{
 	GameMenu GameMenu;
 
 	[Imported] public IFileSystem FileSystem;
+	[Imported] public IGameUI GameUI;
+	[Imported] public IEngineClient engine;
+
+	TextureID BackgroundImageID = TextureID.INVALID;
 
 	public BasePanel() : base(null, "BaseGameUIPanel") {
 		CreateGameMenu();
 		CreateGameLogo();
 
 		SetMenuAlpha(255);
+	}
+
+	public override void PaintBackground() {
+		DrawBackgroundImage();
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		Surface.GetScreenSize(out int screenWide, out int screenTall);
+		float aspectRatio = (float)screenWide / screenTall;
+		bool isWidescreen = aspectRatio >= 1.5999f;
+
+		Span<char> filename = stackalloc char[MAX_PATH];
+		Span<char> background = stackalloc char[MAX_PATH];
+		engine.GetMainMenuBackgroundName(background); background = background[..background.IndexOf('\0')];
+		sprintf(filename, "console/%s", new string(background));
+
+		if (BackgroundImageID == TextureID.INVALID)
+			BackgroundImageID = Surface.CreateNewTextureID();
+
+		Surface.DrawSetTextureFile(BackgroundImageID, filename[..filename.IndexOf('\0')], 0, false);
+	}
+
+	private void DrawBackgroundImage() {
+		int alpha = 255;
+
+		Surface.GetScreenSize(out int wide, out int tall);
+
+		TextureID imageID = BackgroundImageID;
+
+		Surface.DrawSetColor(255, 255, 255, alpha);
+		Surface.DrawSetTexture(imageID);
+		Surface.DrawTexturedRect(0, 0, wide, tall);
 	}
 
 	private void SetMenuAlpha(int alpha) {
@@ -64,12 +109,12 @@ public class BasePanel : Panel {
 	private void CreateGameMenu() {
 		KeyValues datafile = new KeyValues("GameMenu");
 		datafile.UsesEscapeSequences(true);
-		if (datafile.LoadFromFile(FileSystem, "Resource/GameMenu.res")) 
+		if (datafile.LoadFromFile(FileSystem, "Resource/GameMenu.res"))
 			GameMenu = RecursiveLoadGameMenu(datafile);
-		
+
 		if (GameMenu == null)
 			Error("Could not load file Resource/GameMenu.res\n");
-		
+
 		else {
 			GameMenu.MakeReadyForUse();
 			GameMenu.SetAlpha(0);
@@ -78,7 +123,7 @@ public class BasePanel : Panel {
 
 	private GameMenu RecursiveLoadGameMenu(KeyValues datafile) {
 		GameMenu menu = EngineAPI.New<GameMenu>(this, new string(datafile.Name));
-		for(KeyValues? dat = datafile.GetFirstSubKey(); dat != null; dat = dat.GetNextKey()) {
+		for (KeyValues? dat = datafile.GetFirstSubKey(); dat != null; dat = dat.GetNextKey()) {
 			ReadOnlySpan<char> label = dat.GetString("label", "<unknown>");
 			ReadOnlySpan<char> cmd = dat.GetString("command", null);
 			ReadOnlySpan<char> name = dat.GetString("name", label);

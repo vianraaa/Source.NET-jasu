@@ -1,4 +1,5 @@
 ﻿using Source.Common.Input;
+using Source.Common.Launcher;
 
 using System.Numerics;
 
@@ -10,6 +11,14 @@ public struct SurfaceVertex
 {
 	public Vector2 Position;
 	public Vector2 TexCoord;
+}
+
+public record struct TextureID {
+	public long ID;
+	public static readonly TextureID INVALID = new(-1);
+	public TextureID(long id) => ID = id;
+	public static implicit operator long(TextureID id) => id.ID;
+	public static implicit operator TextureID(long id) => new(id);
 }
 
 public enum FontDrawType
@@ -77,15 +86,15 @@ public interface ISurface
 	void DrawFlushText();
 
 	int DrawGetTextureId(ReadOnlySpan<char> filename);
-	bool DrawGetTextureFile(int id, out ReadOnlySpan<char> filename);
-	void DrawSetTextureFile(int id, in ReadOnlySpan<char> filename, int hardwareFilter, bool forceReload);
-	void DrawSetTextureRGBA(int id, Span<byte> rgba, int wide, int tall, int hardwareFilter, bool forceReload);
-	void DrawSetTexture(int id);
-	void DrawGetTextureSize(int id, out int wide, out int tall);
+	bool DrawGetTextureFile(in TextureID id, out ReadOnlySpan<char> filename);
+	void DrawSetTextureFile(in TextureID id, in ReadOnlySpan<char> filename, int hardwareFilter, bool forceReload);
+	void DrawSetTextureRGBA(in TextureID id, Span<byte> rgba, int wide, int tall, int hardwareFilter, bool forceReload);
+	void DrawSetTexture(in TextureID id);
+	void DrawGetTextureSize(in TextureID id, out int wide, out int tall);
 	void DrawTexturedRect(int x0, int y0, int x1, int y1);
-	bool IsTextureIDValid(int id);
-	bool DeleteTextureByID(int id);
-	int CreateNewTextureID(bool procedural = false);
+	bool IsTextureIDValid(in TextureID id);
+	bool DeleteTextureByID(in TextureID id);
+	TextureID CreateNewTextureID(bool procedural = false);
 
 	void GetScreenSize(out int wide, out int tall);
 	void SetAsTopMost(IPanel panel, bool state);
@@ -160,4 +169,9 @@ public interface ISurface
 	float DrawGetAlphaMultiplier();
 	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
 	void OffsetAbsPos(ref int x, ref int y);
+}
+
+public interface IMatSystemSurface : ISurface {
+	void AttachToWindow(IWindow? window, bool appDrivesInput);
+	void EnableWindowsMessages(bool enabled);
 }

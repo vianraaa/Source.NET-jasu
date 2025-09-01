@@ -65,7 +65,7 @@ public class GameUI : IGameUI
 	}
 
 	public void RunFrame() {
-		throw new NotImplementedException();
+
 	}
 
 	public void SetMainMenuOverride(IPanel panel) {

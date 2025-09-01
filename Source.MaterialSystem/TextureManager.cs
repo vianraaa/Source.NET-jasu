@@ -19,11 +19,11 @@ public class TextureManager : ITextureManager
 	}
 
 	public ITextureInternal ErrorTexture() {
-		return null;
+		return errorTexture;
 	}
 
-	private ITexture errorTexture;
-	private ITexture whiteTexture;
+	private ITextureInternal errorTexture;
+	private ITextureInternal whiteTexture;
 
 	const int ERROR_TEXTURE_SIZE = 32;
 	const int WHITE_TEXTURE_SIZE = 1;
@@ -52,7 +52,7 @@ public class TextureManager : ITextureManager
 	private void CreateSolidTexture(ITexture tex, Color color) 
 		=> tex.SetTextureGenerator(new SolidTexture(color));
 
-	public ITexture? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
+	public ITextureInternal? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
 		Texture newTexture = new(MaterialSystem);
 		newTexture.InitProceduralTexture(name, textureGroup, w, h, d, imageFormat, flags, generator);
 		if (newTexture == null)

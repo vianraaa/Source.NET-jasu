@@ -73,7 +73,7 @@ public interface IPanel
 	void SetBgColor(in Color color);
 	void SetFgColor(in Color color);
 	bool IsPopup();
-	void SetPopup(bool state);
+	void MakePopup(bool showTaskbarIcon = true, bool disabled = false);
 	bool IsFullyVisible();
 
 	// gets the scheme this panel uses
@@ -126,4 +126,5 @@ public interface IPanel
 	float GetAlpha();
 	void SetAlpha(float alpha);
 	void TraverseLevel(int v);
+	void SetPopup(bool v);
 }

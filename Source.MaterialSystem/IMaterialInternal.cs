@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.HighPerformance;
 
+using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 
 using System;
@@ -25,7 +26,7 @@ public struct MaterialLookup(IMaterialInternal? material, ulong symbol, bool man
 	public readonly bool ManuallyCreated => manuallyCreated;
 }
 
-public class MaterialDict : IEnumerable<IMaterialInternal> {
+public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInternal> {
 	Dictionary<ulong, MaterialLookup> Dict = [];
 	public IMaterialInternal? FindMaterial(ReadOnlySpan<char> name, bool manuallyCreated) {
 		MaterialLookup lookup = new(null, name.Hash(), manuallyCreated);
@@ -50,6 +51,16 @@ public class MaterialDict : IEnumerable<IMaterialInternal> {
 	IEnumerator IEnumerable.GetEnumerator() {
 		return GetEnumerator();
 	}
+
+	HashSet<ulong> Missing = [];
+
+	public bool NoteMissing(ReadOnlySpan<char> name) {
+		return Missing.Add(name.Hash());
+	}
+
+	public IMaterialInternal AddMaterialSubRect(Span<char> matNameWithExtension, ReadOnlySpan<char> textureGroupName, KeyValues keyValues, KeyValues pPatchKeyValues) {
+		throw new NotImplementedException();
+	}
 }
 
 public interface IMaterialInternal : IMaterial
@@ -63,4 +74,5 @@ public interface IMaterialInternal : IMaterial
 	bool IsRealTimeVersion();
 	bool IsUsingVertexID();
 	void Precache();
+	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0);
 }

@@ -537,8 +537,7 @@ public class Panel : IPanel
 	public Color GetSchemeColor(ReadOnlySpan<char> keyName, Color defaultColor, IScheme scheme) {
 		return scheme.GetColor(keyName, defaultColor);
 	}
-
-	private void ApplySchemeSettings(IScheme scheme) {
+	public virtual void ApplySchemeSettings(IScheme scheme) {
 		SetFgColor(GetSchemeColor("Panel.FgColor", scheme));
 		SetBgColor(GetSchemeColor("Panel.BgColor", scheme));
 
@@ -614,13 +613,30 @@ public class Panel : IPanel
 	}
 
 	public void SetParent(IPanel? newParent) {
-		Parent?.Children.Remove(this);
+		if (this == newParent)
+			return;
 
-		Parent = (Panel)newParent!;
+		if (Parent == newParent)
+			return;
+
+		if (Parent != null) {
+			Parent?.Children.Remove(this);
+			Parent = null;
+		}
+
+		if(newParent != null) {
+			Parent = (Panel)newParent!;
+			Parent.Children.Add(this);
+			SetZPos(ZPos);
+			Parent.OnChildAdded(this);
+		}
 	}
 
-	public void SetPopup(bool state) {
-		throw new NotImplementedException();
+	public void SetPopup(bool enabled) {
+		Popup = enabled;
+	}
+	public void MakePopup(bool showTaskbarIcon, bool disabled) {
+		Surface.CreatePopup(this, false, showTaskbarIcon, disabled);
 	}
 
 	public void SetPos(int x, int y) {

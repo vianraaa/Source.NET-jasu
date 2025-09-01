@@ -41,4 +41,5 @@ public interface IEngineClient
 {
 	ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding);
 	void GetUILanguage(Span<char> dest);
+	void GetMainMenuBackgroundName(Span<char> dest);
 }

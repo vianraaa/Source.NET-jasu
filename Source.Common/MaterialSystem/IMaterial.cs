@@ -198,4 +198,6 @@ public interface IMaterial
 	bool IsRealTimeVersion();
 	bool InMaterialPage();
 	IMaterial GetMaterialPage();
+	float GetMappingWidth();
+	float GetMappingHeight();
 }

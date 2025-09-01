@@ -72,7 +72,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override IMaterial GetOwningMaterial() {
-		throw new NotImplementedException();
+		return owningMaterial;
 	}
 
 	public override string GetStringValue() {
@@ -80,6 +80,9 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override ITexture? GetTextureValue() {
+		if (owningMaterial != null)
+			owningMaterial.Precache();
+
 		if (Type == MaterialVarType.Texture)
 			return TextureValue;
 

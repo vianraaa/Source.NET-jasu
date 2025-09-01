@@ -2,10 +2,10 @@
 
 public enum InputEventType
 {
-	ButtonPressed = 0,
-	ButtonReleased,
-	ButtonDoubleClicked,
-	AnalogValueChanged,
+	IE_ButtonPressed = 0,
+	IE_ButtonReleased,
+	IE_ButtonDoubleClicked,
+	IE_AnalogValueChanged,
 
 	FirstSystemEvent = 100,
 	System_Quit = FirstSystemEvent,
@@ -25,6 +25,7 @@ public enum InputEventType
 	Gui_IMEShowCandidates,
 	Gui_IMEChangeCandidates,
 	Gui_IMECloseCandidates,
+	Gui_IMERecomputeModes,
 
 	FirstAppEvent = 2000,
 	// Extensions of GameInputEventType

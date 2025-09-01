@@ -23,7 +23,7 @@ public struct GameMessageHandler {
 	}
 }
 
-public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, ISurface surface, IEngine eng) : IGame
+public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng) : IGame
 {
 	GameMessageHandler[] GameMessageHandlers;
 
@@ -71,6 +71,9 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		inputSystem.AttachToWindow(window);
 		inputSystem.EnableInput(true);
 		inputSystem.EnableMessagePump(false);
+
+		surface.AttachToWindow(window, true);
+		surface.EnableWindowsMessages(true);
 	}
 
 	IWindow window;
@@ -87,9 +90,9 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 
 	private void DispatchInputEvent(in InputEvent ev) {
 		switch (ev.Type) {
-			case InputEventType.ButtonPressed:
-			case InputEventType.ButtonDoubleClicked:
-			case InputEventType.ButtonReleased:
+			case InputEventType.IE_ButtonPressed:
+			case InputEventType.IE_ButtonDoubleClicked:
+			case InputEventType.IE_ButtonReleased:
 				KeyEvent(in ev);
 				break;
 			default:

@@ -10,6 +10,7 @@ using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
+using Source.MaterialSystem;
 using Source.MaterialSystem.Surface;
 
 using System.Numerics;
@@ -21,10 +22,12 @@ namespace Source.MaterialSystem;
 
 public class MaterialSystem : IMaterialSystem, IShaderUtil
 {
-	MaterialDict Dict = new();
+	MaterialDict MaterialDict;
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
-		services.AddSingleton<ISurface, MatSystemSurface>();
+		services.AddSingleton<MatSystemSurface>();
+		services.AddSingleton<IMatSystemSurface>(x => x.GetRequiredService<MatSystemSurface>());
+		services.AddSingleton<ISurface>(x => x.GetRequiredService<MatSystemSurface>());
 		services.AddSingleton<ShaderAPIGl46>();
 		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
 		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
@@ -48,6 +51,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly MaterialSystem_Config Config;
 
 	public MaterialSystem(IServiceProvider services) {
+		MaterialDict = new(this);
 		this.services = services;
 
 		FileSystem = services.GetRequiredService<IFileSystem>();
@@ -82,7 +86,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	ILauncherManager launcherMgr;
-	
+
 
 	public void ModInit() {
 		launcherMgr = services.GetRequiredService<ILauncherManager>();
@@ -233,7 +237,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			material = new Material(this, materialName, textureGroup, keyValues);
 		}
 
-		Dict.AddMaterialToMaterialList(material);
+		MaterialDict.AddMaterialToMaterialList(material);
 		return material;
 	}
 
@@ -275,7 +279,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public ITexture FindTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroupName, bool complain, int additionalCreationFlags) {
 		ITextureInternal? texture = TextureSystem.FindOrLoadTexture(textureName, textureGroupName, additionalCreationFlags);
 		Assert(texture != null);
-		if(texture != null && texture.IsError()) {
+		if (texture != null && texture.IsError()) {
 			if (complain) {
 				DevWarning($"Texture '{textureName}' not found.\n");
 			}
@@ -286,11 +290,90 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
 		return "GAME";
 	}
+	public IMaterial FindMaterialEx(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, MaterialFindContext context, bool complain, ReadOnlySpan<char> complainPrefix) {
+		string temp = new string(materialName).Replace('\\', '/');
+		IMaterialInternal? existingMaterial = MaterialDict.FindMaterial(temp, false);
 
+		if (existingMaterial != null)
+			return existingMaterial;
+
+
+		Span<char> vmtName = stackalloc char["materials/".Length + temp.Length];
+		"materials/".CopyTo(vmtName);
+		temp.CopyTo(vmtName["materials/".Length..]);
+
+		KeyValues keyValues = new KeyValues("vmt");
+		KeyValues pPatchKeyValues = new KeyValues("vmt_patches");
+		if (!LoadVMTFile(keyValues, pPatchKeyValues, vmtName, true)) {
+			keyValues = null!;
+			pPatchKeyValues = null!;
+		}
+		else {
+			int len = vmtName.Length + ".vmt".Length;
+			Span<char> matNameWithExtension = stackalloc char[len];
+			vmtName.CopyTo(matNameWithExtension);
+			".vmt".CopyTo(matNameWithExtension[vmtName.Length..]);
+
+			IMaterialInternal? mat = null;
+			if (keyValues.Name.Equals("subrect", StringComparison.OrdinalIgnoreCase)) {
+				mat = MaterialDict.AddMaterialSubRect(matNameWithExtension, textureGroupName, keyValues, pPatchKeyValues);
+			}
+			else {
+				// NOTE: This differs slightly, but should still work
+				// It seems passing keyValues into precachevars like Source does *really* makes things unhappy, and I don't want to diagnose that right now
+				mat = CreateMaterial(matNameWithExtension, textureGroupName, keyValues);
+				MaterialDict.AddMaterialToMaterialList(mat);
+			}
+			keyValues = null!;
+			pPatchKeyValues = null!;
+
+			return mat;
+		}
+
+		if (complain) {
+			Assert(temp != null);
+
+			if (MaterialDict.NoteMissing(vmtName)) {
+				if (complainPrefix != null)
+					DevWarning(complainPrefix);
+
+				DevWarning($"material \"{vmtName}\" not found.\n");
+			}
+		}
+
+		return errorMaterial;
+	}
+
+	private bool LoadVMTFile(KeyValues keyValues, KeyValues patchKeyValues, Span<char> materialName, bool absolutePath) {
+		Span<char> fileName = stackalloc char[MAX_PATH];
+		ReadOnlySpan<char> pathID = "GAME";
+		if (!absolutePath) {
+			sprintf(fileName, "materials/%s.vmt", new string(materialName));
+		}
+		else {
+			sprintf(fileName, "%s.vmt", new string(materialName));
+			if (materialName[0] == '/' && materialName[1] == '/' && materialName[2] != '/') {
+				pathID = null;
+			}
+		}
+
+		if (!keyValues.LoadFromFile(FileSystem, fileName[..fileName.IndexOf('\0')], pathID)) {
+			return false;
+		}
+		// ExpandPatchFile(keyValues, patchKeyValues, pathID, includes);
+
+		return true;
+	}
+
+	public string? ForcedTextureLoadPathID;
+
+	public IMaterial? FindMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, bool complain, ReadOnlySpan<char> complainPrefix) {
+		return FindMaterialEx(materialName, textureGroupName, MaterialFindContext.None, complain, complainPrefix);
+	}
 	public IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
-		IMaterialInternal? material = Dict.FindMaterial(materialName, true);
-		if(keyValues != null) {
-			if(material != null) {
+		IMaterialInternal? material = MaterialDict.FindMaterial(materialName, true);
+		if (keyValues != null) {
+			if (material != null) {
 				keyValues = null;
 			}
 			else {
@@ -312,12 +395,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	public void RestoreShaderObjects(IServiceProvider services, int changeFlags) {
-		if(services != null) {
+		if (services != null) {
 			ShaderAPI = (ShaderAPIGl46)services.GetRequiredService<IShaderAPI>();
 			ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		}
 
-		foreach(var material in Dict) {
+		foreach (var material in MaterialDict) {
 			// material.ReportVarChanged TODO
 		}
 

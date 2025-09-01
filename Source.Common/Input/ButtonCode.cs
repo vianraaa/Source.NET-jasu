@@ -1,4 +1,6 @@
-﻿namespace Source.Common.Input;
+﻿using System.Runtime.CompilerServices;
+
+namespace Source.Common.Input;
 
 public enum ButtonCode
 {
@@ -132,4 +134,34 @@ public enum ButtonCode
 
 	Last = MouseLast,
 	Count
+}
+public static class ButtonCodeExts {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsAlpha(this ButtonCode code) {
+		return (code >= ButtonCode.KeyA) && (code <= ButtonCode.KeyZ);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsAlphaNumeric(this ButtonCode code) {
+		return (code >= ButtonCode.Key0) && (code <= ButtonCode.KeyZ);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsSpace(this ButtonCode code) {
+		return (code == ButtonCode.KeyEnter) || (code == ButtonCode.KeyTab) || (code == ButtonCode.KeySpace);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsKeypad(this ButtonCode code) {
+		return (code >= ButtonCode.KeyPad0) && (code <= ButtonCode.KeyPadDecimal);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsPunctuation(this ButtonCode code) {
+		return (code >= ButtonCode.Key0) && (code <= ButtonCode.KeySpace) && !IsAlphaNumeric(code) && !IsSpace(code) && !IsKeypad(code);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsKeyCode(this ButtonCode code) {
+		return (code >= ButtonCode.KeyFirst) && (code <= ButtonCode.Last);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsMouseCode(this ButtonCode code) {
+		return (code >= ButtonCode.MouseFirst) && (code <= ButtonCode.MouseLast);
+	}
 }

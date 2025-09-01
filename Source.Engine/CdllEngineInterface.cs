@@ -10,4 +10,8 @@ internal class EngineClient : IEngineClient
 	public void GetUILanguage(Span<char> destination) {
 		"english".CopyTo(destination);
 	}
+
+	public void GetMainMenuBackgroundName(Span<char> dest) {
+		"kagami".CopyTo(dest);
+	}
 }

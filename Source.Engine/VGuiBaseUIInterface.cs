@@ -13,6 +13,7 @@ using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
 using Source.Engine.Server;
+using Source.GUI;
 using Source.GUI.Controls;
 
 using System.Runtime.InteropServices;
@@ -144,6 +145,7 @@ public class EngineVGui(
 	IGameUI staticGameUIFuncs;
 	ISurface matSystemSurface;
 	IEngineClient engineClient;
+	IVGui vgui;
 	ISchemeManager vguiScheme;
 	StaticPanel staticPanel;
 	EnginePanel staticClientDLLPanel;
@@ -261,6 +263,7 @@ public class EngineVGui(
 		matSystemSurface = engineAPI.GetRequiredService<ISurface>();
 		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
 		engineClient = engineAPI.GetRequiredService<IEngineClient>();
+		vgui = engineAPI.GetRequiredService<IVGui>();
 		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
 		vguiScheme.Init();
 		// IGameConsole, but later.
@@ -375,6 +378,28 @@ public class EngineVGui(
 
 		ActivateGameUI();
 	}
+	void DumpPanels_r(IPanel panel, int level) {
+		int i;
+		ReadOnlySpan<char> name = panel.GetName();
+
+		Span<char> indentBuff = stackalloc char[64];
+		for (i = 0; i < level; i++) 
+			indentBuff[i] = '.';
+
+		indentBuff = indentBuff[..i];
+
+		ConMsg($"{indentBuff}{name}\n");
+
+		int children = panel.GetChildCount();
+		for (i = 0; i < children; i++) {
+			IPanel child = panel.GetChild(i);
+			DumpPanels_r(child, level + 1);
+		}
+	}
+	[ConCommand(helpText: "Dump panel tree.")]
+	void dump_panels() {
+		DumpPanels_r(surface.GetEmbeddedPanel(), 0);
+	}
 
 	private void ActivateGameUI() {
 		if (staticGameUIFuncs == null)
@@ -402,7 +427,13 @@ public class EngineVGui(
 	}
 
 	public void Simulate() {
+		int w = 0, h = 0;
+		launcherMgr.RenderedSize(false, ref w, ref h);
+		using (MatRenderContextPtr renderContext = new(materials))
+			renderContext.Viewport(0, 0, w, h);
 
+		staticGameUIFuncs.RunFrame();
+			vgui.RunFrame();
 	}
 
 	readonly ConVar r_drawvgui = new("r_drawvgui", "1", FCvar.Cheat, "Enable the rendering of vgui panels" );

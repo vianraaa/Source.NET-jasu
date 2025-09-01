@@ -73,7 +73,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	public IEnumerable<InputEvent> GetEventData() => CurrentInputState.Events;
 
 	public int GetPollCount() {
-		throw new NotImplementedException();
+		return PollCount;
 	}
 
 	public int GetPollTick() {
@@ -239,7 +239,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 							if (MapVirtualKeyToButtonCode(ev.VirtualKeyCode, out ButtonCode virtualCode)) {
 								ButtonCode scancode = virtualCode;
 								if (scancode != ButtonCode.None)
-									PostButtonPressedEvent(InputEventType.ButtonPressed, LastSampleTick, scancode, virtualCode);
+									PostButtonPressedEvent(InputEventType.IE_ButtonPressed, LastSampleTick, scancode, virtualCode);
 
 								InputEvent newEv = new() {
 									Tick = GetPollTick(),
@@ -264,7 +264,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 							if (MapVirtualKeyToButtonCode(ev.VirtualKeyCode, out ButtonCode virtualCode)) {
 								ButtonCode scancode = virtualCode;
 								if (scancode != ButtonCode.None)
-									PostButtonReleasedEvent(InputEventType.ButtonPressed, LastSampleTick, scancode, virtualCode);
+									PostButtonReleasedEvent(InputEventType.IE_ButtonPressed, LastSampleTick, scancode, virtualCode);
 							}
 						}
 						break;
@@ -296,11 +296,11 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 			ButtonCode code = ButtonCode.MouseFirst + i;
 			bool down = ((int)buttonMask & (1 << i)) != 0;
 			if (down) {
-				InputEventType type = code != dblClickCode ? InputEventType.ButtonPressed : InputEventType.ButtonDoubleClicked;
+				InputEventType type = code != dblClickCode ? InputEventType.IE_ButtonPressed : InputEventType.IE_ButtonDoubleClicked;
 				PostButtonPressedEvent(type, LastSampleTick, code, code);
 			}
 			else
-				PostButtonReleasedEvent(InputEventType.ButtonReleased, LastSampleTick, code, code);
+				PostButtonReleasedEvent(InputEventType.IE_ButtonReleased, LastSampleTick, code, code);
 		}
 	}
 
@@ -333,6 +333,46 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	}
 
 	public ButtonCode VirtualKeyToButtonCode(int virtualKey) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalKeyCodePressed(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalMousePressed(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalKeyCodeReleased(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalMouseReleased(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalMouseDoublePressed(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalMouseWheeled(int data3) {
+		throw new NotImplementedException();
+	}
+
+	public bool InternalCursorMoved(int data2, int data3) {
+		throw new NotImplementedException();
+	}
+
+	public void InternalKeyCodeTyped(ButtonCode data) {
+		throw new NotImplementedException();
+	}
+
+	public void InternalKeyTyped(ButtonCode data) {
+		throw new NotImplementedException();
+	}
+
+	public void OnInputLanguageChanged() {
 		throw new NotImplementedException();
 	}
 }

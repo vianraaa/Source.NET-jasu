@@ -106,7 +106,7 @@ public class Material : IMaterialInternal
 		PrecacheMappingDimensions();
 	}
 
-	private void RecomputeStateSnapshots() {
+	public void RecomputeStateSnapshots() {
 		bool ok = InitializeRenderState();
 		if (!ok)
 			SetupErrorShader();
@@ -173,7 +173,12 @@ public class Material : IMaterialInternal
 		IMaterialVar? textureVar = FindVar($"baseTexture", out found, false);
 		if (found && textureVar.GetVarType() == MaterialVarType.Texture) {
 			ITextureInternal? texture = (ITextureInternal?)textureVar.GetTextureValue();
-			// todo
+			if (representativeTexture != null)
+				representativeTexture.Precache();
+			else {
+				representativeTexture = materials.TextureSystem.ErrorTexture();
+				Assert(representativeTexture);
+			}
 		}
 		if (!found || textureVar.GetVarType() != MaterialVarType.Texture) {
 			textureVar = FindVar("$envmapmask", out found, false);
@@ -216,7 +221,7 @@ public class Material : IMaterialInternal
 		return "";
 	}
 
-	private bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, int findContext = 0) {
+	public bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0) {
 		if (IsPrecachedVars())
 			return true;
 
@@ -257,7 +262,7 @@ public class Material : IMaterialInternal
 
 	}
 
-	private KeyValues? InitializeShader(KeyValues keyValues, KeyValues? patchKeyValues, int findContext) {
+	private KeyValues? InitializeShader(KeyValues keyValues, KeyValues? patchKeyValues, MaterialFindContext findContext) {
 		KeyValues currentFallback = keyValues;
 		KeyValues? fallbackSection = null;
 
@@ -312,7 +317,7 @@ public class Material : IMaterialInternal
 		return currentFallback;
 	}
 
-	private int ParseMaterialVars(IShader shader, KeyValues keyValues, KeyValues? fallbackSection, KeyValues? overrideKeyValues, bool modelDefault, IMaterialVar[] vars, int findContext) {
+	private int ParseMaterialVars(IShader shader, KeyValues keyValues, KeyValues? fallbackSection, KeyValues? overrideKeyValues, bool modelDefault, IMaterialVar[] vars, MaterialFindContext findContext) {
 		IMaterialVar? newVar;
 		Span<bool> overrides = stackalloc bool[256];
 		Span<bool> conditional = stackalloc bool[256];
@@ -337,7 +342,7 @@ public class Material : IMaterialInternal
 			bool isConditionalVar;
 			ReadOnlySpan<char> varName = GetVarName(var);
 
-			if (findContext == (int)MaterialFindContext.IsOnAModel && varName != null && varName.Length > 0) {
+			if (findContext == MaterialFindContext.IsOnAModel && varName != null && varName.Length > 0) {
 				if (varName.Contains("$ignorez", StringComparison.OrdinalIgnoreCase)) {
 					Dbg.Warning($"Ignoring material flag '{varName}' on material '{matName}'.\n");
 					goto nextVar;
@@ -606,4 +611,14 @@ public class Material : IMaterialInternal
 
 	public bool InMaterialPage() => false;
 	public IMaterial GetMaterialPage() => null;
+
+	public float GetMappingWidth() {
+		Precache();
+		return MappingWidth;
+	}
+
+	public float GetMappingHeight() {
+		Precache();
+		return MappingHeight;
+	}
 }

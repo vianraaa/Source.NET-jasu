@@ -39,7 +39,7 @@ public unsafe class SDL3_System : ISystem
 	}
 
 	public double GetCurrentTime() {
-		throw new NotImplementedException();
+		return Platform.Time;
 	}
 
 	public bool GetCurrentTimeAndDate(out int year, out int month, out int dayOfWeek, out int day, out int hour, out int minute, out int second) {
@@ -51,7 +51,7 @@ public unsafe class SDL3_System : ISystem
 	}
 
 	public double GetFrameTime() {
-		throw new NotImplementedException();
+		return FrameTime;
 	}
 
 	public double GetFreeDiskSpace(ReadOnlySpan<char> path) {
@@ -106,8 +106,10 @@ public unsafe class SDL3_System : ISystem
 		throw new NotImplementedException();
 	}
 
+	double FrameTime;
+
 	public void RunFrame() {
-		throw new NotImplementedException();
+		FrameTime = GetCurrentTime();	
 	}
 
 	public void SaveUserConfigFile() {
