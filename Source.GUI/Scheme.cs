@@ -63,7 +63,14 @@ public class Scheme : IScheme
 	}
 
 	public IFont? GetFont(ReadOnlySpan<char> fontName, bool proportional = false) {
-		throw new NotImplementedException();
+		return FindFontInAliasList(GetMungedFontName(fontName, tag, proportional));
+	}
+
+	private IFont? FindFontInAliasList(ReadOnlySpan<char> name) {
+		if (FontAliases.TryGetValue(name.Hash(), out FontAlias alias)) 
+			return alias.Font;
+
+		return null;
 	}
 
 	public IFont? GetFontAtIndex() {
@@ -170,10 +177,10 @@ public class Scheme : IScheme
 
 				FontAlias alias = new();
 				alias.TrueFontName = new(kv.Name);
-				alias.TrueFontSymbol = kv.Name.Hash();
+				alias.TrueFontSymbol = fontName.Hash();
 				alias.Font = font;
 				alias.Proportional = proportionalFont;
-				FontAliases[alias.TrueFontSymbol] = alias;
+				FontAliases[fontName.Hash()] = alias;
 			}
 		}
 
@@ -183,12 +190,13 @@ public class Scheme : IScheme
 
 	static char[] mungeBuffer = new char[64];
 	private ReadOnlySpan<char> GetMungedFontName(ReadOnlySpan<char> fontName, ReadOnlySpan<char> scheme, bool proportional) {
+		memset(mungeBuffer.AsSpan(), '\0');
 		if (scheme != null)
 			sprintf(mungeBuffer, $"{fontName}{scheme}-{(proportional ? "p" : "no")}");
 		else
 			sprintf(mungeBuffer, $"{fontName}-{(proportional ? "p" : "no")}");
 
-		return mungeBuffer;
+		return mungeBuffer.AsSpan().SliceNullTerminatedString();
 	}
 
 	int ScreenWide, ScreenTall;

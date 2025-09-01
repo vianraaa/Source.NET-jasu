@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Bitmap;
 using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
@@ -421,6 +422,10 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			ShaderDevice.ReleaseResources();
 			ShaderDevice.ReacquireResources();
 		}
+	}
+
+	public ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, CompiledVtfFlags flags) {
+		return TextureSystem.CreateProceduralTexture(textureName, textureGroup, wide, tall, 1, format, flags)!;
 	}
 
 	public event Action? Restore;

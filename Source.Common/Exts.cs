@@ -167,7 +167,7 @@ public static class UnmanagedUtils
 		span = span[..index];
 	}
 
-	public static ReadOnlySpan<char> SliceNullTerminatedString(this ref Span<char> span) {
+	public static ReadOnlySpan<char> SliceNullTerminatedString(this Span<char> span) {
 		int index = span.IndexOf('\0');
 		if (index == -1)
 			return span;

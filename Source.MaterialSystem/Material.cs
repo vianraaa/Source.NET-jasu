@@ -621,4 +621,42 @@ public class Material : IMaterialInternal
 		Precache();
 		return MappingHeight;
 	}
+
+	public void Refresh() {
+		if (materials.ShaderDevice.IsUsingGraphics()) {
+			Uncache();
+			Precache();
+		}
+	}
+
+	private void Uncache(bool preserveVars = false) {
+		if (IsPrecached()) {
+			CleanUpStateSnapshots();
+			flags &= ~MaterialFlags.ValidRenderState;
+			flags &= ~MaterialFlags.IsPrecached;
+		}
+
+		if (!preserveVars) {
+			if (IsPrecachedVars()) {
+				CleanUpShaderParams();
+				Shader = null;
+
+				CleanUpMaterialProxy();
+
+				flags &= ~MaterialFlags.VarsIsPrecached;
+			}
+		}
+	}
+
+	private void CleanUpMaterialProxy() {
+
+	}
+
+	private void CleanUpShaderParams() {
+
+	}
+
+	private void CleanUpStateSnapshots() {
+
+	}
 }

@@ -97,6 +97,8 @@ public class BasePanel : Panel
 
 	int BackgroundFIllAlpha;
 
+	IFont? FontTest;
+
 	public override void PaintBackground() {
 		DrawBackgroundImage();
 
@@ -105,6 +107,10 @@ public class BasePanel : Panel
 			Surface.DrawSetColor(0, 0, 0, BackgroundFIllAlpha);
 			Surface.DrawFilledRect(0, 0, wide, tall);
 		}
+
+		Surface.DrawSetTextFont(FontTest);
+		Surface.DrawSetTextPos(64, 64);
+		Surface.DrawPrintText("Hello ISurface!");
 	}
 
 	Vector2 GameMenuPos;
@@ -125,6 +131,8 @@ public class BasePanel : Panel
 
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
+
+		FontTest = scheme.GetFont("Default");
 
 		Surface.GetScreenSize(out int screenWide, out int screenTall);
 		float aspectRatio = (float)screenWide / screenTall;

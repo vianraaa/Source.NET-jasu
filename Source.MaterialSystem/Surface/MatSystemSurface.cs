@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Bitmap;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -46,7 +47,6 @@ public struct ScissorRect
 	public int Bottom;
 }
 
-
 public class MatSystemSurface : IMatSystemSurface
 {
 	readonly IMaterialSystem materials;
@@ -77,6 +77,7 @@ public class MatSystemSurface : IMatSystemSurface
 	readonly ICommandLine CommandLine;
 	readonly IFileSystem FileSystem;
 	readonly FontManager FontManager;
+	readonly FontTextureCache FontTextureCache;
 	readonly IInputSystem InputSystem;
 	readonly ClientGlobalVariables globals;
 	readonly IServiceProvider services;
@@ -90,6 +91,7 @@ public class MatSystemSurface : IMatSystemSurface
 		this.TextureDictionary = new(materials, this);
 		this.FileSystem = fileSystem;
 		this.FontManager = new FontManager(materials, fileSystem, system, this);
+		this.FontTextureCache = new FontTextureCache(materials, fileSystem, system, this.FontManager, this);
 		this.InputSystem = inputSystem;
 		this.globals = globals;
 		CommandLine = commandLine;
@@ -376,8 +378,52 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
-	public void DrawPrintText(Span<char> text, int textLen, FontDrawType drawType) {
-		throw new NotImplementedException();
+	IFont? CurrentFont;
+
+	public void DrawPrintText(ReadOnlySpan<char> text, FontDrawType drawType = FontDrawType.Default) {
+		Assert(InDrawing);
+
+		if (text == null)
+			return;
+
+		if (CurrentFont == null)
+			return;
+
+		int x = TextPosX + TranslateX;
+		int y = TextPosY + TranslateY;
+
+		int tall = GetFontTall(CurrentFont);
+		TextureID lastTexId = TextureID.INVALID;
+
+		int count = 0;
+		Span<SurfaceVertex> quads = stackalloc SurfaceVertex[2 * text.Length];
+		bool underlined = FontManager.GetFontUnderlined(CurrentFont);
+
+		int totalWidth = 0;
+		Span<TextureID> texID = stackalloc TextureID[1];
+		Span<CharTexCoord> texCoords = stackalloc CharTexCoord[1];
+
+		for (int i = 0; i < text.Length; ++i) {
+			char ch = text[i];
+			GetCharABCwide(CurrentFont, ch, out int abcA, out int abcB, out int abcC);
+			int textureWide = abcB;
+			if (underlined) {
+				textureWide += (abcA + abcC);
+				x -= abcA;
+			}
+
+			float flA = abcA;
+			float flWide = abcA + abcB + abcC;
+
+			if(!char.IsWhiteSpace(ch) || underlined) {
+				if (!FontTextureCache.GetTextureForChar(CurrentFont, drawType, ch, texID, texCoords))
+					continue;
+			}
+		}
+	}
+
+	public int GetFontTall(IFont? font) {
+		return FontManager.GetFontTall(font);
 	}
 
 	public void DrawSetColor(int r, int g, int b, int a) {
@@ -389,19 +435,20 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawSetTextColor(int r, int g, int b, int a) {
-		throw new NotImplementedException();
+		DrawTextColor.SetColor(r, g, b, a);
 	}
 
 	public void DrawSetTextColor(in Color color) {
-		throw new NotImplementedException();
+		DrawTextColor = color;
 	}
 
-	public void DrawSetTextFont(IFont font) {
-		throw new NotImplementedException();
+	public void DrawSetTextFont(IFont? font) {
+		CurrentFont = font;
 	}
 
 	public void DrawSetTextPos(int x, int y) {
-		throw new NotImplementedException();
+		TextPosX = x;
+		TextPosY = y;
 	}
 
 	TextureID BoundTexture;
@@ -1094,6 +1141,35 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags) {
+		throw new NotImplementedException();
+	}
+
+	public int GetFontTallRequested(IFont? font) {
+		throw new NotImplementedException();
+	}
+
+	public int GetFontAscent(IFont? font, char ch) {
+		throw new NotImplementedException();
+	}
+
+	public int IsFontAdditive(IFont? font) {
+		return FontManager.IsFontAdditive(font);
+	}
+
+	public void GetCharABCwide(IFont? font, char ch, out int a, out int b, out int c) {
+		FontManager.GetCharABCwide(font, ch, out a, out b, out c);
+	}
+
+	public int GetCharacterWidth(IFont? font, char ch) {
+		throw new NotImplementedException();
+	}
+
+
+	internal void DrawSetSubTextureRGBA(in TextureID id, int drawX, int drawY, Span<byte> rgba, int subTextureWide, int subTextureTall) {
+		TextureDictionary.SetSubTextureRGBA(in id, drawX, drawY, rgba, subTextureWide, subTextureTall, ImageFormat.RGBA8888);
+	}
+
+	internal void DrawSetTextureMaterial(TextureID textureID, IMaterial material) {
 		throw new NotImplementedException();
 	}
 }

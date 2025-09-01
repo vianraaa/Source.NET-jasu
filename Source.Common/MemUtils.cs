@@ -15,6 +15,12 @@ public static unsafe class MemUtils
 		for (nuint i = 0; i < size; i++)
 			write[i] = data;
 	}
+
+	public static void memset<T>(Span<T> field, T data) where T : unmanaged {
+		fixed (T* ptr = field)
+			for (nuint i = 0; i < (nuint)field.Length; i++)
+				ptr[i] = data;
+	}
 	/// <summary>
 	/// This honestly might not be faster.
 	/// </summary>
@@ -64,12 +70,13 @@ public static unsafe class MemUtils
 	public static void memcpy<T>(ref T dest, ref T src) where T : unmanaged {
 		dest = src;
 	}
-	public static void memcpy<T>(Span<T> dest, Span<T> src) where T : unmanaged {
+	public static void memcpy<T>(Span<T> dest, ReadOnlySpan<T> src) where T : unmanaged {
 		src.CopyTo(dest);
 	}
 }
 
-public unsafe ref struct UnmanagedHeapMemory {
+public unsafe ref struct UnmanagedHeapMemory
+{
 	byte* Pointer;
 	nuint Len;
 

@@ -1,18 +1,120 @@
-﻿using Source.Common.GUI;
+﻿using Source.Bitmap;
+using Source.Common;
+using Source.Common.Bitmap;
+using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem.Surface;
 
-public class MatSystemTexture(IMaterialSystem materials) {
+public enum MatSystemTextureFlags
+{
+	IsProcedural = 0x1,
+	IsReference = 0x2
+}
+
+public class FontTextureRegen : ITextureRegenerator
+{
+	int Width;
+	int Height;
+	ImageFormat Format;
+	byte[] TextureBits;
+	public FontTextureRegen(int width, int height, ImageFormat format) {
+		Width = width;
+		Height = height;
+		Format = format;
+
+		TextureBits = new byte[ImageLoader.GetMemRequired(Width, Height, 1, Format, false)];
+	}
+
+	public void RegenerateTextureBits(ITexture texture, IVTFTexture vtfTexture, in Rectangle subRect) {
+		if (TextureBits == null)
+			return;
+
+		Assert((vtfTexture.Width() == Width) && (vtfTexture.Height() == Height));
+
+		int nFormatBytes = ImageLoader.SizeInBytes(Format);
+		if (nFormatBytes == 4) {
+			if (Format == vtfTexture.Format()) {
+				int ymax = subRect.Y + subRect.Height;
+				for (int y = subRect.Y; y < ymax; ++y) {
+					Span<byte> pchData = vtfTexture.ImageData(0, 0, 0, 0, y)[(subRect.X * nFormatBytes)..];
+					nint size = ImageLoader.GetMemRequired(subRect.Width, 1, 1, Format, false);
+					memcpy(pchData, TextureBits.AsSpan()[((y * Width + subRect.X) * nFormatBytes)..]);
+				}
+			}
+			else {
+				using PixelWriter pixelWriter = new();
+				pixelWriter.SetPixelMemory(vtfTexture.Format(), vtfTexture.ImageData(0, 0, 0), vtfTexture.RowSizeInBytes(0));
+
+				int xmax = subRect.X + subRect.Width;
+				int ymax = subRect.Y + subRect.Height;
+				int x, y;
+
+				for (y = subRect.Y; y < ymax; ++y) {
+					pixelWriter.Seek(subRect.X, y);
+					Span<byte> rgba = TextureBits[((y * Width + subRect.X) * nFormatBytes)..];
+
+					for (x = subRect.X; x < xmax; ++x) {
+						pixelWriter.WritePixel(rgba[0], rgba[1], rgba[2], rgba[3]);
+						rgba = rgba[nFormatBytes..];
+					}
+				}
+			}
+		}
+		else {
+			if (subRect.Width != Width || subRect.Height != Height) {
+				Assert(0);
+				return;
+			}
+			nint size = ImageLoader.GetMemRequired(Width, Height, 1, Format, false);
+			memcpy(vtfTexture.ImageData(0, 0, 0), TextureBits.AsSpan());
+		}
+	}
+
+	internal unsafe void UpdateBackingBits(Rectangle subRect, Span<byte> bits, Rectangle uploadRect, ImageFormat format) {
+		nint size = ImageLoader.GetMemRequired(Width, Height, 1, Format, false);
+		if (TextureBits == null)
+			return;
+
+		int y;
+		if (ImageLoader.SizeInBytes(Format) == 4) {
+			bool bIsInputFullRect = (subRect.Width != uploadRect.Width || subRect.Height != uploadRect.Height);
+			Assert((subRect.X >= 0) && (subRect.Y >= 0));
+			Assert((subRect.X + subRect.Width <= Width) && (subRect.Y + subRect.Height <= Height));
+			for (y = 0; y < subRect.Height; ++y) {
+				int idx = ((subRect.Y + y) * Width + subRect.X) << 2;
+				Span<uint> pDst = MemoryMarshal.Cast<byte, uint>(TextureBits[idx..]);
+				int offset = bIsInputFullRect ? (subRect.Y + y) * uploadRect.Width + subRect.X : y * uploadRect.Width;
+				Span<uint> pSrc = MemoryMarshal.Cast<byte, uint>(bits[(offset << 2)..]);
+				ImageLoader.ConvertImageFormat(MemoryMarshal.Cast<uint, byte>(pSrc), format, MemoryMarshal.Cast<uint, byte>(pDst), Format, subRect.Width, 1);
+			}
+		}
+		else {
+			if (subRect.Width != Width || subRect.Height != Height) {
+				Assert(0);
+				return;
+			}
+			memcpy<byte>(TextureBits, bits);
+		}
+	}
+}
+
+public class MatSystemTexture(IMaterialSystem materials)
+{
 	public TextureID ID { get; set; }
-	public bool Procedural {get; set;}
-	public ulong Hash {get; set;}
+	public bool Procedural { get; set; }
+	public ulong Hash { get; set; }
 
 	public IMaterial? Material;
-
+	public ITexture? Texture;
+	public ITexture? OverrideTexture;
+	public MatSystemTextureFlags Flags;
 	public float Wide, Tall, S0, T0, S1, T1;
+	public FontTextureRegen? Regen;
 
 	public void SetMaterial(ReadOnlySpan<char> filename) {
 		IMaterial? material = materials.FindMaterial(filename, TEXTURE_GROUP_VGUI);
@@ -39,8 +141,78 @@ public class MatSystemTexture(IMaterialSystem materials) {
 		T0 = pixelCenterY;
 		S1 = 1.0F - pixelCenterX;
 		T1 = 1.0F - pixelCenterY;
+
+		if (IsProcedural()) {
+			if (Material!.TryFindVar("$basetexture", out IMaterialVar? var) && var.IsTexture()) {
+				Texture = var.GetTextureValue();
+				if (Texture != null) {
+					CreateRegen(Wide, Tall, Texture.GetImageFormat());
+					Texture.SetTextureGenerator(Regen);
+				}
+			}
+		}
+	}
+
+	[MemberNotNull(nameof(Regen))]
+	private void CreateRegen(float width, float height, ImageFormat format) {
+		Assert(IsProcedural());
+		if (Regen == null)
+			Regen = new FontTextureRegen((int)width, (int)height, format);
+	}
+
+	private bool IsProcedural() {
+		return Flags.HasFlag(MatSystemTextureFlags.IsProcedural);
+	}
+
+	public void SetProcedural(bool proc) {
+		if (proc)
+			Flags |= MatSystemTextureFlags.IsProcedural;
+		else
+			Flags &= ~MatSystemTextureFlags.IsProcedural;
+	}
+
+	public ITexture? GetTextureValue() {
+		if (Material == null)
+			return null;
+
+		return OverrideTexture ?? Texture;
+	}
+
+	internal void SetSubTextureRGBAEx(int drawX, int drawY, Span<byte> rgba, int subTextureWide, int subTextureTall, ImageFormat format) {
+		ITexture? texture = GetTextureValue();
+		if (texture == null)
+			return;
+
+		Assert(IsProcedural());
+		if (!IsProcedural())
+			return;
+
+		Assert(drawX < Wide);
+		Assert(drawY < Tall);
+		Assert(drawX + subTextureWide <= Wide);
+		Assert(drawY + subTextureTall <= Tall);
+
+		Assert(Regen);
+
+		Assert(rgba != null);
+
+		Rectangle subRect = new();
+		subRect.X = drawX;
+		subRect.Y = drawY;
+		subRect.Width = subTextureWide;
+		subRect.Height = subTextureTall;
+
+		Rectangle textureSize = new();
+		textureSize.X = 0;
+		textureSize.Y = 0;
+		textureSize.Width = subTextureWide;
+		textureSize.Height = subTextureTall;
+
+		Regen!.UpdateBackingBits(subRect, rgba, textureSize, format);
+		texture.Download(subRect);
 	}
 }
+
 
 public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surface)
 {
@@ -52,13 +224,13 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 	}
 
 	internal void BindTextureToFile(in TextureID id, ReadOnlySpan<char> filename) {
-		if(!IsValidId(id, out MatSystemTexture? tex)) {
+		if (!IsValidId(id, out MatSystemTexture? tex)) {
 			Msg($"BindTextureToFile: Invalid texture id for file {filename}\n");
 			return;
 		}
 
 		ulong curhash = filename.Hash();
-		if(tex.Material == null || tex.Hash != curhash) {
+		if (tex.Material == null || tex.Hash != curhash) {
 			tex.Hash = curhash;
 			tex.SetMaterial(filename);
 		}
@@ -94,5 +266,13 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 		t0 = tex.T0;
 		s1 = tex.S1;
 		t1 = tex.T1;
+	}
+
+	internal void SetSubTextureRGBA(in TextureID id, int drawX, int drawY, Span<byte> rgba, int subTextureWide, int subTextureTall, ImageFormat format) {
+		if (!IsValidId(id, out MatSystemTexture? tex)) {
+			Msg($"SetSubTextureRGBA: Invalid texture id {id}\n");
+			return;
+		}
+		tex.SetSubTextureRGBAEx(drawX, drawY, rgba, subTextureWide, subTextureTall, format);
 	}
 }

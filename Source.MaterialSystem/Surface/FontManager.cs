@@ -20,83 +20,11 @@ public abstract class BaseFont
 	public abstract int GetHeight();
 	public abstract int GetMaxCharWidth();
 	public abstract bool IsEqualTo(ReadOnlySpan<char> fontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags);
-}
 
-public unsafe class FreeTypeFont : BaseFont
-{
-	internal static readonly FT_LibraryRec_* Library;
-	static FreeTypeFont() {
-		FT_Error error;
-		fixed (FT_LibraryRec_** outRec = &Library)
-			error = FT_Init_FreeType(outRec);
+	public abstract bool GetUnderlined();
 
-		if (error != 0)
-			throw new Exception("FT_Init_FreeType failed");
-	}
-
-	internal readonly FontManager fontManager;
-	internal readonly ISystem system;
-	public FreeTypeFont(FontManager fontManager, ISystem system) {
-		this.fontManager = fontManager;
-		this.system = system;
-	}
-	string? Name;
-	ulong Symbol;
-	short Tall;
-	ushort Weight;
-	SurfaceFontFlags Flags = 0;
-	ushort ScanLines;
-	ushort Blur;
-	bool Underlined;
-	uint Height;
-	uint MaxCharWidth;
-	uint Ascent;
-	uint DropShadowOffset;
-	uint OutlineSize;
-	bool AntiAliased;
-	bool Rotary;
-	bool Additive;
-
-	public override SurfaceFontFlags GetFlags() => Flags;
-	public override int GetHeight() => (int)Height;
-	public override int GetMaxCharWidth() => (int)MaxCharWidth;
-
-	public override bool IsEqualTo(ReadOnlySpan<char> fontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags) {
-		return fontName.Hash() == Symbol && Tall == tall && Weight == weight && ScanLines == scanlines && flags == Flags;
-	}
-
-	FT_FaceRec_* face;
-
-	public bool Create(ReadOnlySpan<char> fontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags) {
-		Name = new(fontName);
-		Symbol = fontName.Hash();
-		Tall = (short)tall;
-		Weight = (ushort)weight;
-		Flags = flags;
-		AntiAliased = flags.HasFlag(SurfaceFontFlags.Antialias);
-		Underlined = flags.HasFlag(SurfaceFontFlags.Underline);
-		DropShadowOffset = flags.HasFlag(SurfaceFontFlags.DropShadow) ? 1u : 0u;
-		OutlineSize = flags.HasFlag(SurfaceFontFlags.Outline) ? 1u : 0u;
-		Rotary = flags.HasFlag(SurfaceFontFlags.Rotary);
-		Additive = flags.HasFlag(SurfaceFontFlags.Additive);
-		Blur = (ushort)blur;
-		ScanLines = (ushort)scanlines;
-
-		FT_Error error;
-
-		byte* font = fontManager.GetFontBinary(fontName, out nint length);
-		if (font == null)
-			return false;
-
-		fixed (FT_FaceRec_** facePtr = &face)
-			error = FT_New_Memory_Face(Library, font, length, 0, facePtr);
-		if (error != FT_Error.FT_Err_Ok) { DevMsg($"Upcoming error info: {fontName}\n"); Assert(false); Warning($"FreeType error during new face initialization: {error}\n"); return false; }
-
-		error = FT_Set_Pixel_Sizes(face, 0, (uint)tall);
-		if (error != FT_Error.FT_Err_Ok) { Warning($"FreeType error during pixel size set: {error}\n"); return false; }
-
-		return true;
-	}
+	public abstract void GetCharABCwidths(char ch, out int a, out int b, out int c);
+	internal abstract void GetCharRGBA(char @char, int fontWide, int fontTall, Span<byte> pRGBA);
 }
 
 public record struct FontRange
@@ -113,12 +41,7 @@ public class FontAmalgam : IFont
 	int MaxWidth;
 	int MaxHeight;
 
-
-	public ReadOnlySpan<char> GetName() {
-		throw new NotImplementedException();
-	}
-
-	public void SetName(ReadOnlySpan<char> name) {
+		public void SetName(ReadOnlySpan<char> name) {
 		Name = new(name);
 	}
 
@@ -177,6 +100,25 @@ public class FontAmalgam : IFont
 
 		MaxHeight = Math.Max(font.GetHeight(), MaxHeight);
 		MaxWidth = Math.Max(font.GetMaxCharWidth(), MaxWidth);
+	}
+
+
+	public int GetFontHeight() {
+		if (Fonts.Count == 0)
+			return MaxHeight;
+
+		return Fonts[0].Font.GetHeight();
+	}
+
+	internal bool GetUnderlined() {
+		if (Fonts.Count == 0)
+			return false;
+
+		return Fonts[0].Font.GetUnderlined();
+	}
+
+	internal int GetFontMaxWidth() {
+		return MaxWidth;
 	}
 }
 
@@ -409,5 +351,38 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		CustomFontFiles[fontName.Hash()] = new(fontFileName);
 
 		return true;
+	}
+
+	internal int GetFontTall(IFont? font) => ((FontAmalgam?)font)!.GetFontHeight();
+	internal bool GetFontUnderlined(IFont font) => ((FontAmalgam?)font)!.GetUnderlined();
+
+	internal bool IsBitmapFont(IFont font) {
+		return false; // Todo
+	}
+
+	internal BaseFont? GetFontForChar(IFont font, char @char) {
+		return ((FontAmalgam?)font)!.GetFontForChar(@char);
+	}
+
+	internal void GetCharABCwide(IFont? font, char ch, out int a, out int b, out int c) {
+		if(font is not FontAmalgam amalgam) {
+			a = b = c = 0;
+			return;
+		}
+
+		BaseFont? baseFont = amalgam.GetFontForChar(ch);
+		if(baseFont != null)
+			baseFont.GetCharABCwidths(ch, out a, out b, out c);
+		else {
+			a = c = 0;
+			b = amalgam.GetFontMaxWidth();
+		}
+	}
+
+	internal int IsFontAdditive(IFont? font) {
+		if (font is not FontAmalgam amalgam)
+			return 0;
+
+		return amalgam.GetFlags(0).HasFlag(SurfaceFontFlags.Additive) ? 1 : 0;
 	}
 }

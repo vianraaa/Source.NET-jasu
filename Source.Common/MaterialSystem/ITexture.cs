@@ -35,9 +35,6 @@ public interface ITexture : IDisposable
 	void GetLowResColorSample(float s, float t, Span<float> color);
 	Span<byte> GetResourceData(uint type);
 
-	void IncrementReferenceCount();
-	void DecrementReferenceCount();
-
 	void SetTextureGenerator(ITextureRegenerator textureRegen);
 
 	// todo: enum for additionalCreationFlags, if applicable?

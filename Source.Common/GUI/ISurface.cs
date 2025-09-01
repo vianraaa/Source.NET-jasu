@@ -25,7 +25,8 @@ public enum FontDrawType
 {
 	Default,
 	NonAdditive,
-	Additive
+	Additive,
+	Count
 }
 
 public enum SurfaceFeature
@@ -77,14 +78,22 @@ public interface ISurface
 	void DrawLine(int x0, int y0, int x1, int y1);
 	void DrawPolyLine(Span<int> x, Span<int> y);
 
-	void DrawSetTextFont(IFont font);
+	void DrawSetTextFont(IFont? font);
 	void DrawSetTextColor(int r, int g, int b, int a);
 	void DrawSetTextColor(in Color color);
 	void DrawSetTextPos(int x, int y);
 	void DrawGetTextPos(out int x, out int y);
-	void DrawPrintText(Span<char> text, int textLen, FontDrawType drawType);
-
+	void DrawPrintText(ReadOnlySpan<char> text, FontDrawType drawType = FontDrawType.Default);
 	void DrawFlushText();
+
+	int GetFontTall(IFont? font);
+	int GetFontTallRequested(IFont? font);
+	int GetFontAscent(IFont? font, char ch);
+	int IsFontAdditive(IFont? font);
+	void GetCharABCwide(IFont? font, char ch, out int a, out int b, out int c);
+	int GetCharacterWidth(IFont? font, char ch);
+	void GetTextSize(IFont? font, ReadOnlySpan<char> text, out int wide, out int tall);
+
 
 	int DrawGetTextureId(ReadOnlySpan<char> filename);
 	bool DrawGetTextureFile(in TextureID id, out ReadOnlySpan<char> filename);
@@ -136,7 +145,6 @@ public interface ISurface
 	bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName);
 
 	int GetCharacterWidth(IFont font, int ch);
-	void GetTextSize(IFont font, ReadOnlySpan<char> text, out int wide, out int tall);
 
 	int GetPopupCount();
 	IPanel? GetPopup(int index);
