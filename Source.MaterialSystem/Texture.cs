@@ -935,7 +935,48 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private IVTFTexture ReconstructPartialProceduralBits(in Rectangle rect, out Rectangle vtfRect) {
-		throw new NotImplementedException();
+		bool ignorePicmip = (Flags & (uint)(CompiledVtfFlags.StagingMemory | CompiledVtfFlags.IgnorePicmip)) != 0;
+		ComputeActualSize(ignorePicmip);
+
+		int sizeFactor = 1;
+		int width = GetActualWidth();
+		if (width != 0) 
+			sizeFactor = GetMappingWidth() / width;
+		
+		int mipSkipCount = 0;
+		while (sizeFactor > 1) {
+			sizeFactor >>= 1;
+			++mipSkipCount;
+		}
+
+		ComputeMipLevelSubRect(in rect, mipSkipCount, out vtfRect);
+
+		IVTFTexture? vtfTexture = GetScratchVTFTexture();
+
+		vtfTexture.Init(DimsActual.Width, DimsActual.Height, DimsActual.Depth,
+			ComputeActualFormat(ImageFormat), (int)Flags, FrameCount);
+
+		if (TextureRegenerator != null) 
+			TextureRegenerator.RegenerateTextureBits(this, vtfTexture, vtfRect);
+		else 
+			materials.TextureSystem.GenerateErrorTexture(this, vtfTexture);
+		
+
+		return vtfTexture;
+	}
+
+	private void ComputeMipLevelSubRect(in Rectangle rect, int mipLevel, out Rectangle subRect) {
+		if (mipLevel == 0) {
+			subRect = rect;
+			return;
+		}
+
+		float flInvShrink = 1.0f / (float)(1 << mipLevel);
+		subRect = new();
+		subRect.X = (int)(rect.X * flInvShrink);
+		subRect.Y = (int)(rect.Y * flInvShrink);
+		subRect.Width = (int)MathF.Ceiling((rect.X + rect.Width) * flInvShrink) - rect.X;
+		subRect.Height = (int)MathF.Ceiling((rect.Y + rect.Height) * flInvShrink) - rect.Y;
 	}
 
 	internal void InitProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat format, CompiledVtfFlags flags, ITextureRegenerator? generator) {

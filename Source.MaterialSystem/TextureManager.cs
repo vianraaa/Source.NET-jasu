@@ -7,6 +7,7 @@ using Steamworks;
 
 using System.Drawing;
 
+using static Source.UnmanagedUtils;
 namespace Source.MaterialSystem;
 
 public class TextureManager : ITextureManager
@@ -34,10 +35,12 @@ public class TextureManager : ITextureManager
 		Color color = new();
 		Color color2 = new();
 
+
 		errorTexture = CreateProceduralTexture("error", TEXTURE_GROUP_OTHER, ERROR_TEXTURE_SIZE, ERROR_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
 		color.R = color.G = color.B = 0; color.A = 128;
 		color2.R = color2.B = color2.A = 255; color2.G = 0;
-		CreateCheckerboardTexture(errorTexture, 4, color, color2);
+		ErrorRegen = new CheckerboardTexture(4, color, color2);
+		errorTexture.SetTextureRegenerator(ErrorRegen);
 
 		whiteTexture = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
 		color.R = color.G = color.B = color.A = 255;
@@ -53,6 +56,7 @@ public class TextureManager : ITextureManager
 		=> tex.SetTextureRegenerator(new SolidTexture(color));
 
 	public ITextureInternal? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
+		name = name.SliceNullTerminatedString();
 		Texture newTexture = new(MaterialSystem);
 		newTexture.InitProceduralTexture(name, textureGroup, w, h, d, imageFormat, flags, generator);
 		if (newTexture == null)
@@ -118,5 +122,11 @@ public class TextureManager : ITextureManager
 
 	internal void FreeStandardRenderTargets() {
 
+	}
+
+	CheckerboardTexture ErrorRegen;
+
+	internal void GenerateErrorTexture(Texture texture, IVTFTexture vtfTexture) {
+		ErrorRegen.RegenerateTextureBits(texture, vtfTexture, default);
 	}
 }

@@ -1,6 +1,8 @@
 ﻿using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
+using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
@@ -106,7 +108,6 @@ public class FontTextureRegen : ITextureRegenerator
 public class MatSystemTexture(IMaterialSystem materials)
 {
 	public TextureID ID { get; set; }
-	public bool Procedural { get; set; }
 	public ulong Hash { get; set; }
 
 	public IMaterial? Material;
@@ -114,6 +115,8 @@ public class MatSystemTexture(IMaterialSystem materials)
 	public ITexture? OverrideTexture;
 	public MatSystemTextureFlags Flags;
 	public float Wide, Tall, S0, T0, S1, T1;
+	public int InputWide;
+	public int InputTall;
 	public FontTextureRegen? Regen;
 
 	public void SetMaterial(IMaterial? material) {
@@ -248,6 +251,70 @@ public class MatSystemTexture(IMaterialSystem materials)
 		Regen!.UpdateBackingBits(subRect, rgba, textureSize, format);
 		texture.Download(subRect);
 	}
+	static int textureID = 0;
+	internal void SetTextureRGBA(Span<byte> rgba, int wide, int tall, ImageFormat format, bool fixupTextCoords) {
+		Assert(IsProcedural());
+		if (!IsProcedural())
+			return;
+
+		if (Material == null) {
+			int width = wide;
+			int height = tall;
+
+			int i;
+			for (i = 0; i < 32; i++) {
+				width = 1 << i;
+				if (width >= wide) {
+					break;
+				}
+			}
+
+			for (i = 0; i < 32; i++) {
+				height = 1 << i;
+				if (height >= tall) {
+					break;
+				}
+			}
+			
+			Span<char> textureName = stackalloc char[64];
+			sprintf(textureName, "__vgui_texture_%d", textureID);
+			++textureID;
+
+			ITexture pTexture = materials.CreateProceduralTexture(
+				textureName,
+				TEXTURE_GROUP_VGUI,
+				width,
+				height,
+				format,
+				CompiledVtfFlags.ClampS | CompiledVtfFlags.ClampT |
+				CompiledVtfFlags.NoMip | CompiledVtfFlags.NoLOD |
+				CompiledVtfFlags.Procedural | CompiledVtfFlags.SingleCopy | CompiledVtfFlags.PointSample);
+
+			KeyValues vmtTKeyValues = new KeyValues("UnlitGeneric");
+			vmtTKeyValues.SetInt("$vertexcolor", 1);
+			vmtTKeyValues.SetInt("$vertexalpha", 1);
+			vmtTKeyValues.SetInt("$ignorez", 1);
+			vmtTKeyValues.SetInt("$no_fullbright", 1);
+			vmtTKeyValues.SetInt("$translucent", 1);
+			vmtTKeyValues.SetString("$basetexture", textureName);
+
+			IMaterial pMaterial = materials.CreateMaterial(textureName, vmtTKeyValues);
+			pMaterial.Refresh();
+
+			SetMaterial(pMaterial);
+			InputTall = tall;
+			InputWide = wide;
+			if (fixupTextCoords && (wide != width || tall != height)) {
+				S1 = (float)wide / width;
+				T1 = (float)tall / height;
+			}
+		}
+
+		Assert(wide <= Wide);
+		Assert(tall <= Tall);
+
+		SetSubTextureRGBAEx(0, 0, rgba, wide, tall, format );
+	}
 }
 
 
@@ -285,7 +352,7 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 	internal TextureID CreateTexture(bool procedural) {
 		long idx = this.idx++;
 		MatSystemTexture texture = new(materials);
-		texture.Procedural = procedural;
+		texture.SetProcedural(procedural);
 		texture.ID = idx;
 		Textures[idx] = texture;
 		return idx;
@@ -320,5 +387,13 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 			return;
 		}
 		tex.SetSubTextureRGBAEx(drawX, drawY, rgba, subTextureWide, subTextureTall, format);
+	}
+
+	internal void SetTextureRGBAEx(in TextureID id, Span<byte> rgba, int wide, int tall, ImageFormat format, bool fixupTextCoords) {
+		if (!IsValidId(id, out MatSystemTexture? tex)) {
+			Msg($"SetSubTextureRGBA: Invalid texture id {id}\n");
+			return;
+		}
+		tex.SetTextureRGBA(rgba, wide, tall, format, fixupTextCoords);
 	}
 }

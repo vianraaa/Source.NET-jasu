@@ -132,7 +132,7 @@ public abstract class BaseVSShader : BaseShader
 
 	private void SetDefaultBlendingShadowState(int baseTextureVar, bool isBaseTexture) {
 		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0)
-			throw new Exception();
+			SetNormalBlendingShadowState(baseTextureVar, isBaseTexture); // TODO: additive
 		else
 			SetNormalBlendingShadowState(baseTextureVar, isBaseTexture);
 	}

@@ -129,7 +129,31 @@ public unsafe class FreeTypeFont : BaseFont
 	}
 
 	private void DrawBitmap(in FT_Bitmap_ bitmap, int rgbaWide, int rgbaTall, Span<byte> rgba) {
-		throw new NotImplementedException();
+		byte* buffer = bitmap.buffer;
+		int bmpWidth = (int)bitmap.width;
+		int bmpHeight = (int)bitmap.rows;
+
+		int xOffset = 0;
+		int yOffset = 0;
+
+		for (int y = 0; y < bmpHeight; y++) {
+			for (int x = 0; x < bmpWidth; x++) {
+				int dstX = x + xOffset;
+				int dstY = y + yOffset;
+
+				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
+					continue;
+
+				// FreeType's bitmap is top-down
+				byte coverage = buffer[y * bitmap.pitch + x];
+
+				int dstIndex = (dstY * rgbaWide + dstX) * 4;
+				rgba[dstIndex + 0] = 255;     
+				rgba[dstIndex + 1] = 255;     
+				rgba[dstIndex + 2] = 255;     
+				rgba[dstIndex + 3] = coverage;
+			}
+		}
 	}
 
 	public override bool GetUnderlined() {

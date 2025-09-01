@@ -170,7 +170,7 @@ public class Material : IMaterialInternal
 	private void FindRepresentativeTexture() {
 		Precache();
 		bool found;
-		IMaterialVar? textureVar = FindVar($"baseTexture", out found, false);
+		IMaterialVar? textureVar = FindVar("$basetexture", out found, false);
 		if (found && textureVar.GetVarType() == MaterialVarType.Texture) {
 			ITextureInternal? texture = (ITextureInternal?)textureVar.GetTextureValue();
 			if (representativeTexture != null)

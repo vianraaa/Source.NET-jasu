@@ -465,8 +465,8 @@ public class MatSystemSurface : IMatSystemSurface
 		DrawSetTexture(id);
 	}
 
-	public void DrawSetTextureRGBA(in TextureID id, Span<byte> rgba, int wide, int tall, int hardwareFilter, bool forceReload) {
-		throw new NotImplementedException();
+	public void DrawSetTextureRGBA(in TextureID id, Span<byte> rgba, int wide, int tall, int a, bool b) {
+		TextureDictionary.SetTextureRGBAEx(in id, rgba, wide, tall, ImageFormat.RGBA8888, false);
 	}
 
 	public void DrawTexturedRect(int x0, int y0, int x1, int y1) {
