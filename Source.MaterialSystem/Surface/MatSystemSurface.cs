@@ -17,6 +17,7 @@ using Source.GUI.Controls;
 using System.ComponentModel;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 using static Source.Dbg;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
@@ -418,8 +419,113 @@ public class MatSystemSurface : IMatSystemSurface
 			if(!char.IsWhiteSpace(ch) || underlined) {
 				if (!FontTextureCache.GetTextureForChar(CurrentFont, drawType, ch, texID, texCoords))
 					continue;
+
+				if (texID[0] != lastTexId) {
+					if (count != 0) {
+						IMaterial material = TextureDictionary.GetTextureMaterial(lastTexId)!;
+						InternalSetMaterial(material);
+						DrawQuadArray(count, quads, DrawTextColor);
+						count = 0;
+					}
+
+					lastTexId = texID[0];
+				}
+
+				ref SurfaceVertex ul = ref quads[2 * count];
+				ref SurfaceVertex lr = ref quads[2 * count + 1];
+				++count;
+
+				ul.Position.X = x + totalWidth + MathF.Floor(abcA + 0.6f);
+				ul.Position.Y = y;
+				lr.Position.X = ul.Position.X + textureWide;
+				lr.Position.Y = ul.Position.Y + tall;
+
+				ul.TexCoord[0] = texCoords[0].X0;
+				ul.TexCoord[1] = texCoords[0].Y0;
+				lr.TexCoord[0] = texCoords[0].X1;
+				lr.TexCoord[1] = texCoords[0].Y1;
 			}
 		}
+
+		if (count != 0) {
+			IMaterial material = TextureDictionary.GetTextureMaterial(lastTexId)!;
+			InternalSetMaterial(material);
+			DrawQuadArray(count, quads, DrawTextColor);
+			count = 0;
+		}
+
+		TextPosX += totalWidth;
+	}
+
+	private void DrawQuadArray(int quadCount, Span<SurfaceVertex> verts, in Color color, bool shouldClip = true) {
+		Assert(!In3DPaintMode);
+
+		if (Mesh == null)
+			return;
+
+		meshBuilder.Begin(Mesh, MaterialPrimitiveType.Quads, quadCount);
+
+		SurfaceVertex ulc;
+		SurfaceVertex lrc;
+		
+		if (shouldClip) {
+			for (int i = 0; i < quadCount; ++i) {
+				if (!ClipRect(verts[2 * i], verts[2 * i + 1], out ulc, out lrc)) {
+					continue;
+				}
+				ref SurfaceVertex pulc = ref ulc;
+				ref SurfaceVertex plrc = ref lrc;
+
+				meshBuilder.Position3f(pulc.Position.X, pulc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, pulc.TexCoord.X, pulc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(plrc.Position.X, pulc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, plrc.TexCoord.X, pulc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(plrc.Position.X, plrc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, plrc.TexCoord.X, plrc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(pulc.Position.X, plrc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, pulc.TexCoord.X, plrc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+			}
+		}
+		else {
+			for (int i = 0; i < quadCount; ++i) {
+				ref SurfaceVertex pulc = ref verts[2 * i];
+				ref SurfaceVertex plrc = ref verts[2 * i + 1];
+
+				meshBuilder.Position3f(pulc.Position.X, pulc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, pulc.TexCoord.X, pulc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(plrc.Position.X, pulc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, plrc.TexCoord.X, pulc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(plrc.Position.X, plrc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, plrc.TexCoord.X, plrc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+
+				meshBuilder.Position3f(pulc.Position.X, plrc.Position.Y, zPos);
+				meshBuilder.Color4ubv(color);
+				meshBuilder.TexCoord2f(0, pulc.TexCoord.X, plrc.TexCoord.Y);
+				meshBuilder.AdvanceVertex();
+			}
+		}
+
+		meshBuilder.End();
+		Mesh.Draw();
 	}
 
 	public int GetFontTall(IFont? font) {
