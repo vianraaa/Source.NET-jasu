@@ -117,7 +117,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new NotImplementedException();
 	}
 
-	public void SetTextureRegenerator(ITextureRegenerator textureRegen) {
+	public void SetTextureRegenerator(ITextureRegenerator? textureRegen) {
 		TextureRegenerator = textureRegen;
 	}
 
@@ -965,10 +965,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	ITextureRegenerator? TextureRegenerator;
-
-	private void SetTextureRegenerator(ITextureRegenerator? generator) {
-		TextureRegenerator = generator;
-	}
 
 	public void OnRestore() {
 
