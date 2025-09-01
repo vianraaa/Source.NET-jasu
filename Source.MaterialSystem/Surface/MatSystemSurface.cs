@@ -84,12 +84,12 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine,
 							ISchemeManager schemeManager, IFileSystem fileSystem, ClientGlobalVariables globals,
-							IServiceProvider services, IInputSystem inputSystem) {
+							IServiceProvider services, IInputSystem inputSystem, ISystem system) {
 		this.materials = materials;
 		this.services = services;
 		this.TextureDictionary = new(materials, this);
 		this.FileSystem = fileSystem;
-		this.FontManager = new FontManager(materials, fileSystem);
+		this.FontManager = new FontManager(materials, fileSystem, system, this);
 		this.InputSystem = inputSystem;
 		this.globals = globals;
 		CommandLine = commandLine;
@@ -407,7 +407,7 @@ public class MatSystemSurface : IMatSystemSurface
 	TextureID BoundTexture;
 
 	public void DrawSetTexture(in TextureID id) {
-		if(id != BoundTexture) {
+		if (id != BoundTexture) {
 			DrawFlushText();
 			BoundTexture = id;
 		}
@@ -472,8 +472,12 @@ public class MatSystemSurface : IMatSystemSurface
 		return 0; // PopupList.Count;
 	}
 
+	const int BASE_WIDTH = 640;
+	const int BASE_HEIGHT = 480;
+
 	public void GetProportionalBase(out int width, out int height) {
-		throw new NotImplementedException();
+		width = BASE_WIDTH;
+		height = BASE_HEIGHT;
 	}
 
 	public void GetScreenSize(out int wide, out int tall) {
@@ -714,7 +718,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 		panel.GetClipRect(out clipRect[0], out clipRect[1], out clipRect[2], out clipRect[3]);
 
-		
+
 		ref PaintState paintState = ref PaintStateStack.Push();
 		paintState.Panel = panel;
 
@@ -909,7 +913,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool SetFontGlyphSet(IFont font, ReadOnlySpan<char> windowsFontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags, int rangeMin = 0, int rangeMax = 0) {
-		throw new NotImplementedException();
+		return FontManager.SetFontGlyphSet(font, windowsFontName, tall, weight, blur, scanlines, flags, rangeMin, rangeMax);
 	}
 
 	public void SetForegroundWindow(IPanel panel) {
@@ -981,7 +985,10 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool SupportsFeature(SurfaceFeature feature) {
-		throw new NotImplementedException();
+		switch (feature) {
+			default:
+				return false; // Most things arent implemented yet...
+		}
 	}
 
 	public void SurfaceGetCursorPos(out int x, out int y) {
@@ -1080,5 +1087,13 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public void EnableWindowsMessages(bool enabled) {
 
+	}
+
+	public bool GetBitmapFontName(ReadOnlySpan<char> name) {
+		throw new NotImplementedException();
+	}
+
+	public void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags) {
+		throw new NotImplementedException();
 	}
 }

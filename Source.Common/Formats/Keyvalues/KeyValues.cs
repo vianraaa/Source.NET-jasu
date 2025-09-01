@@ -389,15 +389,45 @@ public class KeyValues : IEnumerable<KeyValues>
 	public int GetInt(ReadOnlySpan<char> key, int defaultValue = default) {
 		var keyob = FindKey(key);
 
-		if (keyob == null) 
+		if (keyob == null)
 			return defaultValue;
 
-		return keyob.Value is int i 
-			? i 
-			: keyob.Value is string str 
-				? int.TryParse(str, out int r) 
-					? r 
-					: defaultValue 
+		return keyob.Value is int i
+			? i
+			: keyob.Value is string str
+				? int.TryParse(str, out int r)
+					? r
+					: defaultValue
+				: defaultValue;
+	}
+
+	public float GetFloat(ReadOnlySpan<char> key, float defaultValue = default) {
+		var keyob = FindKey(key);
+
+		if (keyob == null)
+			return defaultValue;
+
+		return Convert.ToSingle(keyob.Value is double i
+			? i
+			: keyob.Value is string str
+				? double.TryParse(str, out double r)
+					? r
+					: defaultValue
+				: defaultValue);
+	}
+
+	public double GetDouble(ReadOnlySpan<char> key, double defaultValue = default) {
+		var keyob = FindKey(key);
+
+		if (keyob == null)
+			return defaultValue;
+
+		return keyob.Value is double i
+			? i
+			: keyob.Value is string str
+				? double.TryParse(str, out double r)
+					? r
+					: defaultValue
 				: defaultValue;
 	}
 

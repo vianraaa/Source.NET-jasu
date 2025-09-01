@@ -13,10 +13,17 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.GUI;
 
+public record struct FontRange
+{
+	public int Min;
+	public int Max;
+}
+
 public class Scheme : IScheme
 {
 	[Imported] public ISystem System;
 	[Imported] public ISurface Surface;
+	[Imported] public ISchemeManager SchemeManager;
 	IPanel SizingPanel;
 	KeyValues Data;
 	KeyValues BaseSettings;
@@ -27,10 +34,12 @@ public class Scheme : IScheme
 
 	struct FontAlias
 	{
+		public string TrueFontName;
 		public ulong TrueFontSymbol;
 		public IFont Font;
 		public bool Proportional;
 	}
+
 	Dictionary<ulong, FontAlias> FontAliases = [];
 
 	public IBorder? GetBorder(ReadOnlySpan<char> borderName) {
@@ -160,6 +169,7 @@ public class Scheme : IScheme
 				IFont font = Surface.CreateFont();
 
 				FontAlias alias = new();
+				alias.TrueFontName = new(kv.Name);
 				alias.TrueFontSymbol = kv.Name.Hash();
 				alias.Font = font;
 				alias.Proportional = proportionalFont;
@@ -181,14 +191,181 @@ public class Scheme : IScheme
 		return mungeBuffer;
 	}
 
-	private void ReloadFontGlyphs() {
+	int ScreenWide, ScreenTall;
 
+	private void ReloadFontGlyphs() {
+		if (SizingPanel != null) {
+			SizingPanel.GetSize(out ScreenWide, out ScreenTall);
+		}
+		else {
+			Surface.GetScreenSize(out ScreenWide, out ScreenTall);
+		}
+
+		int minimumFontHeight = GetMinimumFontHeightForCurrentLanguage();
+
+		KeyValues fonts = Data.FindKey("Fonts", true)!;
+		foreach (var kvp in FontAliases) {
+			ulong k = kvp.Key;
+			FontAlias v = kvp.Value;
+
+			KeyValues kv = fonts.FindKey(v.TrueFontName, true)!;
+
+			for (KeyValues? fontdata = kv.GetFirstSubKey(); fontdata != null; fontdata = fontdata.GetNextKey()) {
+				new ScanF(fontdata.GetString(), "%d %d")
+					.Read(out int fontYResMin)
+					.Read(out int fontYResMax);
+				if (fontYResMin > 0) {
+					if (fontYResMax == 0)
+						fontYResMax = fontYResMin;
+
+					if (ScreenTall < fontYResMin || ScreenTall > fontYResMax)
+						continue;
+				}
+
+				SurfaceFontFlags flags = 0;
+				if (fontdata.GetInt("italic") != 0)
+					flags |= SurfaceFontFlags.Italic;
+				if (fontdata.GetInt("underline") != 0)
+					flags |= SurfaceFontFlags.Underline;
+				if (fontdata.GetInt("strikeout") != 0)
+					flags |= SurfaceFontFlags.Strikeout;
+				if (fontdata.GetInt("symbol") != 0)
+					flags |= SurfaceFontFlags.Symbol;
+				if (fontdata.GetInt("antialias") != 0 && Surface.SupportsFeature(SurfaceFeature.AntialiasedFonts))
+					flags |= SurfaceFontFlags.Antialias;
+				if (fontdata.GetInt("dropshadow") != 0 && Surface.SupportsFeature(SurfaceFeature.DropShadowFonts))
+					flags |= SurfaceFontFlags.DropShadow;
+				if (fontdata.GetInt("outline") != 0 && Surface.SupportsFeature(SurfaceFeature.OutlineFonts))
+					flags |= SurfaceFontFlags.Outline;
+				if (fontdata.GetInt("custom") != 0)
+					flags |= SurfaceFontFlags.Custom;
+				if (fontdata.GetInt("bitmap") != 0)
+					flags |= SurfaceFontFlags.Bitmap;
+				if (fontdata.GetInt("rotary") != 0)
+					flags |= SurfaceFontFlags.Rotary;
+				if (fontdata.GetInt("additive") != 0)
+					flags |= SurfaceFontFlags.Additive;
+
+				int tall = fontdata.GetInt("tall");
+				int blur = fontdata.GetInt("blur");
+				int scanlines = fontdata.GetInt("scanlines");
+				float scalex = fontdata.GetFloat("scalex", 1.0f);
+				float scaley = fontdata.GetFloat("scaley", 1.0f);
+
+				// only grow this font if it doesn't have a resolution filter specified
+				if ((fontYResMin == 0 && fontYResMax == 0) && v.Proportional) {
+					tall = GetProportionalScaledValueEx(tall);
+					blur = GetProportionalScaledValueEx(blur);
+					scanlines = GetProportionalScaledValueEx(scanlines);
+					scalex = GetProportionalScaledValueEx((int)(scalex * 10000.0f)) * 0.0001f;
+					scaley = GetProportionalScaledValueEx((int)(scaley * 10000.0f)) * 0.0001f;
+				}
+
+				// clip the font size so that fonts can't be too big
+				if (tall > 127) {
+					tall = 127;
+				}
+
+				// check our minimum font height
+				if (tall < minimumFontHeight) {
+					tall = minimumFontHeight;
+				}
+
+				if (flags.HasFlag(SurfaceFontFlags.Bitmap)) {
+					// add the new set
+					Surface.SetBitmapFontGlyphSet(
+						v.Font,
+						Surface.GetBitmapFontName(fontdata.GetString("name")),
+						scalex,
+						scaley,
+						flags);
+				}
+				else {
+					int nRangeMin, nRangeMax;
+
+					if (GetFontRange(fontdata.GetString("name"), out int rangeMin, out int rangeMax)) {
+						// add the new set
+						Surface.SetFontGlyphSet(
+							v.Font,
+							fontdata.GetString("name"),
+							tall,
+							fontdata.GetInt("weight"),
+							blur,
+							scanlines,
+							flags,
+							rangeMin,
+							rangeMax);
+					}
+					else {
+						// add the new set
+						Surface.SetFontGlyphSet(
+							v.Font,
+							fontdata.GetString("name"),
+							tall,
+							fontdata.GetInt("weight"),
+							blur,
+							scanlines,
+							flags);
+					}
+				}
+
+				// don't add any more
+				break;
+			}
+		}
 	}
 
-	record struct FontRange
-	{
-		public int Min;
-		public int Max;
+	private bool GetFontRange(ReadOnlySpan<char> font, out int rangeMin, out int rangeMax) {
+		if (FontRanges.TryGetValue(font.Hash(), out FontRange range)) {
+			rangeMin = range.Min;
+			rangeMax = range.Max;
+			return true;
+		}
+
+		rangeMin = 0;
+		rangeMax = 0;
+		return false;
+	}
+
+	private int GetProportionalScaledValueEx(int normalized) {
+		var sizing = SizingPanel;
+		if (sizing == null)
+			return GetProportionalScaledValue(normalized);
+
+		sizing.GetSize(out int w, out int h);
+		return GetProportionalScaledValue_(w, h, normalized);
+	}
+
+	private int GetProportionalScaledValue(int normalized) {
+		Surface.GetScreenSize(out int wide, out int tall);
+		return GetProportionalScaledValue_(wide, tall, normalized);
+	}
+
+	private int GetProportionalScaledValue_(int w, int rootTall, int normalized) {
+		Surface.GetProportionalBase(out int proW, out int proH);
+		float scale = (float)rootTall / proH;
+
+		return (int)(normalized * scale);
+	}
+
+	private int GetMinimumFontHeightForCurrentLanguage() {
+		Span<char> language = stackalloc char[64];
+		bool valid = System.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
+		ReadOnlySpan<char> lang = language.SliceNullTerminatedString();
+
+		if (valid) {
+			if (lang.Equals("korean", StringComparison.OrdinalIgnoreCase)
+				|| lang.Equals("tchinese", StringComparison.OrdinalIgnoreCase)
+				|| lang.Equals("schinese", StringComparison.OrdinalIgnoreCase)
+				|| lang.Equals("japanese", StringComparison.OrdinalIgnoreCase)
+			)
+				return 13;
+
+			if (lang.Equals("thai", StringComparison.OrdinalIgnoreCase))
+				return 18;
+		}
+
+		return 0;
 	}
 
 	Dictionary<ulong, FontRange> FontRanges = [];

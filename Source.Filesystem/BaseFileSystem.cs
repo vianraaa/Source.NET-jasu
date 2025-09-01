@@ -11,214 +11,6 @@ using System.IO;
 
 namespace Source.FileSystem;
 
-public class DiskFileHandle(IBaseFileSystem filesystem, FileStream data) : IFileHandle, IDisposable
-{
-	private bool disposedValue;
-
-	public Stream Stream => data;
-
-	protected virtual void Dispose(bool disposing) {
-		if (!disposedValue && disposing)
-			data.Dispose();
-	}
-
-	public void Dispose() {
-		Dispose(disposing: true);
-		GC.SuppressFinalize(this);
-	}
-
-	public bool IsOK() => !disposedValue && data != null;
-}
-
-public abstract class SearchPath
-{
-	public string? DiskPath { get; private set; }
-	public void SetPath(ReadOnlySpan<char> diskPath) {
-		DiskPath = new(diskPath);
-	}
-
-	public abstract bool Exists(ReadOnlySpan<char> path); // Returns if the file or directory exists
-	public abstract bool IsDirectory(ReadOnlySpan<char> path); // Returns true if the path is a directory
-	public abstract bool IsFileWritable(ReadOnlySpan<char> path); // Returns true if the path can be written to
-	public abstract IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options); // Can return null if something went wrong
-	public abstract bool RemoveFile(ReadOnlySpan<char> path); // Return true if the file was deleted
-	public abstract bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath); // Renames a single file, returns true if it worked
-	public abstract bool SetFileWritable(ReadOnlySpan<char> path, bool writable); // Determines if the file is writable
-	public abstract long Size(ReadOnlySpan<char> path); // Gets the size of a file
-	/// <summary>
-	/// Gets the last modified time of a file (UTC)
-	/// </summary>
-	/// <param name="path"></param>
-	/// <returns></returns>
-	public abstract DateTime Time(ReadOnlySpan<char> path);
-	internal abstract ReadOnlySpan<char> GetPathString();
-	internal abstract object? GetPackFile();
-	internal abstract object? GetPackedStore();
-}
-
-public class SearchPathCollection : List<SearchPath>
-{
-	/// <summary>
-	/// Defines whether the search path ID is searchable when pathID == null in queries.
-	/// </summary>
-	public bool RequestOnly { get; set; } = false;
-}
-
-public class SearchPathIDCollection : Dictionary<ulong, SearchPathCollection>
-{
-	List<ulong> pathOrder = [];
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="pathID"></param>
-	/// <param name="collection"></param>
-	/// <returns>True if the collection was created, false if it already existed.</returns>
-	public bool OpenOrCreateCollection(in ReadOnlySpan<char> pathID, out SearchPathCollection collection) {
-		ulong hashID = pathID.Hash();
-		if (TryGetValue(hashID, out var c)) {
-			collection = c;
-			return false;
-		}
-
-		collection = new();
-		this[hashID] = collection;
-		pathOrder.Add(hashID);
-		return true;
-	}
-
-	public new bool Remove(in ReadOnlySpan<char> pathID) {
-		ulong hashID = pathID.Hash();
-
-		base.Remove(hashID);
-		return pathOrder.Remove(hashID);
-	}
-
-	public new void Clear() {
-		base.Clear();
-		pathOrder.Clear();
-	}
-}
-
-
-public class DiskSearchPath : SearchPath
-{
-	private IBaseFileSystem parent;
-	public DiskSearchPath(IBaseFileSystem filesystem, string absPath) {
-		parent = filesystem;
-
-		if (!Path.IsPathFullyQualified(absPath))
-			absPath = Path.GetFullPath(absPath);
-
-		SetPath(absPath);
-	}
-
-	private string GetAbsPath(ReadOnlySpan<char> relPath) => Path.Combine(DiskPath!, new(relPath));
-
-	public override bool Exists(ReadOnlySpan<char> path) => Path.Exists(GetAbsPath(path));
-	public override bool IsDirectory(ReadOnlySpan<char> path) => Directory.Exists(GetAbsPath(path));
-
-	public override bool IsFileWritable(ReadOnlySpan<char> path) {
-		var info = new FileInfo(GetAbsPath(path));
-		return info.Exists && !info.IsReadOnly;
-	}
-
-	public override IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options) {
-		string absPath = GetAbsPath(path);
-		var info = new FileInfo(absPath);
-
-		// Scram early if the file doesn't even exist
-		if (!info.Exists) return null;
-
-		// Check file options for invalid access
-		FileOpenOptions operation = options.GetOperation();
-		if (operation == FileOpenOptions.Write && info.IsReadOnly)
-			return null;
-
-		// Open the file stream
-		FileMode mode = operation switch {
-			FileOpenOptions.Read => FileMode.Open,
-			FileOpenOptions.Write => FileMode.Create,
-			FileOpenOptions.Append => FileMode.Append,
-			_ => throw new NotSupportedException()
-		};
-
-		FileAccess access = options.Extended() ? FileAccess.ReadWrite : operation switch {
-			FileOpenOptions.Read => FileAccess.Read,
-			FileOpenOptions.Write => FileAccess.Write,
-			FileOpenOptions.Append => FileAccess.Write,
-			_ => throw new NotSupportedException()
-		};
-
-		try {
-			return new DiskFileHandle(parent, File.Open(absPath, mode, access));
-		}
-		catch {
-			return null;
-		}
-	}
-
-	public override bool RemoveFile(ReadOnlySpan<char> path) {
-		var absPath = GetAbsPath(path);
-		var info = new FileInfo(absPath);
-		if (!info.Exists) return false;
-		if (info.IsReadOnly) return false;
-
-		try {
-			info.Delete();
-		}
-		catch {
-			return false;
-		}
-
-		return true;
-	}
-
-	public override bool RenameFile(ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath) {
-		var absPath = GetAbsPath(oldPath);
-		var info = new FileInfo(absPath);
-		if (!info.Exists) return false;
-		if (info.IsReadOnly) return false;
-
-		try {
-			info.MoveTo(GetAbsPath(newPath));
-		}
-		catch {
-			return false;
-		}
-
-		return true;
-	}
-
-	// Do nothing
-	public override bool SetFileWritable(ReadOnlySpan<char> path, bool writable) => false;
-
-	public override long Size(ReadOnlySpan<char> path) {
-		var absPath = GetAbsPath(path);
-		var info = new FileInfo(absPath);
-		if (!info.Exists) return -1;
-
-		return info.Length;
-	}
-
-	public override DateTime Time(ReadOnlySpan<char> path) {
-		var absPath = GetAbsPath(path);
-		var info = new FileInfo(absPath);
-		if (!info.Exists) return DateTime.UnixEpoch;
-
-		return info.LastWriteTimeUtc;
-	}
-
-	internal override ReadOnlySpan<char> GetPathString() => DiskPath;
-
-	internal override object? GetPackFile() {
-		return null;
-	}
-
-	internal override object? GetPackedStore() {
-		return null;
-	}
-}
-
 // Maybe we redo this one day...
 public class BaseFileSystem : IFileSystem
 {
@@ -324,6 +116,12 @@ public class BaseFileSystem : IFileSystem
 		}
 		winner = null;
 		return loseDefault;
+	}
+	public ReadOnlySpan<char> RelativePathToFullPath(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID, Span<char> dest, PathTypeFilter filter = PathTypeFilter.None) {
+		if (!FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? winner))
+			return null;
+
+		return winner.Concat(fileName);
 	}
 
 	private static bool boolWin(bool inp) => inp;
@@ -485,4 +283,5 @@ public class BaseFileSystem : IFileSystem
 	public void GetLocalCopy(ReadOnlySpan<char> path) {
 
 	}
+
 }

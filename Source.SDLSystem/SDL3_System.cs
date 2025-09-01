@@ -1,6 +1,8 @@
 ﻿using Source.Common.Formats.Keyvalues;
 using Source.Common.Input;
 using Source.Common.Launcher;
+using System.Text.RegularExpressions;
+
 
 #if WIN32
 using Microsoft.Win32;
@@ -67,20 +69,22 @@ public unsafe class SDL3_System : ISystem
 	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "WIN32 constant handle thsi")]
-	public bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value) {
 #if WIN32
+	public bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value) {
 		string path = new(key);
 		string fullPath = Path.GetDirectoryName(path)!;
 		string valueName = Path.GetFileName(path);
 		string? regValue = Registry.GetValue(fullPath, valueName, null) as string;
-		if(regValue == null) {
+		if (regValue == null) {
 			return false;
 		}
 
 		regValue.CopyTo(value);
 		return true;
-#endif
 	}
+#else
+#error Please implement System.GetRegistryString for this platform
+#endif
 
 	public bool GetShortcutTarget(ReadOnlySpan<char> linkFileName, Span<char> targetPath, Span<char> arguments) {
 		throw new NotImplementedException();
@@ -109,7 +113,7 @@ public unsafe class SDL3_System : ISystem
 	double FrameTime;
 
 	public void RunFrame() {
-		FrameTime = GetCurrentTime();	
+		FrameTime = GetCurrentTime();
 	}
 
 	public void SaveUserConfigFile() {
@@ -147,4 +151,33 @@ public unsafe class SDL3_System : ISystem
 	public void ShellExecuteEx(ReadOnlySpan<char> command, ReadOnlySpan<char> file, ReadOnlySpan<char> pParams) {
 		throw new NotImplementedException();
 	}
+
+#if WIN32
+#pragma warning disable CA1416 // Validate platform compatibility (WIN32 ifdef catches this instead)
+	static string[] possibleKeys = [@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Fonts"];
+	public ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName) {
+		foreach (var keyPath in possibleKeys) {
+			using var baseKey = Registry.LocalMachine.OpenSubKey(keyPath, false);
+			if (baseKey is null) 
+				continue;
+
+			foreach (var valueName in baseKey.GetValueNames()) {
+				var normalized = Regex.Replace(valueName, @"\s*\(.*?\)$", "").Trim();
+				if (fontName.Equals(normalized, StringComparison.OrdinalIgnoreCase)) {
+					var fontFile = baseKey.GetValue(valueName)?.ToString();
+					if (string.IsNullOrEmpty(fontFile)) 
+						continue;
+
+					return Path.IsPathRooted(fontFile)
+						? fontFile
+						: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), fontFile);
+				}
+			}
+		}
+		return null;
+	}
+#pragma warning restore CA1416 // Validate platform compatibility
+#else
+#error Please implement System.GetSystemFontPath for this platform
+#endif
 }

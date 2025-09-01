@@ -56,6 +56,7 @@ public enum SurfaceFontFlags
 	Bitmap = 0x800,
 }
 
+
 public delegate void VGuiPlayFunc(ReadOnlySpan<char> fileName);
 public interface ISurface
 {
@@ -130,6 +131,7 @@ public interface ISurface
 
 	IFont CreateFont();
 
+	bool GetBitmapFontName(ReadOnlySpan<char> name);
 	bool SetFontGlyphSet(IFont font, ReadOnlySpan<char> windowsFontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags, int rangeMin = 0, int rangeMax = 0);
 	bool AddCustomFontFile(ReadOnlySpan<char> fontName, ReadOnlySpan<char> fontFileName);
 
@@ -169,6 +171,7 @@ public interface ISurface
 	float DrawGetAlphaMultiplier();
 	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
 	void OffsetAbsPos(ref int x, ref int y);
+	void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags);
 }
 
 public interface IMatSystemSurface : ISurface {

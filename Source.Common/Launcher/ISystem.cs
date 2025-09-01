@@ -59,4 +59,11 @@ public interface ISystem
 	// Dimensions of the copied rectangle are (x2 - x1) x (y2 - y1)
 	// Pixel at (x1,y1) is copied, pixels at column x2 and row y2 are *not* copied
 	void SetClipboardImage(IWindow wnd, int x1, int y1, int x2, int y2);
+
+	/// <summary>
+	/// Makes an attempt to query the operating system for an installed font's filepath.
+	/// </summary>
+	/// <param name="fontName"></param>
+	/// <returns></returns>
+	ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName);
 }

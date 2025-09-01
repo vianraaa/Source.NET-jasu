@@ -160,6 +160,20 @@ public static class ClassUtils
 
 public static class UnmanagedUtils
 {
+	public static void SliceNullTerminatedStringInPlace(this ref Span<char> span) {
+		int index = span.IndexOf('\0');
+		if (index == -1)
+			return;
+		span = span[..index];
+	}
+
+	public static ReadOnlySpan<char> SliceNullTerminatedString(this ref Span<char> span) {
+		int index = span.IndexOf('\0');
+		if (index == -1)
+			return span;
+		return span[..index];
+	}
+
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
 		while (list.Count < ensureTo) {
 			list.Add(new T());

@@ -14,12 +14,12 @@
 		<Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/ShaderUsings.cs" />
 	</ItemGroup>
 	<ItemGroup>
+	  <PackageReference Include="FreeTypeSharp" Version="3.0.1" />
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\Dependencies\OpenGL\OpenGL46.csproj" />
 		<ProjectReference Include="..\Source.Bitmap\Source.Bitmap.csproj" />
 		<ProjectReference Include="..\Source.Common\Source.Common.csproj" />
 		<ProjectReference Include="..\Source.GUI.Controls\Source.GUI.Controls.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-	  <PackageReference Include="SharpFont" Version="4.0.1" />
 	</ItemGroup>
 </Project>
