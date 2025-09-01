@@ -401,6 +401,8 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 			}
 			string nameManaged = Encoding.ASCII.GetString(name, (int)len);
 			fontName = nameManaged;
+			// don't leave a dead copy lying around
+			FT_Done_Face(face);
 		}
 
 		// Register the custom font file
