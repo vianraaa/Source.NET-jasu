@@ -109,8 +109,8 @@ public class BasePanel : Panel
 		}
 
 		Surface.DrawSetTextFont(FontTest);
-		Surface.DrawSetTextPos(820, 120);
-		Surface.DrawPrintText("Hello ISurface!");
+		Surface.DrawSetTextPos(300, 120);
+		Surface.DrawPrintText("HALF-LIFE 4");
 	}
 
 	Vector2 GameMenuPos;
@@ -132,7 +132,7 @@ public class BasePanel : Panel
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
 
-		FontTest = scheme.GetFont("Default");
+		FontTest = scheme.GetFont("TitleFont");
 
 		Surface.GetScreenSize(out int screenWide, out int screenTall);
 		float aspectRatio = (float)screenWide / screenTall;

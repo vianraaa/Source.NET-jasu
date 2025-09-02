@@ -348,7 +348,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		}
 
 		// Register the custom font file
-		CustomFontFiles[fontName.Hash()] = new(fontFileName);
+		CustomFontFiles[fontName.Hash()] = new(fontFilepath);
 
 		return true;
 	}
