@@ -385,4 +385,12 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 
 		return amalgam.GetFlags(0).HasFlag(SurfaceFontFlags.Additive) ? 1 : 0;
 	}
+
+	internal int GetCharacterWidth(IFont? font, char ch) {
+		if (!char.IsControl(ch)) {
+			GetCharABCwide(font, ch, out int a, out int b, out int c);
+			return a + b + c;
+		}
+		return 0;
+	}
 }

@@ -93,7 +93,7 @@ public abstract class BaseVSShader : BaseShader
 		IMaterialVar[] shaderParams = Params!;
 
 		bool bBaseTexture = (baseTextureVar >= 0) && shaderParams[baseTextureVar].IsTexture();
-
+		bool bVertexColor = IsFlagSet(Params, MaterialVarFlags.VertexColor);
 		if (IsSnapshotting()) {
 			ShaderShadow.EnableAlphaTest(IsFlagSet(shaderParams, MaterialVarFlags.AlphaTest));
 			if (alphaTestReferenceVar != -1 && shaderParams[alphaTestReferenceVar].GetFloatValue() > 0.0f)
@@ -108,7 +108,7 @@ public abstract class BaseVSShader : BaseShader
 			ShaderShadow.SetVertexShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Vertex)}");
 			ShaderShadow.SetPixelShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
 
-			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | VertexFormat.Color, 1, null, 0);
+			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | (bVertexColor ? VertexFormat.Color : 0), 1, null, 0);
 			SetStandardShaderUniforms();
 
 			DevMsg("UnlitGeneric snapshotted!\n");

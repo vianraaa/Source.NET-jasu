@@ -489,6 +489,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			return -1;
 		}
 
+		// If the name starts with $, go up one
+		if (name.Length > 0 && name[0] == '$')
+			name = name[1..];
+
 		// Combobulate
 		uint shader = CombobulateShadersIfChanged();
 
@@ -657,6 +661,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public unsafe void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData) {
+		glGetError();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, srcStride / srcFormat.SizeInBytes());
 		fixed (byte* data = imageData)
 			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageUploadFormat(srcFormat), GL_UNSIGNED_BYTE, data);
@@ -700,6 +705,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public void SetShaderUniform(IMaterialVar textureVar) {
 		int uniform = LocateShaderUniform(textureVar.GetName());
+		if (uniform == -1)
+			return;
 		switch (textureVar.GetVarType()) {
 			case MaterialVarType.Float: SetShaderUniform(uniform, textureVar.GetFloatValue()); break;
 			case MaterialVarType.Int: SetShaderUniform(uniform, textureVar.GetIntValue()); break;

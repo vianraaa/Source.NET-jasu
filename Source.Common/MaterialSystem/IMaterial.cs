@@ -202,6 +202,6 @@ public interface IMaterial
 	float GetMappingWidth();
 	float GetMappingHeight();
 	bool TryFindVar(ReadOnlySpan<char> varName, [NotNullWhen(true)] out IMaterialVar? found, bool complain = true);
-		IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true);
+	IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true);
 	void Refresh();
 }

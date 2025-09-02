@@ -58,6 +58,23 @@ public enum SurfaceFontFlags
 	Bitmap = 0x800,
 }
 
+public ref struct CharRenderInfo
+{
+	public int X, Y;
+	public Span<SurfaceVertex> Verts;
+	public TextureID TextureId;
+	public int A;
+	public int B;
+	public int C;
+	public int FontTall;
+	public IFont? CurrentFont;
+
+	public FontDrawType DrawType;
+	public char Character;
+
+	public bool Valid;
+	public bool ShouldClip;
+};
 
 public delegate void VGuiPlayFunc(ReadOnlySpan<char> fileName);
 public interface ISurface
@@ -181,7 +198,7 @@ public interface ISurface
 	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
 	void OffsetAbsPos(ref int x, ref int y);
 	void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags);
-	void DrawChar(char c);
+	void DrawChar(char c, FontDrawType drawType = FontDrawType.Default);
 }
 
 public interface IMatSystemSurface : ISurface {

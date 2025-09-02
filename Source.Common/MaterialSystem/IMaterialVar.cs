@@ -43,6 +43,10 @@ public abstract class IMaterialVar
 	protected string Name = "";
 	public MaterialVarGPU GPU;
 
+	public override string ToString() {
+		return $"Material Var '{Name}', typeof {Type}";
+	}
+
 	public abstract ITexture? GetTextureValue();
 	public abstract ReadOnlySpan<char> GetName();
 	public abstract void SetFloatValue(float val);

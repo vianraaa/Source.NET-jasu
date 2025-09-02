@@ -28,6 +28,13 @@ public class Menu : Panel
 	int MenuWide;
 	int NumVisibleLines;
 
+	public override void PaintBackground() {
+
+	}
+	public override void Paint() {
+
+	}
+
 	public Menu(Panel parent, string panelName) : base(parent, panelName) {
 		Scroller = new ScrollBar(this, "MenuScrollBar", true);
 		Scroller.SetVisible(false);

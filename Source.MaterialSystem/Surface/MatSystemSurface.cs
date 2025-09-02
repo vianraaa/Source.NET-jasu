@@ -14,6 +14,7 @@ using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 using Source.GUI.Controls;
 
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Numerics;
@@ -349,11 +350,18 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawFlushText() {
+		if (BatchedCharVertCount <= 0)
+			return;
 
+		IMaterial? pMaterial = TextureDictionary.GetTextureMaterial(BoundTexture);
+		InternalSetMaterial(pMaterial);
+		DrawQuadArray(BatchedCharVertCount / 2, BatchedCharVerts, DrawTextColor);
+		BatchedCharVertCount = 0;
 	}
 
 	public void DrawGetTextPos(out int x, out int y) {
-		throw new NotImplementedException();
+		x = TextPosX;
+		y = TextPosY;
 	}
 
 	public bool DrawGetTextureFile(in TextureID id, out ReadOnlySpan<char> filename) {
@@ -417,7 +425,7 @@ public class MatSystemSurface : IMatSystemSurface
 			float flA = abcA;
 			float flWide = abcA + abcB + abcC;
 
-			if(!char.IsWhiteSpace(ch) || underlined) {
+			if (!char.IsWhiteSpace(ch) || underlined) {
 				if (!FontTextureCache.GetTextureForChar(CurrentFont, drawType, ch, texID, texCoords))
 					continue;
 
@@ -469,7 +477,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 		SurfaceVertex ulc;
 		SurfaceVertex lrc;
-		
+
 		if (shouldClip) {
 			for (int i = 0; i < quadCount; ++i) {
 				if (!ClipRect(verts[2 * i], verts[2 * i + 1], out ulc, out lrc)) {
@@ -1269,7 +1277,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public int GetCharacterWidth(IFont? font, char ch) {
-		throw new NotImplementedException();
+		return FontManager.GetCharacterWidth(font, ch);
 	}
 
 
@@ -1286,7 +1294,90 @@ public class MatSystemSurface : IMatSystemSurface
 		TextureDictionary.BindTextureToMaterialReference(in id, in refID, material);
 	}
 
-	public void DrawChar(char c) {
-		throw new NotImplementedException();
+	public void DrawChar(char ch, FontDrawType drawType = FontDrawType.Default) {
+		if (DrawTextColor.A == 0)
+			return;
+
+		CharRenderInfo info = new();
+		info.DrawType = drawType;
+		if (DrawGetCharRenderInfo(ch, ref info)) {
+			DrawRenderCharFromInfo(info);
+		}
+	}
+
+	private void DrawRenderCharFromInfo(CharRenderInfo info) {
+		if (!info.Valid)
+			return;
+
+		int x = info.X;
+		DrawSetTexture(info.TextureId);
+		DrawRenderCharInternal(info);
+		x += (info.B + info.C);
+		DrawSetTextPos(x, info.Y);
+	}
+
+	private void DrawRenderCharInternal(CharRenderInfo info) {
+		Assert(InDrawing);
+
+		if (info.ShouldClip) {
+			Span<SurfaceVertex> clip = [info.Verts[0], info.Verts[1]];
+			if (!ClipRect(clip[0], clip[1], out info.Verts[0], out info.Verts[1]))
+				return;
+		}
+
+		BatchedCharVertCount += 2;
+
+		if (BatchedCharVertCount >= MAX_BATCHED_CHAR_VERTS - 2)
+			DrawFlushText();
+	}
+
+	const int MAX_BATCHED_CHAR_VERTS = 4096;
+	SurfaceVertex[] BatchedCharVerts = new SurfaceVertex[MAX_BATCHED_CHAR_VERTS];
+
+
+	private bool DrawGetCharRenderInfo(char ch, ref CharRenderInfo info) {
+		Assert(InDrawing);
+		info.Valid = false;
+
+		if (CurrentFont == null)
+			return info.Valid;
+
+		info.Valid = true;
+		info.Character = ch;
+		DrawGetTextPos(out info.X, out info.Y);
+
+		info.CurrentFont = CurrentFont;
+		info.FontTall = GetFontTall(CurrentFont);
+
+		GetCharABCwide(CurrentFont, ch, out info.A, out info.B, out info.C);
+		bool bUnderlined = FontManager.GetFontUnderlined(CurrentFont);
+
+		if (!bUnderlined)
+			info.X += info.A;
+
+		info.TextureId = 0;
+		Span<CharTexCoord> texCoords = stackalloc CharTexCoord[1];
+		if (!FontTextureCache.GetTextureForChar(CurrentFont, info.DrawType, ch, new Span<TextureID>(ref info.TextureId), texCoords)) {
+			info.Valid = false;
+			return info.Valid;
+		}
+
+		int fontWide = info.B;
+		if (bUnderlined) {
+			fontWide += (info.A + info.C);
+			info.X -= info.A;
+		}
+
+		if (info.TextureId != BoundTexture) {
+			DrawFlushText();
+		}
+
+		info.Verts = BatchedCharVerts.AsSpan()[BatchedCharVertCount..];
+		InitVertex(ref info.Verts[0], info.X, info.Y, texCoords[0].X0, texCoords[0].X1);
+		InitVertex(ref info.Verts[1], info.X + fontWide, info.Y + info.FontTall, texCoords[0].X1, texCoords[0].Y1);
+
+		info.ShouldClip = true;
+
+		return info.Valid;
 	}
 }

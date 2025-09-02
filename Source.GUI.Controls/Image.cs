@@ -21,6 +21,8 @@ public class Image : IImage
 		GetSize(out wide, out tall);
 	}
 
+	public Color GetColor() => Color;
+
 	public void GetPos(out int x, out int y) {
 		x = X;
 		y = Y;

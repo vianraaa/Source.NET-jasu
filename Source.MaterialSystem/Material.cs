@@ -344,7 +344,7 @@ public class Material : IMaterialInternal
 
 			if (findContext == MaterialFindContext.IsOnAModel && varName != null && varName.Length > 0) {
 				if (varName.Contains("$ignorez", StringComparison.OrdinalIgnoreCase)) {
-					Dbg.Warning($"Ignoring material flag '{varName}' on material '{matName}'.\n");
+					Warning($"Ignoring material flag '{varName}' on material '{matName}'.\n");
 					goto nextVar;
 				}
 			}
@@ -362,7 +362,7 @@ public class Material : IMaterialInternal
 				if (varIdx >= 0) {
 					if (vars[varIdx] != null && (!isConditionalVar)) {
 						if (!overrides[varIdx] || parsingOverrides) {
-							Dbg.Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
+							Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
 						}
 						goto nextVar;
 					}
@@ -370,14 +370,14 @@ public class Material : IMaterialInternal
 				else {
 					int i;
 					for (i = numParams; i < varCount; ++i) {
-						Dbg.Assert(vars[i] != null);
+						Assert(vars[i] != null);
 						if (vars[i].GetName().Equals(var.Name, StringComparison.OrdinalIgnoreCase))
 							break;
 					}
 
 					if (i != varCount) {
 						if (!overrides[varIdx] || parsingOverrides) {
-							Dbg.Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
+							Warning($"Error! Variable \"{var.Name}\" is multiply defined in material \"{GetName()}\"!\n");
 						}
 						goto nextVar;
 					}
@@ -484,13 +484,14 @@ public class Material : IMaterialInternal
 	}
 
 	private bool ParseMaterialFlag(KeyValues parseValue, IMaterialVar flagVar, IMaterialVar flagDefinedVar, bool parsingOverrides, ref int flagMask, ref int overrideMask) {
-		int flagbit = FindMaterialVarFlag(GetVarName(parseValue));
+		int flagbit = (int)FindMaterialVarFlag(GetVarName(parseValue));
 		if (flagbit == 0)
 			return false;
 
+		MaterialVarFlags dbg = (MaterialVarFlags)flagbit;
 		int testMask = parsingOverrides ? overrideMask : flagMask;
 		if ((testMask & flagbit) != 0) {
-			Dbg.Warning($"Error! Flag \"{parseValue.Name}\" is multiply defined in material \"{GetName()}\"!\n");
+			Warning($"Error! Flag \"{parseValue.Name}\" is multiply defined in material \"{GetName()}\"!\n");
 			return true;
 		}
 
@@ -511,7 +512,7 @@ public class Material : IMaterialInternal
 		return true;
 	}
 
-	private int FindMaterialVarFlag(ReadOnlySpan<char> flagName) {
+	private MaterialVarFlags FindMaterialVarFlag(ReadOnlySpan<char> flagName) {
 		flagName = flagName.Trim();
 
 		for (int i = 0; materials.ShaderSystem.ShaderStateString(i) != null; ++i) {
@@ -526,7 +527,7 @@ public class Material : IMaterialInternal
 
 			while (true) {
 				if (pFound >= flagName.Length)
-					return (1 << i);
+					return (MaterialVarFlags)(1 << i);
 
 				if (!char.IsWhiteSpace(flagName[pFound]))
 					break;

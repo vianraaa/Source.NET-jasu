@@ -26,7 +26,7 @@ public enum BackgroundState
 	MainMenu,
 	Level,
 	Disconnected,
-	Exiting,      
+	Exiting,
 }
 
 public class GameMenu(Panel parent, string name) : Menu(parent, name)
@@ -67,13 +67,13 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 	public override void SetVisible(bool state) {
 		if (MainMenuOverridePanel != null) {
 			MainMenuOverridePanel.SetVisible(true);
-			if (!state) 
+			if (!state)
 				MainMenuOverridePanel.MoveToBack();
 		}
 
 		base.SetVisible(true);
 
-		if (!state) 
+		if (!state)
 			MoveToBack();
 	}
 }
@@ -100,10 +100,13 @@ public class BasePanel : Panel
 	IFont? FontTest;
 
 	public override void PaintBackground() {
-		DrawBackgroundImage();
+		//DrawBackgroundImage();
+		Surface.DrawSetColor(0, 0, 0, 255);
+		Surface.GetScreenSize(out int wide, out int tall);
 
-		if(BackgroundFIllAlpha > 0) {
-			Surface.GetScreenSize(out int wide, out int tall);
+		Surface.DrawFilledRect(0, 0, wide, tall);
+
+		if (BackgroundFIllAlpha > 0) {
 			Surface.DrawSetColor(0, 0, 0, BackgroundFIllAlpha);
 			Surface.DrawFilledRect(0, 0, wide, tall);
 		}
@@ -122,7 +125,7 @@ public class BasePanel : Panel
 		Surface.GetScreenSize(out int wide, out int tall);
 		GameMenu.GetSize(out int menuWide, out int menuTall);
 		int idealMenuY = (int)GameMenuPos.Y;
-		if(idealMenuY + menuTall + GameMenuInset > tall) 
+		if (idealMenuY + menuTall + GameMenuInset > tall)
 			idealMenuY = tall - menuTall - GameMenuInset;
 
 		int yDiff = idealMenuY - (int)GameMenuPos.Y;

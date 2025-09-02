@@ -14,4 +14,7 @@ public class MenuItem : Button {
 		userData = null;
 		userData = kv?.MakeCopy();
 	}
+	public override void PaintBackground() {
+		
+	}
 }

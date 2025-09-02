@@ -10,7 +10,8 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Source.GUI.Controls;
 
-public struct ColorChange {
+public struct ColorChange
+{
 	public nint TextStreamIndex;
 	public Color Color;
 }
@@ -114,9 +115,9 @@ public class TextImage : Image
 		if (font == null)
 			return;
 
-		if (Wrap || WrapCenter) 
+		if (Wrap || WrapCenter)
 			RecalculateNewLinePositions();
-		
+
 		int fontHeight = Surface.GetFontTall(GetFont());
 		tall = fontHeight;
 
@@ -124,10 +125,10 @@ public class TextImage : Image
 		for (nint i = 0; i < textLen; i++) {
 			char ch = text[(int)i];
 
-			if (ch == '&') 
+			if (ch == '&')
 				continue;
 
-			if (AllCaps) 
+			if (AllCaps)
 				ch = char.ToUpper(ch);
 
 			Surface.GetCharABCwide(font, ch, out int a, out int b, out int c);
@@ -135,27 +136,27 @@ public class TextImage : Image
 
 			if (ch == '\n') {
 				tall += fontHeight;
-				if (wide > maxWide) 
+				if (wide > maxWide)
 					maxWide = wide;
-				
-				wide = 0; 
+
+				wide = 0;
 			}
 
 			if (Wrap || WrapCenter) {
 				for (nint j = 0; j < LineBreaks.Count; j++) {
 					if (i == LineBreaks[(int)j]) {
 						tall += fontHeight;
-						if (wide > maxWide) 
+						if (wide > maxWide)
 							maxWide = wide;
-						
-						wide = 0; 
+
+						wide = 0;
 					}
 				}
 			}
 
 		}
 
-		if (wide < maxWide) 
+		if (wide < maxWide)
 			wide = maxWide;
 	}
 
@@ -173,7 +174,7 @@ public class TextImage : Image
 			RecalculateEllipsesPosition();
 		}
 
-		DrawSetTextColor(GetSpewOutputColor());
+		DrawSetTextColor(GetColor());
 		DrawSetTextFont(font);
 
 		int lineHeight = Surface.GetFontTall(font);
@@ -193,13 +194,13 @@ public class TextImage : Image
 			if (AllCaps)
 				ch = char.ToUpperInvariant(ch);
 
-			if(ColorChangeStream.Count > nextColorChange) 
-				if (ColorChangeStream[nextColorChange].TextStreamIndex == i) 
+			if (ColorChangeStream.Count > nextColorChange)
+				if (ColorChangeStream[nextColorChange].TextStreamIndex == i)
 					DrawSetTextColor(ColorChangeStream[nextColorChange++].Color);
 
 			if (ch == '\r' || ch <= 8)
 				continue;
-			else if(ch == '\n') {
+			else if (ch == '\n') {
 				indent++;
 				if (WrapCenter && indent < LineXIndent.Count)
 					x = LineXIndent[indent];
@@ -207,7 +208,7 @@ public class TextImage : Image
 					x = 0;
 				y += lineHeight;
 			}
-			else if(ch == '&') {
+			else if (ch == '&') {
 				if (i + 1 < len && Text[(int)(i + 1)] == '&')
 					i++;
 				else {
@@ -215,7 +216,7 @@ public class TextImage : Image
 				}
 			}
 
-			if(i == EllipsesPosition) {
+			if (i == EllipsesPosition) {
 				for (int _ = 0; i < 3; i++) {
 					Surface.DrawSetTextPos((int)x + px, y + py);
 					Surface.DrawChar('.');
@@ -224,8 +225,8 @@ public class TextImage : Image
 				break;
 			}
 
-			if(currentLineBreak != LineBreaks.Count) {
-				if(i == LineBreaks[currentLineBreak]) {
+			if (currentLineBreak != LineBreaks.Count) {
+				if (i == LineBreaks[currentLineBreak]) {
 					indent++;
 					if (WrapCenter && indent < LineXIndent.Count)
 						x = LineXIndent[indent];
@@ -235,23 +236,211 @@ public class TextImage : Image
 					y += lineHeight;
 					currentLineBreak++;
 				}
-
+			}
 				Surface.DrawSetTextPos((int)x + px, y + py);
 				Surface.DrawChar(ch);
 				x += Surface.GetCharacterWidth(font, '.');
 			}
-		}
 	}
 
 	private void RecalculateEllipsesPosition() {
-		throw new NotImplementedException();
+		RecalculateTruncation = false;
+		EllipsesPosition = 0;
+
+		if (Wrap || WrapCenter)
+			return;
+
+		if (Text!.Contains('\n'))
+			return;
+
+		if (DrawWidth == 0) 
+			GetSize(out DrawWidth, out _);
+
+		for (int check = 0; check < (UseFallbackFont ? 2 : 1); ++check) {
+			IFont? font = GetFont();
+			if (check == 1 && FallbackFont != null) {
+				EllipsesPosition = 0;
+				font = FallbackFont;
+				RenderUsingFallbackFont = true;
+			}
+
+			int ellipsesWidth = 3 * Surface.GetCharacterWidth(font, '.');
+			int x = 0;
+
+			for (nint i = 0, len = Text.Length; i < len; i++) {
+				char ch = Text[(int)i];
+				if (AllCaps)
+					ch = char.ToUpperInvariant(ch);
+
+
+				if (ch == '\r' || ch <= 8)
+					continue;
+				else if (ch == '&') {
+					if (i + 1 < len && Text[(int)(i + 1)] == '&')
+						i++;
+					else {
+						continue;
+					}
+				}
+
+				int len1 = Surface.GetCharacterWidth(font, ch);
+				if (i == 0) {
+					x += len1;
+					continue;
+				}
+
+				if (x + len + ellipsesWidth > DrawWidth) {
+					int remainingLength = len1;
+					for (nint ri = i + 1; ri < len; ri++) {
+						remainingLength += Surface.GetCharacterWidth(font, Text[(int)ri]);
+					}
+
+					if (x + remainingLength > DrawWidth) {
+						EllipsesPosition = i;
+						break;
+					}
+				}
+
+				x += (int)len;
+			}
+
+			if (EllipsesPosition == 0)
+				break;
+		}
 	}
 
 	public void RecalculateNewLinePositions() {
-		throw new NotImplementedException();
+		IFont? font = GetFont();
+
+		int charWidth;
+		int x = 0;
+
+		nint wordStartIndex = 0;
+		int wordLength = 0;
+		bool hasWord = false;
+		bool justStartedNewLine = true;
+		bool wordStartedOnNewLine = true;
+
+		int startChar = 0;
+
+		LineBreaks.Clear();
+		LineXIndent.Clear();
+		if(Text == null) 
+			return; 
+		if (Text.Length > 0 && (Text![startChar] == '\r' || Text![startChar] == '\n')) {
+			startChar++;
+		}
+
+		for (nint i = 0, len = Text.Length; i < len; i++) {
+			char ch = Text[(int)i];
+			if ((ch == '&' || ch == 0x01 || ch == 0x02 || ch == 0x03) && (i + 1) < len) {
+				i++;
+				ch = Text[(int)i];
+			}
+
+			if (AllCaps) 
+				ch = char.ToUpper(ch);
+
+			if (!char.IsWhiteSpace(ch)) {
+				if (!hasWord) {
+					wordStartIndex = i;
+					hasWord = true;
+					wordStartedOnNewLine = justStartedNewLine;
+					wordLength = 0;
+				}
+			}
+			else {
+				hasWord = false;
+			}
+
+			charWidth = Surface.GetCharacterWidth(font, ch);
+			if (!char.IsControl(ch)) 
+				justStartedNewLine = false;
+
+			if ((x + charWidth) > DrawWidth || ch == '\r' || ch == '\n') {
+				justStartedNewLine = true;
+				hasWord = false;
+
+				if (ch == '\r' || ch == '\n') {
+
+				}
+				else if (wordStartedOnNewLine) {
+					LineBreaks.Add(i);
+				}
+				else {
+					LineBreaks.Add(wordStartIndex);
+
+					i = wordStartIndex - 1;
+				}
+
+				wordLength = 0;
+				x = 0;
+				continue;
+			}
+
+			x += charWidth;
+			wordLength += charWidth;
+		}
+
+		RecalculateCenterWrapIndents();
 	}
 
-	internal void SetUseFallbackFont(bool useFallbackFont, IFont fallbackItemFont) {
-		throw new NotImplementedException();
+	private void RecalculateCenterWrapIndents() {
+		LineXIndent.Clear();
+
+		if (!WrapCenter)
+			return;
+
+		if (Text == null || GetFont() == null)
+			return;
+
+		IFont font = GetFont()!;
+		GetPos(out int px, out int py);
+
+		int currentLineBreak = 0;
+		int iCurLineW = 0;
+
+		for (nint i = 0, len = Text.Length; i < len; i++) {
+			char ch = Text[(int)i];
+
+			if (AllCaps) 
+				ch = char.ToUpper(ch);
+			
+			if (ch == '\r') {
+				continue;
+			}
+			else if (ch == '\n') {
+				LineXIndent.Add((int)((DrawWidth - iCurLineW) * 0.5f));
+
+				iCurLineW = 0;
+				continue;
+			}
+			else if (ch == '&') {
+				if (i + 1 < len && Text[(int)(i + 1)] == '&')
+					i++;
+				else {
+					continue;
+				}
+			}
+
+
+			if (currentLineBreak != LineBreaks.Count) {
+				if (i == LineBreaks[currentLineBreak]) {
+					LineXIndent.Add((int)((DrawWidth - iCurLineW) * 0.5f));
+
+					iCurLineW = 0;
+					currentLineBreak++;
+				}
+			}
+
+			iCurLineW += Surface.GetCharacterWidth(font, ch);
+		}
+
+		LineXIndent.Add((DrawWidth - iCurLineW) / 2);
+	}
+
+	internal void SetUseFallbackFont(bool useFallbackFont, IFont? fallbackItemFont) {
+		UseFallbackFont = true;
+		FallbackFont = fallbackItemFont;
 	}
 }
