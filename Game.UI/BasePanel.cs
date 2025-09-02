@@ -110,7 +110,7 @@ public class BasePanel : Panel
 
 		Surface.DrawSetTextFont(FontTest);
 		Surface.DrawSetTextPos(300, 120);
-		Surface.DrawPrintText("HALF-LIFE 4");
+		Surface.DrawPrintText("abcdefghijklmno");
 	}
 
 	Vector2 GameMenuPos;
