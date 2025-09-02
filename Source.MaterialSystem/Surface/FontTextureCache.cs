@@ -262,11 +262,11 @@ public class FontTextureCache
 			nNextX = charWide;
 
 			Span<char> textureName = stackalloc char[64];
-			sprintf(textureName, "__font_page_%d", fontPageId);
+			Span<char> finalName = textureName[..sprintf(textureName, "__font_page_%d", fontPageId)];
 			++fontPageId;
 
 			ITexture pTexture = materials.CreateProceduralTexture(
-				textureName,
+				finalName,
 				TEXTURE_GROUP_VGUI,
 				newPage.Wide,
 				newPage.Tall,
@@ -324,8 +324,10 @@ public class FontTextureCache
 		material.Refresh();
 
 		int typePageAdditive = (int)FontDrawType.Additive - 1;
-		if (bitmapFont) 
+		if (bitmapFont)
 			surface.DrawSetTextureMaterial(page.TextureID[typePageAdditive], material);
+		else
+			surface.ReferenceProceduralMaterial(page.TextureID[typePageAdditive], page.TextureID[typePageNonAdditive], material);
 	}
 
 	int ComputePageType(int charTall) {

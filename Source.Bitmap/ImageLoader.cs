@@ -297,6 +297,11 @@ public static class ImageLoader
 	};
 
 	public static bool ConvertImageFormat(Span<byte> srcData, ImageFormat srcFormat, Span<byte> dstData, ImageFormat dstFormat, int width, int height) {
+		if(srcFormat == dstFormat) {
+			memcpy(dstData, srcData);
+			return true;
+		}
+
 		switch (srcFormat) {
 			case ImageFormat.DXT5:
 				switch (dstFormat) {

@@ -141,12 +141,12 @@ public class BasePanel : Panel
 		Span<char> filename = stackalloc char[MAX_PATH];
 		Span<char> background = stackalloc char[MAX_PATH];
 		engine.GetMainMenuBackgroundName(background); background = background[..background.IndexOf('\0')];
-		sprintf(filename, "console/%s", new string(background));
+		Span<char> finalFilename = filename[..sprintf(filename, "console/%s", new string(background))];
 
 		if (BackgroundImageID == TextureID.INVALID)
 			BackgroundImageID = Surface.CreateNewTextureID();
 
-		Surface.DrawSetTextureFile(BackgroundImageID, filename[..filename.IndexOf('\0')], 0, false);
+		Surface.DrawSetTextureFile(BackgroundImageID, finalFilename, 0, false);
 	}
 
 	private void DrawBackgroundImage() {

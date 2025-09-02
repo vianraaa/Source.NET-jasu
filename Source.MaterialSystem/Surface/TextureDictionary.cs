@@ -89,10 +89,14 @@ public class FontTextureRegen : ITextureRegenerator
 			Assert((subRect.X + subRect.Width <= Width) && (subRect.Y + subRect.Height <= Height));
 			for (y = 0; y < subRect.Height; ++y) {
 				int idx = ((subRect.Y + y) * Width + subRect.X) << 2;
-				Span<uint> pDst = MemoryMarshal.Cast<byte, uint>(TextureBits[idx..]);
+				Span<uint> pDst = MemoryMarshal.Cast<byte, uint>(TextureBits.AsSpan()[idx..]);
 				int offset = bIsInputFullRect ? (subRect.Y + y) * uploadRect.Width + subRect.X : y * uploadRect.Width;
 				Span<uint> pSrc = MemoryMarshal.Cast<byte, uint>(bits[(offset << 2)..]);
-				ImageLoader.ConvertImageFormat(MemoryMarshal.Cast<uint, byte>(pSrc), format, MemoryMarshal.Cast<uint, byte>(pDst), Format, subRect.Width, 1);
+
+				Span<byte> srcFinal = MemoryMarshal.Cast<uint, byte>(pSrc);
+				Span<byte> dstFinal = MemoryMarshal.Cast<uint, byte>(pDst);
+
+				ImageLoader.ConvertImageFormat(srcFinal, format, dstFinal, Format, subRect.Width, 1);
 			}
 		}
 		else {
@@ -275,7 +279,7 @@ public class MatSystemTexture(IMaterialSystem materials)
 					break;
 				}
 			}
-			
+
 			Span<char> textureName = stackalloc char[64];
 			sprintf(textureName, "__vgui_texture_%d", textureID);
 			++textureID;
@@ -313,7 +317,53 @@ public class MatSystemTexture(IMaterialSystem materials)
 		Assert(wide <= Wide);
 		Assert(tall <= Tall);
 
-		SetSubTextureRGBAEx(0, 0, rgba, wide, tall, format );
+		SetSubTextureRGBAEx(0, 0, rgba, wide, tall, format);
+	}
+
+	internal void ReferenceOtherProcedural(MatSystemTexture texture, IMaterial material) {
+		CleanUpMaterial();
+
+		Assert(texture.IsProcedural());
+
+		Flags |= MatSystemTextureFlags.IsReference;
+
+		Material = material;
+
+		if (material == null) {
+			Wide = Tall = 0;
+			S0 = T0 = 0.0f;
+			S1 = T1 = 1.0f;
+			return;
+		}
+
+		Wide = texture.Wide;
+		Tall = texture.Tall;
+		S0 = texture.S0;
+		T0 = texture.T0;
+		S1 = texture.S1;
+		T1 = texture.T1;
+
+		Assert((material.GetMappingWidth() == Wide) && (material.GetMappingHeight() == Tall));
+
+		if (Material!.TryFindVar("$basetexture", out IMaterialVar? var) && var.IsTexture()) {
+			Texture = var.GetTextureValue();
+			if (Texture != null) {
+				Assert(Texture == texture.Texture);
+				Regen = texture.Regen;
+
+			}
+		}
+	}
+
+	private void CleanUpMaterial() {
+		if (Material != null)
+			Material = null;
+
+		if (Texture != null)
+			Texture = null;
+
+		if (Regen != null)
+			Regen = null;
 	}
 }
 
@@ -347,6 +397,19 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 		}
 
 		tex.SetMaterial(material);
+	}
+
+	internal void BindTextureToMaterialReference(in TextureID id, in TextureID refID, IMaterial material) {
+		if (!IsValidId(id, out MatSystemTexture? tex)) {
+			Msg($"BindTextureToMaterialReference: Invalid texture id {id}\n");
+			return;
+		}
+		if (!IsValidId(refID, out MatSystemTexture? refTex)) {
+			Msg($"BindTextureToMaterialReference: Invalid ref. texture id {refID}\n");
+			return;
+		}
+
+		tex.ReferenceOtherProcedural(refTex, material);
 	}
 
 	internal TextureID CreateTexture(bool procedural) {

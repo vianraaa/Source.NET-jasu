@@ -445,6 +445,7 @@ public class MatSystemSurface : IMatSystemSurface
 				lr.TexCoord[0] = texCoords[0].X1;
 				lr.TexCoord[1] = texCoords[0].Y1;
 			}
+			totalWidth += (int)MathF.Floor(flWide + 0.6f);
 		}
 
 		if (count != 0) {
@@ -1278,5 +1279,9 @@ public class MatSystemSurface : IMatSystemSurface
 	internal void DrawSetTextureMaterial(TextureID textureID, IMaterial material) {
 		TextureDictionary.BindTextureToMaterial(in textureID, material);
 		DrawSetTexture(in textureID);
+	}
+
+	internal void ReferenceProceduralMaterial(in TextureID id, in TextureID refID, IMaterial material) {
+		TextureDictionary.BindTextureToMaterialReference(in id, in refID, material);
 	}
 }

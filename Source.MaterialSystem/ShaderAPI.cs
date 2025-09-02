@@ -659,6 +659,9 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public unsafe void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData) {
 		fixed (byte* data = imageData)
 			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageFormat(srcFormat), GL_UNSIGNED_BYTE, data);
+
+		var err = glGetError();
+		Assert(err == 0);
 	}
 
 	public void ReacquireResources() {

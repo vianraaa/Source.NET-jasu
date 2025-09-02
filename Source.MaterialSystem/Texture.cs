@@ -917,7 +917,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 				for (int iMip = 0; iMip < DimsActual.MipCount; ++iMip) {
 					vtfTexture.ComputeMipLevelSubRect(in vtfRect, iMip, out mipRect);
 					stride = vtfTexture.RowSizeInBytes(iMip);
-					Span<byte> bits = vtfTexture.ImageData(frame, iFace + firstFace, iMip, mipRect.X, mipRect.Y, 0);
+					
+					Span<byte> bits = vtfTexture.ImageData(frame, iFace + firstFace, iMip, mipRect.X, mipRect.Y, 0)[..stride];
+
 					materials.ShaderAPI.TexSubImage2D(
 						iMip,
 						iFace,
