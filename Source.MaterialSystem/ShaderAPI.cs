@@ -518,7 +518,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	uint GetCurrentProgramInternal() => CombobulateShadersIfChanged();
 
 	public void SetShaderUniform(int uniform, int integer) {
+		int i = glGetError();
 		glProgramUniform1i(GetCurrentProgramInternal(), uniform, integer);
+		if ((i = glGetError()) != 0)
+			AssertMsg(false, $"GL error {i}");
 	}
 
 	public void SetShaderUniform(int uniform, uint integer) {

@@ -12,7 +12,7 @@ layout(std140, binding = 3) uniform source_pixel_sharedUBO {
 const int VertexColor = 32;
 const int VertexAlpha = 64;
 
-uniform uint flags;
+uniform int flags;
 uniform sampler2D basetexture;
 
 out vec4 fragColor;
