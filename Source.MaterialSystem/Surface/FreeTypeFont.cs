@@ -128,29 +128,24 @@ public unsafe class FreeTypeFont : BaseFont
 		DrawBitmap(in slot->bitmap, rgbaWide, rgbaTall, rgba);
 	}
 
-	private void DrawBitmap(in FT_Bitmap_ bitmap, int rgbaWide, int rgbaTall, Span<byte> rgba) {
+	private unsafe void DrawBitmap(in FT_Bitmap_ bitmap, int rgbaWide, int rgbaTall, Span<byte> rgba) {
 		byte* buffer = bitmap.buffer;
 		int bmpWidth = (int)bitmap.width;
 		int bmpHeight = (int)bitmap.rows;
 
-		int xOffset = 0;
-		int yOffset = 0;
-
 		for (int y = 0; y < bmpHeight; y++) {
+			byte* row = buffer + (bmpHeight - 1 - y) * Math.Abs(bitmap.pitch);
 			for (int x = 0; x < bmpWidth; x++) {
-				int dstX = x + xOffset;
-				int dstY = y + yOffset;
-
+				int dstX = x;
+				int dstY = y;
 				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
 					continue;
 
-				// FreeType's bitmap is top-down
-				byte coverage = buffer[y * bitmap.pitch + x];
-
+				byte coverage = row[x];
 				int dstIndex = (dstY * rgbaWide + dstX) * 4;
-				rgba[dstIndex + 0] = 255;     
-				rgba[dstIndex + 1] = 255;     
-				rgba[dstIndex + 2] = 255;     
+				rgba[dstIndex + 0] = 255;
+				rgba[dstIndex + 1] = 255;
+				rgba[dstIndex + 2] = 255;
 				rgba[dstIndex + 3] = coverage;
 			}
 		}

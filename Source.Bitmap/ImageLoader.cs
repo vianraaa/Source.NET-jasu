@@ -247,7 +247,36 @@ public static class ImageLoader
 	// The various forms of oddly rearranged formatting needs transmutations - we'll figure that out later as well.
 	// ^^ would be nice in shader form rather than CPU transmute on a per texture basis but we'll see... need to review
 	// the best way to do this
-	public static int GetGLImageFormat(ImageFormat format) => format switch {
+
+	const int GL_COLOR = 0x1800;
+	const int GL_DEPTH = 0x1801;
+	const int GL_STENCIL = 0x1802;
+	const int GL_STENCIL_INDEX = 0x1901;
+	const int GL_DEPTH_COMPONENT = 0x1902;
+	const int GL_RED = 0x1903;
+	const int GL_GREEN = 0x1904;
+	const int GL_BLUE = 0x1905;
+	const int GL_ALPHA = 0x1906;
+	const int GL_RGB = 0x1907;
+	const int GL_RGBA = 0x1908;
+	const int GL_BGR = 0x80E0;
+	const int GL_BGRA = 0x80E1;
+	public static int GetGLImageUploadFormat(ImageFormat format) => format switch {
+		ImageFormat.RGBA8888 => GL_RGBA,
+		ImageFormat.RGB888 => GL_RGB,
+		ImageFormat.BGR888 => GL_BGR,
+		ImageFormat.RGB888_Bluescreen => GL_RGB,
+		ImageFormat.BGR888_Bluescreen => GL_BGR, // TODO: what does bluescreen mean here
+													  // ImageFormat.ARGB8888 => Gl46.ARGB,
+		ImageFormat.BGRA8888 => GL_BGRA,
+		ImageFormat.BGRX8888 => GL_BGRA,
+		ImageFormat.RGBA16161616 => GL_RGBA,
+		ImageFormat.RGBA16161616F => GL_RGBA,
+		ImageFormat.R32F => GL_RED,
+		ImageFormat.RGB323232F => GL_RGB,
+		ImageFormat.RGBA32323232F => GL_RGBA,
+	};
+	public static int GetGLImageInternalFormat(ImageFormat format) => format switch {
 		// Uncompressed color formats
 		ImageFormat.RGBA8888 => GL_RGBA8,
 		ImageFormat.ABGR8888 => 0x8000, // Supposedly GL_ABGR_EXT?
@@ -297,7 +326,7 @@ public static class ImageLoader
 	};
 
 	public static bool ConvertImageFormat(Span<byte> srcData, ImageFormat srcFormat, Span<byte> dstData, ImageFormat dstFormat, int width, int height) {
-		if(srcFormat == dstFormat) {
+		if (srcFormat == dstFormat) {
 			memcpy(dstData, srcData);
 			return true;
 		}

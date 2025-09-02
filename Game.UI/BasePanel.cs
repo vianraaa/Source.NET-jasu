@@ -109,7 +109,7 @@ public class BasePanel : Panel
 		}
 
 		Surface.DrawSetTextFont(FontTest);
-		Surface.DrawSetTextPos(64, 64);
+		Surface.DrawSetTextPos(820, 120);
 		Surface.DrawPrintText("Hello ISurface!");
 	}
 

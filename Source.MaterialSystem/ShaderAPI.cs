@@ -592,7 +592,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			vtf.ComputeMipLevelDimensions(info.Level, out int w, out int h, out _);
 			glGetError();
 			fixed (byte* bytes = data)
-				glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, w, h, ImageLoader.GetGLImageFormat(info.SrcFormat), data.Length, bytes);
+				glCompressedTextureSubImage2D((uint)info.Handle, info.Level, 0, 0, w, h, ImageLoader.GetGLImageInternalFormat(info.SrcFormat), data.Length, bytes);
 			// Msg("err: " + glGetErrorName() + "\n");
 		}
 		else {
@@ -629,7 +629,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		for (int i = 0; i < count; i++) {
 			ShaderAPITextureHandle_t handle = textureHandles[i];
 			glObjectLabel(GL_TEXTURE, (uint)handle, $"ShaderAPI Texture '{debugName}' [frame {i}]");
-			glTextureStorage2D((uint)handle, mipCount, ImageLoader.GetGLImageFormat(imageFormat), width, height);
+			glTextureStorage2D((uint)handle, mipCount, ImageLoader.GetGLImageInternalFormat(imageFormat), width, height);
 		}
 	}
 	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool v) {
@@ -657,9 +657,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public unsafe void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData) {
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, srcStride / srcFormat.SizeInBytes());
 		fixed (byte* data = imageData)
-			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageFormat(srcFormat), GL_UNSIGNED_BYTE, data);
-
+			glTextureSubImage2D((uint)ModifyTextureHandle, mip, x, y, width, height, ImageLoader.GetGLImageUploadFormat(srcFormat), GL_UNSIGNED_BYTE, data);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		var err = glGetError();
 		Assert(err == 0);
 	}

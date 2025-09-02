@@ -441,9 +441,9 @@ public class MatSystemSurface : IMatSystemSurface
 				lr.Position.Y = ul.Position.Y + tall;
 
 				ul.TexCoord[0] = texCoords[0].X0;
-				ul.TexCoord[1] = texCoords[0].Y0;
+				ul.TexCoord[1] = texCoords[0].Y1;
 				lr.TexCoord[0] = texCoords[0].X1;
-				lr.TexCoord[1] = texCoords[0].Y1;
+				lr.TexCoord[1] = texCoords[0].Y0;
 			}
 			totalWidth += (int)MathF.Floor(flWide + 0.6f);
 		}

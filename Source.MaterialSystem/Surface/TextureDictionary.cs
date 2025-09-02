@@ -6,6 +6,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -58,7 +59,7 @@ public class FontTextureRegen : ITextureRegenerator
 
 				for (y = subRect.Y; y < ymax; ++y) {
 					pixelWriter.Seek(subRect.X, y);
-					Span<byte> rgba = TextureBits[((y * Width + subRect.X) * nFormatBytes)..];
+					Span<byte> rgba = TextureBits.AsSpan()[((y * Width + subRect.X) * nFormatBytes)..];
 
 					for (x = subRect.X; x < xmax; ++x) {
 						pixelWriter.WritePixel(rgba[0], rgba[1], rgba[2], rgba[3]);
@@ -79,34 +80,43 @@ public class FontTextureRegen : ITextureRegenerator
 
 	internal unsafe void UpdateBackingBits(Rectangle subRect, Span<byte> bits, Rectangle uploadRect, ImageFormat format) {
 		nint size = ImageLoader.GetMemRequired(Width, Height, 1, Format, false);
-		if (TextureBits == null)
-			return;
 
-		int y;
-		if (ImageLoader.SizeInBytes(Format) == 4) {
-			bool bIsInputFullRect = (subRect.Width != uploadRect.Width || subRect.Height != uploadRect.Height);
-			Assert((subRect.X >= 0) && (subRect.Y >= 0));
-			Assert((subRect.X + subRect.Width <= Width) && (subRect.Y + subRect.Height <= Height));
-			for (y = 0; y < subRect.Height; ++y) {
-				int idx = ((subRect.Y + y) * Width + subRect.X) << 2;
-				Span<uint> pDst = MemoryMarshal.Cast<byte, uint>(TextureBits.AsSpan()[idx..]);
-				int offset = bIsInputFullRect ? (subRect.Y + y) * uploadRect.Width + subRect.X : y * uploadRect.Width;
-				Span<uint> pSrc = MemoryMarshal.Cast<byte, uint>(bits[(offset << 2)..]);
+		if (TextureBits == null) {
+			TextureBits = new byte[size];
+			TextureBits.AsSpan().Clear();
+		}
 
-				Span<byte> srcFinal = MemoryMarshal.Cast<uint, byte>(pSrc);
-				Span<byte> dstFinal = MemoryMarshal.Cast<uint, byte>(pDst);
+		int bytesPerPixel = ImageLoader.SizeInBytes(Format);
 
-				ImageLoader.ConvertImageFormat(srcFinal, format, dstFinal, Format, subRect.Width, 1);
+		if (bytesPerPixel == 4) {
+			bool isSubRectSmaller = subRect.Width != uploadRect.Width || subRect.Height != uploadRect.Height;
+
+			Assert(subRect.X >= 0 && subRect.Y >= 0);
+			Assert(subRect.X + subRect.Width <= Width && subRect.Y + subRect.Height <= Height);
+
+			for (int y = 0; y < subRect.Height; ++y) {
+				int dstIndex = ((subRect.Y + y) * Width + subRect.X) * bytesPerPixel;
+
+				int srcOffset = isSubRectSmaller
+					? ((subRect.Y + y) * uploadRect.Width + subRect.X) * bytesPerPixel
+					: y * uploadRect.Width * bytesPerPixel;
+
+				var srcRow = bits.Slice(srcOffset, subRect.Width * bytesPerPixel);
+				var dstRow = TextureBits.AsSpan(dstIndex, subRect.Width * bytesPerPixel);
+
+				ImageLoader.ConvertImageFormat(srcRow, format, dstRow, Format, subRect.Width, 1);
 			}
 		}
 		else {
 			if (subRect.Width != Width || subRect.Height != Height) {
-				Assert(0);
+				AssertMsg(false, "Cannot subrect copy when format is not RGBA.\n");
 				return;
 			}
-			memcpy<byte>(TextureBits, bits);
+
+			bits.CopyTo(TextureBits);
 		}
 	}
+
 }
 
 public class MatSystemTexture(IMaterialSystem materials)
@@ -254,6 +264,7 @@ public class MatSystemTexture(IMaterialSystem materials)
 
 		Regen!.UpdateBackingBits(subRect, rgba, textureSize, format);
 		texture.Download(subRect);
+
 	}
 	static int textureID = 0;
 	internal void SetTextureRGBA(Span<byte> rgba, int wide, int tall, ImageFormat format, bool fixupTextCoords) {
