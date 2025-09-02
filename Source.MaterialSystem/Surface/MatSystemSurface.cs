@@ -17,6 +17,7 @@ using Source.GUI.Controls;
 using System.ComponentModel;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using static Source.Dbg;
@@ -375,7 +376,7 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
-	public void DrawPolyLine(Span<int> x, Span<int> y) {
+	public void DrawPolyLine(Span<Point> points) {
 		throw new NotImplementedException();
 	}
 
@@ -690,7 +691,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void Invalidate(IPanel panel) {
-		throw new NotImplementedException();
+
 	}
 
 	public bool IsCursorVisible() {
@@ -1283,5 +1284,9 @@ public class MatSystemSurface : IMatSystemSurface
 
 	internal void ReferenceProceduralMaterial(in TextureID id, in TextureID refID, IMaterial material) {
 		TextureDictionary.BindTextureToMaterialReference(in id, in refID, material);
+	}
+
+	public void DrawChar(char c) {
+		throw new NotImplementedException();
 	}
 }

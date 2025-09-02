@@ -1,6 +1,7 @@
 ﻿using Source.Common.Input;
 using Source.Common.Launcher;
 
+using System.Drawing;
 using System.Numerics;
 
 using static System.Net.Mime.MediaTypeNames;
@@ -76,7 +77,7 @@ public interface ISurface
 	void DrawOutlinedRect(int x0, int y0, int x1, int y1);
 
 	void DrawLine(int x0, int y0, int x1, int y1);
-	void DrawPolyLine(Span<int> x, Span<int> y);
+	void DrawPolyLine(Span<Point> points);
 
 	void DrawSetTextFont(IFont? font);
 	void DrawSetTextColor(int r, int g, int b, int a);
@@ -180,6 +181,7 @@ public interface ISurface
 	void DrawSetAlphaMultiplier(float newAlphaMultiplier);
 	void OffsetAbsPos(ref int x, ref int y);
 	void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags);
+	void DrawChar(char c);
 }
 
 public interface IMatSystemSurface : ISurface {

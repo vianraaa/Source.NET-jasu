@@ -174,6 +174,16 @@ public class Panel : IPanel
 		y1 = ClipRectH;
 	}
 
+
+	public void GetPaintSize(out int wide, out int tall) {
+		GetSize(out wide, out tall);
+		if (Border != null) {
+			Border.GetInset(out int left, out int top, out int right, out int bottom);
+			wide -= left + right;
+			tall -= top + bottom;
+		}
+	}
+
 	public IPanel GetCurrentKeyFocus() {
 		throw new NotImplementedException();
 	}
@@ -548,7 +558,8 @@ public class Panel : IPanel
 	}
 
 	public void Repaint() {
-		// todo
+		Flags |= PanelFlags.NeedsRepaint;
+		Surface?.Invalidate(this);
 	}
 
 	public void RequestFocus(int direction = 0) {

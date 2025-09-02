@@ -14,7 +14,7 @@ namespace Game.UI;
 
 public class GameMenuItem : MenuItem
 {
-	public GameMenuItem(Panel panel, string name) : base(panel, name) {
+	public GameMenuItem(Panel panel, string name, string text) : base(panel, name, text) {
 
 	}
 }
@@ -32,7 +32,7 @@ public enum BackgroundState
 public class GameMenu(Panel parent, string name) : Menu(parent, name)
 {
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
-		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName));
+		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
 		item.AddActionSignalTarget(target);
 		item.SetCommand(command);
 		item.SetText(itemText);

@@ -5,7 +5,7 @@ namespace Source.GUI.Controls;
 public class Button : Label {
 	KeyValues? _actionMessage;
 
-	public Button(Panel parent, string name) : base(parent, name) {
+	public Button(Panel parent, string name, string text) : base(parent, name, text) {
 	}
 
 	public void SetCommand(ReadOnlySpan<char> command) => SetCommand(new KeyValues("Command", "command", command));

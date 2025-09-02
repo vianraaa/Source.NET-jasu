@@ -1,4 +1,9 @@
 ﻿namespace Source.Common.GUI;
+public enum ColorState {
+	Normal,
+	Dull,
+	Bright
+}
 public enum Alignment
 {
 	Northwest,
