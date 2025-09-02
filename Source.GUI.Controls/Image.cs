@@ -17,8 +17,8 @@ public class Image : IImage
 	int X, Y, Width, Height;
 	Color Color;
 
-	public void GetContentSize(out int wide, out int tall) {
-		throw new NotImplementedException();
+	public virtual void GetContentSize(out int wide, out int tall) {
+		GetSize(out wide, out tall);
 	}
 
 	public void GetPos(out int x, out int y) {
@@ -44,7 +44,7 @@ public class Image : IImage
 
 	void IImage.SetSize(int wide, int tall) => SetSize(wide, tall);
 
-	protected virtual void SetSize(int wide, int tall) {
+	public virtual void SetSize(int wide, int tall) {
 		Width = wide;
 		Height = tall;
 	}

@@ -261,7 +261,7 @@ public class Panel : IPanel
 	}
 
 	public bool IsEnabled() {
-		throw new NotImplementedException();
+		return Enabled;
 	}
 
 	public bool IsFullyVisible() {
@@ -277,7 +277,7 @@ public class Panel : IPanel
 	}
 
 	public bool IsProportional() {
-		throw new NotImplementedException();
+		return (Flags & PanelFlags.IsProportional) != 0;
 	}
 
 	public bool IsTopmostPopup() => TopmostPopup;

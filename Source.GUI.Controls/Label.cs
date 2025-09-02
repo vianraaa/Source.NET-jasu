@@ -41,6 +41,69 @@ public class Label : Panel
 		return newImage;
 	}
 
+	public override void PerformLayout() {
+		GetSize(out int wide, out int tall);
+		wide -= TextInsetX;
+
+		int twide, ttall;
+		if (Images.Count == 1 && TextImageIndex == 0) {
+			if (Wrap || CenterWrap) {
+				TextImage!.GetContentSize(out twide, out ttall);
+				TextImage!.SetSize(wide, ttall);
+			}
+			else {
+				TextImage!.GetContentSize(out twide, out ttall);
+
+				if (wide < twide)
+					TextImage!.SetSize(wide, ttall);
+				else
+					TextImage!.SetSize(twide, ttall);
+			}
+
+			HandleAutoSizing();
+			HandleAutoSizing();
+
+			return;
+		}
+
+		if (TextImageIndex < 0)
+			return;
+
+		int widthOfImages = 0;
+		Span<ImageInfo> images = Images.AsSpan();
+		for (int i = 0; i < images.Length; i++) {
+			ref ImageInfo imageInfo = ref images[i];
+			IImage? image = imageInfo.Image;
+			if (image == null)
+				continue;
+
+			if (i == TextImageIndex)
+				continue;
+
+			image.GetSize(out int iWide, out int iTall);
+			widthOfImages += iWide;
+		}
+
+		int spaceAvail = wide - widthOfImages;
+
+		if (spaceAvail < 0)
+			return;
+
+		TextImage!.GetSize(out twide, out ttall);
+		TextImage!.SetSize(spaceAvail, ttall);
+
+		HandleAutoSizing();
+	}
+
+	private void HandleAutoSizing() {
+		if (AutoWideDirty) {
+			AutoWideDirty = false;
+
+			GetContentSize(out int wide, out int tall);
+			SetSize(wide, GetTall());
+		}
+	}
+
 	void Init() {
 		ContentAlignment = Alignment.West;
 		TextColorState = ColorState.Normal;
@@ -81,9 +144,11 @@ public class Label : Panel
 		public short Width;
 	}
 
-	IFont? Font;
-	public virtual void SetFont(IFont? font) => Font = font;
-	public virtual IFont? GetFont() => Font;
+	public virtual void SetFont(IFont? font) {
+		TextImage!.SetFont(font);
+		Repaint();
+	}
+	public virtual IFont? GetFont() => TextImage!.GetFont();
 
 
 	public void SetContentAlignment(Alignment alignment) {
@@ -91,17 +156,94 @@ public class Label : Panel
 	}
 
 	public virtual void GetContentSize(out int wide, out int tall) {
-		wide = 0;
-		tall = 0;
+		if (GetFont() == null) {
+			IScheme? scheme = GetScheme();
+			if (scheme != null) {
+				SetFont(scheme.GetFont("Default", IsProportional()));
+			}
+		}
+
+		ComputeAlignment(out int tx0, out int ty0, out int tx1, out int ty1);
+
+		wide = (tx1 - tx0) + TextInsetX;
+
+		TextImage!.GetSize(out int iWide, out int iTall);
+		wide -= iWide;
+		TextImage.GetContentSize(out iWide, out iTall);
+		wide += iWide;
+
+		foreach (var i in Images)
+			wide += i.Offset;
+
+		tall = Math.Max((ty1 - ty0) + TextInsetY, iTall);
 	}
 	public virtual void GetText(Span<char> textOut) { }
 	public virtual void SetText(ReadOnlySpan<char> text) {
 		if (text == null)
 			text = "";
-		TextImage.SetText(text);
+		TextImage!.SetText(text);
 		AutoWideDirty = AutoWideToContents;
 		InvalidateLayout();
 		Repaint();
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		if (FontOverrideName != null)
+			SetFont(scheme.GetFont(FontOverrideName, IsProportional()));
+
+		if (GetFont() == null)
+			SetFont(scheme.GetFont("Default", IsProportional()));
+
+		int wide, tall;
+		if (Wrap || CenterWrap) {
+			GetSize(out wide, out tall);
+			wide -= TextInsetX;
+			TextImage!.SetSize(wide, tall);
+
+			TextImage!.RecalculateNewLinePositions();
+		}
+		else {
+			TextImage!.GetContentSize(out wide, out tall);
+			TextImage!.SetSize(wide, tall);
+		}
+
+		if (AutoWideToContents) {
+			AutoWideDirty = true;
+			HandleAutoSizing();
+		}
+
+		// clear out any the images, since they will have been invalidated
+		Span<ImageInfo> images = Images.AsSpan();
+		for (int i = 0; i < images.Length; i++) {
+			IImage? image = images[i].Image;
+			if (image == null)
+				continue; // skip over null images
+
+			if (i == TextImageIndex)
+				continue;
+
+			ref ImageInfo imageInfo = ref images[i];
+			imageInfo.Image = null;
+		}
+
+		SetDisabledFgColor1(GetSchemeColor("Label.DisabledFgColor1", scheme));
+		SetDisabledFgColor2(GetSchemeColor("Label.DisabledFgColor2", scheme));
+		SetBgColor(GetSchemeColor("Label.BgColor", scheme));
+
+		switch (TextColorState) {
+			case ColorState.Dull:
+				SetFgColor(GetSchemeColor("Label.TextDullColor", scheme));
+				break;
+			case ColorState.Bright:
+				SetFgColor(GetSchemeColor("Label.TextBrightColor", scheme));
+				break;
+			case ColorState.Normal:
+			default:
+				SetFgColor(GetSchemeColor("Label.TextColor", scheme));
+				break;
+		}
 	}
 
 	nint TextImageIndex;
@@ -152,7 +294,7 @@ public class Label : Panel
 			imageYPos = y;
 			image.SetPos(x, y);
 
-			if (ContentAlignment == Alignment.West || ContentAlignment == Alignment.Center || ContentAlignment == Alignment.East) { 
+			if (ContentAlignment == Alignment.West || ContentAlignment == Alignment.Center || ContentAlignment == Alignment.East) {
 				image.GetSize(out int iw, out int it);
 				if (it < (ty1 - ty0)) {
 					imageYPos = ((ty1 - ty0) - it) / 2 + y;
@@ -162,7 +304,7 @@ public class Label : Panel
 
 			if (imageInfo.Width >= 0) {
 				image.GetSize(out int w, out int t);
-				if (w > imageInfo.Width) 
+				if (w > imageInfo.Width)
 					image.SetSize(imageInfo.Width, t);
 			}
 
@@ -264,5 +406,9 @@ public class Label : Panel
 
 		tx1 = tx0 + tWide;
 		ty1 = ty0 + tTall;
+	}
+
+	internal TextImage GetTextImage() {
+		return TextImage;
 	}
 }

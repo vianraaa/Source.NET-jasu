@@ -37,27 +37,67 @@ public class Menu : Panel
 		SetVisible(false);
 		SetParent(parent);
 		recalculateWidth = true;
+
+		if (IsProportional()) {
+			// todo
+		}
+		else 
+			MenuItemHeight = DEFAULT_MENU_ITEM_HEIGHT;
 	}
+
+	bool UseFallbackFont;
+	IFont? FallbackItemFont;
 
 	public virtual int AddMenuItem(MenuItem panel) {
 		panel.SetParent(this);
+		int itemID = MenuItems.Count;
 		MenuItems.Add(panel);
+		SortedItems.Add(itemID);
 		InvalidateLayout(false);
 		recalculateWidth = true;
 		panel.SetContentAlignment(Alignment);
-		// the rest is todo
-		return MenuItems.Count - 1;
+
+		if (ItemFont != null)
+			panel.SetFont(ItemFont);
+
+		if(UseFallbackFont && FallbackItemFont != null) {
+			Label l = panel;
+			TextImage? ti = l.GetTextImage();
+			if (ti != null)
+				ti.SetUseFallbackFont(UseFallbackFont, FallbackItemFont);
+		}
+
+		// hotkeys?
+
+		return itemID;
 	}
 
 	MenuItem? GetParentMenuItem() => GetParent() is MenuItem mi ? mi : null;
 
-	public int CountVisibleItems() {
-		int i = 0;
-		foreach (var child in GetChildren())
-			if (child.IsVisible())
-				i++;
 
-		return i;
+	public int GetMenuItemHeight() {
+		return MenuItemHeight;
+	}
+	public void SetMenuItemHeight(int itemHeight) {
+		MenuItemHeight = itemHeight;
+	}
+	public const int DEFAULT_MENU_ITEM_HEIGHT = 22;
+	public int CountVisibleItems() {
+		int count = 0;
+		int len = SortedItems.Count;
+		for (int i = 0; i < len; i++)
+			if (MenuItems[SortedItems[i]].IsVisible())
+				++count;
+
+		return count;
+	}
+
+	IFont? ItemFont;
+	public void SetFont(IFont font) {
+		ItemFont = font;
+		if (font != null)
+			MenuItemHeight = Surface.GetFontTall(font) + 2;
+		InvalidateLayout();
 	}
 
 	public override void PerformLayout() {
@@ -227,8 +267,53 @@ public class Menu : Panel
 			SetBorder(menuBorder);
 	}
 
-	private void MakeItemsVisibleInScrollRange(int numVisibleLines, int v) {
-		throw new NotImplementedException();
+	private void MakeItemsVisibleInScrollRange(int maxVisibleItems, int numPixelsAvailable) {
+		int i;
+		foreach(var item in MenuItems)
+	{
+			item.SetBounds(0, 0, 0, 0);
+		}
+		for (i = 0; i < SeparatorPanels.Count; ++i) 
+			SeparatorPanels[i].SetVisible(false);
+		
+
+		VisibleSortedItems.Clear();
+
+		int tall = 0;
+
+		int startItem = 0; //Scroller?.GetValue();
+		Assert(startItem >= 0);
+		do {
+			if (startItem >= SortedItems.Count)
+				break;
+
+			int itemId = SortedItems[startItem];
+
+			if (!MenuItems[itemId].IsVisible()) {
+				++startItem;
+				continue;
+			}
+
+			int itemHeight = MenuItemHeight;
+			int sepIndex = -1; // Separators.Find(itemId);
+			if (sepIndex != -1) {
+				itemHeight += MENU_SEPARATOR_HEIGHT;
+			}
+
+			if (tall + itemHeight > numPixelsAvailable)
+				break;
+
+			// Too many items
+			if (maxVisibleItems > 0) {
+				if (VisibleSortedItems.Count >= maxVisibleItems)
+					break;
+			}
+
+			tall += itemHeight;
+			VisibleSortedItems.Add(itemId);
+			++startItem;
+		}
+		while (true);
 	}
 
 	private void RemoveScrollBar() {
