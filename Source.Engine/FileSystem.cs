@@ -1,4 +1,7 @@
-﻿using Source.Common.Filesystem;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
+using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 
 using static Source.Engine.Common;
@@ -26,7 +29,7 @@ public enum FSReturnCode
 /// <summary>
 /// Internal engine filesystem initializer.
 /// </summary>
-public class FileSystem(IFileSystem fileSystem) {
+public class FileSystem(IFileSystem fileSystem, IServiceProvider services) {
 	FSReturnCode SetupFileSystemError(bool run, FSReturnCode ret, ReadOnlySpan<char> msg) {
 		Dbg.Error($"{msg}\n");
 		return ret;
@@ -98,6 +101,9 @@ public class FileSystem(IFileSystem fileSystem) {
 		mainFile = ReadKeyValuesFile(gameInfoFilename);
 		if (mainFile == null)
 			return SetupFileSystemError(true, FSReturnCode.MissingGameInfoFile, $"{gameInfoFilename} is missing.");
+
+		// Load ModInfo for other things so everything else doesn't need to parse gameinfo.txt.
+		services.GetRequiredService<ModInfo>().LoadGameInfoFromKeyValues(mainFile);
 
 		fileSystemInfo = mainFile.FindKey("FileSystem");
 		if (fileSystemInfo == null)

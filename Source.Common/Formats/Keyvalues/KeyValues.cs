@@ -503,4 +503,18 @@ public class KeyValues : IEnumerable<KeyValues>
 			parent.children.AddLast(dat.node);
 		}
 	}
+
+	// Untested...
+	public unsafe bool LoadFromBuffer(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> buffer) {
+		fixed(char* bytes = buffer) {
+			byte* input = (byte*)bytes;
+			using UnmanagedMemoryStream stream = new(input, buffer.Length * sizeof(char));
+			return LoadFromStream(stream);
+		}
+	}
+
+	public void AddSubKey(KeyValues subkey) {
+		Assert(subkey != null);
+		children.AddLast(subkey);
+	}
 }

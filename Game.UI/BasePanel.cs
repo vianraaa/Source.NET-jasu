@@ -6,6 +6,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Common.Launcher;
+using Source.GUI;
 using Source.GUI.Controls;
 
 using System.Numerics;
@@ -78,6 +79,35 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 	}
 }
 
+public class MainMenuGameLogo : EditablePanel
+{
+	[Imported] public IEngineClient engine;
+
+	int OffsetX;
+	int OffsetY;
+
+	public MainMenuGameLogo(Panel? parent, string name) : base(parent, name) {
+
+	}
+	public override void ApplySettings(KeyValues resourceData) {
+		base.ApplySettings(resourceData);
+
+		OffsetX = resourceData.GetInt("offsetX", 0);
+		OffsetY = resourceData.GetInt("offsetY", 0);
+	}
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		KeyValues conditions = new KeyValues("conditions");
+		Span<char> background = stackalloc char[MAX_PATH];
+		engine.GetMainMenuBackgroundName(background);
+
+		KeyValues subKey = new KeyValues(background);
+		conditions.AddSubKey(subKey);
+
+		LoadControlSettings("Resource/GameLogo.res", null, null, conditions);
+	}
+}
 public class BasePanel : Panel
 {
 	GameMenu GameMenu;
@@ -85,6 +115,7 @@ public class BasePanel : Panel
 	[Imported] public IFileSystem FileSystem;
 	[Imported] public IGameUI GameUI;
 	[Imported] public IEngineClient engine;
+	[Imported] public ModInfo ModInfo;
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
@@ -95,25 +126,17 @@ public class BasePanel : Panel
 		SetMenuAlpha(255);
 	}
 
-	int BackgroundFIllAlpha;
+	int BackgroundFillAlpha;
 
 	IFont? FontTest;
 
 	public override void PaintBackground() {
-		//DrawBackgroundImage();
-		Surface.DrawSetColor(0, 0, 0, 255);
-		Surface.GetScreenSize(out int wide, out int tall);
-
-		Surface.DrawFilledRect(0, 0, wide, tall);
-
-		if (BackgroundFIllAlpha > 0) {
-			Surface.DrawSetColor(0, 0, 0, BackgroundFIllAlpha);
-			Surface.DrawFilledRect(0, 0, wide, tall);
+		DrawBackgroundImage();
+		if (BackgroundFillAlpha > 0) {
+			Surface.DrawSetColor(0, 0, 0, BackgroundFillAlpha);
+			Surface.GetScreenSize(out int wide, out int tall);
+			Surface.DrawFilledRect(0, 0, wide / 2, tall);
 		}
-
-		Surface.DrawSetTextFont(FontTest);
-		Surface.DrawSetTextPos(300, 120);
-		Surface.DrawPrintText("abcdefghijklmno");
 	}
 
 	Vector2 GameMenuPos;
@@ -183,6 +206,11 @@ public class BasePanel : Panel
 		}
 	}
 
+	public override void OnThink() {
+		base.OnThink();
+		BackgroundFillAlpha = 80; // todo
+	}
+
 	private GameMenu RecursiveLoadGameMenu(KeyValues datafile) {
 		GameMenu menu = EngineAPI.New<GameMenu>(this, new string(datafile.Name));
 		for (KeyValues? dat = datafile.GetFirstSubKey(); dat != null; dat = dat.GetNextKey()) {
@@ -195,8 +223,15 @@ public class BasePanel : Panel
 		return menu;
 	}
 
-	private void CreateGameLogo() {
+	MainMenuGameLogo? GameLogo;
 
+	private void CreateGameLogo() {
+		if (ModInfo.UseGameLogo()) {
+			GameLogo = EngineAPI.New<MainMenuGameLogo>(this, "GameLogo");
+
+			GameLogo.MakeReadyForUse();
+			GameLogo.InvalidateLayout(true, true);
+		}
 	}
 
 	bool EverActivated;

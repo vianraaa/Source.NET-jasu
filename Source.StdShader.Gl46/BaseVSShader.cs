@@ -132,9 +132,23 @@ public abstract class BaseVSShader : BaseShader
 
 	private void SetDefaultBlendingShadowState(int baseTextureVar, bool isBaseTexture) {
 		if ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.Additive) != 0)
-			SetNormalBlendingShadowState(baseTextureVar, isBaseTexture); // TODO: additive
+			SetAdditiveBlendingShadowState(baseTextureVar, isBaseTexture); // TODO: additive
 		else
 			SetNormalBlendingShadowState(baseTextureVar, isBaseTexture);
+	}
+
+	private void SetAdditiveBlendingShadowState(int baseTextureVar, bool isBaseTexture) {
+		Assert(IsSnapshotting());
+		bool isTranslucent = false;
+
+		isTranslucent |= (CurrentMaterialVarFlags() & (int)MaterialVarFlags.VertexAlpha) != 0;
+
+		isTranslucent |= TextureIsTranslucent(baseTextureVar, isBaseTexture) && ((CurrentMaterialVarFlags() & (int)MaterialVarFlags.AlphaTest) == 0);
+
+		if (isTranslucent)
+			EnableAlphaBlending(ShaderBlendFactor.SrcAlpha, ShaderBlendFactor.One);
+		else
+			EnableAlphaBlending(ShaderBlendFactor.One, ShaderBlendFactor.One);
 	}
 
 	private void SetNormalBlendingShadowState(int textureVar, bool isBaseTexture) {
