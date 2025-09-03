@@ -335,44 +335,4 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	public ButtonCode VirtualKeyToButtonCode(int virtualKey) {
 		throw new NotImplementedException();
 	}
-
-	public bool InternalKeyCodePressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalMousePressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalKeyCodeReleased(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalMouseReleased(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalMouseDoublePressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalMouseWheeled(int data3) {
-		throw new NotImplementedException();
-	}
-
-	public bool InternalCursorMoved(int data2, int data3) {
-		throw new NotImplementedException();
-	}
-
-	public void InternalKeyCodeTyped(ButtonCode data) {
-		throw new NotImplementedException();
-	}
-
-	public void InternalKeyTyped(ButtonCode data) {
-		throw new NotImplementedException();
-	}
-
-	public void OnInputLanguageChanged() {
-		throw new NotImplementedException();
-	}
 }

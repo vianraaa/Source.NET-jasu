@@ -1,4 +1,6 @@
 ﻿using Source.Common.Filesystem;
+using Source.Common.GUI;
+
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
@@ -39,11 +41,26 @@ public class KeyValues : IEnumerable<KeyValues>
 		node = new(this);
 		Name = new(name);
 	}
+
+	public KeyValues(ReadOnlySpan<char> name, int value) : base() {
+		node = new(this);
+		Name = new(name);
+
+		SetInt(value);
+	}
+
 	public KeyValues(ReadOnlySpan<char> name, ReadOnlySpan<char> firstKey, ReadOnlySpan<char> firstValue) : base() {
 		node = new(this);
 		Name = new(name);
 
 		SetString(firstKey, firstValue);
+	}
+
+	public KeyValues(ReadOnlySpan<char> name, ReadOnlySpan<char> firstKey, int firstValue) : base() {
+		node = new(this);
+		Name = new(name);
+
+		SetInt(firstKey, firstValue);
 	}
 
 	public bool LoadFromStream(Stream? stream) {
@@ -132,7 +149,7 @@ public class KeyValues : IEnumerable<KeyValues>
 
 	private bool HandleConditional(ReadOnlySpan<char> condition, bool mustMatch) {
 		int realStrLength = condition.IndexOf('\0');
-		if(realStrLength == -1) {
+		if (realStrLength == -1) {
 			Debug.Assert(false, "String overflow!!!");
 			return false;
 		}
@@ -218,6 +235,8 @@ public class KeyValues : IEnumerable<KeyValues>
 		return valueMatches;
 	}
 
+	void AddToTail(KeyValues kv) => children.AddLast(kv.node);
+
 	private void ReadKVPairs(StreamReader reader, bool matches) {
 		int rd = reader.Read();
 
@@ -230,11 +249,11 @@ public class KeyValues : IEnumerable<KeyValues>
 			SkipComments(reader);
 			// Start reading keyvalues.
 			KeyValues kvpair = new() { evaluateConditionals = this.evaluateConditionals, useEscapeSequences = this.useEscapeSequences };
-			
+
 			if (kvpair.ReadKV(reader) && matches) // When conditional, still need to waste time on parsing, but we throw it away after
-					                              // There's definitely a better way to handle this, but it would need more testing scenarios
+												  // There's definitely a better way to handle this, but it would need more testing scenarios
 												  // The ReadKV call can also determine its condition and will return false if it doesnt want to be added.
-				children.AddLast(kvpair.node);
+				AddToTail(kvpair);
 		}
 	}
 
@@ -360,7 +379,7 @@ public class KeyValues : IEnumerable<KeyValues>
 			KeyValues newKey = new(searchStr);
 			newKey.useEscapeSequences = useEscapeSequences;
 
-			children.AddLast(newKey.node);
+			AddToTail(newKey);
 			return newKey;
 		}
 
@@ -431,6 +450,11 @@ public class KeyValues : IEnumerable<KeyValues>
 				: defaultValue;
 	}
 
+	public void SetInt(int value) {
+		Value = value;
+		Type = Types.Int;
+	}
+
 	public void SetInt(ReadOnlySpan<char> keyName, int value) {
 		KeyValues? dat = FindKey(keyName, true);
 		if (dat != null) {
@@ -471,7 +495,7 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 	public IEnumerator<KeyValues> GetEnumerator() {
-		foreach(var key in children)
+		foreach (var key in children)
 			yield return key;
 	}
 
@@ -498,23 +522,37 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 	public void CopySubkeys(KeyValues parent) {
-		for(KeyValues? sub = GetFirstSubKey(); sub != null; sub = sub.GetNextKey()) {
+		for (KeyValues? sub = GetFirstSubKey(); sub != null; sub = sub.GetNextKey()) {
 			KeyValues dat = sub.MakeCopy();
-			parent.children.AddLast(dat.node);
+			parent.AddToTail(dat);
 		}
 	}
 
 	// Untested...
 	public unsafe bool LoadFromBuffer(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> buffer) {
-		fixed(char* bytes = buffer) {
+		fixed (char* bytes = buffer) {
 			byte* input = (byte*)bytes;
 			using UnmanagedMemoryStream stream = new(input, buffer.Length * sizeof(char));
 			return LoadFromStream(stream);
 		}
 	}
 
-	public void AddSubKey(KeyValues subkey) {
+	public KeyValues AddSubKey(KeyValues subkey) {
 		Assert(subkey != null);
-		children.AddLast(subkey);
+		AddToTail(subkey);
+		return this;
+	}
+
+	public KeyValues AddSubKey(ReadOnlySpan<char> name, int value) {
+		AddToTail(new KeyValues(name, value));
+		return this;
+	}
+
+	public void SetPtr(string keyName, object? ptr) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			dat.Value = ptr;
+			dat.Type = Types.Pointer;
+		}
 	}
 }

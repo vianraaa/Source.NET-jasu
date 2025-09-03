@@ -5,6 +5,7 @@ using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
+using Source.Common.Input;
 using Source.Common.Launcher;
 using Source.GUI;
 using Source.GUI.Controls;
@@ -33,6 +34,14 @@ public enum BackgroundState
 public class GameMenu(Panel parent, string name) : Menu(parent, name)
 {
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
+		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
+		item.AddActionSignalTarget(target);
+		item.SetCommand(command);
+		item.SetText(itemText);
+		item.SetUserData(userData);
+		return base.AddMenuItem(item);
+	}
+	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, KeyValues command, Panel? target, KeyValues? userData = null) {
 		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
 		item.AddActionSignalTarget(target);
 		item.SetCommand(command);
@@ -76,6 +85,36 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 
 		if (!state)
 			MoveToBack();
+	}
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		//SetMenuItemHeight(int.TryParse(scheme.GetResourceString(""), out int r) ? r : 0);
+		SetBgColor(new(0, 0, 0, 0));
+		SetBorder(null);
+	}
+	public override void OnSetFocus() {
+		base.OnSetFocus();
+	}
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		base.OnCommand(command);
+	}
+	public override void OnKeyCodePressed(ButtonCode code) {
+		int dir = 0;
+		switch (code) {
+			case ButtonCode.KeyUp:
+				dir = -1;
+				break;
+			case ButtonCode.KeyDown:
+				dir = 1;
+				break;
+		}
+
+		if(dir != 0) {
+
+		}
+
+		base.OnKeyCodePressed(code);
 	}
 }
 

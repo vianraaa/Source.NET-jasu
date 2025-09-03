@@ -130,4 +130,6 @@ public interface IPanel
 	void SetAlpha(float alpha);
 	void TraverseLevel(int v);
 	void SetPopup(bool v);
+	void OnTick();
+	void SendMessage(KeyValues parms, IPanel? from);
 }

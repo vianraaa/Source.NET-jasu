@@ -16,6 +16,7 @@ using Source.GUI.Controls;
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Numerics;
 using System.Reflection;
@@ -81,10 +82,16 @@ public class MatSystemSurface : IMatSystemSurface
 	readonly IFileSystem FileSystem;
 	readonly FontManager FontManager;
 	readonly FontTextureCache FontTextureCache;
+	IVGuiInput? VGuiInput;
 	readonly IInputSystem InputSystem;
 	readonly ClientGlobalVariables globals;
 	readonly IServiceProvider services;
 	readonly TextureDictionary TextureDictionary;
+
+	[MemberNotNull(nameof(VGuiInput))]
+	void LinkVGUI() {
+		VGuiInput ??= services.GetRequiredService<IVGui>().GetInput();
+	}
 
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine,
 							ISchemeManager schemeManager, IFileSystem fileSystem, ClientGlobalVariables globals,
@@ -145,7 +152,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 
 	private void EnableInput(bool v) {
-
+		
 	}
 
 	private void InitCursors() {
@@ -624,7 +631,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public IPanel GetEmbeddedPanel() {
-		return EmbeddedPanel;
+		return EmbeddedPanel!;
 	}
 
 	public IPanel? GetPopup(int index) {
@@ -654,7 +661,7 @@ public class MatSystemSurface : IMatSystemSurface
 		renderContext.GetViewport(out _, out _, out wide, out tall);
 	}
 
-	public void GetTextSize(IFont font, ReadOnlySpan<char> text, out int wide, out int tall) {
+	public void GetTextSize(IFont? font, ReadOnlySpan<char> text, out int wide, out int tall) {
 		throw new NotImplementedException();
 	}
 
@@ -695,16 +702,17 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool HasFocus() {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public void Invalidate(IPanel panel) {
 
 	}
 
-	public bool IsCursorVisible() {
-		throw new NotImplementedException();
-	}
+	bool CursorAlwaysVisible;
+	ICursor? CurrentCursor;
+
+	public bool IsCursorVisible() => CursorAlwaysVisible || CurrentCursor != null;
 
 	public bool IsMinimized(IPanel panel) {
 		throw new NotImplementedException();
@@ -976,49 +984,56 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool HandleInputEvent(in InputEvent ev) {
+		LinkVGUI();
+		if (AppDrivesInput)
+			VGuiInput.UpdateButtonState(in ev);
+
+		return InputHandleInputEvent(in ev);
+	}
+	bool InputHandleInputEvent(in InputEvent ev) {
+		LinkVGUI();
 		switch (ev.Type) {
 			case InputEventType.IE_ButtonPressed: {
 					ButtonCode code = (ButtonCode)ev.Data2;
 					if (code.IsKeyCode())
-						return InputSystem.InternalKeyCodePressed(code);
-
+						return VGuiInput.InternalKeyCodePressed(code);
 
 					if (code.IsMouseCode())
-						return InputSystem.InternalMousePressed(code);
+						return VGuiInput.InternalMousePressed(code);
 
 				}
 				break;
 			case InputEventType.IE_ButtonReleased: {
 					ButtonCode code = (ButtonCode)ev.Data2;
 					if (code.IsKeyCode())
-						return InputSystem.InternalKeyCodeReleased(code);
+						return VGuiInput.InternalKeyCodeReleased(code);
 
 					if (code.IsMouseCode())
-						return InputSystem.InternalMouseReleased(code);
+						return VGuiInput.InternalMouseReleased(code);
 				}
 				break;
 			case InputEventType.IE_ButtonDoubleClicked: {
 					ButtonCode code = (ButtonCode)ev.Data2;
 					if (code.IsMouseCode())
-						return InputSystem.InternalMouseDoublePressed(code);
+						return VGuiInput.InternalMouseDoublePressed(code);
 				}
 				break;
 
 			case InputEventType.IE_AnalogValueChanged: {
 					if ((AnalogCode)ev.Data == AnalogCode.MouseWheel)
-						return InputSystem.InternalMouseWheeled(ev.Data3);
+						return VGuiInput.InternalMouseWheeled(ev.Data3);
 					if ((AnalogCode)ev.Data == AnalogCode.MouseXY)
-						return InputSystem.InternalCursorMoved(ev.Data2, ev.Data3);
+						return VGuiInput.InternalCursorMoved(ev.Data2, ev.Data3);
 				}
 				break;
 
 			case InputEventType.Gui_KeyCodeTyped: {
-					InputSystem.InternalKeyCodeTyped((ButtonCode)ev.Data);
+					VGuiInput.InternalKeyCodeTyped((ButtonCode)ev.Data);
 				}
 				return true;
 
 			case InputEventType.Gui_KeyTyped: {
-					InputSystem.InternalKeyTyped((ButtonCode)ev.Data);
+					VGuiInput.InternalKeyTyped((char)ev.Data);
 				}
 				return true;
 
@@ -1043,11 +1058,11 @@ public class MatSystemSurface : IMatSystemSurface
 				}
 
 			case InputEventType.Gui_LocateMouseClick:
-				InputSystem.InternalCursorMoved(ev.Data, ev.Data2);
+				VGuiInput.InternalCursorMoved(ev.Data, ev.Data2);
 				return true;
 
 			case InputEventType.Gui_InputLanguageChanged:
-				InputSystem.OnInputLanguageChanged();
+				VGuiInput.OnInputLanguageChanged();
 				return true;
 
 			case InputEventType.Gui_IMEStartComposition:

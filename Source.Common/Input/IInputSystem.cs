@@ -31,14 +31,4 @@ public interface IInputSystem
 	public void SetCursorPosition(int x, int y);
 	public bool GetRawMouseAccumulators(out int accumX, out int accumY);
 	public void SetConsoleTextMode(bool consoleTextMode);
-	bool InternalKeyCodePressed(ButtonCode code);
-	bool InternalMousePressed(ButtonCode code);
-	bool InternalKeyCodeReleased(ButtonCode code);
-	bool InternalMouseReleased(ButtonCode code);
-	bool InternalMouseDoublePressed(ButtonCode code);
-	bool InternalMouseWheeled(int data3);
-	bool InternalCursorMoved(int data2, int data3);
-	void InternalKeyCodeTyped(ButtonCode data);
-	void InternalKeyTyped(ButtonCode data);
-	void OnInputLanguageChanged();
 }

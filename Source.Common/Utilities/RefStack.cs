@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common.Utilities;
+
 /// <summary>
 /// A by-reference Stack<typeparamref name="T"/> implementation. Never shrinks, but can grow to infinite size
 /// <br/>

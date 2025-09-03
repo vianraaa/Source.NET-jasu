@@ -1,10 +1,13 @@
 ﻿using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+using Source.Common.Input;
 using Source.Common.MaterialSystem;
 
 using System.Runtime.InteropServices;
 
 using static Source.Common.Networking.svc_ClassInfo;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Source.GUI.Controls;
 
@@ -298,13 +301,6 @@ public class Panel : IPanel
 		// todo... ugh
 	}
 
-	public virtual void OnChildAdded(IPanel child) {
-
-	}
-
-	public virtual void OnSizeChanged(int newWide, int newTall) {
-		InvalidateLayout();
-	}
 
 	public void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false) {
 		Flags |= PanelFlags.NeedsLayout;
@@ -805,10 +801,6 @@ public class Panel : IPanel
 		OnThink();
 	}
 
-	public virtual void OnThink() {
-
-	}
-
 	public void SetPanelBorderEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintEnabled : Flags &= ~PanelFlags.PaintEnabled;
 	public void SetPaintBackgroundEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintBackgroundEnabled : Flags &= ~PanelFlags.PaintBackgroundEnabled;
 	public void SetPaintBorderEnabled(bool enabled) => Flags = enabled ? Flags |= PanelFlags.PaintBorderEnabled : Flags &= ~PanelFlags.PaintBorderEnabled;
@@ -826,5 +818,44 @@ public class Panel : IPanel
 
 	public void TraverseLevel(int v) {
 
+	}
+
+	public virtual void OnCommand(ReadOnlySpan<char> command) { }
+	public virtual void OnMouseCaptureLost() { }
+	public virtual void OnSetFocus() { }
+	public virtual void OnKillFocus() { }
+	public virtual void OnDelete() { }
+	public virtual void OnThink() { }
+	public virtual void OnChildAdded(IPanel child) {}
+	public virtual void OnSizeChanged(int newWide, int newTall) {
+		InvalidateLayout();
+	}
+	public virtual void OnCursorMoved() {}
+	public virtual void OnCursorEntered() { }
+	public virtual void OnCursorExited() { }
+	public virtual void OnMousePressed(ButtonCode code) { }
+	public virtual void OnMouseDoublePressed(ButtonCode code) { }
+	public virtual void OnMouseReleased(ButtonCode code) { }
+	public virtual void OnMouseMismatchedRelease(ButtonCode code, IPanel? pressedPanel) { }
+	public virtual void OnMouseWheeled(int delta) { }
+	bool TriplePressAllowed;
+	public virtual void SetTriplePressAllowed(bool state) => TriplePressAllowed = state;
+	public virtual bool IsTriplePressAllowed() => TriplePressAllowed;
+	public virtual void OnMouseTriplePressed(ButtonCode code) { }
+
+	public virtual void OnKeyCodePressed(ButtonCode code) { }
+	public virtual void OnKeyCodeTyped(ButtonCode code) { }
+	public virtual void OnKeyTyped(char unichar) { }
+	public virtual void OnKeyCodeReleased(ButtonCode code) { }
+	public virtual void OnKeyFocusTicked() { }
+	public virtual void OnMouseFocusTicked() { }
+	public virtual void OnMessage(KeyValues message, IPanel? from) { }
+
+	public void OnTick() {
+		throw new NotImplementedException();
+	}
+
+	public void SendMessage(KeyValues parms, IPanel? from) {
+		OnMessage(parms, from);
 	}
 }

@@ -91,7 +91,7 @@ public unsafe class SDL3_System : ISystem
 	}
 
 	public long GetTimeMillis() {
-		throw new NotImplementedException();
+		return (long)(GetCurrentTime() * 1000);
 	}
 
 	public double GetTimeSinceLastUse() {
