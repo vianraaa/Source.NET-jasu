@@ -71,7 +71,16 @@ public class ShadowState : IShaderShadow
 	public VertexShaderHandle VertexShader;
 	public PixelShaderHandle PixelShader;
 
-	public void SetShaderUniform(IMaterialVar textureVar) => ShaderAPI.SetShaderUniform(textureVar);
+	List<IMaterialVar> shaderUniforms = [];
+
+	public void SetShaderUniform(IMaterialVar textureVar) {
+		shaderUniforms.Add(textureVar);
+	}
+	public void ActivateShaderUniforms() {
+		foreach(var var in shaderUniforms) {
+			ShaderAPI.SetShaderUniform(var);
+		}
+	}
 	private static unsafe int SizeAligned<T>(int alignment = 16) where T : unmanaged {
 		var size = sizeof(T);
 		var a = alignment - (size % alignment);
@@ -110,7 +119,6 @@ public class ShadowState : IShaderShadow
 	}
 
 	bool needsBufferUpload = true;
-	ulong lastBoardUploadHash;
 	internal VertexFormat VertexFormat;
 
 	public unsafe void Dispose() {
@@ -127,18 +135,7 @@ public class ShadowState : IShaderShadow
 		ReuploadBuffers(); // Reupload UBO's, if needed
 
 		// Set GL states. We compare our last upload state to the current desired state and adjust if it differs.
-		ulong currHash = State.Hash();
-		if (currHash != lastBoardUploadHash) {
-			glToggle(GL_BLEND, State.Blending);
-
-			glBlendFunc(State.SourceBlend.GLEnum(), State.DestinationBlend.GLEnum());
-			glBlendEquation(State.BlendOperation.GLEnum());
-
-			glToggle(GL_DEPTH_TEST, State.DepthTest);
-			glDepthMask(State.DepthWrite);
-
-			lastBoardUploadHash = currHash;
-		}
+		ShaderAPI.SetBoardState(in State);
 
 		// Set VSH and PSH. Shader API can bind these whenever it needs to
 		ShaderAPI!.BindVertexShader(in VertexShader);
@@ -148,6 +145,9 @@ public class ShadowState : IShaderShadow
 		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedBaseShader, BASE_UBO);
 		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedVertexShader, VERTEX_UBO);
 		glBindBufferBase(GL_UNIFORM_BUFFER, (int)UniformBufferBindingLocation.SharedPixelShader, PIXEL_UBO);
+
+		// Activate per-shader-instance uniforms...
+		ActivateShaderUniforms();
 
 		// And now the shader shadow state is activated
 	}

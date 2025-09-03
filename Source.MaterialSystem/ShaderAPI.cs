@@ -11,24 +11,9 @@ using Source.Common.Engine;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
-using Source.Common.ShaderLib;
 using Source.MaterialSystem.Meshes;
-
-using Steamworks;
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Drawing;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
-
-using static Source.Common.Engine.IEngine;
-using static Source.MaterialSystem.ShaderAPIGl46;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 
@@ -518,10 +503,14 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	uint GetCurrentProgramInternal() => CombobulateShadersIfChanged();
 
 	public void SetShaderUniform(int uniform, int integer) {
+#if GL_DEBUG
 		int i = glGetError();
+#endif
 		glProgramUniform1i(GetCurrentProgramInternal(), uniform, integer);
+#if GL_DEBUG
 		if ((i = glGetError()) != 0)
 			AssertMsg(false, $"GL error {i}");
+#endif
 	}
 
 	public void SetShaderUniform(int uniform, uint integer) {
@@ -713,6 +702,22 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		switch (textureVar.GetVarType()) {
 			case MaterialVarType.Float: SetShaderUniform(uniform, textureVar.GetFloatValue()); break;
 			case MaterialVarType.Int: SetShaderUniform(uniform, textureVar.GetIntValue()); break;
+		}
+	}
+
+	ulong lastBoardUploadHash;
+	internal void SetBoardState(in GraphicsBoardState state) {
+		ulong currHash = state.Hash();
+		if (currHash != lastBoardUploadHash) {
+			glToggle(GL_BLEND, state.Blending);
+
+			glBlendFunc(state.SourceBlend.GLEnum(), state.DestinationBlend.GLEnum());
+			glBlendEquation(state.BlendOperation.GLEnum());
+
+			glToggle(GL_DEPTH_TEST, state.DepthTest);
+			glDepthMask(state.DepthWrite);
+
+			lastBoardUploadHash = currHash;
 		}
 	}
 }

@@ -213,8 +213,9 @@ public static class UnmanagedUtils
 		return hash;
 	}
 
-	public static unsafe ulong Hash<T>(this ref T target) where T : unmanaged {
-		fixed (T* ptr = &target) {
+	public static unsafe ulong Hash<T>(this T target) where T : unmanaged {
+		ref T t = ref target;
+		fixed (T* ptr = &t) {
 			Span<byte> data = new(ptr, Unsafe.SizeOf<T>());
 			return XXH64.DigestOf(data);
 		}
