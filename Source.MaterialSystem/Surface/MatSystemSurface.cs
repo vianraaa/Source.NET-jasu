@@ -86,6 +86,7 @@ public class MatSystemSurface : IMatSystemSurface
 	readonly IInputSystem InputSystem;
 	readonly ClientGlobalVariables globals;
 	readonly IServiceProvider services;
+	readonly ILauncherManager launcherMgr;
 	readonly TextureDictionary TextureDictionary;
 
 	[MemberNotNull(nameof(VGuiInput))]
@@ -95,7 +96,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine,
 							ISchemeManager schemeManager, IFileSystem fileSystem, ClientGlobalVariables globals,
-							IServiceProvider services, IInputSystem inputSystem, ISystem system) {
+							IServiceProvider services, IInputSystem inputSystem, ISystem system, ILauncherManager launcherMgr) {
 		this.materials = materials;
 		this.services = services;
 		this.TextureDictionary = new(materials, this);
@@ -129,6 +130,7 @@ public class MatSystemSurface : IMatSystemSurface
 			SchemeManager = schemeManager
 		};
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
+		this.launcherMgr = launcherMgr;
 	}
 
 	private void InitInput() {
@@ -971,8 +973,20 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void SetCursor(ICursor cursor) {
-		Warning("MatSystemSurface.SetCursor not implemented.\n");
+		cursor.Activate();
 	}
+
+	public void SetCursor(nint cursor) {
+		ICursor? realCursor = launcherMgr.GetHardwareCursor(cursor);
+
+		if(realCursor != null) {
+			realCursor.Activate();
+			return;
+		}
+
+		throw new NotImplementedException("Software cursors not yet implemented!");
+	}
+
 
 	public void SetCursorAlwaysVisible(bool visible) {
 		throw new NotImplementedException();

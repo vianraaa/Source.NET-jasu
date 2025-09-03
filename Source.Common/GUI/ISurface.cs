@@ -138,6 +138,8 @@ public interface ISurface
 	void CreatePopup(IPanel panel, bool minimised, bool showTaskbarIcon = true, bool disabled = false, bool mouseInput = true, bool kbInput = true);
 	void SwapBuffers(IPanel panel);
 	void Invalidate(IPanel panel);
+	void SetCursor(CursorCode cursor) => SetCursor((nint)cursor);
+	void SetCursor(nint cursor);
 	void SetCursor(ICursor cursor);
 	void SetCursorAlwaysVisible(bool visible);
 	bool IsCursorVisible();

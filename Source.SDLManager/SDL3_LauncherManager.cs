@@ -2,10 +2,12 @@
 
 using SDL;
 
+using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Source.SDLManager;
@@ -48,6 +50,8 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	public SDL3_LauncherManager(IServiceProvider services) {
 		this.services = services;
 		SDL3_State.InitializeIfRequired();
+
+		InitCursors();
 	}
 	SDL3_Window window;
 	public unsafe bool CreateGameWindow(string title, bool windowed, int width, int height) {
@@ -173,4 +177,43 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	}
 
 	public delegate* unmanaged[Cdecl]<byte*, void*> GL_LoadExtensionsPtr() => &GL_ProcAddress;
+
+	ICursor[] DefaultCursors;
+
+	public ICursor? GetHardwareCursor(nint cursor) {
+		if (cursor <= 0) return null;
+		if (cursor >= (int)CursorCode.Last) return null;
+		return DefaultCursors[cursor];
+	}
+
+	[MemberNotNull(nameof(DefaultCursors))]
+	void InitCursors() {
+		DefaultCursors = new ICursor[(int)CursorCode.Last];
+
+		DefaultCursors[(nint)CursorCode.Arrow] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_DEFAULT);
+		DefaultCursors[(nint)CursorCode.IBeam] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_TEXT);
+		DefaultCursors[(nint)CursorCode.Hourglass] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_WAIT);
+		DefaultCursors[(nint)CursorCode.Crosshair] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_CROSSHAIR);
+		DefaultCursors[(nint)CursorCode.WaitArrow] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_PROGRESS);
+		DefaultCursors[(nint)CursorCode.SizeNWSE] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_NWSE_RESIZE);
+		DefaultCursors[(nint)CursorCode.SizeNESW] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_NESW_RESIZE);
+		DefaultCursors[(nint)CursorCode.SizeWE] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_EW_RESIZE);
+		DefaultCursors[(nint)CursorCode.SizeNS] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_NS_RESIZE);
+		DefaultCursors[(nint)CursorCode.SizeAll] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_MOVE);
+		DefaultCursors[(nint)CursorCode.No] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_NOT_ALLOWED);
+		DefaultCursors[(nint)CursorCode.Hand] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_POINTER);
+
+		DefaultCursors[(nint)CursorCode.Arrow].Activate();
+	}
+}
+
+public unsafe class SDL3_Cursor : ICursor
+{
+	SDL_Cursor* cursorPtr;
+	public SDL3_Cursor(SDL_SystemCursor cursorID) {
+		cursorPtr = SDL3.SDL_CreateSystemCursor(cursorID);
+	}
+	public void Activate() {
+		SDL3.SDL_SetCursor(cursorPtr);
+	}
 }

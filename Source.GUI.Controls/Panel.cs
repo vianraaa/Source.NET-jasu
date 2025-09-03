@@ -578,6 +578,9 @@ public class Panel : IPanel
 	public void SetCursor(ICursor cursor) {
 		// todo
 	}
+	public void SetCursor(CursorCode cursor) {
+		// todo
+	}
 
 	public void SetEnabled(bool state) {
 		throw new NotImplementedException();

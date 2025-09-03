@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common.GUI;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,4 +32,5 @@ public interface ILauncherManager
 	IWindow GetWindow();
 	int GetEvents(WindowEvent[] eventBuffer, int length);
 	void CenterWindow(int v2, int v3);
+	ICursor? GetHardwareCursor(nint cursor);
 }
