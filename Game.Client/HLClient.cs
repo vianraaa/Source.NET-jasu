@@ -49,4 +49,8 @@ public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 	public void DecodeUserCmdFromBuffer(bf_read buf, int slot) {
 		input.DecodeUserCmdFromBuffer(buf, slot);
 	}
+
+	public bool HandleUiToggle() {
+		return false;
+	}
 }

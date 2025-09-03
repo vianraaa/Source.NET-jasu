@@ -378,13 +378,9 @@ public class VGuiInput : IVGuiInput
 		throw new NotImplementedException();
 	}
 
-	public bool IsKeyDown(ButtonCode code) {
-		throw new NotImplementedException();
-	}
+	public unsafe bool IsKeyDown(ButtonCode code) => GetInputContext(Context).KeyDown[code - ButtonCode.KeyFirst];
 
-	public bool IsMouseDown(ButtonCode code) {
-		throw new NotImplementedException();
-	}
+	public unsafe bool IsMouseDown(ButtonCode code) => GetInputContext(Context).MouseDown[code - ButtonCode.MouseFirst];
 
 	public void OnButtonCodeUnhandled(int code) {
 		throw new NotImplementedException();
@@ -774,11 +770,11 @@ public class VGuiInput : IVGuiInput
 			return;
 
 		ref InputContext context = ref GetInputContext(Context);
-		if (pressed) 
+		if (pressed)
 			context.KeyPressed[code - ButtonCode.KeyFirst] = true;
-		else 		
+		else
 			context.KeyReleased[code - ButtonCode.KeyFirst] = true;
-		
+
 		context.KeyDown[code - ButtonCode.KeyFirst] = pressed;
 	}
 
@@ -861,39 +857,52 @@ public class VGuiInput : IVGuiInput
 		SetMouseFocus(focus);
 	}
 
-	public bool WasKeyPressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
+	public unsafe bool WasKeyPressed(ButtonCode code) => GetInputContext(Context).KeyPressed[code - ButtonCode.KeyFirst];
+	public unsafe bool WasKeyReleased(ButtonCode code) => GetInputContext(Context).KeyReleased[code - ButtonCode.KeyFirst];
+	public unsafe bool WasKeyTyped(ButtonCode code) => GetInputContext(Context).KeyTyped[code - ButtonCode.KeyFirst];
+	public unsafe bool WasMouseDoublePressed(ButtonCode code) => GetInputContext(Context).MouseDoublePressed[code - ButtonCode.KeyFirst];
+	public unsafe bool WasMousePressed(ButtonCode code) => GetInputContext(Context).MousePressed[code - ButtonCode.KeyFirst];
+	public unsafe bool WasMouseReleased(ButtonCode code) => GetInputContext(Context).MouseReleased[code - ButtonCode.KeyFirst];
 
-	public bool WasKeyReleased(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool WasKeyTyped(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool WasMouseDoublePressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool WasMousePressed(ButtonCode code) {
-		throw new NotImplementedException();
-	}
-
-	public bool WasMouseReleased(ButtonCode code) {
-		throw new NotImplementedException();
+	public bool PostKeyMessage(KeyValues message) {
+		ref InputContext context = ref GetInputContext(Context);
+		if (context.KeyFocus != null && IsChildOfModalPanel(context.KeyFocus)) {
+			vgui.PostMessage(context.KeyFocus, message, null);
+			return true;
+		}
+		return false;
 	}
 
 	bool IVGuiInput.InternalKeyCodePressed(ButtonCode code) {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+
+		if (!code.IsKeyCode())
+			return false;
+
+		bool filter = PostKeyMessage(new KeyValues("KeyCodePressed").AddSubKey("code", (int)code));
+		if (filter)
+			context.KeyRepeater?.KeyDown(code);
+		
+		return filter;
 	}
 
-	public void InternalKeyCodeTyped(ButtonCode data) {
-		throw new NotImplementedException();
+	public unsafe void InternalKeyCodeTyped(ButtonCode code) {
+		ref InputContext context = ref GetInputContext(Context);
+		if (!code.IsKeyCode())
+			return;
+
+		context.KeyTyped[code - ButtonCode.KeyFirst] = true;
+
+		PostKeyMessage(new KeyValues("KeyCodeTyped").AddSubKey("code", (int)code));
 	}
 
 	public bool InternalKeyCodeReleased(ButtonCode code) {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		if (!code.IsKeyCode())
+			return false;
+
+		context.KeyRepeater?.KeyUp(code);
+
+		return PostKeyMessage(new KeyValues("KeyCodeReleased").AddSubKey("code", (int)code));
 	}
 }

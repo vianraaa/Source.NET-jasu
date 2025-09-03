@@ -301,7 +301,7 @@ public class Panel : IPanel
 				IPanel? panel = children[i];
 				if (panel.IsPopup()) {
 					panel = panel.IsWithinTraverse(x, y, true);
-					if (panel != null) 
+					if (panel != null)
 						return panel;
 				}
 			}
@@ -310,7 +310,7 @@ public class Panel : IPanel
 				IPanel? panel = children[i];
 				if (!panel.IsPopup()) {
 					panel = panel.IsWithinTraverse(x, y, true);
-					if (panel != null) 
+					if (panel != null)
 						return panel;
 				}
 			}
@@ -327,7 +327,7 @@ public class Panel : IPanel
 					IPanel? panel = children[i];
 					if (!panel.IsPopup()) {
 						panel = panel.IsWithinTraverse(x, y, false);
-						if (panel != null) 
+						if (panel != null)
 							return panel;
 					}
 				}
@@ -341,16 +341,16 @@ public class Panel : IPanel
 	}
 
 	private bool IsWithin(int x, int y) {
-		if (x < ClipRectX) 
+		if (x < ClipRectX)
 			return false;
 
-		if (y < ClipRectY) 
+		if (y < ClipRectY)
 			return false;
 
-		if (x >= ClipRectW) 
+		if (x >= ClipRectW)
 			return false;
 
-		if (y >= ClipRectH) 
+		if (y >= ClipRectH)
 			return false;
 
 		return true;
@@ -704,7 +704,7 @@ public class Panel : IPanel
 			Parent = null;
 		}
 
-		if(newParent != null) {
+		if (newParent != null) {
 			Parent = (Panel)newParent!;
 			Parent.Children.Add(this);
 			SetZPos(ZPos);
@@ -896,11 +896,11 @@ public class Panel : IPanel
 	public virtual void OnKillFocus() { }
 	public virtual void OnDelete() { }
 	public virtual void OnThink() { }
-	public virtual void OnChildAdded(IPanel child) {}
+	public virtual void OnChildAdded(IPanel child) { }
 	public virtual void OnSizeChanged(int newWide, int newTall) {
 		InvalidateLayout();
 	}
-	public virtual void OnCursorMoved() {}
+	public virtual void OnCursorMoved() { }
 	public virtual void OnCursorEntered() { }
 	public virtual void OnCursorExited() { }
 	public virtual void OnMousePressed(ButtonCode code) { }
@@ -923,7 +923,8 @@ public class Panel : IPanel
 		switch (message.Name) {
 
 		}
-		Msg($"got message {message.Name}\n");
+		if (message.Name != "MouseFocusTicked")
+			Msg($"got message {message.Name}\n");
 	}
 
 	public void OnTick() {

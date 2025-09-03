@@ -17,4 +17,5 @@ public interface IBaseClientDLL
 	void HudText(ReadOnlySpan<char> text);
 	bool DispatchUserMessage(int msgType, bf_read msgData);
 	bool Init();
+	bool HandleUiToggle();
 }

@@ -18,4 +18,12 @@ public class EngineClient(ClientState cl, GameServer sv) : IEngineClient
 	}
 
 	public int GetMaxClients() => cl.MaxClients;
+
+	public ReadOnlySpan<char> GetLevelName() {
+		if (sv.IsDedicated())
+			return "Dedicated Server";
+		else if (!cl.IsConnected())
+			return "";
+		return cl.LevelFileName;
+	}
 }

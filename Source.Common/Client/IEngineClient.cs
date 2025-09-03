@@ -43,4 +43,5 @@ public interface IEngineClient
 	void GetUILanguage(Span<char> dest);
 	void GetMainMenuBackgroundName(Span<char> dest);
 	int GetMaxClients();
+	ReadOnlySpan<char> GetLevelName();
 }

@@ -1,4 +1,5 @@
 ﻿using Source.Common.GUI;
+using Source.Common.Input;
 
 namespace Source.Engine;
 
@@ -21,4 +22,6 @@ public interface IEngineVGui
 {
 	public IPanel GetPanel(VGuiPanelType type);
 	public bool IsGameUIVisible();
+	bool Key_Event(in InputEvent ev);
+	void UpdateButtonState(in InputEvent ev);
 }
