@@ -17,4 +17,15 @@ public class MenuItem : Button {
 	public override void PaintBackground() {
 		
 	}
+
+	public Menu? GetParentMenu() => GetParent() is Menu menu ? menu : null;
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		SetTextInset(int.TryParse(scheme.GetResourceString("Menu.TextInset"), out int r) ? r : 0, 0);
+
+		Menu? parent = GetParentMenu();
+		if (parent != null)
+			parent.ForceCalculateWidth();
+	}
 }

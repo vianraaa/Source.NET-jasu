@@ -450,9 +450,9 @@ public class MatSystemSurface : IMatSystemSurface
 				lr.Position.Y = ul.Position.Y + tall;
 
 				ul.TexCoord[0] = texCoords[0].X0;
-				ul.TexCoord[1] = texCoords[0].Y1;
+				ul.TexCoord[1] = texCoords[0].Y0;
 				lr.TexCoord[0] = texCoords[0].X1;
-				lr.TexCoord[1] = texCoords[0].Y0;
+				lr.TexCoord[1] = texCoords[0].Y1;
 			}
 			totalWidth += (int)MathF.Floor(flWide + 0.6f);
 		}
@@ -1372,8 +1372,8 @@ public class MatSystemSurface : IMatSystemSurface
 			DrawFlushText();
 		}
 
-		info.Verts = BatchedCharVerts.AsSpan()[BatchedCharVertCount..];
-		InitVertex(ref info.Verts[0], info.X, info.Y, texCoords[0].X0, texCoords[0].X1);
+		info.Verts = BatchedCharVerts.AsSpan()[BatchedCharVertCount..(BatchedCharVertCount + 2)];
+		InitVertex(ref info.Verts[0], info.X, info.Y, texCoords[0].X0, texCoords[0].Y0);
 		InitVertex(ref info.Verts[1], info.X + fontWide, info.Y + info.FontTall, texCoords[0].X1, texCoords[0].Y1);
 
 		info.ShouldClip = true;

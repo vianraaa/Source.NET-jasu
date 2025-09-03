@@ -82,13 +82,12 @@ public unsafe class FreeTypeFont : BaseFont
 		if (error != FT_Error.FT_Err_Ok) { Warning($"FreeType error during pixel size set: {error}\n"); return false; }
 
 		FT_Size_Metrics_ tm = face->size->metrics;
-		Height = (uint)(tm.height / 64f) + DropShadowOffset + 2 * OutlineSize;
-		MaxCharWidth = (uint)(tm.max_advance / 64f);
-		Ascent = (uint)(tm.ascender / 64f);
+		Height = (uint)(tm.height >> 6) + DropShadowOffset + 2 * OutlineSize;
+		MaxCharWidth = (uint)(tm.max_advance >> 6);
+		Ascent = (uint)(tm.ascender >> 6);
 
-		BitmapSize[0] = (ushort)((int)(tm.max_advance / 64f) + OutlineSize * 2);
-		BitmapSize[1] = (ushort)((int)(tm.height / 64f) + DropShadowOffset + OutlineSize * 2);
-
+		BitmapSize[0] = (ushort)((int)(tm.max_advance >> 6) + OutlineSize * 2);
+		BitmapSize[1] = (ushort)((int)(tm.height >> 6) + DropShadowOffset + OutlineSize * 2);
 		return true;
 	}
 
@@ -125,19 +124,21 @@ public unsafe class FreeTypeFont : BaseFont
 		FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
 		FT_GlyphSlotRec_* slot = face->glyph;
 		FT_Render_Glyph(slot, FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
-		DrawBitmap(in slot->bitmap, rgbaWide, rgbaTall, rgba);
+		DrawBitmap(slot, rgbaWide, rgbaTall, rgba);
 	}
 
-	private unsafe void DrawBitmap(in FT_Bitmap_ bitmap, int rgbaWide, int rgbaTall, Span<byte> rgba) {
-		byte* buffer = bitmap.buffer;
-		int bmpWidth = (int)bitmap.width;
-		int bmpHeight = (int)bitmap.rows;
+	private unsafe void DrawBitmap(FT_GlyphSlotRec_* rec, int rgbaWide, int rgbaTall, Span<byte> rgba) {
+		FT_Bitmap_* bitmap = &rec->bitmap;
+		byte* buffer = bitmap->buffer;
+		int bmpWidth = (int)bitmap->width;
+		int bmpHeight = (int)bitmap->rows;
 
 		for (int y = 0; y < bmpHeight; y++) {
-			byte* row = buffer + (bmpHeight - 1 - y) * Math.Abs(bitmap.pitch);
+			byte* row = buffer + y * Math.Abs(bitmap->pitch);
 			for (int x = 0; x < bmpWidth; x++) {
-				int dstX = x;
-				int dstY = y;
+				int dstX = x + rec->bitmap_left;
+				int dstY = (int)(Ascent - rec->bitmap_top + y);
+
 				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
 					continue;
 

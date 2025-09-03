@@ -86,7 +86,7 @@ public class Scheme : IScheme
 	}
 
 	public ReadOnlySpan<char> GetResourceString(ReadOnlySpan<char> stringName) {
-		throw new NotImplementedException();
+		return BaseSettings.GetString(stringName);
 	}
 
 	internal void LoadFromFile(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> inTag, KeyValues inKeys) {

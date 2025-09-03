@@ -128,7 +128,11 @@ public class Label : Panel
 		yInset = TextInsetY;
 	}
 	public virtual void SetTextInset(int xInset, int yInset) {
+		TextInsetX = xInset;
+		TextInsetY = yInset;
 
+		GetSize(out int wide, out int tall);
+		TextImage!.SetDrawWidth(wide - TextInsetX);
 	}
 	public virtual Color GetDisabledFgColor1() => DisabledFgColor1;
 	public virtual Color GetDisabledFgColor2() => DisabledFgColor2;

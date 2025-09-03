@@ -36,6 +36,11 @@ public class TextImage : Image
 	List<int> LineXIndent = [];
 	List<ColorChange> ColorChangeStream = new();
 
+	public void SetDrawWidth(int width) {
+		DrawWidth = width;
+		RecalculateTruncation = true;
+	}
+
 	public TextImage(string text) : base() {
 		Text = null;
 		Font = null;
@@ -160,6 +165,22 @@ public class TextImage : Image
 			wide = maxWide;
 	}
 
+	public void ResizeImageToContentMaxWidth(int maxWidth) {
+		DrawWidth = maxWidth;
+		if (RecalculateTruncation) {
+			if (Wrap || WrapCenter)
+				RecalculateNewLinePositions();
+
+			RecalculateEllipsesPosition();
+		}
+		ResizeImageToContent();
+	}
+
+	private void ResizeImageToContent() {
+		GetContentSize(out int wide, out int tall);
+		SetSize(wide, tall);
+	}
+
 	public override void Paint() {
 		GetSize(out int wide, out int tall);
 		IFont? font = GetFont();
@@ -216,8 +237,8 @@ public class TextImage : Image
 				}
 			}
 
-			if (i == EllipsesPosition) {
-				for (int _ = 0; i < 3; i++) {
+			if (EllipsesPosition > 0 && i == EllipsesPosition) {
+				for (int i2 = 0; i2 < 3; i2++) {
 					Surface.DrawSetTextPos((int)x + px, y + py);
 					Surface.DrawChar('.');
 					x += Surface.GetCharacterWidth(font, '.');
@@ -237,10 +258,10 @@ public class TextImage : Image
 					currentLineBreak++;
 				}
 			}
-				Surface.DrawSetTextPos((int)x + px, y + py);
-				Surface.DrawChar(ch);
-				x += Surface.GetCharacterWidth(font, '.');
-			}
+			Surface.DrawSetTextPos((int)x + px, y + py);
+			Surface.DrawChar(ch);
+			x += Surface.GetCharacterWidth(font, ch);
+		}
 	}
 
 	private void RecalculateEllipsesPosition() {
@@ -253,7 +274,7 @@ public class TextImage : Image
 		if (Text!.Contains('\n'))
 			return;
 
-		if (DrawWidth == 0) 
+		if (DrawWidth == 0)
 			GetSize(out DrawWidth, out _);
 
 		for (int check = 0; check < (UseFallbackFont ? 2 : 1); ++check) {
@@ -267,7 +288,7 @@ public class TextImage : Image
 			int ellipsesWidth = 3 * Surface.GetCharacterWidth(font, '.');
 			int x = 0;
 
-			for (nint i = 0, len = Text.Length; i < len; i++) {
+			for (nint i = 0, textLen = Text.Length; i < textLen; i++) {
 				char ch = Text[(int)i];
 				if (AllCaps)
 					ch = char.ToUpperInvariant(ch);
@@ -276,22 +297,22 @@ public class TextImage : Image
 				if (ch == '\r' || ch <= 8)
 					continue;
 				else if (ch == '&') {
-					if (i + 1 < len && Text[(int)(i + 1)] == '&')
+					if (i + 1 < textLen && Text[(int)(i + 1)] == '&')
 						i++;
 					else {
 						continue;
 					}
 				}
 
-				int len1 = Surface.GetCharacterWidth(font, ch);
+				int charLen = Surface.GetCharacterWidth(font, ch);
 				if (i == 0) {
-					x += len1;
+					x += charLen;
 					continue;
 				}
 
-				if (x + len + ellipsesWidth > DrawWidth) {
-					int remainingLength = len1;
-					for (nint ri = i + 1; ri < len; ri++) {
+				if (x + charLen + ellipsesWidth > DrawWidth) {
+					int remainingLength = charLen;
+					for (nint ri = i + 1; ri < textLen; ri++) {
 						remainingLength += Surface.GetCharacterWidth(font, Text[(int)ri]);
 					}
 
@@ -301,7 +322,7 @@ public class TextImage : Image
 					}
 				}
 
-				x += (int)len;
+				x += (int)charLen;
 			}
 
 			if (EllipsesPosition == 0)
@@ -325,8 +346,8 @@ public class TextImage : Image
 
 		LineBreaks.Clear();
 		LineXIndent.Clear();
-		if(Text == null) 
-			return; 
+		if (Text == null)
+			return;
 		if (Text.Length > 0 && (Text![startChar] == '\r' || Text![startChar] == '\n')) {
 			startChar++;
 		}
@@ -338,7 +359,7 @@ public class TextImage : Image
 				ch = Text[(int)i];
 			}
 
-			if (AllCaps) 
+			if (AllCaps)
 				ch = char.ToUpper(ch);
 
 			if (!char.IsWhiteSpace(ch)) {
@@ -354,7 +375,7 @@ public class TextImage : Image
 			}
 
 			charWidth = Surface.GetCharacterWidth(font, ch);
-			if (!char.IsControl(ch)) 
+			if (!char.IsControl(ch))
 				justStartedNewLine = false;
 
 			if ((x + charWidth) > DrawWidth || ch == '\r' || ch == '\n') {
@@ -403,9 +424,9 @@ public class TextImage : Image
 		for (nint i = 0, len = Text.Length; i < len; i++) {
 			char ch = Text[(int)i];
 
-			if (AllCaps) 
+			if (AllCaps)
 				ch = char.ToUpper(ch);
-			
+
 			if (ch == '\r') {
 				continue;
 			}

@@ -29,7 +29,10 @@ public class Menu : Panel
 	int NumVisibleLines;
 
 	public override void PaintBackground() {
-
+		Surface.DrawSetTexture(0);
+		Surface.DrawSetColor(60, 60, 60, 255);
+		GetSize(out int w, out int h);
+		Surface.DrawFilledRect(0, 0, w, h);
 	}
 	public override void Paint() {
 
@@ -368,5 +371,11 @@ public class Menu : Panel
 		}
 
 		return totalTall;
+	}
+
+	public void ForceCalculateWidth() {
+		recalculateWidth = true;
+		CalculateWidth();
+		PerformLayout();
 	}
 }
