@@ -10,23 +10,6 @@ using System.Runtime.CompilerServices;
 
 namespace Source.GUI;
 
-public struct MessageItem
-{
-	public KeyValues Params;
-	public IPanel? To;
-	public IPanel? From;
-	public double ArrivalTime;
-	public ulong MessageID;
-}
-
-public struct Tick
-{
-	public IPanel? Panel;
-	public long Interval;
-	public long NextTick;
-	public bool MarkDeleted;
-}
-
 public class MessageItemComparer : IComparer<double>
 {
 	public int Compare(double x, double y) => x.CompareTo(y);
@@ -140,7 +123,13 @@ public class VGui : IVGui
 				}
 
 				KeyValues parms = messageItem.Params;
-				// Cursor pos messages? What the hell
+
+				if(messageItem.Special == MessageItemType.SetCursorPos) {
+					int xpos = parms.GetInt("xpos", 0);
+					int ypos = parms.GetInt("ypos", 0);
+					Input.UpdateCursorPosInternal(xpos, ypos);
+				}
+
 				messageItem.To?.SendMessage(parms, messageItem.From);
 			}
 			passCount += 1;
@@ -152,13 +141,13 @@ public class VGui : IVGui
 		return doneWork;
 	}
 
-	public void PostMessage(IPanel? target, KeyValues parms, IPanel? from, double delay = 0) {
+	public void PostMessage(IPanel? target, KeyValues parms, IPanel? from, double delay = 0, MessageItemType type = MessageItemType.TargettingPanel) {
 		if (IsReentrant()) {
 			Assert(false);
 			return;
 		}
 
-		if (target == null)
+		if (target == null && type == MessageItemType.TargettingPanel)
 			return;
 
 		MessageItem messageItem = new();
@@ -168,6 +157,7 @@ public class VGui : IVGui
 		messageItem.From = from;
 		messageItem.ArrivalTime = 0;
 		messageItem.MessageID = CurrentMessageID++;
+		messageItem.Special = type;
 
 		if(delay > 0) {
 			messageItem.ArrivalTime = system.GetTimeMillis() + (delay * 1000);

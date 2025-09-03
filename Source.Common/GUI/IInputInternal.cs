@@ -6,7 +6,7 @@ using HInputContext = int;
 namespace Source.Common.GUI;
 
 
-public enum ButtonCodeState
+public enum MouseCodeState
 {
 	Released,
 	Pressed,
@@ -156,8 +156,7 @@ public interface IVGuiInput
 
 	void HandleExplicitSetCursor();
 
-	void SetButtonCodeState(ButtonCode code, bool pressed);
-	void SetButtonCodeState(ButtonCode code, ButtonCodeState state);
+	void SetMouseCodeState(ButtonCode code, MouseCodeState state);
 	void UpdateButtonState(in InputEvent ev);
 	bool InternalKeyCodePressed(ButtonCode code);
 	void InternalKeyCodeTyped(ButtonCode data);

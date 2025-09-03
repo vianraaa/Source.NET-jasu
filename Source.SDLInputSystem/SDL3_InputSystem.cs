@@ -14,12 +14,16 @@ public class InputState
 	public bool[] ButtonState;
 	public int[] ButtonPressedTick;
 	public int[] ButtonReleasedTick;
+	public int[] AnalogDelta;
+	public int[] AnalogValue;
 	public Queue<InputEvent> Events;
 	public bool Dirty;
 	public InputState() {
 		ButtonState = new bool[(int)ButtonCode.Count];
 		ButtonPressedTick = new int[(int)ButtonCode.Count];
 		ButtonReleasedTick = new int[(int)ButtonCode.Count];
+		AnalogDelta = new int[(int)AnalogCode.Last];
+		AnalogValue = new int[(int)AnalogCode.Last];
 		Events = [];
 		Dirty = false;
 	}
@@ -77,7 +81,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	}
 
 	public int GetPollTick() {
-		throw new NotImplementedException();
+		return LastPollTick;
 	}
 
 	public bool GetRawMouseAccumulators(out int accumX, out int accumY) {
@@ -94,6 +98,8 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 			Array.Clear(state.ButtonState);
 			Array.Clear(state.ButtonPressedTick);
 			Array.Clear(state.ButtonReleasedTick);
+			Array.Clear(state.AnalogValue);
+			Array.Clear(state.AnalogDelta);
 			state.Dirty = false;
 		}
 	}
@@ -207,6 +213,8 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 			dest.ButtonState = src.ButtonState;
 			Array.ConstrainedCopy(src.ButtonPressedTick, 0, dest.ButtonPressedTick, 0, dest.ButtonPressedTick.Length);
 			Array.ConstrainedCopy(src.ButtonReleasedTick, 0, dest.ButtonReleasedTick, 0, dest.ButtonReleasedTick.Length);
+			Array.ConstrainedCopy(src.AnalogDelta, 0, dest.AnalogDelta, 0, dest.AnalogDelta.Length);
+			Array.ConstrainedCopy(src.AnalogValue, 0, dest.AnalogValue, 0, dest.AnalogValue.Length);
 			if (copyEvents) {
 				if (src.Events.Count > 0) {
 					dest.Events.Clear();
@@ -222,12 +230,27 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 
 		InputState queuedState = QueuedInputState;
 		CopyInputState(CurrentInputState, queuedState, true);
+		SampleDevices();
+
 		LastPollTick = LastSampleTick;
 
 		PollInputState_Platform();
 		CopyInputState(queuedState, CurrentInputState, false);
 		IsPolling = false;
 	}
+
+	private void SampleDevices() {
+		LastSampleTick = ComputeSampleTick();
+	}
+
+	private int ComputeSampleTick() {
+		int sampleTick;
+
+		uint nCurrentTick = Convert.ToUInt32(Platform.MSTime);
+		sampleTick = (int)nCurrentTick;
+		return sampleTick;
+	}
+
 	public void PollInputState_Platform() {
 		while (true) {
 			int events = launcherMgr?.GetEvents(eventBuffer, eventBuffer.Length) ?? 0;
@@ -283,12 +306,47 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 						UpdateMouseButtonState(ev.MouseButtonFlags);
 						break;
 
+					case WindowEventType.MouseMove:
+						UpdateMousePositionState(InputState, (short)ev.MousePos[0], (short)ev.MousePos[1]);
+
+						InputEvent newEvent = new();
+						newEvent.Tick = GetPollTick();
+						newEvent.Type = InputEventType.Gui_LocateMouseClick;
+						newEvent.Data = (short)ev.MousePos[0];
+						newEvent.Data2 = (short)ev.MousePos[1];
+						PostUserEvent(newEvent);
+
+						break;
+
 					case WindowEventType.AppQuit:
 						PostEvent(InputEventType.System_Quit, LastSampleTick, 0, 0, 0);
 						break;
 				}
 			}
 		}
+	}
+
+	private void UpdateMousePositionState(InputState state, short x, short y) {
+		int nOldX = state.AnalogValue[(int)AnalogCode.MouseX];
+		int nOldY = state.AnalogValue[(int)AnalogCode.MouseY];
+
+		state.AnalogValue[(int)AnalogCode.MouseX] = x;
+		state.AnalogValue[(int)AnalogCode.MouseY] = y;
+
+		int nDeltaX = x - nOldX;
+		int nDeltaY = y - nOldY;
+
+		state.AnalogDelta[(int)AnalogCode.MouseX] = nDeltaX;
+		state.AnalogDelta[(int)AnalogCode.MouseY] = nDeltaY;
+
+		if (nDeltaX != 0)
+			PostEvent(InputEventType.IE_AnalogValueChanged, LastSampleTick, (int)AnalogCode.MouseX, x, nDeltaX);
+
+		if (nDeltaY != 0)
+			PostEvent(InputEventType.IE_AnalogValueChanged, LastSampleTick, (int)AnalogCode.MouseY, y, nDeltaY);
+
+		if (nDeltaX != 0 || nDeltaY != 0)
+			PostEvent(InputEventType.IE_AnalogValueChanged, LastSampleTick, (int)AnalogCode.MouseXY, x, y);
 	}
 
 	private void UpdateMouseButtonState(MouseButton buttonMask, ButtonCode dblClickCode = ButtonCode.Invalid) {
@@ -314,7 +372,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 		PostUserEvent(ev);
 	}
 
-	public void PostUserEvent(InputEvent ev) {
+	public void PostUserEvent(in InputEvent ev) {
 		InputState state = InputState;
 		state.Events.Enqueue(ev);
 		state.Dirty = true;

@@ -29,6 +29,7 @@ public static class Platform
 
 	public static ReadOnlySpan<char> GetCommandLine() => Environment.CommandLine;
 	public static double Time => __timer.Value.Elapsed.TotalSeconds;
+	public static double MSTime => __timer.Value.Elapsed.TotalMilliseconds;
 
 #if WIN32
 	[DllImport("kernel32.dll")]

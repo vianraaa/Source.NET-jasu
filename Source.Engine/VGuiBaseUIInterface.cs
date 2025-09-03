@@ -388,7 +388,7 @@ public class EngineVGui(
 
 		indentBuff = indentBuff[..i];
 
-		ConMsg($"{indentBuff}{name} visible = {panel.IsVisible()}\n");
+		ConMsg($"{indentBuff}{name} popup == {panel.IsPopup()} kb == {panel.IsKeyboardInputEnabled()} mouse == {panel.IsMouseInputEnabled()}\n");
 
 		int children = panel.GetChildCount();
 		for (i = 0; i < children; i++) {

@@ -144,7 +144,7 @@ public unsafe class SDL3_Window : IWindow
 
 						WindowEvent newEvent = new();
 						newEvent.EventType = WindowEventType.MouseMove;
-						newEvent.MousePos = new((int)(ev.motion.x * MouseXScale), (int)(ev.motion.x * MouseYScale));
+						newEvent.MousePos = new((int)(ev.motion.x * MouseXScale), (int)(ev.motion.y * MouseYScale));
 						newEvent.MouseButtonFlags = MouseButtons;
 						PostEvent(newEvent);
 					}

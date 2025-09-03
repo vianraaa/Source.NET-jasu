@@ -19,7 +19,7 @@ public interface IInputSystem
 	public int GetButtonReleasedTick(ButtonCode code);
 	public long GetEventCount();
 	public IEnumerable<InputEvent> GetEventData();
-	public void PostUserEvent(InputEvent ev);
+	public void PostUserEvent(in InputEvent ev);
 	public void ResetInputState() { }
 	public void SetPrimaryUserId(int userId) { }
 

@@ -849,7 +849,12 @@ public class Panel : IPanel
 	public virtual void OnKeyCodeReleased(ButtonCode code) { }
 	public virtual void OnKeyFocusTicked() { }
 	public virtual void OnMouseFocusTicked() { }
-	public virtual void OnMessage(KeyValues message, IPanel? from) { }
+	public virtual void OnMessage(KeyValues message, IPanel? from) {
+		switch (message.Name) {
+
+		}
+		Msg($"got message {message.Name}\n");
+	}
 
 	public void OnTick() {
 		throw new NotImplementedException();

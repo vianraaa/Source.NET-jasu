@@ -3,6 +3,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -313,15 +314,14 @@ public class VGuiInput : IVGuiInput
 		}
 	}
 
-# if WIN32
+#if WIN32
 	[DllImport("user32.dll", EntryPoint = "SetCursorPos")]
 	[return: MarshalAs(UnmanagedType.Bool)]
 	static extern bool Win32SetCursorPos(int x, int y);
 #endif
 
 	private void SurfaceSetCursorPos(int x, int y) {
-		if (surface.HasCursorPosFunctions())
-		{
+		if (surface.HasCursorPosFunctions()) {
 			surface.SurfaceSetCursorPos(x, y);
 		}
 		else {
@@ -348,8 +348,14 @@ public class VGuiInput : IVGuiInput
 		throw new NotImplementedException();
 	}
 
+	// Trying not to create so many heap keyvalues... hopefully this optimization is alright...
+	KeyValues SetCursorPosKV = new("SetCursorPosInternal");
+
 	public bool InternalCursorMoved(int x, int y) {
-		throw new NotImplementedException();
+		SetCursorPosKV.SetInt("xpos", x);
+		SetCursorPosKV.SetInt("ypos", y);
+		vgui.PostMessage(null, SetCursorPosKV, null, type: MessageItemType.SetCursorPos);
+		return true;
 	}
 
 	public void InternalKeyTyped(char unichar) {
@@ -456,7 +462,7 @@ public class VGuiInput : IVGuiInput
 
 			vgui.PostMessage(context.MouseCapture, new KeyValues("CursorMoved").AddSubKey("xpos", context.CursorX).AddSubKey("ypos", context.CursorY), null);
 		}
-		else if (context.MouseFocus != null) 
+		else if (context.MouseFocus != null)
 			vgui.PostMessage(context.MouseFocus, new KeyValues("CursorMoved").AddSubKey("xpos", context.CursorX).AddSubKey("ypos", context.CursorY), null);
 	}
 
@@ -479,18 +485,18 @@ public class VGuiInput : IVGuiInput
 
 		ref InputContext context = ref GetInputContext(Context);
 
-		if (context.KeyFocus != null) 
-			if (IsChildOfModalPanel(context.KeyFocus)) 
+		if (context.KeyFocus != null)
+			if (IsChildOfModalPanel(context.KeyFocus))
 				vgui.PostMessage(context.KeyFocus, new KeyValues("KeyFocusTicked"), null);
 
-		if (context.MouseFocus != null) 
-			if (IsChildOfModalPanel(context.MouseFocus)) 
+		if (context.MouseFocus != null)
+			if (IsChildOfModalPanel(context.MouseFocus))
 				vgui.PostMessage(context.MouseFocus, new KeyValues("MouseFocusTicked"), null);
 
-		else if (context.AppModalPanel != null) {
-			// surface.SetCursor(vgui::dc_arrow);
-			// ^^ TODO: Default cursors... maybe this shouldnt be an interface type... we'll see later
-		}
+			else if (context.AppModalPanel != null) {
+				// surface.SetCursor(vgui::dc_arrow);
+				// ^^ TODO: Default cursors... maybe this shouldnt be an interface type... we'll see later
+			}
 
 		int i;
 
@@ -519,9 +525,9 @@ public class VGuiInput : IVGuiInput
 				context.KeyFocus?.Repaint();
 
 				IPanel? dlg = context.KeyFocus;
-				while (dlg != null && !dlg.IsPopup()) 
+				while (dlg != null && !dlg.IsPopup())
 					dlg = dlg.GetParent();
-				
+
 				dlg?.Repaint();
 			}
 			if (wantedKeyFocus != null) {
@@ -532,9 +538,9 @@ public class VGuiInput : IVGuiInput
 				wantedKeyFocus.Repaint();
 
 				IPanel? dlg = wantedKeyFocus;
-				while (dlg != null && !dlg.IsPopup()) 
+				while (dlg != null && !dlg.IsPopup())
 					dlg = dlg.GetParent();
-				
+
 				dlg?.Repaint();
 			}
 
@@ -586,10 +592,10 @@ public class VGuiInput : IVGuiInput
 				wantedKeyFocus = top;
 		}
 
-		if (!surface.HasFocus()) 
+		if (!surface.HasFocus())
 			wantedKeyFocus = null;
 
-		if (!IsChildOfModalPanel(wantedKeyFocus)) 
+		if (!IsChildOfModalPanel(wantedKeyFocus))
 			wantedKeyFocus = null;
 
 		return wantedKeyFocus;
@@ -605,8 +611,8 @@ public class VGuiInput : IVGuiInput
 
 		ref InputContext context = ref GetInputContext(Context);
 
-		if (context.AppModalPanel != null) 
-			if (!panel.HasParent(context.AppModalPanel)) 
+		if (context.AppModalPanel != null)
+			if (!panel.HasParent(context.AppModalPanel))
 				return false;
 
 		if (!checkModalSubTree)
@@ -622,9 +628,9 @@ public class VGuiInput : IVGuiInput
 		ref InputContext context = ref GetInputContext(Context);
 		if (context.ModalSubTree != null) {
 			bool isChildOfModal = panel.HasParent(context.ModalSubTree);
-			if (isChildOfModal) 
+			if (isChildOfModal)
 				return context.RestrictMessagesToModalSubTree;
-			else 
+			else
 				return !context.RestrictMessagesToModalSubTree;
 		}
 
@@ -632,14 +638,6 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetAppModalSurface(IPanel? panel) {
-		throw new NotImplementedException();
-	}
-
-	public void SetButtonCodeState(ButtonCode code, bool pressed) {
-		throw new NotImplementedException();
-	}
-
-	public void SetButtonCodeState(ButtonCode code, ButtonCodeState state) {
 		throw new NotImplementedException();
 	}
 
@@ -672,9 +670,9 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetMouseCapture(IPanel? panel) {
-		if (!IsChildOfModalPanel(panel)) 
+		if (!IsChildOfModalPanel(panel))
 			return;
-		
+
 
 		ref InputContext context = ref GetInputContext(Context);
 		Assert(!Unsafe.IsNullRef(ref context));
@@ -685,12 +683,12 @@ public class VGuiInput : IVGuiInput
 			vgui.PostMessage(context.MouseCapture, new KeyValues("MouseCaptureLost"), null);
 
 		if (panel == null) {
-			if (context.MouseCapture != null) 
+			if (context.MouseCapture != null)
 				surface.EnableMouseCapture(context.MouseCapture, false);
 		}
-		else 
+		else
 			surface.EnableMouseCapture(panel, true);
-		
+
 		context.MouseCapture = panel;
 	}
 
@@ -699,10 +697,10 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetMouseFocus(IPanel? newMouseFocus) {
-		if (!IsChildOfModalPanel(newMouseFocus)) 
+		if (!IsChildOfModalPanel(newMouseFocus))
 			return;
 
-		bool wantsMouse, isPopup; 
+		bool wantsMouse, isPopup;
 		IPanel? panel = newMouseFocus;
 
 		ref InputContext context = ref GetInputContext(Context);
@@ -714,21 +712,21 @@ public class VGuiInput : IVGuiInput
 				isPopup = panel.IsPopup();
 				panel = panel.GetParent();
 			}
-			while (wantsMouse && !isPopup && panel != null && panel.GetParent() != null); 
+			while (wantsMouse && !isPopup && panel != null && panel.GetParent() != null);
 		}
 
-		if (newMouseFocus != null && !wantsMouse) 
+		if (newMouseFocus != null && !wantsMouse)
 			return;
 
 		if (context.MouseOver != newMouseFocus || (context.MouseCapture == null && context.MouseFocus != newMouseFocus)) {
 			context.OldMouseFocus = context.MouseOver;
 			context.MouseOver = newMouseFocus;
 
-			if (context.OldMouseFocus != null) 
+			if (context.OldMouseFocus != null)
 				if (context.MouseCapture == null || context.OldMouseFocus == context.MouseCapture)
 					vgui.PostMessage(context.OldMouseFocus, new KeyValues("CursorExited"), null);
 
-			if (context.MouseOver != null) 
+			if (context.MouseOver != null)
 				if (context.MouseCapture == null || context.MouseOver == context.MouseCapture)
 					vgui.PostMessage(context.MouseOver, new KeyValues("CursorEntered"), null);
 
@@ -746,18 +744,82 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void UpdateButtonState(in InputEvent ev) {
-		throw new NotImplementedException();
+		switch (ev.Type) {
+			case InputEventType.IE_ButtonPressed:
+			case InputEventType.IE_ButtonReleased:
+			case InputEventType.IE_ButtonDoubleClicked:
+				ButtonCode code = (ButtonCode)ev.Data2;
+
+				if (code.IsKeyCode()) {
+					SetKeyCodeState(code, (ev.Type != InputEventType.IE_ButtonReleased));
+					break;
+				}
+
+				if (code.IsMouseCode()) {
+					MouseCodeState state = (ev.Type == InputEventType.IE_ButtonReleased) ? MouseCodeState.Released : MouseCodeState.Pressed; ;
+					if (ev.Type == InputEventType.IE_ButtonDoubleClicked) {
+						state = MouseCodeState.DoubleClicked;
+					}
+
+					SetMouseCodeState(code, state);
+					break;
+
+				}
+				break;
+		}
+	}
+
+	private unsafe void SetKeyCodeState(ButtonCode code, bool pressed) {
+		if (!code.IsKeyCode())
+			return;
+
+		ref InputContext context = ref GetInputContext(Context);
+		if (pressed) 
+			context.KeyPressed[code - ButtonCode.KeyFirst] = true;
+		else 		
+			context.KeyReleased[code - ButtonCode.KeyFirst] = true;
+		
+		context.KeyDown[code - ButtonCode.KeyFirst] = pressed;
+	}
+
+	public unsafe void SetMouseCodeState(ButtonCode code, MouseCodeState state) {
+		if (!code.IsMouseCode())
+			return;
+
+		ref InputContext context = ref GetInputContext(Context);
+		switch (state) {
+			case MouseCodeState.Released:
+				context.MouseReleased[code - ButtonCode.MouseFirst] = true;
+				break;
+
+			case MouseCodeState.Pressed:
+				context.MousePressed[code - ButtonCode.MouseFirst] = true;
+				break;
+
+			case MouseCodeState.DoubleClicked:
+				context.MouseDoublePressed[code - ButtonCode.MouseFirst] = true;
+				break;
+		}
+
+		context.MouseDown[code - ButtonCode.MouseFirst] = state != MouseCodeState.Released;
 	}
 
 	public void UpdateCursorPosInternal(int x, int y) {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		if (context.CursorX == x && context.CursorY == y)
+			return;
+
+		context.CursorX = x;
+		context.CursorY = y;
+
+		UpdateMouseFocus(x, y);
 	}
 
 	public void UpdateMouseFocus(int x, int y) {
 		IPanel? focus = null;
 
 		ref InputContext context = ref GetInputContext(Context);
-
+		// Msg($"x = {x}, y = {y}\n");
 		if (surface.IsCursorVisible() && surface.IsWithin(x, y)) {
 			int c = surface.GetPopupCount();
 			for (int i = c - 1; i >= 0; i--) {
@@ -777,12 +839,10 @@ public class VGuiInput : IVGuiInput
 				if (!isVisible)
 					continue;
 
-				while (isVisible && panel != null && panel.GetParent() != null)
-				{
+				while (isVisible && panel != null && panel.GetParent() != null) {
 					isVisible = panel.IsVisible();
 					panel = panel.GetParent();
 				}
-
 
 				if (!wantsMouse || !isVisible)
 					continue;
@@ -795,7 +855,7 @@ public class VGuiInput : IVGuiInput
 				focus = surface.GetEmbeddedPanel().IsWithinTraverse(x, y, false);
 		}
 
-		if (!IsChildOfModalPanel(focus)) 
+		if (!IsChildOfModalPanel(focus))
 			focus = null;
 
 		SetMouseFocus(focus);
