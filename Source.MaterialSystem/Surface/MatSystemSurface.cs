@@ -725,7 +725,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool IsWithin(int x, int y) {
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public void LockCursor() {
@@ -974,13 +974,14 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public void SetCursor(ICursor cursor) {
 		cursor.Activate();
+		CurrentCursor = cursor;
 	}
 
 	public void SetCursor(nint cursor) {
 		ICursor? realCursor = launcherMgr.GetHardwareCursor(cursor);
 
 		if(realCursor != null) {
-			realCursor.Activate();
+			SetCursor(realCursor);
 			return;
 		}
 

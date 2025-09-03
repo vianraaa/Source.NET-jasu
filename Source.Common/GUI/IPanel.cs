@@ -106,7 +106,7 @@ public interface IPanel
 	void PerformApplySchemeSettings();
 	void PaintTraverse(bool forceRepaint, bool allowForce = true);
 	void Repaint();
-	IPanel IsWithinTraverse(int x, int y, bool traversePopups);
+	IPanel? IsWithinTraverse(int x, int y, bool traversePopups);
 
 	void OnChildAdded(IPanel child);
 	void OnSizeChanged(int newWide, int newTall);

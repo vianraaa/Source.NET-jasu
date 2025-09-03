@@ -289,8 +289,75 @@ public class Panel : IPanel
 		return Visible;
 	}
 
-	public IPanel IsWithinTraverse(int x, int y, bool traversePopups) {
-		throw new NotImplementedException();
+	public IPanel? IsWithinTraverse(int x, int y, bool traversePopups) {
+		if (!IsVisible() || !IsMouseInputEnabled())
+			return null;
+
+		if (traversePopups) {
+			int i;
+			IList<IPanel> children = Children;
+			int childCount = children.Count();
+			for (i = childCount - 1; i >= 0; i--) {
+				IPanel? panel = children[i];
+				if (panel.IsPopup()) {
+					panel = panel.IsWithinTraverse(x, y, true);
+					if (panel != null) 
+						return panel;
+				}
+			}
+
+			for (i = childCount - 1; i >= 0; i--) {
+				IPanel? panel = children[i];
+				if (!panel.IsPopup()) {
+					panel = panel.IsWithinTraverse(x, y, true);
+					if (panel != null) 
+						return panel;
+				}
+			}
+
+			if (!IsMouseInputDisabledForThisPanel() && IsWithin(x, y)) {
+				return this;
+			}
+		}
+		else {
+			if (IsWithin(x, y)) {
+				IList<IPanel> children = Children;
+				int childCount = children.Count();
+				for (int i = childCount - 1; i >= 0; i--) {
+					IPanel? panel = children[i];
+					if (!panel.IsPopup()) {
+						panel = panel.IsWithinTraverse(x, y, false);
+						if (panel != null) 
+							return panel;
+					}
+				}
+
+				if (!IsMouseInputDisabledForThisPanel())
+					return this;
+			}
+		}
+
+		return null;
+	}
+
+	private bool IsWithin(int x, int y) {
+		if (x < ClipRectX) 
+			return false;
+
+		if (y < ClipRectY) 
+			return false;
+
+		if (x >= ClipRectW) 
+			return false;
+
+		if (y >= ClipRectH) 
+			return false;
+
+		return true;
+	}
+
+	private bool IsMouseInputDisabledForThisPanel() {
+		return (Flags & PanelFlags.IsMouseDisabledForThisPanelOnly) != 0;
 	}
 
 	public void MoveToBack() {
