@@ -23,6 +23,7 @@ public abstract class BaseFont
 
 	public abstract bool GetUnderlined();
 
+	public abstract int GetCharYOffset(char ch);
 	public abstract void GetCharABCwidths(char ch, out int a, out int b, out int c);
 	internal abstract void GetCharRGBA(char @char, int fontWide, int fontTall, Span<byte> pRGBA);
 }
@@ -364,6 +365,14 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		return ((FontAmalgam?)font)!.GetFontForChar(@char);
 	}
 
+	internal int GetCharYOffset(IFont? font, char ch) {
+		if (font is not FontAmalgam amalgam) {
+			return 0;
+		}
+
+		BaseFont? baseFont = amalgam.GetFontForChar(ch);
+		return baseFont?.GetCharYOffset(ch) ?? 0;
+	}
 	internal void GetCharABCwide(IFont? font, char ch, out int a, out int b, out int c) {
 		if(font is not FontAmalgam amalgam) {
 			a = b = c = 0;

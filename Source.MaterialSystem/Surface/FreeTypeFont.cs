@@ -91,13 +91,24 @@ public unsafe class FreeTypeFont : BaseFont
 		return true;
 	}
 
-	public struct GlyphABC {
+	public struct GlyphABC
+	{
 		public int A;
 		public int B;
 		public int C;
 	}
 	Dictionary<char, GlyphABC> Glyphs = [];
+	Dictionary<char, int> GlyphsY = [];
 
+	public override int GetCharYOffset(char ch) {
+		if (!GlyphsY.TryGetValue(ch, out int y)) {
+			FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
+			FT_GlyphSlotRec_* g = face->glyph;
+			y = (int)(g->metrics.horiBearingY >> 6);
+			GlyphsY.Add(ch, y);
+		}
+		return y;
+	}
 	public override void GetCharABCwidths(char ch, out int a, out int b, out int c) {
 		if (!Glyphs.TryGetValue(ch, out GlyphABC glyphABC)) {
 			FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
@@ -136,7 +147,7 @@ public unsafe class FreeTypeFont : BaseFont
 		for (int y = 0; y < bmpHeight; y++) {
 			byte* row = buffer + y * Math.Abs(bitmap->pitch);
 			for (int x = 0; x < bmpWidth; x++) {
-				int dstX = x + rec->bitmap_left;
+				int dstX = x;
 				int dstY = (int)(Ascent - rec->bitmap_top + y);
 
 				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
