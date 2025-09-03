@@ -27,18 +27,11 @@ public enum ShaderMaterialVars
 	Count,
 }
 
-public enum BlendType
-{
-	None,
-	Blend,
-	Add,
-	BlendAdd
-}
-public enum ShaderFlags
-{
-	NotEditable = 0x1
-}
 public enum ShaderParamFlags
 {
-	NotEditable = 0x1
+	NotEditable = 0x1,
+	/// <summary>
+	/// Marks the standard parameter as non-uploadable - ie, its upload to the GPU is handled by some other component.
+	/// </summary>
+	DoNotUpload = 0x2
 }

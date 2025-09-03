@@ -9,8 +9,8 @@ layout(std140, binding = 3) uniform source_pixel_sharedUBO {
     float alphaTestRef;
 };
 
-const int VertexColor = 32;
-const int VertexAlpha = 64;
+const int VertexColor = 16;
+const int VertexAlpha = 32;
 
 uniform int flags;
 uniform sampler2D basetexture;

@@ -156,9 +156,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return ShaderUtil.InFlashlightMode();
 	}
 
-	public void SetPixelShaderConstant(int v1, Span<float> flConsts, int v2) {
-		// todo
-	}
 
 	Mesh? RenderMesh;
 	IMaterialInternal? Material;
