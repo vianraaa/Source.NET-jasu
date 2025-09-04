@@ -534,15 +534,15 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawSetColor(int r, int g, int b, int a) {
-		DrawColor.SetColor(r, g, b, a);
+		DrawColor.SetColor(r, g, b, (int)(a * AlphaMultiplier));
 	}
 
 	public void DrawSetColor(in Color color) {
-		DrawColor = color;
+		DrawColor = color with { A = (byte)Math.Clamp(color.A * AlphaMultiplier, 0, 255) };
 	}
 
 	public void DrawSetTextColor(int r, int g, int b, int a) {
-		DrawTextColor.SetColor(r, g, b, a);
+		DrawTextColor.SetColor(r, g, b, (int)(a * AlphaMultiplier));
 	}
 
 	public void DrawSetTextColor(in Color color) {

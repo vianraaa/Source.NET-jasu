@@ -247,6 +247,8 @@ public class AnimationController : Panel, IAnimationController
 				col[3] = (byte)Math.Clamp((int)value.D, 0, 255);
 				inputData.SetColor(ScriptSymbols.String(variable), col);
 			}
+
+			panel.SetInfo(inputData);
 		}
 	}
 

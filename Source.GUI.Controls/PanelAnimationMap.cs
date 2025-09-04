@@ -9,7 +9,8 @@ public class PanelAnimationMap {
 	}
 }
 
-public delegate ref object? PanelLookupFunc(Panel panel);
+public delegate object PanelGetFunc(Panel panel);
+public delegate void PanelSetFunc(Panel panel, object value);
 
 public struct PanelAnimationMapEntry
 {
@@ -18,7 +19,8 @@ public struct PanelAnimationMapEntry
 	public string Type;
 	public string DefaultValue;
 	public bool Array;
-	public PanelLookupFunc Lookup;
+	public PanelGetFunc Get;
+	public PanelSetFunc Set;
 }
 
 public static class PanelAnimationDictionary {

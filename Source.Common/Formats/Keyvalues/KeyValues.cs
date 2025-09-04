@@ -593,4 +593,8 @@ public class KeyValues : IEnumerable<KeyValues>
 			dat.Type = Types.Color;
 		}
 	}
+
+	public bool GetBool(ReadOnlySpan<char> name, bool defaultValue) {
+		return GetInt(name, defaultValue ? 1 : 0) != 0;
+	}
 }

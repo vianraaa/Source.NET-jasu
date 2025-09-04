@@ -4,6 +4,7 @@ using Source.Common.GUI;
 namespace Source.GUI.Controls;
 
 public class MenuItem : Button {
+	static MenuItem() => ChainToAnimationMap<MenuItem>();
 	KeyValues? userData;
 	public MenuItem(Panel parent, string name, string text) : base(parent, name, text){
 		ContentAlignment = Alignment.West;

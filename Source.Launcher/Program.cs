@@ -22,6 +22,8 @@ using Source;
 using Game.UI;
 using Source.StdShader.Gl46;
 using Microsoft.Extensions.DependencyInjection;
+using Source.GUI;
+using Source.GUI.Controls;
 
 namespace Source.Launcher;
 
@@ -90,6 +92,9 @@ public class Bootloader : IDisposable
 		info.TextMode = isTextMode;
 
 		engineAPI!.SetStartupInfo(in info);
+
+		// Preload VGUI controls
+		Panel.InitializeControls();
 	}
 
 	const string defaultHalfLife2GameDirectory = "hl2";

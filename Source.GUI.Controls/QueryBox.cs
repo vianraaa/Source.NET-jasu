@@ -6,6 +6,7 @@ namespace Source.GUI.Controls;
 
 public class QueryBox : MessageBox
 {
+	static QueryBox() => ChainToAnimationMap<QueryBox>();
 	public QueryBox(string title, string queryText, Panel? parent = null) : base(title, queryText, parent) {
 		CancelButton?.DeletePanel();
 

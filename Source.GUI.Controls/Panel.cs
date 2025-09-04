@@ -66,23 +66,54 @@ public class PanelAnimationVarAttribute : Attribute
 {
 	public readonly string Name;
 	public readonly string DefaultValue;
+	public readonly string? Type;
 
 	public PanelAnimationVarAttribute(string name, string defaultValue) {
 		Name = name;
 		DefaultValue = defaultValue;
 	}
 
-	public static void InitVar<T>(PanelAnimationVarAttribute attribute, FieldInfo field) where T : Panel {
-		DynamicMethod method = new DynamicMethod($"{typeof(T).Name}PanelAnim_GetVar_{field.Name}", typeof(object).MakeByRefType(), [typeof(Panel)]);
-		var il = method.GetILGenerator();
-		{
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(OpCodes.Ldflda, field);
-			il.Emit(OpCodes.Ret);
-		}
-		PanelLookupFunc lookup = method.CreateDelegate<PanelLookupFunc>();
+	public static void InitVar(Type t, PanelAnimationVarAttribute attribute, FieldInfo field) {
+		PanelGetFunc get;
+		PanelSetFunc set;
 
-		Panel.AddToAnimationMap<T>(attribute.Name, "Float", field.Name, attribute.DefaultValue, false, lookup);
+		{
+			DynamicMethod methodBuilder = new($"{t.Name}PanelAnim_GetVar_{field.Name}", typeof(object), [typeof(Panel)]);
+			var il = methodBuilder.GetILGenerator();
+			{
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(OpCodes.Ldfld, field);
+				if (field.FieldType.IsValueType)
+					il.Emit(OpCodes.Box, field.FieldType);
+
+				il.Emit(OpCodes.Ret);
+			}
+			get = methodBuilder.CreateDelegate<PanelGetFunc>();
+		}
+
+		{
+			DynamicMethod methodBuilder = new($"{t.Name}PanelAnim_SetVar_{field.Name}", typeof(void), [typeof(Panel), typeof(object)]);
+			var il = methodBuilder.GetILGenerator();
+			{
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(OpCodes.Ldarg_1);
+
+				if (field.FieldType.IsValueType)
+					il.Emit(OpCodes.Unbox_Any, field.FieldType);
+				else
+					il.Emit(OpCodes.Castclass, field.FieldType);
+
+				il.Emit(OpCodes.Stfld, field);
+
+				il.Emit(OpCodes.Ret);
+			}
+			set = methodBuilder.CreateDelegate<PanelSetFunc>();
+		}
+
+		Panel.AddToAnimationMap(t, attribute.Name, attribute.Type ?? field.FieldType.Name switch {
+			"Single" => "float",
+			_ => field.FieldType.Name
+		}, field.Name, attribute.DefaultValue, false, get, set);
 	}
 }
 
@@ -110,7 +141,13 @@ public class Panel : IPanel
 	static readonly FloatProperty floatConverter = new();
 
 	public static void AddPropertyConverter(ReadOnlySpan<char> typeName, IPanelAnimationPropertyConverter converter) {
+		var hash = typeName.Hash();
+		if (AnimationPropertyConverters.TryGetValue(hash, out _)) {
+			Msg($"Already have VGUI property converter for type {typeName}, ignoring...\n");
+			return;
+		}
 
+		AnimationPropertyConverters[hash] = converter;
 	}
 
 	[Imported] public ISurface Surface;
@@ -1213,11 +1250,8 @@ public class Panel : IPanel
 		GetSize(out w, out h);
 	}
 
-	/// <summary>
-	/// Do NOT call this outside the cctor of the panel class or things will break!!!
-	/// </summary>
-	public static void AddToAnimationMap<T>(ReadOnlySpan<char> scriptName, ReadOnlySpan<char> type, ReadOnlySpan<char> var, ReadOnlySpan<char> defaultValue, bool array, PanelLookupFunc func) where T : Panel {
-		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(typeof(T).Name);
+	public static void AddToAnimationMap(Type t, ReadOnlySpan<char> scriptName, ReadOnlySpan<char> type, ReadOnlySpan<char> var, ReadOnlySpan<char> defaultValue, bool array, PanelGetFunc get, PanelSetFunc set) {
+		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(t.Name);
 
 		PanelAnimationMapEntry entry = new() {
 			ScriptName = new string(scriptName),
@@ -1225,43 +1259,52 @@ public class Panel : IPanel
 			Type = new string(type),
 			DefaultValue = new string(defaultValue),
 			Array = array,
-			Lookup = func,
+			Get = get,
+			Set = set
 		};
+		map.Entries.Add(entry);
 	}
-	public static void ChainToAnimationMap<T>() where T : Panel {
-		foreach(var field in typeof(T).GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)) {
+	public static void ChainToAnimationMap<T>() where T : Panel => ChainToAnimationMap(typeof(T));
+	public static void ChainToAnimationMap(Type t) {
+		foreach (var field in t.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)) {
 			PanelAnimationVarAttribute? attr = field.GetCustomAttribute<PanelAnimationVarAttribute>();
 			if (attr == null)
 				continue;
 
-			PanelAnimationVarAttribute.InitVar<T>(attr, field);
+			PanelAnimationVarAttribute.InitVar(t, attr, field);
 		}
 
-		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(typeof(T).Name);
-		map.ClassName = typeof(T).Name;
-		Type? baseClass = typeof(T).BaseType;
+		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(t.Name);
+		map.ClassName = t.Name;
+		Type? baseClass = t.BaseType;
 		if (baseClass?.IsAssignableTo(typeof(Panel)) ?? false)
 			map.BaseMap = PanelAnimationDictionary.FindOrAddPanelAnimationMap(baseClass.Name);
 	}
 
 	public virtual PanelAnimationMap GetAnimMap() => PanelAnimationDictionary.FindOrAddPanelAnimationMap(GetType().Name);
+
+	public static void InitializeControls() {
+		var types = ReflectionUtils.GetLoadedTypes().Where(type => typeof(Panel).IsAssignableFrom(type));
+		foreach (var type in types) {
+			ChainToAnimationMap(type);
+			Msg($"Initializing {type.Name}\n");
+		}
+	}
 }
 
 class FloatProperty : IPanelAnimationPropertyConverter
 {
 	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
-		ref object? data = ref entry.Lookup(panel);
+		object? data = entry.Get(panel);
 		if (data == null) return;
 		kv.SetFloat(entry.ScriptName, (float)data);
 	}
 
 	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
-		ref object? data = ref entry.Lookup(panel);
-		data = kv.GetFloat(entry.ScriptName);
+		entry.Set(panel, kv.GetFloat(entry.ScriptName));
 	}
 
 	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
-		ref object? data = ref entry.Lookup(panel);
-		data = float.TryParse(entry.DefaultValue, out float r) ? r : 0;
+		entry.Set(panel, float.TryParse(entry.DefaultValue, out float r) ? r : 0);
 	}
 }

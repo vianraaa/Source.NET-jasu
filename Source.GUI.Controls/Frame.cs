@@ -1,4 +1,5 @@
 ﻿using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 
 using static System.Net.Mime.MediaTypeNames;
@@ -23,10 +24,10 @@ public class FrameSystemButton : MenuButton
 		int tw = 0, th = 0;
 		Enabled?.GetSize(out w, out h);
 		Disabled?.GetSize(out tw, out th);
-		if (tw > w) 
+		if (tw > w)
 			w = tw;
-		
-		if (th > h) 
+
+		if (th > h)
 			h = th;
 	}
 }
@@ -61,6 +62,8 @@ public class FrameButton : Button
 
 public class Frame : EditablePanel
 {
+	static Frame() => ChainToAnimationMap<Frame>();
+
 	TextImage? Title;
 	bool Moveable;
 	bool Sizeable;
@@ -248,7 +251,7 @@ public class Frame : EditablePanel
 			tall = (tall - yinset) - y;
 		}
 
-		if (SmallCaption) 
+		if (SmallCaption)
 			tall -= 5;
 
 		wide = (wide - ClientInsetX) - x;
@@ -273,10 +276,48 @@ public class Frame : EditablePanel
 			FadingOut = true;
 			Surface.MovePopupToBack(this);
 		}
-		else 
+		else
 			FinishClose();
-		
-		FinishClose();
+	}
+
+	public override void ApplySettings(KeyValues resourceData) {
+		resourceData.SetInt("visible", -1);
+		base.ApplySettings(resourceData);
+
+		SetCloseButtonVisible(resourceData.GetBool("setclosebuttonvisible", true));
+
+		if (resourceData.GetInt("settitlebarvisible", 1) == 0)
+			SetTitleBarVisible(false);
+
+		ReadOnlySpan<char> title = resourceData.GetString("title", "");
+		if (title != null && title.Length > 0) {
+			SetTitle(title, true);
+		}
+
+		ReadOnlySpan<char> titlefont = resourceData.GetString("title_font", "");
+		if (titlefont != null && titlefont.Length > 0) {
+			IScheme? scheme = GetScheme();
+			if (scheme != null)
+				CustomTitleFont = scheme.GetFont(titlefont);
+		}
+
+		KeyValues? clientInsetXOverride = resourceData.FindKey("clientinsetx_override", false);
+		if (clientInsetXOverride != null) {
+			ClientInsetX = clientInsetXOverride.GetInt();
+			ClientInsetXOverridden = true;
+		}
+	}
+
+	private void SetTitleBarVisible(bool state) {
+		DrawTitleBar = state;
+		SetMenuButtonVisible(state);
+		SetMinimizeButtonVisible(state);
+		SetMaximizeButtonVisible(state);
+		SetCloseButtonVisible(state);
+	}
+
+	private void SetMenuButtonVisible(bool state) {
+		MenuButton?.SetVisible(state);
 	}
 
 	public override void OnCommand(ReadOnlySpan<char> command) {
@@ -299,7 +340,7 @@ public class Frame : EditablePanel
 
 	private void CloseModal() {
 		Input.ReleaseAppModalSurface();
-		if(PreviousModal != null) {
+		if (PreviousModal != null) {
 			Input.SetAppModalSurface(PreviousModal);
 			PreviousModal = null;
 		}
@@ -310,7 +351,7 @@ public class Frame : EditablePanel
 		SetVisible(false);
 		PreviouslyVisible = false;
 		FadingOut = false;
-		
+
 		OnFinishedClose();
 
 		if (DeleteSelfOnClose)
@@ -319,9 +360,9 @@ public class Frame : EditablePanel
 	public override void OnThink() {
 		base.OnThink();
 
-		Msg($"{GetAlpha()}");
+		Msg($"{GetAlpha()}\n");
 
-		if(IsVisible() && TransitionEffectTime > 0 && !DisableFadeEffect) {
+		if (IsVisible() && TransitionEffectTime > 0 && !DisableFadeEffect) {
 			if (FadingOut) {
 				if (GetAlpha() < 1)
 					FinishClose();
@@ -352,7 +393,7 @@ public class Frame : EditablePanel
 			HasFocus = hasFocus;
 			OnFrameFocusChanged(HasFocus);
 		}
-		else 
+		else
 			Primed = false;
 	}
 
@@ -441,9 +482,9 @@ public class Frame : EditablePanel
 				}
 
 				int nTitleY;
-				if (TitleTextInsetYOverride != 0) 
+				if (TitleTextInsetYOverride != 0)
 					nTitleY = TitleTextInsetYOverride;
-				else 
+				else
 					nTitleY = SmallCaption ? 2 : 9;
 
 				Title?.SetPos(nTitleX, nTitleY);
