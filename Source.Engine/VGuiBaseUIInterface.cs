@@ -442,6 +442,7 @@ public class EngineVGui(
 	}
 
 	public void Simulate() {
+		vgui.GetAnimationController().UpdateAnimations(Sys.Time);
 		int w = 0, h = 0;
 		launcherMgr.RenderedSize(false, ref w, ref h);
 		using (MatRenderContextPtr renderContext = new(materials))

@@ -131,5 +131,9 @@ public interface IPanel : IDisposable
 	void SetPopup(bool v);
 	void OnTick();
 	void SendMessage(KeyValues parms, IPanel? from);
+	IPanel? FindChildByName(ReadOnlySpan<char> childName, bool recurseDown);
 }
 
+public interface IAnimationController {
+	void UpdateAnimations(double time);
+}

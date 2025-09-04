@@ -38,4 +38,5 @@ public interface IVGui
 	void Stop();
 	IVGuiInput GetInput();
 	void MarkPanelForDeletion(IPanel? panel);
+	IAnimationController GetAnimationController();
 }

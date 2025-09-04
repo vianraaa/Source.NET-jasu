@@ -14,6 +14,24 @@ public static class MathLib
 		return (Math.Abs(a * b) + a) % b;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static double SimpleSpline(double value) {
+		return (value * value) * (3 - 2 * value);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static double Bias(double x, double biasAmount) {
+		double fRet = Math.Pow(x, Math.Log(biasAmount) * -1.4427);
+		Assert(!double.IsNaN(fRet));
+		return fRet;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static double Gain(double x, double biasAmount) {
+		if (x < 0.5)
+			return 0.5f * Bias(2 * x, 1 - biasAmount);
+		else
+			return 1 - 0.5f * Bias(2 - 2 * x, 1 - biasAmount);
+	}
+
 	public static Matrix4x4 CreateOpenGLOrthoOffCenter(float left, float right, float bottom, float top, float near, float far) {
 		float m11 = 2.0f / (right - left);
 		float m22 = -2.0f / (top - bottom);

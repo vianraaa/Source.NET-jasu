@@ -47,6 +47,7 @@ public class Bootloader : IDisposable
 			engineAPI = new EngineBuilder(commandLine)
 				// These assemblies have no reference to them, so they must be manually loaded.
 				.WithAssembly("Source.GUI")
+				.WithAssembly("Source.GUI.Controls")
 				.WithAssembly("Source.VTF")
 				// Base file system implementation
 				.WithComponent<IFileSystem, BaseFileSystem>()

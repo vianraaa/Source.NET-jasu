@@ -270,6 +270,21 @@ public class Frame : EditablePanel
 		if (DeleteSelfOnClose)
 			MarkForDeletion();
 	}
+	public override void OnThink() {
+		base.OnThink();
+
+		if(IsVisible() && TransitionEffectTime > 0 && !DisableFadeEffect) {
+			if (FadingOut) {
+				if (GetAlpha() < 1)
+					FinishClose();
+			}
+			else if (!PreviouslyVisible) {
+				PreviouslyVisible = true;
+				SetAlpha(0);
+				GetAnimationController().RunAnimationCommand(this, "alpha", 255.0f, 0.0f, TransitionEffectTime, Interpolators.Linear);
+			}
+		}
+	}
 
 	private void OnFinishedClose() {
 	}

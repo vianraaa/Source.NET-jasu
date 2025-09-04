@@ -1,6 +1,9 @@
 ﻿using CommunityToolkit.HighPerformance;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Launcher;
@@ -25,11 +28,16 @@ public class VGui : IVGui
 	public readonly VGuiInput Input;
 	public readonly ISurface surface;
 	public readonly ISystem system;
+	public readonly IEngineAPI engineAPI;
 
-	public VGui(ICommandLine commandLine, ISurface surface, ISystem system) {
+	public IAnimationController? animController;
+	public IAnimationController GetAnimationController() => animController ??= engineAPI.GetRequiredService<IAnimationController>();
+
+	public VGui(ICommandLine commandLine, ISurface surface, ISystem system, IEngineAPI engineAPI) {
 		Input = new(commandLine, this, surface);
 		this.surface = surface;
 		this.system = system;
+		this.engineAPI = engineAPI;
 	}
 
 	public void Quit() {

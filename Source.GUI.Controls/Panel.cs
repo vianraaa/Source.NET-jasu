@@ -1,11 +1,19 @@
-﻿using Source.Common;
+﻿using CommunityToolkit.HighPerformance;
+
+using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.MaterialSystem;
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 
 using static Source.Common.Networking.svc_ClassInfo;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
@@ -44,14 +52,44 @@ public enum PanelFlags
 	All = 0xFFFF,
 }
 
+public interface IPanelAnimationPropertyConverter {
+	void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry);
+	void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry);
+	void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry);
+}
+
 public class Panel : IPanel
 {
+	public static bool IsValid([NotNullWhen(true)] Panel? panel) => panel != null && !panel.IsMarkedForDeletion();
+
+	readonly static Dictionary<ulong, IPanelAnimationPropertyConverter> AnimationPropertyConverters = [];
+
+	public static IPanelAnimationPropertyConverter? FindConverter(ReadOnlySpan<char> typeName) {
+		if (AnimationPropertyConverters.TryGetValue(typeName.Hash(), out var converter))
+			return converter;
+		return null;
+	}
+	static bool initialized;
+	public static void InitPropertyConverters() {
+		if (initialized)
+			return;
+		initialized = true;
+		// todo
+	}
+	public static void AddPropertyConverter(ReadOnlySpan<char> typeName, IPanelAnimationPropertyConverter converter) {
+
+	}
+
 	[Imported] public ISurface Surface;
 	[Imported] public ISchemeManager SchemeManager;
 	[Imported] public IVGui VGui;
 	[Imported] public IVGuiInput Input;
 	[Imported] public IEngineAPI EngineAPI;
 	[Imported] public ILocalize Localize;
+
+	private AnimationController? ac;
+	public AnimationController GetAnimationController() => ac ??= EngineAPI.GetRequiredService<AnimationController>();
+
 	public void Init(int x, int y, int w, int h) {
 		PanelName = null;
 		TooltipText = null;
@@ -709,7 +747,7 @@ public class Panel : IPanel
 	}
 
 	public void SetEnabled(bool state) {
-		if(state != IsEnabled()) {
+		if (state != IsEnabled()) {
 			Enabled = state;
 			InvalidateLayout();
 			Repaint();
@@ -953,6 +991,7 @@ public class Panel : IPanel
 
 	}
 
+	public bool IsMarkedForDeletion() => Flags.HasFlag(PanelFlags.MarkedForDeletion);
 	public void MarkForDeletion() {
 		if (Flags.HasFlag(PanelFlags.MarkedForDeletion))
 			return;
@@ -999,9 +1038,9 @@ public class Panel : IPanel
 		SetParent(null);
 		while (GetChildCount() > 0) {
 			IPanel child = GetChild(0);
-			if (child.IsAutoDeleteSet()) 
+			if (child.IsAutoDeleteSet())
 				child.DeletePanel();
-			else 
+			else
 				child.SetParent(null);
 		}
 
@@ -1039,12 +1078,12 @@ public class Panel : IPanel
 			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
 			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
 			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
-			case "Delete": OnDelete();  break;
-			case "Close": OnClose();  break;
+			case "Delete": OnDelete(); break;
+			case "Close": OnClose(); break;
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
 		// if (!message.Name.Contains("Ticked"))
-			// Msg($"Message: {message.Name}\n");
+		// Msg($"Message: {message.Name}\n");
 	}
 
 	public void OnTick() {
@@ -1054,4 +1093,115 @@ public class Panel : IPanel
 	public void SendMessage(KeyValues parms, IPanel? from) {
 		OnMessage(parms, from);
 	}
+
+	public virtual bool RequestInfo(KeyValues outputData) {
+		return InternalRequestInfo(GetAnimMap(), outputData) || (((Panel?)GetParent())?.RequestInfo(outputData) ?? false);
+	}
+
+	private bool InternalRequestInfo(PanelAnimationMap? map, KeyValues outputData) {
+		if (map == null)
+			return false;
+
+		Assert(outputData);
+
+		ReadOnlySpan<char> name = outputData.Name;
+
+		ref PanelAnimationMapEntry e = ref FindPanelAnimationEntry(name, map);
+		if (!Unsafe.IsNullRef(ref e)) {
+			IPanelAnimationPropertyConverter? converter = FindConverter(e.Type);
+			if (converter != null) {
+				converter.GetData(this, outputData, ref e);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Note: modifying the animation map may result in this handle being invalid!
+	/// </summary>
+	/// <param name="name"></param>
+	/// <param name="map"></param>
+	/// <returns></returns>
+	private ref PanelAnimationMapEntry FindPanelAnimationEntry(ReadOnlySpan<char> scriptname, PanelAnimationMap map) {
+		if (map == null)
+			return ref Unsafe.NullRef<PanelAnimationMapEntry>();
+
+		int c = map.Entries.Count;
+		Span<PanelAnimationMapEntry> entries = map.Entries.AsSpan();
+		for (int i = 0; i < c; i++) {
+			ref PanelAnimationMapEntry e = ref entries[i];
+
+			if (((ReadOnlySpan<char>)e.ScriptName).Equals(scriptname, StringComparison.OrdinalIgnoreCase)) {
+				return ref e;
+			}
+		}
+
+		if (map.BaseMap != null) 
+			return ref FindPanelAnimationEntry(scriptname, map.BaseMap);
+		
+		return ref Unsafe.NullRef<PanelAnimationMapEntry>();
+	}
+
+	public virtual bool SetInfo(KeyValues inputData) {
+		if (InternalSetInfo(GetAnimMap(), inputData))
+			return true;
+		return false;
+	}
+
+	private bool InternalSetInfo(PanelAnimationMap? map, KeyValues inputData) {
+		if (map == null)
+			return false;
+
+		Assert(inputData != null);
+		ReadOnlySpan<char> name = inputData.Name;
+
+		ref PanelAnimationMapEntry e = ref FindPanelAnimationEntry(name, map);
+		if (e) {
+			IPanelAnimationPropertyConverter? converter = FindConverter(e.Type);
+			if (converter != null) {
+				converter.SetData(this, inputData, e);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	IPanel? IPanel.FindChildByName(ReadOnlySpan<char> childName, bool recurseDown) => FindChildByName(childName, recurseDown);
+
+	private IPanel? FindChildByName(ReadOnlySpan<char> childName, bool recurseDown) {
+		return null; // todo: impl
+	}
+
+	public void GetBounds(out int x, out int y, out int w, out int h) {
+		GetPos(out x, out y);
+		GetSize(out w, out h);
+	}
+
+	/// <summary>
+	/// Do NOT call this outside the cctor of the panel class or things will break!!!
+	/// </summary>
+	public static void AddToAnimationMap<T>(ReadOnlySpan<char> scriptName, ReadOnlySpan<char> type, ReadOnlySpan<char> var, ReadOnlySpan<char> defaultValue, bool array, PanelLookupFunc func) where T : Panel {
+		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(typeof(T).Name);
+
+		PanelAnimationMapEntry entry = new() {
+			ScriptName = new string(scriptName),
+			Variable = new string(var),
+			Type = new string(type),
+			DefaultValue = new string(defaultValue),
+			Array = array,
+			Lookup = func,
+		};
+	}
+	public static void ChainToAnimationMap<T>() {
+		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(typeof(T).Name);
+		map.ClassName = typeof(T).Name;
+		Type? baseClass = typeof(T).BaseType;
+		if(baseClass?.IsAssignableTo(typeof(Panel)) ?? false)
+			map.BaseMap = PanelAnimationDictionary.FindOrAddPanelAnimationMap(baseClass.Name);
+	}
+
+	public virtual PanelAnimationMap GetAnimMap() => PanelAnimationDictionary.FindOrAddPanelAnimationMap(GetType().Name);
 }

@@ -564,4 +564,33 @@ public class KeyValues : IEnumerable<KeyValues>
 			dat.Type = Types.Pointer;
 		}
 	}
+
+	public Color GetColor() {
+		if(Value is Color c) {
+			return c;
+		}
+		return new(); // todo: proper implementation of this
+	}
+
+	public void SetFloat(ReadOnlySpan<char> keyName, float value) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			dat.Value = (double)value;
+			dat.Type = Types.Double;
+		}
+	}
+	public void SetDouble(ReadOnlySpan<char> keyName, double value) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			dat.Value = value;
+			dat.Type = Types.Double;
+		}
+	}
+	public void SetColor(ReadOnlySpan<char> keyName, Color value) {
+		KeyValues? dat = FindKey(keyName, true);
+		if (dat != null) {
+			dat.Value = value;
+			dat.Type = Types.Color;
+		}
+	}
 }
