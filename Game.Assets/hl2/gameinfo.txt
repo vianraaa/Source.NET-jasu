@@ -1,7 +1,7 @@
 "GameInfo"
 {
 	game	"My Cool Game"
-	title	""
+	title	"HALF-LIFE '"
 	title2	""
 	type	multiplayer_only
 

@@ -7,6 +7,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.GUI;
 using Source.GUI.Controls;
 
 namespace Game.UI;
@@ -144,6 +145,24 @@ public class MainMenuGameLogo : EditablePanel
 		LoadControlSettings("Resource/GameLogo.res", null, null, conditions);
 	}
 }
+public class BackgroundMenuButton : Button
+{
+	public BackgroundMenuButton(Panel parent, string name) : base(parent, name, "") {
+
+	}
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		SetFgColor(new(255, 255, 255, 255));
+		SetBgColor(new(0, 0, 0, 0));
+		SetDefaultColor(new(255, 255, 255, 255), new(0, 0, 0, 0));
+		SetArmedColor(new(255, 255, 0, 255), new(0, 0, 0, 0));
+		SetDepressedColor(new(255, 255, 0, 255), new(0, 0, 0, 0));
+		SetContentAlignment(Alignment.West);
+		SetBorder(null);
+		SetTextInset(0, 0);
+	}
+}
 public class BasePanel : Panel
 {
 	GameMenu GameMenu;
@@ -155,11 +174,22 @@ public class BasePanel : Panel
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
+	static BackgroundMenuButton CreateMenuButton(BasePanel parent, ReadOnlySpan<char> panelName, ReadOnlySpan<char> panelText) {
+		BackgroundMenuButton button = parent.EngineAPI.New<BackgroundMenuButton>(parent, new string(panelName));
+		button.SetProportional(true);
+		button.SetCommand("OpenGameMenu");
+		button.SetText(panelText);
+		return button;
+	}
+
 	public BasePanel() : base(null, "BaseGameUIPanel") {
 		CreateGameMenu();
 		CreateGameLogo();
 
 		SetMenuAlpha(255);
+
+		GameMenuButtons.Add(CreateMenuButton(this, "GameMenuButton", ModInfo!.GetGameTitle()));
+		GameMenuButtons.Add(CreateMenuButton(this, "GameMenuButton2", ModInfo!.GetGameTitle2()));
 	}
 
 	int BackgroundFillAlpha;
@@ -178,6 +208,10 @@ public class BasePanel : Panel
 	Coord GameMenuPos;
 	int GameMenuInset;
 
+	public void RunMenuCommand(ReadOnlySpan<char> command) {
+
+	}
+
 	public override void PerformLayout() {
 		base.PerformLayout();
 
@@ -188,10 +222,21 @@ public class BasePanel : Panel
 			idealMenuY = tall - menuTall - GameMenuInset;
 
 		int yDiff = idealMenuY - GameMenuPos.Y;
+
+		for (int i = 0; i < GameMenuButtons.Count; ++i) {
+			GameMenuButtons[i].SizeToContents();
+			GameMenuButtons[i].SetPos(GameTitlePos[i].X, GameTitlePos[i].Y + yDiff);
+		}
+
+		for (int i = 0; i < GameMenuButtons.Count; i++) {
+			GameMenuButtons[i].SizeToContents();
+		}
+
 		GameMenu.SetPos(GameMenuPos.X, idealMenuY);
 	}
 
 	List<Coord> GameTitlePos = [];
+	List<BackgroundMenuButton> GameMenuButtons = [];
 	float FrameFadeInTime;
 	Color BackdropColor;
 
@@ -201,10 +246,20 @@ public class BasePanel : Panel
 		GameMenuInset = int.TryParse(scheme.GetResourceString("MainMenu.Inset"), out int r) ? r : 0;
 		GameMenuInset *= 2;
 
-		IScheme? clientScheme = SchemeManager.GetScheme("ClientScheme");
-
+		IScheme? clientScheme = SchemeManager.LoadSchemeFromFile("Resource/ClientScheme.res", "ClientScheme");
+		List<Color> buttonColor = [];
 		if(clientScheme != null) {
 			GameTitlePos.Clear();
+
+			for (int i = 0; i < GameMenuButtons.Count; ++i) {
+				GameMenuButtons[i].SetFont(clientScheme.GetFont("ClientTitleFont", true));
+				GameTitlePos.Add(new Coord() {
+					X = SchemeManager.GetProportionalScaledValue(int.TryParse(clientScheme.GetResourceString($"Main.Title{i + 1}.X"), out int x) ? x : 0),
+					Y = SchemeManager.GetProportionalScaledValue(int.TryParse(clientScheme.GetResourceString($"Main.Title{i + 1}.Y"), out int y) ? y : 0),
+				});
+
+				buttonColor.Add(clientScheme.GetColor($"Main.Title{i + 1}.Color", new Color(255, 255, 255, 255)));
+			}
 
 			GameMenuPos.X = int.TryParse(clientScheme.GetResourceString("Main.Menu.X"), out r) ? r : 0;
 			GameMenuPos.X = SchemeManager.GetProportionalScaledValue(GameMenuPos.X);
@@ -213,6 +268,18 @@ public class BasePanel : Panel
 
 			GameMenuInset = int.TryParse(clientScheme.GetResourceString("Main.BottomBorder"), out r) ? r : 0;
 			GameMenuInset = SchemeManager.GetProportionalScaledValue(GameMenuInset);
+		}
+		else {
+			for (int i = 0; i < GameMenuButtons.Count; ++i) {
+				GameMenuButtons[i].SetFont(scheme.GetFont("TitleFont"));
+				buttonColor.Add(new Color(255, 255, 255, 255));
+			}
+		}
+
+		for (int i = 0; i < GameMenuButtons.Count; ++i) {
+			GameMenuButtons[i].SetDefaultColor(buttonColor[i], new Color(0, 0, 0, 0));
+			GameMenuButtons[i].SetArmedColor(buttonColor[i], new Color(0, 0, 0, 0));
+			GameMenuButtons[i].SetDepressedColor(buttonColor[i], new Color(0, 0, 0, 0));
 		}
 
 		FrameFadeInTime = float.TryParse(scheme.GetResourceString("Frame.TransitionEffectTime"), out float f) ? f : 0;

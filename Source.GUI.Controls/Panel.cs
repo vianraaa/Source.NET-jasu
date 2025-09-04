@@ -280,6 +280,16 @@ public class Panel : IPanel
 		return true;
 	}
 
+	public void SetProportional(bool state) {
+		if(state != Flags.HasFlag(PanelFlags.IsProportional)) {
+			Flags |= PanelFlags.IsProportional;
+			for (int i = 0; i < GetChildCount(); i++) {
+				GetChild(i).SetProportional(IsProportional());
+			}
+		}
+		InvalidateLayout();
+	}
+
 	public bool IsKeyboardInputEnabled() => KbInput;
 
 	public bool IsMouseInputEnabled() => MouseInput;
