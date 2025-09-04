@@ -73,7 +73,7 @@ public class PanelAnimationVarAttribute : Attribute
 	}
 
 	public static void InitVar<T>(PanelAnimationVarAttribute attribute, FieldInfo field) where T : Panel {
-		DynamicMethod method = new DynamicMethod($"{typeof(T).Name}PanelAnim_GetVar_{field.Name}", field.FieldType, [typeof(Panel)]);
+		DynamicMethod method = new DynamicMethod($"{typeof(T).Name}PanelAnim_GetVar_{field.Name}", typeof(object).MakeByRefType(), [typeof(Panel)]);
 		var il = method.GetILGenerator();
 		{
 			il.Emit(OpCodes.Ldarg_0);
@@ -1229,7 +1229,7 @@ public class Panel : IPanel
 		};
 	}
 	public static void ChainToAnimationMap<T>() where T : Panel {
-		foreach(var field in typeof(T).GetFields()) {
+		foreach(var field in typeof(T).GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)) {
 			PanelAnimationVarAttribute? attr = field.GetCustomAttribute<PanelAnimationVarAttribute>();
 			if (attr == null)
 				continue;
