@@ -64,10 +64,13 @@ public interface IPanelAnimationPropertyConverter
 [AttributeUsage(AttributeTargets.Field)]
 public class PanelAnimationVarAttribute : Attribute
 {
-	public readonly string Name;
+	public readonly string? Name;
 	public readonly string DefaultValue;
 	public readonly string? Type;
 
+	public PanelAnimationVarAttribute(string defaultValue) {
+		DefaultValue = defaultValue;
+	}
 	public PanelAnimationVarAttribute(string name, string defaultValue) {
 		Name = name;
 		DefaultValue = defaultValue;
@@ -110,7 +113,7 @@ public class PanelAnimationVarAttribute : Attribute
 			set = methodBuilder.CreateDelegate<PanelSetFunc>();
 		}
 
-		Panel.AddToAnimationMap(t, attribute.Name, attribute.Type ?? field.FieldType.Name switch {
+		Panel.AddToAnimationMap(t, attribute.Name ?? field.Name, attribute.Type ?? field.FieldType.Name switch {
 			"Single" => "float",
 			_ => field.FieldType.Name
 		}, field.Name, attribute.DefaultValue, false, get, set);
@@ -1287,7 +1290,7 @@ public class Panel : IPanel
 		var types = ReflectionUtils.GetLoadedTypes().Where(type => typeof(Panel).IsAssignableFrom(type));
 		foreach (var type in types) {
 			ChainToAnimationMap(type);
-			Msg($"Initializing {type.Name}\n");
+			Msg($"VGUI: Initializing {type.Name}\n");
 		}
 	}
 }

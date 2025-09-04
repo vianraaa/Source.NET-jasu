@@ -82,6 +82,8 @@ public class GameUI : IGameUI
 	public void RunFrame() {
 		Surface.GetScreenSize(out int wide, out int tall);
 		staticPanel.SetSize(wide, tall);
+
+		staticPanel.RunFrame();
 	}
 
 	public void SetMainMenuOverride(IPanel panel) {
@@ -118,5 +120,9 @@ public class GameUI : IGameUI
 
 	public bool HasSavedThisMenuSession() {
 		throw new NotImplementedException();
+	}
+
+	public bool IsInBackgroundLevel() {
+		return false;
 	}
 }

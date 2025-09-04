@@ -36,18 +36,18 @@ public class GameMenuItem : MenuItem
 
 		IFont? mainMenuFont = scheme.GetFont("MainMenuFont", IsProportional());
 
-		if (mainMenuFont != null) 
+		if (mainMenuFont != null)
 			SetFont(mainMenuFont);
-		else 
+		else
 			SetFont(scheme.GetFont("MenuLarge", IsProportional()));
-		
+
 		SetTextInset(0, 0);
 		SetArmedSound("UI/buttonrollover.wav");
 		SetDepressedSound("UI/buttonclick.wav");
 		SetReleasedSound("UI/buttonclickrelease.wav");
 		SetButtonActivationType(ActivationType.OnPressed);
 
-		if (RightAligned) 
+		if (RightAligned)
 			SetContentAlignment(Alignment.East);
 	}
 }
@@ -138,7 +138,7 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 				break;
 		}
 
-		if(dir != 0) {
+		if (dir != 0) {
 
 		}
 
@@ -208,7 +208,7 @@ public class BasePanel : Panel
 	[Imported] public IGameUI GameUI;
 	[Imported] public IEngineClient engine;
 	[Imported] public ModInfo ModInfo;
-#pragma warning restore CS8618 
+#pragma warning restore CS8618
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
@@ -303,16 +303,16 @@ public class BasePanel : Panel
 		GameMenuButtons.Add(CreateMenuButton(this, "GameMenuButton2", ModInfo!.GetGameTitle2()));
 	}
 
-	int BackgroundFillAlpha;
+	[PanelAnimationVar("0")] float BackgroundFillAlpha;
 
 	IFont? FontTest;
 
 	public override void PaintBackground() {
 		DrawBackgroundImage();
 		if (BackgroundFillAlpha > 0) {
-			Surface.DrawSetColor(0, 0, 0, BackgroundFillAlpha);
+			Surface.DrawSetColor(0, 0, 0, (int)BackgroundFillAlpha);
 			Surface.GetScreenSize(out int wide, out int tall);
-			Surface.DrawFilledRect(0, 0, wide / 2, tall);
+			Surface.DrawFilledRect(0, 0, wide, tall);
 		}
 	}
 
@@ -346,6 +346,100 @@ public class BasePanel : Panel
 	List<BackgroundMenuButton> GameMenuButtons = [];
 	float FrameFadeInTime;
 	Color BackdropColor;
+	int ExitingFrameCount;
+	BackgroundState BackgroundState;
+
+	public void SetBackgroundRenderState(BackgroundState state) {
+		BackgroundState = state;
+	}
+
+	public void UpdateBackgroundState() {
+		if (ExitingFrameCount != 0) 
+			SetBackgroundRenderState(BackgroundState.Exiting);
+		else if (GameUI.IsInLevel()) 
+			SetBackgroundRenderState(BackgroundState.Level);
+		else if (GameUI.IsInBackgroundLevel() && !LevelLoading) 
+			SetBackgroundRenderState(BackgroundState.MainMenu);
+		else if (LevelLoading) 
+			SetBackgroundRenderState(BackgroundState.Loading);
+		else if (EverActivated && PlatformMenuInitialized) 
+			SetBackgroundRenderState(BackgroundState.Disconnected);
+		
+		if (!PlatformMenuInitialized)
+			return;
+
+		int i;
+		bool haveActiveDialogs = false;
+		bool bIsInLevel = GameUI.IsInLevel();
+		for (i = 0; i < GetChildCount(); ++i) {
+			IPanel? child = GetChild(i);
+			if (child != null && child.IsVisible() && child.IsPopup() && child != GameMenu) 
+				haveActiveDialogs = true;
+		}
+
+		IPanel? parent = GetParent();
+		for (i = 0; i < (parent?.GetChildCount() ?? 0); ++i) {
+			IPanel? child = parent.GetChild(i);
+			if (child != null && child.IsVisible() && child.IsPopup() && child != this) 
+				haveActiveDialogs = true;
+		}
+
+		bool needDarkenedBackground = (haveActiveDialogs || bIsInLevel);
+		if (HaveDarkenedBackground != needDarkenedBackground) {
+			float targetAlpha, duration;
+			if (needDarkenedBackground) {
+				targetAlpha = BackdropColor[3];
+				duration = FrameFadeInTime;
+			}
+			else {
+				targetAlpha = 0.0f;
+				duration = 2.0f;
+			}
+
+			HaveDarkenedBackground = needDarkenedBackground;
+			GetAnimationController().RunAnimationCommand(this, "BackgroundFillAlpha", targetAlpha, 0.0f, duration, Interpolators.Linear);
+		}
+
+		if (LevelLoading)
+			return;
+
+		bool bNeedDarkenedTitleText = haveActiveDialogs;
+		if (HaveDarkenedTitleText != bNeedDarkenedTitleText || ForceTitleTextUpdate) {
+			float targetTitleAlpha, duration;
+			if (haveActiveDialogs) {
+				duration = FrameFadeInTime;
+				targetTitleAlpha = 32.0f;
+			}
+			else {
+				duration = 2.0f;
+				targetTitleAlpha = 255.0f;
+			}
+
+			if (GameLogo != null)
+				GetAnimationController().RunAnimationCommand(GameLogo, "alpha", targetTitleAlpha, 0.0f, duration, Interpolators.Linear);
+
+			for (i = 0; i < GameMenuButtons.Count; ++i) {
+				GetAnimationController().RunAnimationCommand(GameMenuButtons[i], "alpha", targetTitleAlpha, 0.0f, duration, Interpolators.Linear);
+			}
+			HaveDarkenedTitleText = bNeedDarkenedTitleText;
+			ForceTitleTextUpdate = false;
+		}
+	}
+
+	bool HaveDarkenedBackground;
+	bool HaveDarkenedTitleText;
+	bool ForceTitleTextUpdate;
+	bool PlatformMenuInitialized;
+	bool LevelLoading;
+
+	public void RunFrame() {
+		InvalidateLayout();
+
+		UpdateBackgroundState();
+
+		if (!PlatformMenuInitialized)
+			PlatformMenuInitialized = true;
+	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
@@ -355,7 +449,7 @@ public class BasePanel : Panel
 
 		IScheme? clientScheme = SchemeManager.LoadSchemeFromFile("Resource/ClientScheme.res", "ClientScheme");
 		List<Color> buttonColor = [];
-		if(clientScheme != null) {
+		if (clientScheme != null) {
 			GameTitlePos.Clear();
 
 			for (int i = 0; i < GameMenuButtons.Count; ++i) {
@@ -442,7 +536,6 @@ public class BasePanel : Panel
 
 	public override void OnThink() {
 		base.OnThink();
-		BackgroundFillAlpha = 80; // todo
 	}
 
 	private GameMenu RecursiveLoadGameMenu(KeyValues datafile) {

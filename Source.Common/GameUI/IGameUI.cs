@@ -34,4 +34,5 @@ public interface IGameUI
 	bool IsInReplay();
 	bool IsConsoleUI();
 	bool HasSavedThisMenuSession();
+	bool IsInBackgroundLevel();
 }

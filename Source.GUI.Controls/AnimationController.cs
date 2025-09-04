@@ -412,7 +412,14 @@ public class AnimationController : Panel, IAnimationController
 		anim.Align = cmd.Align;
 	}
 
-	private void RemoveQueuedAnimationByType(Panel panel, ulong var, int v) {
-
+	private void RemoveQueuedAnimationByType(Panel panel, ulong variable, ulong sequenceToIgnore) {
+		Span<ActiveAnimation> anims = ActiveAnimations.AsSpan();
+		for (int i = 0; i < anims.Length; i++) {
+			ref ActiveAnimation anim = ref anims[i];
+			if (anim.Panel == panel && anim.Variable == variable && anim.SeqName != sequenceToIgnore) {
+				ActiveAnimations.RemoveAt(i);
+				break;
+			}
+		}
 	}
 }

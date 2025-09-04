@@ -360,7 +360,7 @@ public class Frame : EditablePanel
 	public override void OnThink() {
 		base.OnThink();
 
-		Msg($"{GetAlpha()}\n");
+		// Msg($"{GetAlpha()}\n");
 
 		if (IsVisible() && TransitionEffectTime > 0 && !DisableFadeEffect) {
 			if (FadingOut) {
