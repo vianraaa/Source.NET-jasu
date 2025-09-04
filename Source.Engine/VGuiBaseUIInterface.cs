@@ -283,6 +283,9 @@ public class EngineVGui(
 			return;
 		}
 
+		// Try loading ClientScheme
+		vguiScheme.LoadSchemeFromFile("Resource/ClientScheme.res", "ClientScheme");
+
 		// Ideal hierarchy:
 
 		// Root -- staticPanel

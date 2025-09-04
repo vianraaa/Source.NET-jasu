@@ -1,4 +1,5 @@
-﻿using Source.Common;
+﻿using Source;
+using Source.Common;
 using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -6,11 +7,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Common.Input;
-using Source.Common.Launcher;
-using Source.GUI;
 using Source.GUI.Controls;
-
-using System.Numerics;
 
 namespace Game.UI;
 
@@ -178,7 +175,7 @@ public class BasePanel : Panel
 		}
 	}
 
-	Vector2 GameMenuPos;
+	Coord GameMenuPos;
 	int GameMenuInset;
 
 	public override void PerformLayout() {
@@ -186,16 +183,40 @@ public class BasePanel : Panel
 
 		Surface.GetScreenSize(out int wide, out int tall);
 		GameMenu.GetSize(out int menuWide, out int menuTall);
-		int idealMenuY = (int)GameMenuPos.Y;
+		int idealMenuY = GameMenuPos.Y;
 		if (idealMenuY + menuTall + GameMenuInset > tall)
 			idealMenuY = tall - menuTall - GameMenuInset;
 
-		int yDiff = idealMenuY - (int)GameMenuPos.Y;
-		GameMenu.SetPos((int)GameMenuPos.X, idealMenuY);
+		int yDiff = idealMenuY - GameMenuPos.Y;
+		GameMenu.SetPos(GameMenuPos.X, idealMenuY);
 	}
+
+	List<Coord> GameTitlePos = [];
+	float FrameFadeInTime;
+	Color BackdropColor;
 
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
+
+		GameMenuInset = int.TryParse(scheme.GetResourceString("MainMenu.Inset"), out int r) ? r : 0;
+		GameMenuInset *= 2;
+
+		IScheme? clientScheme = SchemeManager.GetScheme("ClientScheme");
+
+		if(clientScheme != null) {
+			GameTitlePos.Clear();
+
+			GameMenuPos.X = int.TryParse(clientScheme.GetResourceString("Main.Menu.X"), out r) ? r : 0;
+			GameMenuPos.X = SchemeManager.GetProportionalScaledValue(GameMenuPos.X);
+			GameMenuPos.Y = int.TryParse(clientScheme.GetResourceString("Main.Menu.Y"), out r) ? r : 0;
+			GameMenuPos.Y = SchemeManager.GetProportionalScaledValue(GameMenuPos.Y);
+
+			GameMenuInset = int.TryParse(clientScheme.GetResourceString("Main.BottomBorder"), out r) ? r : 0;
+			GameMenuInset = SchemeManager.GetProportionalScaledValue(GameMenuInset);
+		}
+
+		FrameFadeInTime = float.TryParse(scheme.GetResourceString("Frame.TransitionEffectTime"), out float f) ? f : 0;
+		BackdropColor = scheme.GetColor("mainmenu.backdrop", new Color(0, 0, 0, 128));
 
 		FontTest = scheme.GetFont("TitleFont");
 
