@@ -9,7 +9,7 @@ public class PanelAnimationMap {
 	}
 }
 
-public delegate object? PanelLookupFunc(Panel panel);
+public delegate ref object? PanelLookupFunc(Panel panel);
 
 public struct PanelAnimationMapEntry
 {

@@ -11,6 +11,8 @@ using Source.Common.MaterialSystem;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -52,10 +54,36 @@ public enum PanelFlags
 	All = 0xFFFF,
 }
 
-public interface IPanelAnimationPropertyConverter {
+public interface IPanelAnimationPropertyConverter
+{
 	void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry);
 	void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry);
 	void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry);
+}
+
+[AttributeUsage(AttributeTargets.Field)]
+public class PanelAnimationVarAttribute : Attribute
+{
+	public readonly string Name;
+	public readonly string DefaultValue;
+
+	public PanelAnimationVarAttribute(string name, string defaultValue) {
+		Name = name;
+		DefaultValue = defaultValue;
+	}
+
+	public static void InitVar<T>(PanelAnimationVarAttribute attribute, FieldInfo field) where T : Panel {
+		DynamicMethod method = new DynamicMethod($"{typeof(T).Name}PanelAnim_GetVar_{field.Name}", field.FieldType, [typeof(Panel)]);
+		var il = method.GetILGenerator();
+		{
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(OpCodes.Ldflda, field);
+			il.Emit(OpCodes.Ret);
+		}
+		PanelLookupFunc lookup = method.CreateDelegate<PanelLookupFunc>();
+
+		Panel.AddToAnimationMap<T>(attribute.Name, "Float", field.Name, attribute.DefaultValue, false, lookup);
+	}
 }
 
 public class Panel : IPanel
@@ -63,7 +91,9 @@ public class Panel : IPanel
 	public static bool IsValid([NotNullWhen(true)] Panel? panel) => panel != null && !panel.IsMarkedForDeletion();
 
 	readonly static Dictionary<ulong, IPanelAnimationPropertyConverter> AnimationPropertyConverters = [];
-
+	static Panel() {
+		ChainToAnimationMap<Panel>();
+	}
 	public static IPanelAnimationPropertyConverter? FindConverter(ReadOnlySpan<char> typeName) {
 		if (AnimationPropertyConverters.TryGetValue(typeName.Hash(), out var converter))
 			return converter;
@@ -74,8 +104,11 @@ public class Panel : IPanel
 		if (initialized)
 			return;
 		initialized = true;
-		// todo
+
+		AddPropertyConverter("float", floatConverter);
 	}
+	static readonly FloatProperty floatConverter = new();
+
 	public static void AddPropertyConverter(ReadOnlySpan<char> typeName, IPanelAnimationPropertyConverter converter) {
 
 	}
@@ -173,7 +206,7 @@ public class Panel : IPanel
 	bool MouseInput;
 	bool KbInput;
 	bool TopmostPopup;
-	float Alpha;
+	[PanelAnimationVar("alpha", "255")] float Alpha;
 	IBorder? Border;
 	IScheme? Scheme;
 	PanelFlags Flags;
@@ -1138,9 +1171,9 @@ public class Panel : IPanel
 			}
 		}
 
-		if (map.BaseMap != null) 
+		if (map.BaseMap != null)
 			return ref FindPanelAnimationEntry(scriptname, map.BaseMap);
-		
+
 		return ref Unsafe.NullRef<PanelAnimationMapEntry>();
 	}
 
@@ -1158,10 +1191,10 @@ public class Panel : IPanel
 		ReadOnlySpan<char> name = inputData.Name;
 
 		ref PanelAnimationMapEntry e = ref FindPanelAnimationEntry(name, map);
-		if (e) {
+		if (!Unsafe.IsNullRef(ref e)) {
 			IPanelAnimationPropertyConverter? converter = FindConverter(e.Type);
 			if (converter != null) {
-				converter.SetData(this, inputData, e);
+				converter.SetData(this, inputData, ref e);
 				return true;
 			}
 		}
@@ -1195,13 +1228,40 @@ public class Panel : IPanel
 			Lookup = func,
 		};
 	}
-	public static void ChainToAnimationMap<T>() {
+	public static void ChainToAnimationMap<T>() where T : Panel {
+		foreach(var field in typeof(T).GetFields()) {
+			PanelAnimationVarAttribute? attr = field.GetCustomAttribute<PanelAnimationVarAttribute>();
+			if (attr == null)
+				continue;
+
+			PanelAnimationVarAttribute.InitVar<T>(attr, field);
+		}
+
 		PanelAnimationMap map = PanelAnimationDictionary.FindOrAddPanelAnimationMap(typeof(T).Name);
 		map.ClassName = typeof(T).Name;
 		Type? baseClass = typeof(T).BaseType;
-		if(baseClass?.IsAssignableTo(typeof(Panel)) ?? false)
+		if (baseClass?.IsAssignableTo(typeof(Panel)) ?? false)
 			map.BaseMap = PanelAnimationDictionary.FindOrAddPanelAnimationMap(baseClass.Name);
 	}
 
 	public virtual PanelAnimationMap GetAnimMap() => PanelAnimationDictionary.FindOrAddPanelAnimationMap(GetType().Name);
+}
+
+class FloatProperty : IPanelAnimationPropertyConverter
+{
+	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		ref object? data = ref entry.Lookup(panel);
+		if (data == null) return;
+		kv.SetFloat(entry.ScriptName, (float)data);
+	}
+
+	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		ref object? data = ref entry.Lookup(panel);
+		data = kv.GetFloat(entry.ScriptName);
+	}
+
+	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
+		ref object? data = ref entry.Lookup(panel);
+		data = float.TryParse(entry.DefaultValue, out float r) ? r : 0;
+	}
 }
