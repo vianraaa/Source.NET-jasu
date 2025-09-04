@@ -18,6 +18,7 @@ using Source.Engine.Server;
 using Source.GUI;
 using Source.GUI.Controls;
 
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Source.Engine;
@@ -98,7 +99,7 @@ public class StaticPanel(Panel? parent, string name) : Panel(parent, name)
 public class EngineVGui(
 	Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface,
 	IMaterialSystem materials, ILauncherManager launcherMgr,
-	ICommandLine CommandLine, IFileSystem fileSystem, GameServer sv, Cbuf Cbuf
+	ICommandLine CommandLine, IFileSystem fileSystem, GameServer sv, Cbuf Cbuf, Sound Sound
 	) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
@@ -257,8 +258,10 @@ public class EngineVGui(
 	}
 
 	public void VGui_PlaySound(ReadOnlySpan<char> fileName) {
-
+		Vector3 dummyOrigin = new(0);
+		// do this later
 	}
+
 	IBaseClientDLL clientDLL;
 	public void Init() {
 		// Load gameui

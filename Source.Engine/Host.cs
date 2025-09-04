@@ -578,7 +578,7 @@ public class Host(
 
 #if !SWDS
 		ReadConfiguration();
-		// engineAPI.InitSubsystem<Sound>();
+		engineAPI.InitSubsystem<Sound>();
 #endif
 		Cbuf.AddText("exec valve.rc");
 
