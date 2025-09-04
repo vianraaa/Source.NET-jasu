@@ -193,14 +193,22 @@ public class BackgroundMenuButton : Button
 		SetTextInset(0, 0);
 	}
 }
+public class QuitQueryBox : QueryBox
+{
+	public QuitQueryBox(string title, string queryText, Panel? parent = null) : base(title, queryText, parent) {
+
+	}
+}
 public class BasePanel : Panel
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 	GameMenu GameMenu;
 
 	[Imported] public IFileSystem FileSystem;
 	[Imported] public IGameUI GameUI;
 	[Imported] public IEngineClient engine;
 	[Imported] public ModInfo ModInfo;
+#pragma warning restore CS8618 
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
@@ -232,8 +240,14 @@ public class BasePanel : Panel
 			case "OpenAchievementsDialog": break;
 			case "OpenCSAchievementsDialog": break;
 			case "AchievementsDialogClosing": break;
-			case "Quit": break;
-			case "QuitNoConfirm": break;
+			case "Quit":
+				OnOpenQuitConfirmationDialog();
+				break;
+			case "QuitNoConfirm":
+				SetVisible(false);
+				Surface.RestrictPaintToSinglePanel(this);
+				engine.ClientCmd_Unrestricted("quit\n");
+				break;
 			case "QuitRestartNoConfirm": break;
 			case "ResumeGame": break;
 			case "Disconnect": break;
@@ -252,6 +266,25 @@ public class BasePanel : Panel
 				break;
 		}
 	}
+
+	private void OnOpenQuitConfirmationDialog() {
+		if (GameUI.IsConsoleUI()) {
+			throw new NotImplementedException();
+		}
+
+		if (GameUI.IsInLevel() && engine.GetMaxClients() == 1) {
+			throw new NotImplementedException();
+		}
+		else {
+			QueryBox box = EngineAPI.New<QuitQueryBox>("#GameUI_QuitConfirmationTitle", "#GameUI_QuitConfirmationText", this);
+			box.SetOKButtonText("#GameUI_Quit");
+			box.SetOKCommand(new KeyValues("Command", "command", "QuitNoConfirm"));
+			box.SetCancelCommand(new KeyValues("Command", "command", "ReleaseModalWindow"));
+			box.AddActionSignalTarget(this);
+			box.DoModal();
+		}
+	}
+
 	static BackgroundMenuButton CreateMenuButton(BasePanel parent, ReadOnlySpan<char> panelName, ReadOnlySpan<char> panelText) {
 		BackgroundMenuButton button = parent.EngineAPI.New<BackgroundMenuButton>(parent, new string(panelName));
 		button.SetProportional(true);

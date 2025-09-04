@@ -386,6 +386,7 @@ public class EngineVGui(
 		// cacheusedmaterials
 
 		localize.AddFile($"Resource/valve_%language%.txt");
+		localize.AddFile($"Resource/{engineAPI.GetRequiredService<EngineParms>().Mod}_%language%.txt");
 
 		staticGameUIFuncs.Initialize(engineAPI);
 		staticGameUIFuncs.Start();

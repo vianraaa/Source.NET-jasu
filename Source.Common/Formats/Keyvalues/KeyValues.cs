@@ -240,10 +240,14 @@ public class KeyValues : IEnumerable<KeyValues>
 	private void ReadKVPairs(StreamReader reader, bool matches) {
 		int rd = reader.Read();
 
-		while (true) {
+		while (reader.Peek() != -1) {
 			SkipWhitespace(reader);
 			if (reader.Peek() == '}') {
 				reader.Read();
+
+				SkipWhitespace(reader);
+				SkipComments(reader);
+
 				break;
 			}
 			SkipComments(reader);
@@ -310,15 +314,18 @@ public class KeyValues : IEnumerable<KeyValues>
 		Span<char> work = stackalloc char[1024];
 		int i, len;
 		for (i = 0, len = work.Length; i < len; i++) {
-			char c = (char)reader.Peek();
+			int c = reader.Peek();
 			if (c == -1) break;
-			if (char.IsWhiteSpace(c)) break;
-			work[i] = c;
+			char ch = (char)c;
+			if (char.IsWhiteSpace(ch)) break;
+			work[i] = ch;
 			reader.Read();
 		}
 
-		if (i >= len)
-			Dbg.Warning("KeyValues: string overflow, ignoring (should we allocate more space?)\n");
+		if (i >= len) {
+			Warning("KeyValues: string overflow, ignoring (should we allocate more space?)\n");
+			AssertMsg(false, "KeyValues string overflow");
+		}
 
 		return new(work[..i]);
 	}
@@ -333,6 +340,12 @@ public class KeyValues : IEnumerable<KeyValues>
 			char c = (char)reader.Peek();
 			if (c == -1) break;
 			if (lastCharacterWasEscape) {
+				// Mutate c into the escape value or just insert the raw character.
+				c = c switch {
+					'n' => '\n',
+					'r' => '\r',
+					_ => c
+				};
 				lastCharacterWasEscape = false;
 			}
 			else {
@@ -342,6 +355,7 @@ public class KeyValues : IEnumerable<KeyValues>
 				}
 				else if (c == '\\' && useEscapeSequences) {
 					lastCharacterWasEscape = true;
+					reader.Read();
 					continue;
 				}
 			}
@@ -349,8 +363,10 @@ public class KeyValues : IEnumerable<KeyValues>
 			reader.Read();
 		}
 
-		if (i >= len)
-			Dbg.Warning("KeyValues: string overflow, ignoring (should we allocate more space?)\n");
+		if (i >= len) {
+			Warning("KeyValues: string overflow, ignoring (should we allocate more space?)\n");
+			AssertMsg(false, "KeyValues string overflow");
+		}
 
 		return new(work[..i]);
 	}

@@ -32,4 +32,6 @@ public interface IGameUI
 	public void SetMainMenuOverride(IPanel panel);
 	bool IsInLevel();
 	bool IsInReplay();
+	bool IsConsoleUI();
+	bool HasSavedThisMenuSession();
 }

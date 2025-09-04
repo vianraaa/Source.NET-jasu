@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Engine;
+using Source.GUI;
 
 namespace Game.UI;
 
@@ -47,10 +49,16 @@ public class GameUI : IGameUI
 	BasePanel staticPanel;
 	IEngineVGui enginevguifuncs;
 	ISurface Surface;
+	ILocalize localize;
 
 	public void Initialize(IEngineAPI engineAPI) {
 		enginevguifuncs = engineAPI.GetRequiredService<IEngineVGui>();
 		Surface = engineAPI.GetRequiredService<ISurface>();
+		localize = engineAPI.GetRequiredService<ILocalize>();
+
+		localize.AddFile("Resource/gameui_%language%.txt", "GAME", true);
+		engineAPI.GetRequiredService<ModInfo>().LoadCurrentGameInfo();
+		localize.AddFile("Resource/valve_%language%.txt", "GAME", true);
 
 		staticPanel = engineAPI.New<BasePanel>();
 		staticPanel.SetBounds(0, 0, 400, 300);
@@ -99,6 +107,14 @@ public class GameUI : IGameUI
 	}
 
 	public bool IsInReplay() {
+		throw new NotImplementedException();
+	}
+
+	public bool IsConsoleUI() {
+		return false;
+	}
+
+	public bool HasSavedThisMenuSession() {
 		throw new NotImplementedException();
 	}
 }

@@ -4,7 +4,7 @@ using Source.Engine.Server;
 
 namespace Source.Engine;
 
-public class EngineClient(ClientState cl, GameServer sv) : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -26,4 +26,6 @@ public class EngineClient(ClientState cl, GameServer sv) : IEngineClient
 			return "";
 		return cl.LevelFileName;
 	}
+
+	public void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString) => Cbuf.AddText(cmdString);
 }

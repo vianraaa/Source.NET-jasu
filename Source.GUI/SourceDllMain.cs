@@ -12,6 +12,6 @@ public static class SourceDllMain
 		services.AddSingleton<IVGui, VGui>();
 		services.AddSingleton(x => x.GetRequiredService<IVGui>().GetInput());
 		services.AddSingleton<ISchemeManager, SchemeManager>();
-		services.AddSingleton<ILocalize, Localize>();
+		services.AddSingleton<ILocalize, LocalizedStringTable>();
 	}
 }

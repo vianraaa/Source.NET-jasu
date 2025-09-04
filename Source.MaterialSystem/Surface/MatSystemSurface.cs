@@ -1134,7 +1134,6 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void SetTitle(IPanel panel, ReadOnlySpan<char> title) {
-		throw new NotImplementedException();
 	}
 
 	public void SetTopLevelFocus(IPanel? panel) {

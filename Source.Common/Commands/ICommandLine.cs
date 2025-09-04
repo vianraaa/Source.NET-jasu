@@ -19,7 +19,7 @@ public interface ICommandLine
 	public double ParmValue(string name, double defaultValue);
 
 	public int ParmCount();
-	public int FindParm(string name);
+	public int FindParm(ReadOnlySpan<char> name);
 	public string GetParm(int index);
 	public void SetParm(int index, string newParm);
 	[return: NotNullIfNotNull(nameof(defaultValue))] public string? ParmValueByIndex(int index, string? defaultValue = null);

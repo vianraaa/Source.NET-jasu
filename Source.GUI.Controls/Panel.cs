@@ -1,4 +1,5 @@
-﻿using Source.Common.Engine;
+﻿using Source.Common;
+using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
@@ -50,7 +51,7 @@ public class Panel : IPanel
 	[Imported] public IVGui VGui;
 	[Imported] public IVGuiInput Input;
 	[Imported] public IEngineAPI EngineAPI;
-
+	[Imported] public ILocalize Localize;
 	public void Init(int x, int y, int w, int h) {
 		PanelName = null;
 		TooltipText = null;
@@ -94,12 +95,12 @@ public class Panel : IPanel
 		SetName(panelName);
 		SetParent(parent);
 	}
-	public Panel(Panel? parent, string panelName) {
+	public Panel(Panel? parent, string? panelName, bool showTaskbarIcon = true) {
 		Init(0, 0, 64, 24);
 		SetName(panelName);
 		SetParent(parent);
 	}
-	public Panel(Panel? parent, string panelName, IScheme scheme) {
+	public Panel(Panel? parent, string? panelName, IScheme scheme) {
 		Init(0, 0, 64, 24);
 		SetName(panelName);
 		SetParent(parent);
@@ -710,7 +711,11 @@ public class Panel : IPanel
 	}
 
 	public void SetEnabled(bool state) {
-		throw new NotImplementedException();
+		if(state != IsEnabled()) {
+			Enabled = state;
+			InvalidateLayout();
+			Repaint();
+		}
 	}
 
 	public void SetInset(int left, int top, int right, int bottom) {

@@ -176,9 +176,9 @@ public class CommandLine : ICommandLine
 
 
 
-	public int FindParm(string name) {
+	public int FindParm(ReadOnlySpan<char> name) {
 		for (int i = 1; i < parms.Count; i++) {
-			if (parms[i].Equals(name, StringComparison.InvariantCultureIgnoreCase))
+			if (name.Equals(parms[i], StringComparison.InvariantCultureIgnoreCase))
 				return i;
 		}
 

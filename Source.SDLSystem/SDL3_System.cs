@@ -2,6 +2,8 @@
 using Source.Common.Input;
 using Source.Common.Launcher;
 using System.Text.RegularExpressions;
+using Source.Common.Commands;
+
 
 
 #if WIN32
@@ -10,10 +12,10 @@ using Microsoft.Win32;
 
 namespace Source.SDLManager;
 
-public unsafe class SDL3_System : ISystem
+public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 {
 	public bool CommandLineParamExists(ReadOnlySpan<char> paramName) {
-		throw new NotImplementedException();
+		return commandLine.FindParm(paramName) != 0;
 	}
 
 	public bool CreateShortcut(ReadOnlySpan<char> linkFileName, ReadOnlySpan<char> targetPath, ReadOnlySpan<char> arguments, ReadOnlySpan<char> workingDirectory, ReadOnlySpan<char> iconFile) {

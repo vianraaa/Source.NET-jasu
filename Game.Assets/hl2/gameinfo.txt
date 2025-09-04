@@ -12,7 +12,7 @@
 	{
 		SteamAppId				4000
 		ToolsAppId				211
-
+// temp restart strings
 		SearchPaths
 		{
 			game+game_write		hl2

@@ -17,11 +17,9 @@ public struct ColorChange
 	public nint TextStreamIndex;
 	public Color Color;
 }
-
 public class TextImage : Image
 {
 	[Imported] public ILocalize Localize;
-
 
 	string? Text;
 	IFont? Font;
@@ -45,7 +43,7 @@ public class TextImage : Image
 		RecalculateTruncation = true;
 	}
 
-	public TextImage(string text) : base() {
+	public TextImage(string? text) : base() {
 		Text = null;
 		Font = null;
 		FallbackFont = null;
@@ -74,10 +72,11 @@ public class TextImage : Image
 		if (text == null)
 			text = "";
 
-		if (text[0] == '#') {
+		if (text != null && text.Length > 0 && text[0] == '#') {
 			UnlocalizedTextSymbol = Localize.FindIndex(text[1..]);
 			if(UnlocalizedTextSymbol != ulong.MaxValue) {
-
+				SetText(Localize.GetValueByIndex(UnlocalizedTextSymbol));
+				return;
 			}
 		}
 

@@ -44,4 +44,5 @@ public interface IEngineClient
 	void GetMainMenuBackgroundName(Span<char> dest);
 	int GetMaxClients();
 	ReadOnlySpan<char> GetLevelName();
+	void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString);
 }
