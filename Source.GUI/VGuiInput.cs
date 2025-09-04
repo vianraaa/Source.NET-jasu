@@ -560,7 +560,7 @@ public class VGuiInput : IVGuiInput
 		if (surface.GetPopupCount() > 0) {
 			int nIndex = surface.GetPopupCount();
 
-			while (nIndex > 0) {
+			 while (nIndex > 0) {
 				top = surface.GetPopup(--nIndex);
 
 				if (top != null && top.IsVisible() && top.IsKeyboardInputEnabled() && !surface.IsMinimized(top) && IsChildOfModalSubTree(top) && (root == null || top.HasParent(root))) {
@@ -584,8 +584,7 @@ public class VGuiInput : IVGuiInput
 
 		if (top != null) {
 			wantedKeyFocus = top.GetCurrentKeyFocus();
-			if (wantedKeyFocus == null)
-				wantedKeyFocus = top;
+			wantedKeyFocus ??= top;
 		}
 
 		if (!surface.HasFocus())
@@ -854,6 +853,7 @@ public class VGuiInput : IVGuiInput
 		if (!IsChildOfModalPanel(focus))
 			focus = null;
 
+		//Msg($"{focus} at {x}, {y}\n");
 		SetMouseFocus(focus);
 	}
 

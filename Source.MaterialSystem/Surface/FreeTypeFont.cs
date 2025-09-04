@@ -166,4 +166,11 @@ public unsafe class FreeTypeFont : BaseFont
 	public override bool GetUnderlined() {
 		return false;
 	}
+
+	internal override void GetKernedCharWidth(char ch, char chBefore, char chAfter, out float flWide, out float flabcA, out float flabcC) {
+		GetCharABCwidths(ch, out int a, out int b, out int c);
+		flWide = (float)(a + b + c);
+		flabcA = (float)(a);
+		flabcC = 0;
+	}
 }

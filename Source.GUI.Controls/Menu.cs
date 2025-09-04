@@ -45,6 +45,7 @@ public class Menu : Panel
 		SizedForScrollBar = false;
 		SetZPos(1);
 		SetVisible(false);
+		MakePopup(false);
 		SetParent(parent);
 		recalculateWidth = true;
 

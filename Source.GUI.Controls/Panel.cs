@@ -187,8 +187,8 @@ public class Panel : IPanel
 		}
 	}
 
-	public IPanel GetCurrentKeyFocus() {
-		throw new NotImplementedException();
+	public virtual IPanel? GetCurrentKeyFocus() {
+		return null;
 	}
 
 	public void GetInset(out int left, out int top, out int right, out int bottom) {
@@ -268,7 +268,16 @@ public class Panel : IPanel
 	}
 
 	public bool IsFullyVisible() {
-		throw new NotImplementedException();
+		Panel? panel = this;
+		while (panel != null) {
+			if (!panel.Visible) {
+				return false;
+			}
+
+			panel = panel.Parent;
+		}
+
+		return true;
 	}
 
 	public bool IsKeyboardInputEnabled() => KbInput;
@@ -715,7 +724,7 @@ public class Panel : IPanel
 	public void SetPopup(bool enabled) {
 		Popup = enabled;
 	}
-	public void MakePopup(bool showTaskbarIcon, bool disabled) {
+	public void MakePopup(bool showTaskbarIcon, bool disabled = false) {
 		Surface.CreatePopup(this, false, showTaskbarIcon, disabled);
 	}
 
@@ -923,7 +932,7 @@ public class Panel : IPanel
 		switch (message.Name) {
 
 		}
-		if (message.Name != "MouseFocusTicked")
+		if (message.Name != "MouseFocusTicked" && message.Name != "KeyFocusTicked")
 			Msg($"got message {message.Name}\n");
 	}
 

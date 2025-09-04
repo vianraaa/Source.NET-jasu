@@ -318,7 +318,7 @@ public class MatSystemSurface : IMatSystemSurface
 		return TextureDictionary.CreateTexture(procedural);
 	}
 
-	LinkedList<IPanel> PopupList = [];
+	List<IPanel> PopupList = [];
 
 	public void CreatePopup(IPanel panel, bool minimised, bool showTaskbarIcon = true, bool disabled = false, bool mouseInput = true, bool kbInput = true) {
 		if (panel.GetParent() == null)
@@ -328,8 +328,8 @@ public class MatSystemSurface : IMatSystemSurface
 		panel.SetKeyboardInputEnabled(kbInput);
 		panel.SetMouseInputEnabled(mouseInput);
 
-		if (PopupList.Find(panel) == null) {
-			PopupList.AddLast(panel);
+		if (!PopupList.Contains(panel)) {
+			PopupList.Add(panel);
 		}
 		else {
 			MovePopupToFront(panel);
@@ -637,11 +637,16 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public IPanel? GetPopup(int index) {
-		throw new NotImplementedException();
+		if (index < 0)
+			return null;
+		if (index >= PopupList.Count)
+			return null;
+
+		return PopupList[index];
 	}
 
 	public int GetPopupCount() {
-		return 0; // PopupList.Count;
+		return PopupList.Count;
 	}
 
 	const int BASE_WIDTH = 640;
@@ -664,11 +669,11 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void GetTextSize(IFont? font, ReadOnlySpan<char> text, out int wide, out int tall) {
-		throw new NotImplementedException();
+		FontManager.GetTextSize(font, text, out wide, out tall);
 	}
 
 	public IPanel? GetTopmostPopup() {
-		throw new NotImplementedException();
+		return null;
 	}
 
 	ScreenOverride ScreenPosOverride;
@@ -699,9 +704,7 @@ public class MatSystemSurface : IMatSystemSurface
 		WorkSpaceInsets[3] = bottom;
 	}
 
-	public bool HasCursorPosFunctions() {
-		throw new NotImplementedException();
-	}
+	public bool HasCursorPosFunctions() => false;
 
 	public bool HasFocus() {
 		return true;
@@ -717,7 +720,7 @@ public class MatSystemSurface : IMatSystemSurface
 	public bool IsCursorVisible() => CursorAlwaysVisible || CurrentCursor != null;
 
 	public bool IsMinimized(IPanel panel) {
-		throw new NotImplementedException();
+		return false;
 	}
 
 	public bool IsTextureIDValid(in TextureID id) {
@@ -738,7 +741,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public void MovePopupToFront(IPanel panel) {
 		PopupList.Remove(panel);
-		PopupList.AddLast(panel);
+		PopupList.Add(panel);
 	}
 
 	public bool NeedKBInput() {
@@ -809,7 +812,7 @@ public class MatSystemSurface : IMatSystemSurface
 				if (popupPanel == null)
 					continue;
 
-				if (popupPanel.IsFullyVisible())
+				if (!popupPanel.IsFullyVisible())
 					continue;
 
 				if (!IsPanelUnderRestrictedPanel(popupPanel))

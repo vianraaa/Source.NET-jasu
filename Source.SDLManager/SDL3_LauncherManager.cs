@@ -50,7 +50,6 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	public SDL3_LauncherManager(IServiceProvider services) {
 		this.services = services;
 		SDL3_State.InitializeIfRequired();
-
 		InitCursors();
 	}
 	SDL3_Window window;

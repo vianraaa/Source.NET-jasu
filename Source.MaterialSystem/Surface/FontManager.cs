@@ -26,6 +26,8 @@ public abstract class BaseFont
 	public abstract int GetCharYOffset(char ch);
 	public abstract void GetCharABCwidths(char ch, out int a, out int b, out int c);
 	internal abstract void GetCharRGBA(char @char, int fontWide, int fontTall, Span<byte> pRGBA);
+
+	internal abstract void GetKernedCharWidth(char ch, char chBefore, char chAfter, out float flWide, out float flabcA, out float flabcC);
 }
 
 public record struct FontRange
@@ -401,5 +403,70 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 			return a + b + c;
 		}
 		return 0;
+	}
+
+	internal void GetTextSize(IFont? font, ReadOnlySpan<char> text, out int wide, out int tall) {
+		wide = 0;
+		tall = 0;
+
+		if (text == null)
+			return;
+
+		tall = GetFontTall(font);
+
+		float xx = 0;
+		char chBefore = '\0';
+		char chAfter = '\0';
+		for (int i = 0; ; i++) {
+			char ch = text[i];
+			if (ch == 0) 
+				break;
+			
+			chAfter = text[i + 1];
+
+			if (ch == '\n') {
+				tall += GetFontTall(font);
+				xx = 0;
+			}
+			else if (ch == '&') { }
+			else {
+				GetKernedCharWidth(font, ch, chBefore, chAfter, out float flWide, out float flabcA, out float flabcC);
+				xx += flWide;
+				if (xx > wide) {
+					wide = (int)MathF.Ceiling(xx);
+				}
+			}
+
+			chBefore = ch;
+		}
+	}
+
+	private void GetKernedCharWidth(IFont? font, char ch, char chBefore, char chAfter, out float flWide, out float flabcA, out float flabcC) {
+		flWide = 0.0f;
+		flabcA = 0.0f;
+		flabcC = 0.0f;
+
+		Assert(font != null);
+		if (font == null)
+			return ;
+
+		if (font is not FontAmalgam fontAmalgam)
+			return;
+
+		BaseFont? baseFont = fontAmalgam.GetFontForChar(ch);
+		if (baseFont == null) {
+			// no font for this range, just use the default width
+			flabcA = 0.0f;
+			flWide = fontAmalgam.GetFontMaxWidth();
+			return;
+		}
+
+		if (fontAmalgam.GetFontForChar(chBefore) != font)
+			chBefore = '\0';
+
+		if (fontAmalgam.GetFontForChar(chAfter) != font)
+			chAfter = '\0';
+
+		baseFont.GetKernedCharWidth( ch, chBefore, chAfter, out flWide, out flabcA, out flabcC );
 	}
 }

@@ -115,7 +115,7 @@ public interface IPanel
 	void RequestFocus(int direction = 0);
 	bool RequestFocusPrev(IPanel existingPanel);
 	bool RequestFocusNext(IPanel existingPanel);
-	IPanel GetCurrentKeyFocus();
+	IPanel? GetCurrentKeyFocus();
 	int GetTabPosition();
 
 	bool IsEnabled();
