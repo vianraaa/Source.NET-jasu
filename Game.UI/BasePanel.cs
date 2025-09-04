@@ -89,7 +89,7 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
 
-		//SetMenuItemHeight(int.TryParse(scheme.GetResourceString(""), out int r) ? r : 0);
+		SetMenuItemHeight(int.TryParse(scheme.GetResourceString("MainMenu.MenuItemHeight"), out int r) ? r : 0);
 		SetBgColor(new(0, 0, 0, 0));
 		SetBorder(null);
 	}
