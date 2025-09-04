@@ -1,4 +1,6 @@
-﻿using Source.Common.GUI;
+﻿using Source.Common;
+using Source.Common.Engine;
+using Source.Common.GUI;
 
 using System;
 using System.Collections.Generic;
@@ -18,6 +20,8 @@ public struct ColorChange
 
 public class TextImage : Image
 {
+	[Imported] public ILocalize Localize;
+
 
 	string? Text;
 	IFont? Font;
@@ -70,9 +74,13 @@ public class TextImage : Image
 		if (text == null)
 			text = "";
 
-		//  if (text[0] == '#') {
-		//  	// TODO: Localization!!!
-		//  }
+		if (text[0] == '#') {
+			UnlocalizedTextSymbol = Localize.FindIndex(text[1..]);
+			if(UnlocalizedTextSymbol != ulong.MaxValue) {
+
+			}
+		}
+
 		SetText(text, false);
 	}
 

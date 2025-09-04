@@ -185,6 +185,7 @@ public class Label : Panel
 	public virtual void SetText(ReadOnlySpan<char> text) {
 		if (text == null)
 			text = "";
+
 		TextImage!.SetText(text);
 		AutoWideDirty = AutoWideToContents;
 		InvalidateLayout();

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.GUI;
+
 namespace Source.GUI;
 
 [EngineComponent]
@@ -10,5 +12,6 @@ public static class SourceDllMain
 		services.AddSingleton<IVGui, VGui>();
 		services.AddSingleton(x => x.GetRequiredService<IVGui>().GetInput());
 		services.AddSingleton<ISchemeManager, SchemeManager>();
+		services.AddSingleton<ILocalize, Localize>();
 	}
 }

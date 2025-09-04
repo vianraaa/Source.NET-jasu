@@ -149,6 +149,7 @@ public class EngineVGui(
 	IGameUI staticGameUIFuncs;
 	ISurface matSystemSurface;
 	IEngineClient engineClient;
+	ILocalize localize;
 	IVGui vgui;
 	ISchemeManager vguiScheme;
 	StaticPanel staticPanel;
@@ -272,6 +273,7 @@ public class EngineVGui(
 		vgui = engineAPI.GetRequiredService<IVGui>();
 		clientDLL = engineAPI.GetRequiredService<IBaseClientDLL>();
 		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
+		localize = engineAPI.GetRequiredService<ILocalize>();
 		vguiScheme.Init();
 		// IGameConsole, but later.
 
@@ -382,7 +384,9 @@ public class EngineVGui(
 		// - CreateVProfPanels
 
 		// cacheusedmaterials
-		// localization files
+
+		localize.AddFile($"Resource/valve_%language%.txt");
+
 		staticGameUIFuncs.Initialize(engineAPI);
 		staticGameUIFuncs.Start();
 
