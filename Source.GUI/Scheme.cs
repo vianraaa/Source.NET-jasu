@@ -24,6 +24,8 @@ public class Scheme : IScheme
 	[Imported] public ISystem System;
 	[Imported] public ISurface Surface;
 	[Imported] public ISchemeManager SchemeManager;
+	[Imported] public IEngineAPI EngineAPI;
+
 	IPanel SizingPanel;
 	KeyValues Data;
 	KeyValues BaseSettings;
@@ -40,22 +42,41 @@ public class Scheme : IScheme
 		public bool Proportional;
 	}
 
+	struct SchemeBorder
+	{
+		public IBorder? Border;
+		public string BorderName;
+		public ulong BorderSymbol;
+		public bool SharedBorder;
+	}
+	List<SchemeBorder> BorderList = [];
+	IBorder? BaseBorder;
+	KeyValues Borders;
+
 	Dictionary<ulong, FontAlias> FontAliases = [];
 
 	public IBorder? GetBorder(ReadOnlySpan<char> borderName) {
-		return null; // todo
+		var hash = borderName.Hash();
+		foreach (var b in BorderList) {
+			if (b.BorderSymbol == hash)
+				return b.Border;
+		}
+		return null;
 	}
 
 	public IBorder? GetBorderAtIndex(int index) {
-		throw new NotImplementedException();
+		if (index < 0)
+			return null;
+		if (index >= BorderList.Count)
+			return null;
+		return BorderList[index].Border;
 	}
 
-	public int GetBorderCount() {
-		throw new NotImplementedException();
-	}
-
+	public int GetBorderCount() => BorderList.Count;
 	public IEnumerable<IBorder> GetBorders() {
-		throw new NotImplementedException();
+		foreach (var b in BorderList)
+			if (b.Border != null)
+				yield return b.Border;
 	}
 
 	public KeyValues GetColorData() {
@@ -67,7 +88,7 @@ public class Scheme : IScheme
 	}
 
 	private IFont? FindFontInAliasList(ReadOnlySpan<char> name) {
-		if (FontAliases.TryGetValue(name.Hash(), out FontAlias alias)) 
+		if (FontAliases.TryGetValue(name.Hash(), out FontAlias alias))
 			return alias.Font;
 
 		return null;
@@ -77,12 +98,14 @@ public class Scheme : IScheme
 		throw new NotImplementedException();
 	}
 
-	public int GetFontCount() {
-		throw new NotImplementedException();
-	}
+	public int GetFontCount() => FontAliases.Count;
 
 	public IEnumerable<IFont> GetFonts() {
-		throw new NotImplementedException();
+		foreach (var fontAlias in FontAliases) {
+			var font = fontAlias.Value.Font;
+			if (font != null)
+				yield return font;
+		}
 	}
 
 	public ReadOnlySpan<char> GetResourceString(ReadOnlySpan<char> stringName) {
@@ -105,7 +128,51 @@ public class Scheme : IScheme
 	}
 
 	private void LoadBorders() {
+		Borders = Data.FindKey("Borders", true)!;
 
+		for (KeyValues? kv = Borders.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			if (kv.Type != KeyValues.Types.String) {
+				IBorder? border = null;
+				ReadOnlySpan<char> borderType = kv.GetString("bordertype", null);
+				if (borderType != null && borderType.Length > 0) {
+					if (borderType.Equals("image", StringComparison.OrdinalIgnoreCase))
+						border = EngineAPI.New<ImageBorder>();
+					else if (borderType.Equals("scalable_image", StringComparison.OrdinalIgnoreCase))
+						border = EngineAPI.New<ScalableImageBorder>();
+					else
+						Assert(false);
+				}
+
+				if (border == null)
+					border = EngineAPI.New<Border>();
+
+				border.SetName(kv.Name);
+				border.ApplySchemeSettings(this, kv);
+
+				BorderList.Add(new() {
+					Border = border,
+					SharedBorder = false,
+					BorderName = new(kv.Name),
+					BorderSymbol = kv.Name.Hash()
+				});
+			}
+		}
+
+		for (KeyValues? kv = Borders.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			if (kv.Type == KeyValues.Types.String) {
+				Border border = (Border)GetBorder(kv.GetString());
+				Assert(border != null);
+
+				BorderList.Add(new() {
+					Border = border,
+					SharedBorder = true,
+					BorderName = new(kv.Name),
+					BorderSymbol = kv.Name.Hash()
+				});
+			}
+		}
+
+		BaseBorder = GetBorder("BaseBorder");
 	}
 
 	private void LoadFonts() {

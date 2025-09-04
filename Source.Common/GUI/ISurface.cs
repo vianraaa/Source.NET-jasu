@@ -12,6 +12,12 @@ public struct SurfaceVertex
 {
 	public Vector2 Position;
 	public Vector2 TexCoord;
+
+	public SurfaceVertex() { }
+	public SurfaceVertex(Vector2 pos, Vector2 tex) {
+		Position = pos;
+		TexCoord = tex;
+	}
 }
 
 public record struct TextureID {
@@ -202,6 +208,7 @@ public interface ISurface
 	void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags);
 	void DrawChar(char c, FontDrawType drawType = FontDrawType.Default);
 	void PlaySound(ReadOnlySpan<char> fileName);
+	void DrawTexturedPolygon(Span<SurfaceVertex> verts, bool clipVertices = true);
 }
 
 public interface IMatSystemSurface : ISurface {

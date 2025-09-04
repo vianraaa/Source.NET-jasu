@@ -182,6 +182,7 @@ public static class UnmanagedUtils
 	}
 
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
+		list.EnsureCapacity(ensureTo);
 		while (list.Count < ensureTo) {
 			list.Add(new T());
 		}
@@ -227,13 +228,7 @@ public static class UnmanagedUtils
 		return XXH64.DigestOf(data);
 	}
 
-	public static unsafe ulong Hash(this string target) {
-		fixed (char* ptr = target) {
-			ReadOnlySpan<char> data = new(ptr, target.Length);
-			ReadOnlySpan<byte> conv = MemoryMarshal.Cast<char, byte>(data);
-			return XXH64.DigestOf(conv);
-		}
-	}
+	public static unsafe ulong Hash(this string target, bool invariant = true) => Hash((ReadOnlySpan<char>)target, invariant);
 
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {
 		fixed (T* ptr = array) {

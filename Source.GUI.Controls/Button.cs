@@ -1,6 +1,8 @@
-﻿using Source.Common.Formats.Keyvalues;
+﻿using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.Common.Launcher;
 
 namespace Source.GUI.Controls;
 
@@ -38,6 +40,8 @@ public class Button : Label
 	string? ArmedSoundName;
 	string? DepressedSoundName;
 	string? ReleasedSoundName;
+
+	[Imported] public ISystem System;
 
 	public void Init() {
 		ButtonFlags |= ButtonFlags.UseCaptureMouse | ButtonFlags.ButtonBorderEnabled;
@@ -83,10 +87,10 @@ public class Button : Label
 	public void SetArmedSound(ReadOnlySpan<char> fileName) {
 		ArmedSoundName = string.Intern(new(fileName));
 	}
-	public void SetDepressedSound(ReadOnlySpan<char> fileName){
+	public void SetDepressedSound(ReadOnlySpan<char> fileName) {
 		DepressedSoundName = string.Intern(new(fileName));
 	}
-	public void SetReleasedSound(ReadOnlySpan<char> fileName){
+	public void SetReleasedSound(ReadOnlySpan<char> fileName) {
 		ReleasedSoundName = string.Intern(new(fileName));
 	}
 
@@ -100,6 +104,84 @@ public class Button : Label
 	public void PlayButtonReleasedSound() {
 		if (ReleasedSoundName != null)
 			Surface.PlaySound(ReleasedSoundName);
+	}
+
+	public override void PerformLayout() {
+		SetBorder(GetBorder(ButtonFlags.HasFlag(ButtonFlags.Depressed), ButtonFlags.HasFlag(ButtonFlags.Armed), ButtonFlags.HasFlag(ButtonFlags.Selected), HasFocus()));
+
+		SetFgColor(GetButtonFgColor());
+		SetBgColor(GetButtonBgColor());
+
+		base.PerformLayout();
+	}
+
+	public IBorder? GetBorder(bool depressed, bool armed, bool selected, bool keyfocus) {
+		if (ButtonFlags.HasFlag(ButtonFlags.ButtonBorderEnabled)) {
+			if (depressed)
+				return DepressedBorder;
+
+			if (keyfocus)
+				return KeyFocusBorder;
+
+			if (IsEnabled() && ButtonFlags.HasFlag(ButtonFlags.DefaultButton))
+				return KeyFocusBorder;
+
+			return DefaultBorder;
+		}
+		else {
+			if (depressed)
+				return DepressedBorder;
+
+			if (armed)
+				return DefaultBorder;
+		}
+
+		return DefaultBorder;
+	}
+
+
+	public Color GetButtonFgColor() {
+		if (!ButtonFlags.HasFlag(ButtonFlags.Blink)) {
+			if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+				return DepressedFgColor;
+			if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+				return ArmedFgColor;
+			if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+				return SelectedFgColor;
+			return DefaultFgColor;
+		}
+
+		Color blended;
+
+		if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+			blended = DepressedFgColor;
+		else if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+			blended = ArmedFgColor;
+		else if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+			blended = SelectedFgColor;
+		else
+			blended = DefaultFgColor;
+
+		float fBlink = (MathF.Sin(System.GetTimeMillis() * 0.01f) + 1.0f) * 0.5f;
+
+		if (ButtonFlags.HasFlag(ButtonFlags.Blink)) {
+			blended[0] = (byte)Math.Clamp(blended[0] * fBlink + (float)BlinkFgColor[0] * (1.0f - fBlink), 0, 255);
+			blended[1] = (byte)Math.Clamp(blended[1] * fBlink + (float)BlinkFgColor[1] * (1.0f - fBlink), 0, 255);
+			blended[2] = (byte)Math.Clamp(blended[2] * fBlink + (float)BlinkFgColor[2] * (1.0f - fBlink), 0, 255);
+			blended[3] = (byte)Math.Clamp(blended[3] * fBlink + (float)BlinkFgColor[3] * (1.0f - fBlink), 0, 255);
+		}
+
+		return blended;
+	}
+
+	public Color GetButtonBgColor() {
+		if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+			return DepressedBgColor;
+		if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+			return ArmedBgColor;
+		if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+			return SelectedBgColor;
+		return DefaultBgColor;
 	}
 
 	public override void OnMousePressed(ButtonCode code) {
@@ -227,8 +309,33 @@ public class Button : Label
 	Color ArmedFgColor, ArmedBgColor;
 	Color SelectedFgColor, SelectedBgColor;
 	Color DepressedFgColor, DepressedBgColor;
+	Color BlinkFgColor;
+	Color KeyboardFocusColor;
 
 	IBorder? DefaultBorder, DepressedBorder, KeyFocusBorder;
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		DefaultBorder = scheme.GetBorder("ButtonBorder");
+		DepressedBorder = scheme.GetBorder("ButtonDepressedBorder");
+		KeyFocusBorder = scheme.GetBorder("ButtonKeyFocusBorder");
+
+		DefaultFgColor = GetSchemeColor("Button.TextColor", new(255, 255, 255, 255), scheme);
+		DefaultBgColor = GetSchemeColor("Button.BgColor", new(0, 0, 0, 255), scheme);
+
+		ArmedFgColor = GetSchemeColor("Button.ArmedTextColor", DefaultFgColor, scheme);
+		ArmedBgColor = GetSchemeColor("Button.ArmedBgColor", DefaultBgColor, scheme);
+
+		SelectedFgColor = GetSchemeColor("Button.SelectedTextColor", SelectedFgColor, scheme);
+		SelectedBgColor = GetSchemeColor("Button.SelectedBgColor", SelectedBgColor, scheme);
+
+		DepressedFgColor = GetSchemeColor("Button.DepressedTextColor", DefaultFgColor, scheme);
+		DepressedBgColor = GetSchemeColor("Button.DepressedBgColor", DefaultBgColor, scheme);
+		KeyboardFocusColor = GetSchemeColor("Button.FocusBorderColor", new(0, 0, 0, 255), scheme);
+
+		BlinkFgColor = GetSchemeColor("Button.BlinkColor", new(255, 155, 0, 255), scheme);
+		InvalidateLayout();
+	}
 
 	public void SetDefaultBorder(IBorder? border) {
 		DefaultBorder = border;

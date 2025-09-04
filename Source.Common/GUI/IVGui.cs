@@ -37,4 +37,5 @@ public interface IVGui
 	void PostMessage(IPanel? to, KeyValues message, IPanel? from, double delay = 0, MessageItemType type = MessageItemType.TargettingPanel);
 	void Stop();
 	IVGuiInput GetInput();
+	void MarkPanelForDeletion(IPanel? panel);
 }

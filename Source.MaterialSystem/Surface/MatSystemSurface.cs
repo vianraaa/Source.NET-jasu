@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Bitmap;
@@ -43,12 +45,15 @@ public struct PaintState
 	public int ScissorBottom;
 }
 
-public struct ScissorRect
+public struct ScissorRectState
 {
 	public int Left;
 	public int Top;
 	public int Right;
 	public int Bottom;
+
+	public bool Scissor;
+	public bool FullScreenScissor;
 }
 
 public class MatSystemSurface : IMatSystemSurface
@@ -57,9 +62,7 @@ public class MatSystemSurface : IMatSystemSurface
 	bool InDrawing;
 	bool In3DPaintMode;
 	float zPos;
-	ScissorRect scissorRect;
-	bool scissor = false;
-	bool fullScreenScissor = false;
+	ScissorRectState scissorRect;
 	public int TranslateX;
 	public int TranslateY;
 	public float alphaMultiplier = 1;
@@ -154,7 +157,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 
 	private void EnableInput(bool v) {
-		
+
 	}
 
 	private void InitCursors() {
@@ -232,32 +235,6 @@ public class MatSystemSurface : IMatSystemSurface
 	private void EnableScissor(bool v) {
 
 	}
-
-	public bool ClipRect(in SurfaceVertex inUL, in SurfaceVertex inLR, out SurfaceVertex outUL, out SurfaceVertex outLR) {
-		if (scissor) {
-			outUL = new();
-			outLR = new();
-
-			outUL.Position.X = scissorRect.Left > inUL.Position.X ? scissorRect.Left : inUL.Position.X;
-			outLR.Position.X = scissorRect.Right <= inLR.Position.X ? scissorRect.Right : inLR.Position.X;
-			outUL.Position.Y = scissorRect.Top > inUL.Position.Y ? scissorRect.Top : inUL.Position.Y;
-			outLR.Position.Y = scissorRect.Bottom <= inLR.Position.Y ? scissorRect.Bottom : inLR.Position.Y;
-
-			// check non intersecting
-			if (outUL.Position.X > outLR.Position.X || outUL.Position.Y > outLR.Position.Y)
-				return false;
-
-			outUL.TexCoord = inUL.TexCoord;
-			outLR.TexCoord = inLR.TexCoord;
-		}
-		else {
-			outUL = inUL;
-			outLR = inLR;
-		}
-
-		return true;
-	}
-
 
 	public void DrawQuad(in SurfaceVertex ul, in SurfaceVertex lr, in Color color) {
 		if (Mesh == null)
@@ -356,7 +333,7 @@ public class MatSystemSurface : IMatSystemSurface
 		InitVertex(ref rect[0], x0, y0, 0, 0);
 		InitVertex(ref rect[1], x1, y1, 1, 1);
 
-		if (!ClipRect(in rect[0], in rect[1], out clippedRect[0], out clippedRect[1]))
+		if (!Clip2D.ClipRect(in scissorRect, in rect[0], in rect[1], out clippedRect[0], out clippedRect[1]))
 			return;
 
 		InternalSetMaterial();
@@ -494,7 +471,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 		if (shouldClip) {
 			for (int i = 0; i < quadCount; ++i) {
-				if (!ClipRect(verts[2 * i], verts[2 * i + 1], out ulc, out lrc)) {
+				if (!Clip2D.ClipRect(in scissorRect, verts[2 * i], verts[2 * i + 1], out ulc, out lrc)) {
 					continue;
 				}
 				ref SurfaceVertex pulc = ref ulc;
@@ -613,7 +590,7 @@ public class MatSystemSurface : IMatSystemSurface
 		InitVertex(ref rect[1], x1, y1, s1, t1);
 
 		// Fully clipped?
-		if (!ClipRect(rect[0], rect[1], out clippedRect[0], out clippedRect[1]))
+		if (!Clip2D.ClipRect(in scissorRect, rect[0], rect[1], out clippedRect[0], out clippedRect[1]))
 			return;
 
 		IMaterial? material = TextureDictionary.GetTextureMaterial(in BoundTexture);
@@ -944,6 +921,54 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
+	public void DrawTexturedPolygon(Span<SurfaceVertex> vertices, bool clipVertices = true) {
+		Assert(!In3DPaintMode);
+		Assert(InDrawing);
+
+		// Don't even bother drawing fully transparent junk
+		if (vertices == null || vertices.Length == 0 || DrawColor[3] == 0)
+			return;
+
+		if (clipVertices) {
+			int iCount;
+			Span<SurfaceVertex> clippedVerts;
+			iCount = Clip2D.ClipPolygon(in scissorRect, vertices, TranslateX, TranslateY, out clippedVerts);
+			if (iCount <= 0)
+				return;
+
+			IMaterial? material = TextureDictionary.GetTextureMaterial(BoundTexture);
+			InternalSetMaterial(material);
+
+			meshBuilder.Begin(Mesh!, MaterialPrimitiveType.Polygon, iCount);
+
+			for (int i = 0; i < iCount; ++i) {
+				meshBuilder.Position3f(clippedVerts[i].Position.X, clippedVerts[i].Position.Y, zPos);
+				meshBuilder.Color4ubv(DrawColor);
+				meshBuilder.TexCoord2fv(0, [clippedVerts[i].TexCoord.X, clippedVerts[i].TexCoord.Y]);
+				meshBuilder.AdvanceVertex();
+			}
+
+			meshBuilder.End();
+			Mesh!.Draw();
+		}
+		else {
+			IMaterial? material = TextureDictionary.GetTextureMaterial(BoundTexture);
+			InternalSetMaterial(material);
+
+			meshBuilder.Begin(Mesh!, MaterialPrimitiveType.Polygon, vertices.Length);
+
+			for (int i = 0; i < vertices.Length; ++i) {
+				meshBuilder.Position3f(vertices[i].Position.X + TranslateX, vertices[i].Position.Y + TranslateY, zPos);
+				meshBuilder.Color4ubv(DrawColor);
+				meshBuilder.TexCoord2fv(0, [vertices[i].TexCoord.X, vertices[i].TexCoord.Y]);
+				meshBuilder.AdvanceVertex();
+			}
+
+			meshBuilder.End();
+			Mesh!.Draw();
+		}
+	}
+
 	public void RestrictPaintToSinglePanel(IPanel panel) {
 		LinkVGUI();
 		if (panel != null && RestrictedPanel != null && RestrictedPanel == VGuiInput.GetAppModalSurface())
@@ -995,7 +1020,7 @@ public class MatSystemSurface : IMatSystemSurface
 	public void SetCursor(nint cursor) {
 		ICursor? realCursor = launcherMgr.GetHardwareCursor(cursor);
 
-		if(realCursor != null) {
+		if (realCursor != null) {
 			SetCursor(realCursor);
 			return;
 		}
@@ -1376,7 +1401,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 		if (info.ShouldClip) {
 			Span<SurfaceVertex> clip = [info.Verts[0], info.Verts[1]];
-			if (!ClipRect(clip[0], clip[1], out info.Verts[0], out info.Verts[1]))
+			if (!Clip2D.ClipRect(in scissorRect, clip[0], clip[1], out info.Verts[0], out info.Verts[1]))
 				return;
 		}
 

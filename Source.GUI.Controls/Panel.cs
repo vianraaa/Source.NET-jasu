@@ -197,10 +197,6 @@ public class Panel : IPanel
 		VGui.PostMessage(target, message, this, delay);
 	}
 
-	public void DeletePanel() {
-		throw new NotImplementedException();
-	}
-
 	public void GetAbsPos(out int x, out int y) {
 		x = AbsX;
 		y = AbsY;
@@ -306,10 +302,6 @@ public class Panel : IPanel
 
 	public virtual void InternalFocusChanged(bool lost) {
 
-	}
-
-	public bool IsAutoDeleteSet() {
-		throw new NotImplementedException();
 	}
 
 	public bool IsEnabled() {
@@ -967,13 +959,15 @@ public class Panel : IPanel
 
 		Flags |= PanelFlags.MarkedForDeletion;
 		Flags &= ~PanelFlags.AutoDeleteEnabled;
+		VGui.MarkPanelForDeletion(this);
 	}
+
+	public bool HasFocus() => Input.GetFocus() == this;
 
 	public virtual void OnCommand(ReadOnlySpan<char> command) { }
 	public virtual void OnMouseCaptureLost() { }
 	public virtual void OnSetFocus() { }
 	public virtual void OnKillFocus() { }
-	public virtual void OnDelete() { }
 	public virtual void OnThink() { }
 	public virtual void OnChildAdded(IPanel child) { }
 	public virtual void OnSizeChanged(int newWide, int newTall) {
@@ -992,6 +986,34 @@ public class Panel : IPanel
 	public virtual bool IsTriplePressAllowed() => TriplePressAllowed;
 	public virtual void OnMouseTriplePressed(ButtonCode code) { }
 
+	bool AutoDelete;
+	public virtual void SetAutoDelete(bool state) {
+		AutoDelete = state;
+	}
+	public bool IsAutoDeleteSet() => AutoDelete;
+
+	public virtual void Dispose() {
+		Flags &= ~PanelFlags.AutoDeleteEnabled;
+		Flags |= PanelFlags.MarkedForDeletion;
+
+		SetParent(null);
+		while (GetChildCount() > 0) {
+			IPanel child = GetChild(0);
+			if (child.IsAutoDeleteSet()) 
+				child.DeletePanel();
+			else 
+				child.SetParent(null);
+		}
+
+		GC.SuppressFinalize(this);
+	}
+
+	public void DeletePanel() {
+		Flags |= PanelFlags.MarkedForDeletion;
+		Flags &= ~PanelFlags.AutoDeleteEnabled;
+		Dispose();
+	}
+
 	public virtual void OnKeyCodePressed(ButtonCode code) { }
 	public virtual void OnKeyCodeTyped(ButtonCode code) { }
 	public virtual void OnKeyTyped(char unichar) { }
@@ -1000,6 +1022,9 @@ public class Panel : IPanel
 	public virtual void OnKeyFocusTicked() { }
 	public virtual void OnMouseFocusTicked() { }
 	public virtual void OnClose() { }
+	public virtual void OnDelete() {
+		Dispose();
+	}
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
 			case "KeyCodePressed": OnKeyCodePressed((ButtonCode)message.GetInt("code")); break;
@@ -1014,6 +1039,7 @@ public class Panel : IPanel
 			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
 			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
 			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
+			case "Delete": OnDelete();  break;
 			case "Close": OnClose();  break;
 			case "Command": OnCommand(message.GetString("command")); break;
 		}

@@ -6,10 +6,9 @@ public enum PaintBackgroundType
 {
 	Filled = 0,
 	Textured = 1,
-	Box = 2, 
+	Box = 2,
 	BoxFade = 3
 }
-
 
 public enum PinCorner
 {
@@ -34,7 +33,7 @@ public enum AutoResize
 	DownAndRight,
 }
 
-public interface IPanel
+public interface IPanel : IDisposable
 {
 	// methods
 	void SetPos(int x, int y);

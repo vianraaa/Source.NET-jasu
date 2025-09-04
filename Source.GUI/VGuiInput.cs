@@ -257,7 +257,8 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public IPanel? GetFocus() {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		return context.KeyFocus;
 	}
 
 	public int GetIMEConversionModes(Span<IVGuiInput.ConversionModeItem> dest) {
