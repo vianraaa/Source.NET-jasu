@@ -1,4 +1,5 @@
 ﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.GUI;
 using Source.Common.Input;
 
 namespace Source.GUI.Controls;
@@ -77,6 +78,16 @@ public class Button : Label
 
 		if (!StaySelectedOnClick)
 			SetSelected(false);
+	}
+
+	public void SetArmedSound(ReadOnlySpan<char> fileName) {
+		ArmedSoundName = string.Intern(new(fileName));
+	}
+	public void SetDepressedSound(ReadOnlySpan<char> fileName){
+		DepressedSoundName = string.Intern(new(fileName));
+	}
+	public void SetReleasedSound(ReadOnlySpan<char> fileName){
+		ReleasedSoundName = string.Intern(new(fileName));
 	}
 
 	public void FireActionSignal() {
@@ -216,6 +227,23 @@ public class Button : Label
 	Color ArmedFgColor, ArmedBgColor;
 	Color SelectedFgColor, SelectedBgColor;
 	Color DepressedFgColor, DepressedBgColor;
+
+	IBorder? DefaultBorder, DepressedBorder, KeyFocusBorder;
+
+	public void SetDefaultBorder(IBorder? border) {
+		DefaultBorder = border;
+		InvalidateLayout(false);
+	}
+
+	public void SetDepressedBorder(IBorder? border) {
+		DepressedBorder = border;
+		InvalidateLayout(false);
+	}
+
+	public void SetKeyFocusBorder(IBorder? border) {
+		KeyFocusBorder = border;
+		InvalidateLayout(false);
+	}
 
 	public void SetDefaultColor(Color fgColor, Color bgColor) {
 		if (!(DefaultFgColor == fgColor && DefaultBgColor == bgColor)) {

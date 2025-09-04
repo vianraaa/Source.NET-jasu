@@ -17,6 +17,39 @@ public class GameMenuItem : MenuItem
 	public GameMenuItem(Panel panel, string name, string text) : base(panel, name, text) {
 
 	}
+
+	bool RightAligned;
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		SetFgColor(GetSchemeColor("MainMenu.TextColor", scheme));
+		SetBgColor(new(0, 0, 0, 0));
+		SetDefaultColor(GetSchemeColor("MainMenu.TextColor", scheme), new(0, 0, 0, 0));
+		SetArmedColor(GetSchemeColor("MainMenu.ArmedTextColor", scheme), new(0, 0, 0, 0));
+		SetDepressedColor(GetSchemeColor("MainMenu.DepressedTextColor", scheme), new(0, 0, 0, 0));
+		SetContentAlignment(Alignment.West);
+		SetBorder(null);
+		SetDefaultBorder(null);
+		SetDepressedBorder(null);
+		SetKeyFocusBorder(null);
+
+		IFont? mainMenuFont = scheme.GetFont("MainMenuFont", IsProportional());
+
+		if (mainMenuFont != null) 
+			SetFont(mainMenuFont);
+		else 
+			SetFont(scheme.GetFont("MenuLarge", IsProportional()));
+		
+		SetTextInset(0, 0);
+		SetArmedSound("UI/buttonrollover.wav");
+		SetDepressedSound("UI/buttonclick.wav");
+		SetReleasedSound("UI/buttonclickrelease.wav");
+		SetButtonActivationType(ActivationType.OnPressed);
+
+		if (RightAligned) 
+			SetContentAlignment(Alignment.East);
+	}
 }
 
 public enum BackgroundState
