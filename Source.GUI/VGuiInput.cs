@@ -202,7 +202,8 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public IPanel? GetAppModalSurface() {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		return context.AppModalPanel;
 	}
 
 	public void GetButtonCodeText(ButtonCode code, Span<char> buffer) {
@@ -748,7 +749,8 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetAppModalSurface(IPanel? panel) {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		context.AppModalPanel = panel;
 	}
 
 	public void SetCandidateListPageStart(int start) {

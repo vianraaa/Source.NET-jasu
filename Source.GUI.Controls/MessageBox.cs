@@ -1,5 +1,6 @@
 ﻿using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.GUI;
 
 using static System.Net.Mime.MediaTypeNames;
 
@@ -68,6 +69,97 @@ public class MessageBox : Frame
 	public void DoModal(Frame? frameOver = null) {
 		ShowWindow(frameOver);
 		Input.SetAppModalSurface(this);
+	}
+
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		switch (command) {
+			case "OnOk":
+				if (OkCommand != null)
+					PostActionSignal(OkCommand.MakeCopy());
+				break;
+
+			case "OnCancel":
+				if (CancelCommand != null)
+					PostActionSignal(CancelCommand.MakeCopy());
+				break;
+		}
+
+		if (!NoAutoClose)
+			OnShutdownRequest();
+	}
+
+	private void OnShutdownRequest() {
+		PostMessage(this, new("Close"));
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		MessageLabel.GetContentSize(out int wide, out int tall);
+		MessageLabel.SetSize(wide, tall);
+		wide += 100;
+		tall += 100;
+		SetSize(wide, tall);
+
+		if (ShowMessageBoxOverCursor) {
+			PlaceUnderCursor();
+		}
+
+		if (FrameOver != null) {
+			FrameOver.GetPos(out int frameX, out int frameY);
+			FrameOver.GetSize(out int frameWide, out int frameTall);
+
+			SetPos((frameWide - wide) / 2 + frameX, (frameTall - tall) / 2 + frameY);
+		}
+		else {
+			Surface.GetScreenSize(out int screenWide, out int screenTall);
+			SetPos((screenWide - wide) / 2, (screenTall - tall) / 2);
+		}
+	}
+
+	public override void PerformLayout() {
+		GetClientArea(out int x, out int y, out int wide, out int tall);
+		wide += x;
+		tall += y;
+
+		GetSize(out int boxWidth, out int boxTall);
+
+		OkButton.GetSize(out int oldWide, out int oldTall);
+
+		OkButton.GetContentSize(out int btnWide, out int btnTall);
+		btnWide = Math.Max(oldWide, btnWide + 10);
+		btnTall = Math.Max(oldTall, btnTall + 10);
+		OkButton.SetSize(btnWide, btnTall);
+
+		int btnWide2 = 0, btnTall2 = 0;
+		if (CancelButton.IsVisible()) {
+			CancelButton.GetSize(out oldWide, out oldTall);
+
+			CancelButton.GetContentSize(out btnWide2, out btnTall2);
+			btnWide2 = Math.Max(oldWide, btnWide2 + 10);
+			btnTall2 = Math.Max(oldTall, btnTall2 + 10);
+			CancelButton.SetSize(btnWide2, btnTall2);
+		}
+
+		boxWidth = Math.Max(boxWidth, MessageLabel.GetWide() + 100);
+		boxWidth = Math.Max(boxWidth, (btnWide + btnWide2) * 2 + 30);
+		SetSize(boxWidth, boxTall);
+
+		GetSize(out boxWidth, out boxTall);
+
+		MessageLabel.SetPos((wide / 2) - (MessageLabel.GetWide() / 2) + x, y + 5);
+		if (!CancelButton.IsVisible()) 
+			OkButton.SetPos((wide / 2) - (OkButton.GetWide() / 2) + x, tall - OkButton.GetTall() - 15);
+		else {
+			OkButton.SetPos((wide / 4) - (OkButton.GetWide() / 2) + x, tall - OkButton.GetTall() - 15);
+			CancelButton.SetPos((3 * wide / 4) - (OkButton.GetWide() / 2) + x, tall - OkButton.GetTall() - 15);
+		}
+
+		base.PerformLayout();
+	}
+
+	private void PlaceUnderCursor() {
+		throw new NotImplementedException();
 	}
 
 	public void ShowWindow(Frame? frameOver) {

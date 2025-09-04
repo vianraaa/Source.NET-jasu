@@ -183,7 +183,7 @@ public class TextImage : Image
 		ResizeImageToContent();
 	}
 
-	private void ResizeImageToContent() {
+	public void ResizeImageToContent() {
 		GetContentSize(out int wide, out int tall);
 		SetSize(wide, tall);
 	}

@@ -193,6 +193,10 @@ public class Panel : IPanel
 		}
 	}
 
+	public void PostMessage(Panel target, KeyValues message, double delay = 0) {
+		VGui.PostMessage(target, message, this, delay);
+	}
+
 	public void DeletePanel() {
 		throw new NotImplementedException();
 	}

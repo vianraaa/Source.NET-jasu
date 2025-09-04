@@ -626,7 +626,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void FlashWindow(IPanel panel, bool state) {
-		throw new NotImplementedException();
+
 	}
 
 	public void GetAbsoluteWindowBounds(out int x, out int y, out int wide, out int tall) {
@@ -945,7 +945,14 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void RestrictPaintToSinglePanel(IPanel panel) {
-		throw new NotImplementedException();
+		LinkVGUI();
+		if (panel != null && RestrictedPanel != null && RestrictedPanel == VGuiInput.GetAppModalSurface())
+			return;
+
+		RestrictedPanel = panel;
+
+		if (VGuiInput.GetAppModalSurface() == null)
+			VGuiInput.SetAppModalSurface(panel);
 	}
 
 	int LastInputPollCount;

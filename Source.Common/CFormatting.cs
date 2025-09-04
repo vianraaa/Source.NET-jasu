@@ -26,7 +26,7 @@ public enum VariableType
 
 public ref struct ScanF
 {
-	public readonly CFormatReader Format;
+	public CFormatReader Format;
 	ReadOnlySpan<char> input;
 	int readArguments = 0;
 	public readonly int ReadArguments => readArguments;
@@ -62,6 +62,8 @@ public ref struct ScanF
 			bool hasWarned = false;
 			while (input.Length > 0) {
 				char c = input[0];
+				if (c == ' ')
+					break;
 				input = input[1..];
 				if (writePtr < incoming.Length) // don't overflow but continue to read to not break further arguments
 					incoming[writePtr++] = c;
@@ -84,7 +86,7 @@ public ref struct ScanF
 			switch (type) {
 				case 'd':
 				case (char)VariableType.SignedDecimalInteger:
-					i = int.TryParse(incoming, out int iAttempt) ? iAttempt : default;
+					i = int.TryParse(incoming[..len], out int iAttempt) ? iAttempt : default;
 					break;
 				default: throw new NotImplementedException();
 			}

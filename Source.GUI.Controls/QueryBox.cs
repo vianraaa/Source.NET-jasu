@@ -6,8 +6,4 @@ public class QueryBox : MessageBox
 {
 	public QueryBox(string title, string queryText, Panel? parent = null) : base(title, queryText, parent) {
 	}
-
-	public void SetOKCommand(KeyValues? keyValues) {
-		OkCommand = keyValues;
-	}
 }
