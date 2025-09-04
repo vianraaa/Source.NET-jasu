@@ -59,6 +59,8 @@ public class GameUI : IGameUI
 		localize.AddFile("Resource/gameui_%language%.txt", "GAME", true);
 		engineAPI.GetRequiredService<ModInfo>().LoadCurrentGameInfo();
 		localize.AddFile("Resource/valve_%language%.txt", "GAME", true);
+		// I have no idea why this one defines needed resource strings...
+		localize.AddFile("Resource/itemtest_%language%.txt", "GAME", true);
 
 		staticPanel = engineAPI.New<BasePanel>();
 		staticPanel.SetBounds(0, 0, 400, 300);

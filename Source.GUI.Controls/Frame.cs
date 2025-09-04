@@ -254,6 +254,26 @@ public class Frame : EditablePanel
 		wide = (wide - ClientInsetX) - x;
 	}
 
+
+	public override void OnClose() {
+		base.OnClose();
+		FinishClose();
+	}
+
+	private void FinishClose() {
+		SetVisible(false);
+		PreviouslyVisible = false;
+		FadingOut = false;
+		
+		OnFinishedClose();
+
+		if (DeleteSelfOnClose)
+			MarkForDeletion();
+	}
+
+	private void OnFinishedClose() {
+	}
+
 	private void OnFrameFocusChanged(bool hasFocus) {
 		MinimizeButton?.SetDisabledLook(!hasFocus);
 		MaximizeButton?.SetDisabledLook(!hasFocus);

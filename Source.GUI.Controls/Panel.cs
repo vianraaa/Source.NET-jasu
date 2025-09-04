@@ -572,6 +572,8 @@ public class Panel : IPanel
 	public Color GetBgColor() => BgColor;
 	public Color GetFgColor() => FgColor;
 
+	public virtual void SetTabPosition(int pos) { }
+
 	public virtual void PaintBackground() {
 		GetSize(out int wide, out int tall);
 		if (SkipChild != null && SkipChild.IsVisible()) {
@@ -959,6 +961,14 @@ public class Panel : IPanel
 
 	}
 
+	public void MarkForDeletion() {
+		if (Flags.HasFlag(PanelFlags.MarkedForDeletion))
+			return;
+
+		Flags |= PanelFlags.MarkedForDeletion;
+		Flags &= ~PanelFlags.AutoDeleteEnabled;
+	}
+
 	public virtual void OnCommand(ReadOnlySpan<char> command) { }
 	public virtual void OnMouseCaptureLost() { }
 	public virtual void OnSetFocus() { }
@@ -989,6 +999,7 @@ public class Panel : IPanel
 	public virtual void OnUnhandledMouseClick(ButtonCode code) { }
 	public virtual void OnKeyFocusTicked() { }
 	public virtual void OnMouseFocusTicked() { }
+	public virtual void OnClose() { }
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
 			case "KeyCodePressed": OnKeyCodePressed((ButtonCode)message.GetInt("code")); break;
@@ -1003,6 +1014,7 @@ public class Panel : IPanel
 			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
 			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
 			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
+			case "Close": OnClose();  break;
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
 		// if (!message.Name.Contains("Ticked"))
