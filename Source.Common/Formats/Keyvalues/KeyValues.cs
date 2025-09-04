@@ -508,14 +508,7 @@ public class KeyValues : IEnumerable<KeyValues>
 		newKeyValue.UsesConditionals(evaluateConditionals);
 
 		newKeyValue.Type = Type;
-		switch (Type) {
-			case Types.String: break;
-			case Types.Int: break;
-			case Types.Double: break;
-			case Types.Pointer: break;
-			case Types.Color: break;
-			case Types.Uint64: break;
-		}
+		newKeyValue.Value = Value;
 
 		CopySubkeys(newKeyValue);
 		return newKeyValue;

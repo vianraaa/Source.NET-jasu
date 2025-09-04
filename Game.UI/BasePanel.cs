@@ -94,9 +94,6 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 	public override void OnSetFocus() {
 		base.OnSetFocus();
 	}
-	public override void OnCommand(ReadOnlySpan<char> command) {
-		base.OnCommand(command);
-	}
 	public override void OnKeyCodePressed(ButtonCode code) {
 		int dir = 0;
 		switch (code) {
@@ -174,6 +171,54 @@ public class BasePanel : Panel
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
+
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		RunMenuCommand(command);
+	}
+
+	private void RunMenuCommand(ReadOnlySpan<char> command) {
+		DevMsg($"Incoming BasePanel message '{command}'\n");
+		switch (command) {
+			case "OpenGameMenu": break;
+			case "OpenPlayerListDialog": break;
+			case "OpenNewGameDialog": break;
+			case "OpenLoadGameDialog": break;
+			case "OpenSaveGameDialog": break;
+			case "OpenBonusMapsDialog": break;
+			case "OpenOptionsDialog": break;
+			case "OpenControllerDialog": break;
+			case "OpenBenchmarkDialog": break;
+			case "OpenServerBrowser": break;
+			case "OpenFriendsDialog": break;
+			case "OpenLoadDemoDialog": break;
+			case "OpenCreateMultiplayerGameDialog": break;
+			case "OpenChangeGameDialog": break;
+			case "OpenLoadCommentaryDialog": break;
+			case "OpenLoadSingleplayerCommentaryDialog": break;
+			case "OpenMatchmakingBasePanel": break;
+			case "OpenAchievementsDialog": break;
+			case "OpenCSAchievementsDialog": break;
+			case "AchievementsDialogClosing": break;
+			case "Quit": break;
+			case "QuitNoConfirm": break;
+			case "QuitRestartNoConfirm": break;
+			case "ResumeGame": break;
+			case "Disconnect": break;
+			case "DisconnectNoConfirm": break;
+			case "ReleaseModalWindow": break;
+			case "ShowSigninUI": break;
+			case "ShowDeviceSelector": break;
+			case "SignInDenied": break;
+			case "RequiredSignInDenied": break;
+			case "RequiredStorageDenied": break;
+			case "StorageDeviceDenied": break;
+			case "clear_storage_deviceID": break;
+			case "RestartWithNewLanguage": break;
+			default:
+				base.OnCommand(command);
+				break;
+		}
+	}
 	static BackgroundMenuButton CreateMenuButton(BasePanel parent, ReadOnlySpan<char> panelName, ReadOnlySpan<char> panelText) {
 		BackgroundMenuButton button = parent.EngineAPI.New<BackgroundMenuButton>(parent, new string(panelName));
 		button.SetProportional(true);
@@ -207,10 +252,6 @@ public class BasePanel : Panel
 
 	Coord GameMenuPos;
 	int GameMenuInset;
-
-	public void RunMenuCommand(ReadOnlySpan<char> command) {
-
-	}
 
 	public override void PerformLayout() {
 		base.PerformLayout();

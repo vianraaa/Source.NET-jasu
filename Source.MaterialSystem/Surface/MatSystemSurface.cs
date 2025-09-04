@@ -303,7 +303,12 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void BringToFront(IPanel panel) {
-		throw new NotImplementedException();
+		panel.MoveToFront();
+
+		// move panel to top of popup list
+		if (panel.IsPopup()) {
+			MovePopupToFront(panel);
+		}
 	}
 
 	public void CalculateMouseVisible() {
@@ -617,7 +622,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void EnableMouseCapture(IPanel panel, bool state) {
-		throw new NotImplementedException();
+
 	}
 
 	public void FlashWindow(IPanel panel, bool state) {
@@ -1120,6 +1125,10 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
+	public void PlaySound(ReadOnlySpan<char> fileName) {
+		play?.Invoke(fileName);
+	}
+
 	public void SetPanelVisible(IPanel panel, bool state) {
 		throw new NotImplementedException();
 	}
@@ -1128,8 +1137,15 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
-	public void SetTopLevelFocus(IPanel panel) {
-		throw new NotImplementedException();
+	public void SetTopLevelFocus(IPanel? panel) {
+		while (panel != null) {
+			if (panel.IsPopup() && panel.IsMouseInputEnabled()) {
+				BringToFront(panel);
+				break;
+			}
+
+			panel = panel.GetParent();
+		}
 	}
 
 	public void SetTranslateExtendedKeys(bool state) {

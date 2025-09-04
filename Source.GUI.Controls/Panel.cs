@@ -47,6 +47,8 @@ public class Panel : IPanel
 {
 	[Imported] public ISurface Surface;
 	[Imported] public ISchemeManager SchemeManager;
+	[Imported] public IVGui VGui;
+	[Imported] public IVGuiInput Input;
 	[Imported] public IEngineAPI EngineAPI;
 
 	public void Init(int x, int y, int w, int h) {
@@ -140,6 +142,7 @@ public class Panel : IPanel
 	readonly List<OverrideableColorEntry> OverrideableColorEntries = [];
 
 	IPanel? SkipChild;
+	bool IsSilent;
 
 	Color BgColor;
 	Color FgColor;
@@ -147,6 +150,47 @@ public class Panel : IPanel
 	PaintBackgroundType PaintBackgroundType;
 	public PaintBackgroundType GetPaintBackgroundType() => PaintBackgroundType;
 	public void SetPaintBackgroundType(PaintBackgroundType type) => PaintBackgroundType = type;
+
+	public void SetSilentMode(bool silent) => IsSilent = silent;
+
+	List<IPanel> ActionSignalTargets = [];
+	HashSet<IPanel> ActionSignalTargetsLookup = [];
+
+	public void AddActionSignalTarget(IPanel? messageTarget) {
+		if (messageTarget == null)
+			return;
+
+		if (ActionSignalTargetsLookup.Add(messageTarget))
+			ActionSignalTargets.Add(messageTarget);
+	}
+
+	public void RemoveActionSignalTarget(IPanel? messageTarget) {
+		if (messageTarget == null)
+			return;
+
+		if (ActionSignalTargetsLookup.Remove(messageTarget))
+			ActionSignalTargets.Remove(messageTarget);
+	}
+
+	public void PostActionSignal(KeyValues message) {
+		if (!IsSilent) {
+			message.SetPtr("panel", this);
+			int i;
+			for (i = ActionSignalTargets.Count - 1; i > 0; i--) {
+				IPanel? panel = ActionSignalTargets[i];
+				if (panel != null)
+					VGui.PostMessage(panel, message.MakeCopy(), this);
+			}
+
+			if (i == 0) {
+				IPanel? panel = ActionSignalTargets[i];
+				if (panel != null) {
+					VGui.PostMessage(panel, message, this);
+					return;
+				}
+			}
+		}
+	}
 
 	public void DeletePanel() {
 		throw new NotImplementedException();
@@ -281,7 +325,7 @@ public class Panel : IPanel
 	}
 
 	public void SetProportional(bool state) {
-		if(state != Flags.HasFlag(PanelFlags.IsProportional)) {
+		if (state != Flags.HasFlag(PanelFlags.IsProportional)) {
 			Flags |= PanelFlags.IsProportional;
 			for (int i = 0; i < GetChildCount(); i++) {
 				GetChild(i).SetProportional(IsProportional());
@@ -425,9 +469,6 @@ public class Panel : IPanel
 
 	}
 
-	public void AddActionSignalTarget(Panel? messageTarget) {
-		// What does this do...?
-	}
 
 	public void PaintTraverse(bool repaint, bool allowForce = true) {
 		if (!IsVisible())
@@ -919,7 +960,7 @@ public class Panel : IPanel
 	public virtual void OnSizeChanged(int newWide, int newTall) {
 		InvalidateLayout();
 	}
-	public virtual void OnCursorMoved() { }
+	public virtual void OnCursorMoved(int x, int y) { }
 	public virtual void OnCursorEntered() { }
 	public virtual void OnCursorExited() { }
 	public virtual void OnMousePressed(ButtonCode code) { }
@@ -936,14 +977,27 @@ public class Panel : IPanel
 	public virtual void OnKeyCodeTyped(ButtonCode code) { }
 	public virtual void OnKeyTyped(char unichar) { }
 	public virtual void OnKeyCodeReleased(ButtonCode code) { }
+	public virtual void OnUnhandledMouseClick(ButtonCode code) { }
 	public virtual void OnKeyFocusTicked() { }
 	public virtual void OnMouseFocusTicked() { }
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
-
+			case "KeyCodePressed": OnKeyCodePressed((ButtonCode)message.GetInt("code")); break;
+			case "KeyCodeTyped": OnKeyCodeTyped((ButtonCode)message.GetInt("code")); break;
+			case "KeyCodeReleased": OnKeyCodeReleased((ButtonCode)message.GetInt("code")); break;
+			case "CursorEntered": OnCursorEntered(); break;
+			case "CursorExited": OnCursorExited(); break;
+			case "CursorMoved": OnCursorMoved(message.GetInt("xpos"), message.GetInt("ypos")); break;
+			case "MouseFocusTicked": OnMouseFocusTicked(); break;
+			case "KeyFocusTicked": OnKeyFocusTicked(); break;
+			case "MouseCaptureLost": OnMouseCaptureLost(); break;
+			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
+			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
+			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
+			case "Command": OnCommand(message.GetString("command")); break;
 		}
-		if (message.Name != "MouseFocusTicked" && message.Name != "KeyFocusTicked")
-			Msg($"got message {message.Name}\n");
+		// if (!message.Name.Contains("Ticked"))
+			// Msg($"Message: {message.Name}\n");
 	}
 
 	public void OnTick() {

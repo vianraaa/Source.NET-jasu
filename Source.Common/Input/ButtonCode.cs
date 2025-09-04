@@ -158,7 +158,7 @@ public static class ButtonCodeExts {
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsKeyCode(this ButtonCode code) {
-		return (code >= ButtonCode.KeyFirst) && (code <= ButtonCode.Last);
+		return (code >= ButtonCode.KeyFirst) && (code <= ButtonCode.KeyLast);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsMouseCode(this ButtonCode code) {

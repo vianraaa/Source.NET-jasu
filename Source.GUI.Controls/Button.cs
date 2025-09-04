@@ -1,17 +1,215 @@
 ﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.Input;
 
 namespace Source.GUI.Controls;
 
-public class Button : Label {
-	KeyValues? _actionMessage;
+public enum ActivationType
+{
+	OnPressedAndReleased,
+	OnPressed,
+	OnReleased
+}
 
-	public Button(Panel parent, string name, string text) : base(parent, name, text) {
+public enum ButtonFlags
+{
+	Armed = 0x0001,
+	Depressed = 0x0002,
+	ForceDepressed = 0x0004,
+	ButtonBorderEnabled = 0x0008,
+	UseCaptureMouse = 0x0010,
+	ButtonKeyDown = 0x0020,
+	DefaultButton = 0x0040,
+	Selected = 0x0080,
+	DrawFocusBox = 0x0100,
+	Blink = 0x0200,
+	AllFlags = 0xFFFF
+}
+
+public class Button : Label
+{
+	KeyValues? ActionMessage;
+	ActivationType ActivationType;
+	ButtonFlags ButtonFlags;
+	int MouseClickMask;
+	bool StayArmedOnClick;
+	bool StaySelectedOnClick;
+
+	string? ArmedSoundName;
+	string? DepressedSoundName;
+	string? ReleasedSoundName;
+
+	public void Init() {
+		ButtonFlags |= ButtonFlags.UseCaptureMouse | ButtonFlags.ButtonBorderEnabled;
+		MouseClickMask = 0;
+		ActionMessage = null;
+		StaySelectedOnClick = false;
+		StayArmedOnClick = false;
+		ArmedSoundName = null;
+		DepressedSoundName = null;
+		ReleasedSoundName = null;
+		SetTextInset(6, 0);
+		SetMouseClickEnabled(ButtonCode.MouseLeft, true);
+		SetButtonActivationType(ActivationType.OnPressedAndReleased);
 	}
 
+	public void SetButtonActivationType(ActivationType type) {
+		ActivationType = type;
+	}
+
+	public void SetMouseClickEnabled(ButtonCode code, bool state) {
+		if (state)
+			MouseClickMask |= unchecked(1 << unchecked((int)(code + 1)));
+		else
+			MouseClickMask &= ~unchecked(1 << unchecked((int)(code + 1)));
+
+	}
+
+	public Button(Panel parent, string name, string text) : base(parent, name, text) {
+		Init();
+	}
+
+	public virtual void DoClick() {
+		SetSelected(true);
+		FireActionSignal();
+		PlayButtonReleasedSound();
+
+		// vgui_nav_lock?
+
+		if (!StaySelectedOnClick)
+			SetSelected(false);
+	}
+
+	public void FireActionSignal() {
+		if (ActionMessage != null) {
+			// TODO: URL messages?
+			PostActionSignal(ActionMessage.MakeCopy());
+		}
+	}
+
+	public void PlayButtonReleasedSound() {
+		if (ReleasedSoundName != null)
+			Surface.PlaySound(ReleasedSoundName);
+	}
+
+	public override void OnMousePressed(ButtonCode code) {
+		if (!IsEnabled())
+			return;
+
+		if (!IsMouseClickEnabled(code))
+			return;
+
+		if (ActivationType == ActivationType.OnPressed) {
+			if (IsKeyboardInputEnabled()) {
+				RequestFocus();
+			}
+			DoClick();
+			return;
+		}
+
+		if (DepressedSoundName != null)
+			Surface.PlaySound(DepressedSoundName);
+
+		if (IsUseCaptureMouseEnabled() && ActivationType == ActivationType.OnPressedAndReleased) {
+			if (IsKeyboardInputEnabled())
+				RequestFocus();
+
+			SetSelected(true);
+			Repaint();
+
+			Input.SetMouseCapture(this);
+		}
+	}
+
+	public override void OnMouseReleased(ButtonCode code) {
+		if (IsUseCaptureMouseEnabled())
+			Input.SetMouseCapture(null);
+
+		if (ActivationType == ActivationType.OnPressed)
+			return;
+
+		if (!IsMouseClickEnabled(code))
+			return;
+
+		if (!IsSelected() && ActivationType == ActivationType.OnPressedAndReleased)
+			return;
+
+		if (IsEnabled() && (this == Input.GetMouseOver() || ButtonFlags.HasFlag(ButtonFlags.ButtonKeyDown))) {
+			DoClick();
+		}
+		else if (!StaySelectedOnClick) {
+			SetSelected(false);
+		}
+
+		Repaint();
+	}
+
+	public void SetSelected(bool state) {
+		if (ButtonFlags.HasFlag(ButtonFlags.Selected) != state) {
+			if (state)
+				ButtonFlags |= ButtonFlags.Selected;
+			else
+				ButtonFlags &= ~ButtonFlags.Selected;
+
+			RecalculateDepressedState();
+			InvalidateLayout(false);
+		}
+
+		if (!StayArmedOnClick && state && ButtonFlags.HasFlag(ButtonFlags.Armed)) {
+			ButtonFlags &= ~ButtonFlags.Armed;
+			InvalidateLayout(false);
+		}
+	}
+
+	public bool IsSelected() {
+		return ButtonFlags.HasFlag(ButtonFlags.Selected);
+	}
+
+	public bool IsMouseClickEnabled(ButtonCode code) {
+		return (MouseClickMask & unchecked(1 << unchecked((int)(code + 1)))) != 0;
+	}
+
+	private bool IsUseCaptureMouseEnabled() => (ButtonFlags & ButtonFlags.UseCaptureMouse) != 0;
+	public void SetUseCaptureMouse(bool state) {
+		if (state) ButtonFlags |= ButtonFlags.UseCaptureMouse;
+		else ButtonFlags &= ~ButtonFlags.UseCaptureMouse;
+	}
+	public bool IsArmed() => (ButtonFlags & ButtonFlags.Armed) != 0;
+
+	public void SetArmed(bool state) {
+		if (((ButtonFlags & ButtonFlags.Armed) != 0) != state) {
+			ButtonFlags |= ButtonFlags.Armed;
+			RecalculateDepressedState();
+			InvalidateLayout(false);
+			if (state && ArmedSoundName != null)
+				Surface.PlaySound(ArmedSoundName);
+		}
+	}
+
+	private void RecalculateDepressedState() {
+		bool newState;
+		if (!IsEnabled())
+			newState = false;
+		else {
+			if (StaySelectedOnClick && ButtonFlags.HasFlag(ButtonFlags.Selected)) {
+				newState = false;
+			}
+			else {
+				newState = ButtonFlags.HasFlag(ButtonFlags.Depressed)
+						 || (ButtonFlags.HasFlag(ButtonFlags.Armed) && ButtonFlags.HasFlag(ButtonFlags.Selected));
+			}
+		}
+
+		if (newState)
+			ButtonFlags |= ButtonFlags.Depressed;
+		else
+			ButtonFlags &= ~ButtonFlags.Depressed;
+	}
+
+	public KeyValues? GetCommand() => ActionMessage;
 	public void SetCommand(ReadOnlySpan<char> command) => SetCommand(new KeyValues("Command", "command", command));
 	public void SetCommand(KeyValues command) {
-		_actionMessage = null;
-		_actionMessage = command;
+		ActionMessage = null;
+		ActionMessage = command;
 	}
 
 	Color DefaultFgColor, DefaultBgColor;

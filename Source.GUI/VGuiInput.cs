@@ -292,7 +292,7 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public IPanel? GetMouseOver() {
-		throw new NotImplementedException();
+		return GetInputContext(Context).MouseOver;
 	}
 
 	public bool GetShouldInvertCompositionString() {
@@ -367,15 +367,130 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public bool InternalMousePressed(ButtonCode code) {
-		throw new NotImplementedException();
+		bool filter = false;
+
+		ref InputContext context = ref GetInputContext(Context);
+		IPanel? targetPanel = context.MouseOver;
+		if (context.MouseCapture != null && IsChildOfModalPanel(context.MouseCapture)) {
+			if (code == ButtonCode.MouseWheelDown || code == ButtonCode.MouseWheelUp)
+				return true;
+
+			filter = true;
+
+			bool captureLost = code == context.MouseCaptureStartCode || context.MouseCaptureStartCode == (ButtonCode)(-1);
+
+			vgui.PostMessage(context.MouseCapture, new KeyValues("MousePressed", "code", (int)code), null);
+			targetPanel = context.MouseCapture;
+
+			if (captureLost) 
+				SetMouseCapture(null);
+		}
+		else if ((context.MouseFocus != null) && IsChildOfModalPanel(context.MouseFocus)) {
+			if (code == ButtonCode.MouseWheelDown || code == ButtonCode.MouseWheelUp)
+				return true;
+
+			filter = true;
+
+			vgui.PostMessage(context.MouseFocus, new KeyValues("MousePressed", "code", (int)code), null);
+			targetPanel = context.MouseFocus;
+		}
+		else if (context.ModalSubTree != null && context.UnhandledMouseClickListener != null) {
+			IPanel? p = GetMouseFocusIgnoringModalSubtree();
+			if (p != null) {
+				bool isChildOfModal = IsChildOfModalSubTree(p);
+				bool isUnRestricted = !context.RestrictMessagesToModalSubTree;
+
+				if (isUnRestricted != isChildOfModal) {
+					if (code == ButtonCode.MouseWheelDown || code == ButtonCode.MouseWheelUp)
+						return true;
+
+					vgui.PostMessage(context.UnhandledMouseClickListener, new KeyValues("UnhandledMouseClick", "code", (int)code), null);
+					targetPanel = context.UnhandledMouseClickListener;
+					filter = true;
+				}
+			}
+		}
+
+
+		if (IsChildOfModalPanel(targetPanel)) 
+			surface.SetTopLevelFocus(targetPanel);
+		
+		return filter;
+	}
+
+	private IPanel? GetMouseFocusIgnoringModalSubtree() {
+		IPanel? focus = null;
+
+		ref InputContext context = ref GetInputContext(Context);
+
+		int x, y;
+		x = context.CursorX;
+		y = context.CursorY;
+
+		if (context.RootPanel == null) {
+			if (surface.IsCursorVisible() && surface.IsWithin(x, y)) {
+				for (int i = surface.GetPopupCount() - 1; i >= 0; i--) {
+					IPanel? popup = surface.GetPopup(i);
+					IPanel? panel = popup;
+					bool wantsMouse = panel!.IsMouseInputEnabled();
+					bool isVisible = !surface.IsMinimized(panel);
+
+					while (isVisible && panel != null && panel.GetParent() != null)
+					{
+						isVisible = panel.IsVisible();
+						panel = panel.GetParent();
+					}
+
+
+					if (wantsMouse && isVisible) {
+						focus = popup!.IsWithinTraverse(x, y, false);
+						if (focus != null)
+							break;
+					}
+				}
+				focus ??= surface.GetEmbeddedPanel().IsWithinTraverse(x, y, false);
+			}
+		}
+		else 
+			focus = context.RootPanel.IsWithinTraverse(x, y, false);
+
+		if (!IsChildOfModalPanel(focus, false)) 
+			focus = null;
+
+		return focus;
 	}
 
 	public bool InternalMouseReleased(ButtonCode code) {
-		throw new NotImplementedException();
+		bool filter = false;
+
+		ref InputContext context = ref GetInputContext(Context);
+		if (context.MouseCapture != null && IsChildOfModalPanel(context.MouseCapture)) {
+			if (code == ButtonCode.MouseWheelDown || code == ButtonCode.MouseWheelUp)
+				return true;
+
+			vgui.PostMessage(context.MouseCapture, new KeyValues("MouseReleased", "code", (int)code), null);
+			filter = true;
+		}
+		else if ((context.MouseFocus != null) && IsChildOfModalPanel(context.MouseFocus)) {
+			if (code == ButtonCode.MouseWheelDown || code == ButtonCode.MouseWheelUp)
+				return true;
+
+			vgui.PostMessage(context.MouseFocus, new KeyValues("MouseReleased", "code", (int)code), null);
+			filter = true;
+		}
+
+		return filter;
 	}
 
 	public bool InternalMouseWheeled(int delta) {
-		throw new NotImplementedException();
+		bool filter = false;
+
+		ref InputContext context = ref GetInputContext(Context);
+		if ((context.MouseFocus != null) && IsChildOfModalPanel(context.MouseFocus)) {
+			vgui.PostMessage(context.MouseFocus, new KeyValues("MouseWheeled", "delta", delta), null);
+			filter = true;
+		}
+		return filter;
 	}
 
 	public unsafe bool IsKeyDown(ButtonCode code) => GetInputContext(Context).KeyDown[code - ButtonCode.KeyFirst];

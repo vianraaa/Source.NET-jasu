@@ -156,7 +156,7 @@ public interface ISurface
 	void LockCursor();
 	void SetTranslateExtendedKeys(bool state);
 	IPanel? GetTopmostPopup();
-	void SetTopLevelFocus(IPanel panel);
+	void SetTopLevelFocus(IPanel? panel);
 
 	IFont CreateFont();
 
@@ -201,6 +201,7 @@ public interface ISurface
 	void OffsetAbsPos(ref int x, ref int y);
 	void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags);
 	void DrawChar(char c, FontDrawType drawType = FontDrawType.Default);
+	void PlaySound(ReadOnlySpan<char> fileName);
 }
 
 public interface IMatSystemSurface : ISurface {

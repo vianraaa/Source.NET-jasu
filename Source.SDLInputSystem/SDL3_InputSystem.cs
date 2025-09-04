@@ -287,7 +287,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 							if (MapVirtualKeyToButtonCode(ev.VirtualKeyCode, out ButtonCode virtualCode)) {
 								ButtonCode scancode = virtualCode;
 								if (scancode != ButtonCode.None)
-									PostButtonReleasedEvent(InputEventType.IE_ButtonPressed, LastSampleTick, scancode, virtualCode);
+									PostButtonReleasedEvent(InputEventType.IE_ButtonReleased, LastSampleTick, scancode, virtualCode);
 							}
 						}
 						break;

@@ -28,8 +28,29 @@ public struct GameMessageHandler
 	}
 }
 
-public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services) : IGame
+public class Game : IGame
 {
+	readonly ILauncherManager? launcherManager; 
+	readonly Sys Sys; 
+	readonly IFileSystem fileSystem; 
+	readonly IInputSystem inputSystem; 
+	readonly IMatSystemSurface surface; 
+	readonly IEngine eng;
+	readonly IServiceProvider services;
+	public Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services) {
+		this.launcherManager = launcherManager;
+		this.Sys = Sys;
+		this.fileSystem = fileSystem;
+		this.inputSystem = inputSystem;
+		this.surface = surface;
+		this.eng = eng;
+		this.services = services;
+
+		KeyInfo = new KeyInfo_t[(int)ButtonCode.Last];
+		for (int i = 0; i < (int)ButtonCode.Last; i++) {
+			KeyInfo[i] = new();
+		}
+	}
 	GameMessageHandler[] GameMessageHandlers;
 
 	public void HandleMsg_ActivateApp(in InputEvent ev) { }
@@ -119,7 +140,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		}
 	}
 
-	struct KeyInfo_t
+	class KeyInfo_t
 	{
 		public string KeyBinding;
 		public KeyUpTarget KeyUpTarget;
@@ -135,7 +156,7 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		Client
 	}
 
-	KeyInfo_t[] KeyInfo = new KeyInfo_t[(int)ButtonCode.Last];
+	KeyInfo_t[] KeyInfo;
 	bool TrapMode = false;
 	bool DoneTrapping = false;
 	ButtonCode TrapKeyUp = ButtonCode.Invalid;
@@ -154,6 +175,8 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		if (KeyInfo[(int)code].KeyDown == down)
 			return;
 
+		KeyInfo[(int)code].KeyDown = down;
+
 		if (FilterTrappedKey(code, down))
 			return;
 
@@ -163,10 +186,10 @@ public class Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSy
 		if (FilterKey(in ev, KeyUpTarget.Tools, HandleToolKey))
 			return;
 
-		if (FilterKey(in ev, KeyUpTarget.Tools, HandleVGuiKey))
+		if (FilterKey(in ev, KeyUpTarget.VGui, HandleVGuiKey))
 			return;
 
-		if (FilterKey(in ev, KeyUpTarget.Tools, HandleClientKey))
+		if (FilterKey(in ev, KeyUpTarget.Client, HandleClientKey))
 			return;
 
 		FilterKey(in ev, KeyUpTarget.Engine, HandleEngineKey);
