@@ -718,7 +718,14 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void MovePopupToBack(IPanel panel) {
-		throw new NotImplementedException();
+		LinkVGUI();
+
+		int index = PopupList.IndexOf(panel);
+		if (index == -1)
+			return;
+
+		PopupList.RemoveAt(index);
+		PopupList.Add(panel);
 	}
 
 	public void MovePopupToFront(IPanel panel) {

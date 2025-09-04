@@ -257,7 +257,53 @@ public class Frame : EditablePanel
 
 	public override void OnClose() {
 		base.OnClose();
+
+		if (Input.GetAppModalSurface() == this) {
+			Input.ReleaseAppModalSurface();
+			if (PreviousModal != null) {
+				Input.SetAppModalSurface(PreviousModal);
+				PreviousModal = null;
+			}
+		}
+
+		base.OnClose();
+
+		if (TransitionEffectTime != 0 && !DisableFadeEffect) {
+			GetAnimationController().RunAnimationCommand(this, "alpha", 0.0f, 0.0f, TransitionEffectTime, Interpolators.Linear);
+			FadingOut = true;
+			Surface.MovePopupToBack(this);
+		}
+		else 
+			FinishClose();
+		
 		FinishClose();
+	}
+
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		switch (command) {
+			case "Close":
+				Close();
+				return;
+			case "CloseModal":
+				CloseModal();
+				return;
+			default:
+				base.OnCommand(command);
+				break;
+		}
+	}
+
+	private void Close() {
+		OnClose();
+	}
+
+	private void CloseModal() {
+		Input.ReleaseAppModalSurface();
+		if(PreviousModal != null) {
+			Input.SetAppModalSurface(PreviousModal);
+			PreviousModal = null;
+		}
+		PostMessage(this, new("Close"));
 	}
 
 	private void FinishClose() {
@@ -273,6 +319,8 @@ public class Frame : EditablePanel
 	public override void OnThink() {
 		base.OnThink();
 
+		Msg($"{GetAlpha()}");
+
 		if(IsVisible() && TransitionEffectTime > 0 && !DisableFadeEffect) {
 			if (FadingOut) {
 				if (GetAlpha() < 1)
@@ -284,6 +332,28 @@ public class Frame : EditablePanel
 				GetAnimationController().RunAnimationCommand(this, "alpha", 255.0f, 0.0f, TransitionEffectTime, Interpolators.Linear);
 			}
 		}
+
+		bool hasFocus = false;
+
+		if (Input != null) {
+			IPanel? focus = Input.GetFocus();
+			if (focus != null && focus.HasParent(this)) {
+				if (Input.GetAppModalSurface() == null || Input.GetAppModalSurface() == this) {
+					hasFocus = true;
+				}
+			}
+		}
+		if (hasFocus != HasFocus) {
+			if (!Primed) {
+				Primed = true;
+				return;
+			}
+			Primed = false;
+			HasFocus = hasFocus;
+			OnFrameFocusChanged(HasFocus);
+		}
+		else 
+			Primed = false;
 	}
 
 	private void OnFinishedClose() {

@@ -584,7 +584,8 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void ReleaseAppModalSurface() {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		context.AppModalPanel = null;
 	}
 
 	public void ReleaseModalSubTree() {
