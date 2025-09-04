@@ -1,7 +1,11 @@
-﻿using Source.Common.Engine;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace Source.GUI;
 
@@ -9,10 +13,17 @@ public class SchemeManager : ISchemeManager
 {
 	readonly IFileSystem fileSystem;
 	readonly IServiceProvider services;
+	ISurface? surface;
 	public SchemeManager(IFileSystem fileSystem, IServiceProvider services) {
 		this.services = services;
 		this.fileSystem = fileSystem;
 	}
+
+	[MemberNotNull(nameof(surface))]
+	public void ValidateSurface() {
+		surface ??= services.GetRequiredService<ISurface>();
+	}
+
 
 	public void Init() {
 		Schemes.Add(services.New<Scheme>());
@@ -33,15 +44,40 @@ public class SchemeManager : ISchemeManager
 	}
 
 	public int GetProportionalNormalizedValue(int scaled) {
-		throw new NotImplementedException();
+		ValidateSurface();
+		surface.GetScreenSize(out int wide, out int tall);
+		return GetProportionalNormalizedValue_(wide, tall, scaled);
+	}
+
+	private int GetProportionalNormalizedValue_(int _, int rootTall, int scaled) {
+		ValidateSurface();
+		surface.GetProportionalBase(out int proW, out int proH);
+		float scale = (float)rootTall / proH;
+
+		return (int)(scaled / scale);
 	}
 
 	public int GetProportionalScaledValue(int normalized) {
-		throw new NotImplementedException();
+		ValidateSurface();
+		surface.GetScreenSize(out int wide, out int tall);
+		return GetProportionalScaledValue_(wide, tall, normalized);
+	}
+
+	private int GetProportionalScaledValue_(int _, int rootTall, int normalized) {
+		ValidateSurface();
+		surface.GetProportionalBase(out int proW, out int proH);
+		float scale = (float)rootTall / proH;
+
+		return (int)(normalized * scale);
 	}
 
 	public IScheme GetScheme(ReadOnlySpan<char> tag) {
-		throw new NotImplementedException();
+		ulong tagHash = tag.Hash();
+		foreach (var scheme in Schemes)
+			if (scheme.tag.Hash() == tagHash)
+				return scheme;
+
+		return Schemes.First();
 	}
 
 	public IScheme? LoadSchemeFromFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag) {
