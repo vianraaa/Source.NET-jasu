@@ -10,7 +10,7 @@ public class EditablePanel : Panel {
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
 	}
 
-	public virtual void ApplySettings(KeyValues resourceData) {
+	public override void ApplySettings(KeyValues resourceData) {
 
 	}
 	public virtual void LoadControlSettings(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> pathID, KeyValues keyValues, KeyValues conditions) {

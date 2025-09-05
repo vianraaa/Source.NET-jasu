@@ -263,6 +263,10 @@ public class Panel : IPanel
 	public PaintBackgroundType GetPaintBackgroundType() => PaintBackgroundType;
 	public void SetPaintBackgroundType(PaintBackgroundType type) => PaintBackgroundType = type;
 
+	public void SetDropEnabled(bool enabled, float hoverContextTime = 0) {
+		// TODO
+	}
+
 	public void SetSilentMode(bool silent) => IsSilent = silent;
 
 	List<IPanel> ActionSignalTargets = [];
@@ -341,6 +345,10 @@ public class Panel : IPanel
 			wide -= left + right;
 			tall -= top + bottom;
 		}
+	}
+
+	public virtual void ApplySettings(KeyValues resourceData) {
+
 	}
 
 	public virtual IPanel? GetCurrentKeyFocus() {
@@ -1165,6 +1173,13 @@ public class Panel : IPanel
 
 	public void SendMessage(KeyValues parms, IPanel? from) {
 		OnMessage(parms, from);
+	}
+
+	public void SetAllowKeyBindingChainToParent(bool state) {
+		if (state)
+			Flags |= PanelFlags.AllowChainKeybindingToParent;
+		else
+			Flags &= ~PanelFlags.AllowChainKeybindingToParent;
 	}
 
 	public virtual bool RequestInfo(KeyValues outputData) {

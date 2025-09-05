@@ -101,7 +101,7 @@ public class Menu : Panel
 	}
 
 	IFont? ItemFont;
-	public void SetFont(IFont font) {
+	public void SetFont(IFont? font) {
 		ItemFont = font;
 		if (font != null)
 			MenuItemHeight = Surface.GetFontTall(font) + 2;
