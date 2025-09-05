@@ -2,5 +2,5 @@
 
 public interface IWindow
 {
-
+	public nint GetHandle();
 }

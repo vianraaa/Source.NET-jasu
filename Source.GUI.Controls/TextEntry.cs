@@ -3,6 +3,7 @@ using Source.Common.GUI;
 using Source.Common.Input;
 
 using System;
+using System.Reflection;
 
 using static System.Net.Mime.MediaTypeNames;
 
@@ -101,14 +102,14 @@ public class TextEntry : Panel
 					endIndex = i1 + 1;
 				}
 
-				if (TextStream.Count - endIndex < 3 && TextStream.Count - endIndex > 0) 
+				if (TextStream.Count - endIndex < 3 && TextStream.Count - endIndex > 0)
 					endIndex = TextStream.Count - 3;
 			}
 
 			int i;
 			for (i = startIndex; i < endIndex; i++) {
 				char ch = TextStream[i];
-				if (HideText) 
+				if (HideText)
 					ch = '*';
 
 				bool iscompositionchar = false;
@@ -137,8 +138,7 @@ public class TextEntry : Panel
 				Surface.DrawSetTextColor(col);
 
 			}
-			if (endIndex < TextStream.Count) 
-			{
+			if (endIndex < TextStream.Count) {
 				x += DrawChar('.', useFont, i++, x, y);
 				x += DrawChar('.', useFont, i++, x, y);
 				x += DrawChar('.', useFont, i++, x, y);
@@ -147,7 +147,7 @@ public class TextEntry : Panel
 		else {
 			for (int i = startIndex; i < TextStream.Count(); i++) {
 				char ch = TextStream[i];
-				if (HideText) 
+				if (HideText)
 					ch = '*';
 
 				if (Multiline && LineBreaks[lineBreakIndexIndex] == i) {
@@ -267,12 +267,12 @@ public class TextEntry : Panel
 
 		for (int i = GetStartDrawIndex(lineBreakIndexIndex); i < TextStream.Count; i++) {
 			char ch = TextStream[i];
-			if (HideText) 
+			if (HideText)
 				ch = '*';
 
-			if (cursorPos == i) 
+			if (cursorPos == i)
 				break;
-			
+
 
 			if (LineBreaks.Count > 0 && lineBreakIndexIndex < LineBreaks.Count && LineBreaks[lineBreakIndexIndex] == i) {
 				AddAnotherLine(ref x, ref y);
@@ -282,9 +282,9 @@ public class TextEntry : Panel
 			x += getCharWidth(Font, ch);
 		}
 
-		if (DrawLanguageIDAtLeft) 
+		if (DrawLanguageIDAtLeft)
 			x += LangInset;
-		
+
 	}
 
 	private void AddAnotherLine(ref int x, ref int y) {
@@ -443,7 +443,7 @@ public class TextEntry : Panel
 
 	List<char> TextStream = ['h', 'e', 'l', 'l', 'o'];
 	List<char> UndoTextStream = [];
-	List<int> LineBreaks = [];
+	List<int> LineBreaks = [-1];
 
 	int CursorPos;
 	bool CursorIsAtEnd;
@@ -480,6 +480,7 @@ public class TextEntry : Panel
 	Color SelectionTextColor, SelectionColor, DefaultSelectionBG2Color, FocusEdgeColor;
 	IFont? Font, SmallFont;
 	bool AllowNonAsciiCharacters;
+	bool AutoProgressOnHittingCharLimit;
 	bool AllowNumericInputOnly;
 	int LangInset;
 	bool DrawLanguageIDAtLeft;
@@ -537,7 +538,450 @@ public class TextEntry : Panel
 	}
 
 	public override void OnKeyCodeTyped(ButtonCode code) {
-		base.OnKeyCodeTyped(code);
+		CursorIsAtEnd = PutCursorAtEnd;
+		PutCursorAtEnd = false;
+
+		bool shift = Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift);
+		bool ctrl = Input.IsKeyDown(ButtonCode.KeyLControl) || Input.IsKeyDown(ButtonCode.KeyRControl);
+		bool alt = Input.IsKeyDown(ButtonCode.KeyLAlt) || Input.IsKeyDown(ButtonCode.KeyRAlt);
+		bool winkey = Input.IsKeyDown(ButtonCode.KeyLWin) || Input.IsKeyDown(ButtonCode.KeyRWin);
+		bool fallThrough = false;
+
+		if ((ctrl || (winkey && IsOSX())) && !alt) {
+			switch (code) {
+				case ButtonCode.KeyA:
+					SelectAllText(false);
+					CursorPos = Select[1];
+					break;
+
+				case ButtonCode.KeyInsert:
+				case ButtonCode.KeyC:
+					CopySelected();
+					break;
+
+				case ButtonCode.KeyV:
+					DeleteSelected();
+					Paste();
+					break;
+
+				case ButtonCode.KeyX:
+					CopySelected();
+					DeleteSelected();
+					break;
+
+				case ButtonCode.KeyZ:
+					Undo();
+					break;
+
+				case ButtonCode.KeyRight:
+					GotoWordRight();
+					break;
+
+				case ButtonCode.KeyLeft:
+					GotoWordLeft();
+					break;
+
+				case ButtonCode.KeyEnter:
+					if (Multiline) {
+						DeleteSelected();
+						SaveUndoState();
+						InsertChar('\n');
+					}
+
+					if (SendNewLines)
+						PostActionSignal(new KeyValues("TextNewLine"));
+
+					break;
+
+				case ButtonCode.KeyHome:
+					GotoTextStart();
+					break;
+
+				case ButtonCode.KeyEnd:
+					GotoTextEnd();
+					break;
+
+				case ButtonCode.KeyUp:
+				case ButtonCode.KeyDown:
+					if (AllowNonAsciiCharacters)
+						FlipToLastIME();
+					else
+						fallThrough = true;
+					break;
+				default:
+					fallThrough = true;
+					break;
+
+			}
+		}
+		else if (alt) {
+			if (!AllowNonAsciiCharacters || (code != ButtonCode.KeyBackquote))
+				fallThrough = true;
+		}
+		else {
+			switch (code) {
+				case ButtonCode.KeyTab:
+				case ButtonCode.KeyLShift:
+				case ButtonCode.KeyRShift:
+				case ButtonCode.KeyEscape:
+					fallThrough = true;
+
+					break;
+				case ButtonCode.KeyInsert:
+					if (shift) {
+						DeleteSelected();
+						Paste();
+					}
+					else
+						fallThrough = true;
+					break;
+				case ButtonCode.KeyDelete:
+					if (shift) {
+						CopySelected();
+						DeleteSelected();
+					}
+					else {
+						Delete();
+					}
+					break;
+				case ButtonCode.KeyLeft: {
+						GotoLeft();
+					}
+					break;
+				case ButtonCode.KeyRight: {
+						GotoRight();
+					}
+					break;
+				case ButtonCode.KeyUp:
+					if (Multiline)
+						GotoUp();
+					else
+						fallThrough = true;
+					break;
+				case ButtonCode.KeyDown:
+					if (Multiline)
+						GotoDown();
+					else
+						fallThrough = true;
+					break;
+				case ButtonCode.KeyHome:
+					if (Multiline) {
+						GotoFirstOfLine();
+					}
+					else {
+						GotoTextStart();
+					}
+					break;
+
+				case ButtonCode.KeyEnd:
+					GotoEndOfLine();
+					break;
+
+				case ButtonCode.KeyBackspace:
+					if (GetSelectedRange(out int x0, out int x1))
+						DeleteSelected();
+					else
+						Backspace();
+
+					break;
+				case ButtonCode.KeyEnter:
+					if (Multiline && CatchEnterKey) {
+						DeleteSelected();
+						SaveUndoState();
+						InsertChar('\n');
+					}
+					else
+						fallThrough = true;
+
+					if (SendNewLines)
+						PostActionSignal(TextNewLineActionSignal);
+
+					break;
+
+
+				// TODO: PageUp
+				// TODO: PageDown
+
+				case ButtonCode.KeyF1:
+				case ButtonCode.KeyF2:
+				case ButtonCode.KeyF3:
+				case ButtonCode.KeyF4:
+				case ButtonCode.KeyF5:
+				case ButtonCode.KeyF6:
+				case ButtonCode.KeyF7:
+				case ButtonCode.KeyF8:
+				case ButtonCode.KeyF9:
+				case ButtonCode.KeyF10:
+				case ButtonCode.KeyF11:
+				case ButtonCode.KeyF12: {
+						fallThrough = true;
+						break;
+					}
+
+				default:
+					return;
+			}
+		}
+
+		Select[1] = CursorPos;
+
+		if (DataChanged)
+			FireActionSignal();
+
+		if (fallThrough) {
+			PutCursorAtEnd = CursorIsAtEnd;
+			base.OnKeyCodeTyped(code);
+		}
+	}
+
+	public override void OnKeyTyped(char ch) {
+		CursorIsAtEnd = PutCursorAtEnd;
+		PutCursorAtEnd = false;
+
+		bool fallThrough = false;
+
+		if (char.IsControl(ch) || ch == 9)
+			return;
+
+		if (!IsEditable()) {
+			base.OnKeyTyped(ch);
+			return;
+		}
+
+		if (ch != 0) {
+			DeleteSelected();
+			SaveUndoState();
+			InsertChar(ch);
+		}
+
+		Select[1] = CursorPos;
+
+		if (DataChanged)
+			FireActionSignal();
+
+		if (fallThrough) {
+			PutCursorAtEnd = CursorIsAtEnd;
+			base.OnKeyTyped(ch);
+		}
+	}
+
+	private void FlipToLastIME() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoTextEnd() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoWordLeft() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoWordRight() {
+		throw new NotImplementedException();
+	}
+
+	private void Undo() {
+		throw new NotImplementedException();
+	}
+
+	private void SelectAllText(bool v) {
+		throw new NotImplementedException();
+	}
+
+	private void InsertChar(char ch) {
+		if (ch == '\r')
+			return;
+
+		if (!Multiline && ch == '\n')
+			return;
+
+		if (ch == '\t')
+			return;
+
+		if (AllowNumericInputOnly) {
+			if (!char.IsDigit(ch) && (ch != '.')) {
+				Surface.PlaySound("Resource\\warning.wav");
+				return;
+			}
+		}
+
+		if (!AllowNonAsciiCharacters) {
+			if (ch > 127)
+				return;
+		}
+
+		if (MaxCharCount > -1 && TextStream.Count >= MaxCharCount) {
+			if (MaxCharCount > 0 && Multiline && Wrap) {
+				while (TextStream.Count > MaxCharCount) {
+					if (RecalculateBreaksIndex == 0)
+						RecalculateLineBreaks();
+
+					if (LineBreaks[0] > TextStream.Count()) {
+						RecalculateBreaksIndex = -1;
+						RecalculateLineBreaks();
+					}
+
+					if (LineBreaks[0] + 1 < TextStream.Count) {
+						TextStream.RemoveRange(0, LineBreaks[0]);
+
+						if (CursorPos > TextStream.Count)
+							CursorPos = TextStream.Count;
+						else {
+							CursorPos -= LineBreaks[0] + 1;
+							if (CursorPos < 0) {
+								CursorPos = 0;
+							}
+						}
+
+						if (Select[0] > -1) {
+							Select[0] -= LineBreaks[0] + 1;
+
+							if (Select[0] <= 0)
+								Select[0] = -1;
+
+							Select[1] -= LineBreaks[0] + 1;
+							if (Select[1] <= 0)
+								Select[1] = -1;
+						}
+
+						for (int i = TextStream.Count - 1; i >= 0; i--)
+							SetCharAt(TextStream[i], i + 1);
+
+
+						RecalculateBreaksIndex = -1;
+						RecalculateLineBreaks();
+
+					}
+				}
+
+			}
+			else {
+				Surface.PlaySound("Resource\\warning.wav");
+				return;
+			}
+		}
+
+
+		if (Wrap) {
+			SetCharAt(ch, TextStream.Count);
+			CursorPos = TextStream.Count;
+		}
+		else {
+			for (int i = TextStream.Count - 1; i >= CursorPos; i--)
+				SetCharAt(TextStream[i], i + 1);
+
+			SetCharAt(ch, CursorPos);
+			CursorPos++;
+		}
+
+		if (ch == '\n')
+			RecalculateLineBreaks();
+
+		if (AutoProgressOnHittingCharLimit && TextStream.Count == MaxCharCount)
+			RequestFocusNext();
+
+		ScrollRight();
+
+		DataChanged = true;
+
+		CalcBreakIndex();
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
+	}
+
+	public const int BUFFER_SIZE = 999999;
+
+	private void SetCharAt(char ch, int index) {
+		if ((ch == '\n') || (ch == '\0')) {
+			RecalculateBreaksIndex = 0;
+			LineBreaks.Clear();
+			LineBreaks.Add(BUFFER_SIZE);
+		}
+
+		if (index < 0)
+			return;
+
+		if (index >= TextStream.Count()) {
+			while (TextStream.Count <= index + 1)
+				TextStream.Add('\0');
+		}
+		TextStream[index] = ch;
+		DataChanged = true;
+	}
+
+	private void ScrollRight() {
+
+	}
+
+	private void CalcBreakIndex() {
+
+	}
+
+	private void LayoutVerticalScrollBarSlider() {
+
+	}
+
+	private void RecalculateLineBreaks() {
+
+	}
+
+	private void SaveUndoState() {
+
+	}
+
+	private void Backspace() {
+	}
+
+	private void GotoEndOfLine() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoTextStart() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoFirstOfLine() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoDown() {
+		throw new NotImplementedException();
+	}
+
+	private void Delete() {
+		throw new NotImplementedException();
+	}
+
+	private void CopySelected() {
+		throw new NotImplementedException();
+	}
+
+	private void Paste() {
+		throw new NotImplementedException();
+	}
+
+	private void DeleteSelected() {
+
+	}
+
+	private void GotoUp() {
+		throw new NotImplementedException();
+	}
+
+	private void GotoRight() {
+	}
+
+	private void GotoLeft() {
+	}
+
+	static readonly KeyValues TextNewLineActionSignal = new("TextNewLine");
+	static readonly KeyValues TextChangedActionSignal = new("TextChanged");
+	public void FireActionSignal() {
+		PostActionSignal(TextChangedActionSignal);
+		DataChanged = false;   // reset the data changed flag
+		InvalidateLayout();
 	}
 
 	private void ResetCursorBlink() {

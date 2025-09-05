@@ -29,4 +29,7 @@ public interface IInputSystem
 	public void SetCursorPosition(int x, int y);
 	public bool GetRawMouseAccumulators(out int accumX, out int accumY);
 	public void SetConsoleTextMode(bool consoleTextMode);
+
+	void StartTextInput();
+	void StopTextInput();
 }

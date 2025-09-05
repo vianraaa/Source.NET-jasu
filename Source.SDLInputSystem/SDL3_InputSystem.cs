@@ -46,6 +46,16 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 	int LastPollTick;
 	int PollCount;
 
+	public unsafe void StartTextInput() {
+		SDL_Window* window = (SDL_Window*)Window!.GetHandle();
+		SDL3.SDL_StartTextInput(window);
+	}
+
+	public unsafe void StopTextInput() {
+		SDL_Window* window = (SDL_Window*)Window!.GetHandle();
+		SDL3.SDL_StopTextInput(window);
+	}
+
 	ILauncherManager launcherMgr;
 
 	public void AttachToWindow(IWindow window) {
@@ -277,7 +287,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 
 								InputEvent newEv = new() {
 									Tick = GetPollTick(),
-									Type = InputEventType.FirstGuiEvent + 4,
+									Type = InputEventType.Gui_KeyCodeTyped,
 									Data = (int)scancode
 								};
 								PostUserEvent(newEv);
@@ -286,7 +296,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 							if (!ev.ModifierKeyMask.HasFlag(KeyModifier.Command) && ev.VirtualKeyCode >= 0 && ev.UTF8Key > 0) {
 								InputEvent newEv = new() {
 									Tick = GetPollTick(),
-									Type = InputEventType.FirstGuiEvent + 3,
+									Type = InputEventType.Gui_KeyTyped,
 									Data = ev.UTF8Key
 								};
 								PostUserEvent(newEv);
@@ -302,7 +312,6 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 							}
 						}
 						break;
-
 					case WindowEventType.MouseButtonDown: {
 							UpdateMouseButtonState(ev.MouseButtonFlags, ev.MouseClickCount > 1 ? ev.MouseButton switch {
 								MouseButton.Right => ButtonCode.MouseRight,

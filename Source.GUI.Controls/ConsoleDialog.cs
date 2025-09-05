@@ -1,5 +1,6 @@
 ﻿using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
@@ -34,6 +35,10 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 	protected bool AutoCompleteMode;
 	protected bool WasBackspacing;
 	protected bool StatusVersion;
+
+	public override void OnTextChanged(Panel p) { 
+	
+	}
 
 	public ConsolePanel(Panel? parent, string? panelName, bool statusVersion) : base(parent, panelName) {
 		StatusVersion = statusVersion;

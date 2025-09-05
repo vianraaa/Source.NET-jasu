@@ -14,6 +14,12 @@ namespace Source;
 public static class PlatformMacros
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static bool IsPC() => true;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static bool IsOSX()
+#if OSX
+		=> true;
+#else
+		=> false;
+#endif
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static bool IsPlatform64Bits() => IntPtr.Size == 8;
 
 	public const int MAX_PATH = 260;

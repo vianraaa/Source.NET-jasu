@@ -6,6 +6,7 @@ using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+using Source.Common.Input;
 using Source.Common.Launcher;
 
 using System.Diagnostics.CodeAnalysis;
@@ -34,7 +35,7 @@ public class VGui : IVGui
 	public IAnimationController GetAnimationController() => animController ??= engineAPI.GetRequiredService<IAnimationController>();
 
 	public VGui(ICommandLine commandLine, ISurface surface, ISystem system, IEngineAPI engineAPI) {
-		Input = new(commandLine, this, surface);
+		Input = new(commandLine, this, surface, engineAPI.GetRequiredService<IInputSystem>());
 		this.surface = surface;
 		this.system = system;
 		this.engineAPI = engineAPI;

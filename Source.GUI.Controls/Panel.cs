@@ -858,12 +858,12 @@ public class Panel : IPanel
 	public virtual void OnRequestFocus(Panel subFocus, Panel? defaultPanel) 
 		=> CallParentFunction(new KeyValues("OnRequestFocus").AddSubKey(new("subFocus", subFocus)).AddSubKey(new("defaultPanel", defaultPanel)));
 
-	public bool RequestFocusNext(IPanel existingPanel) {
-		throw new NotImplementedException();
+	public bool RequestFocusNext(IPanel? existingPanel = null) {
+		return false;
 	}
 
-	public bool RequestFocusPrev(IPanel existingPanel) {
-		throw new NotImplementedException();
+	public bool RequestFocusPrev(IPanel? existingPanel = null) {
+		return false;
 	}
 
 	public void SetBounds(int x, int y, int wide, int tall) {
@@ -1336,6 +1336,7 @@ public class Panel : IPanel
 		switch (message.Name) {
 			case "KeyCodePressed": InternalKeyCodePressed((ButtonCode)message.GetInt("code")); break;
 			case "KeyCodeTyped": InternalKeyCodeTyped((ButtonCode)message.GetInt("code")); break;
+			case "KeyTyped": OnKeyTyped((char)message.GetInt("unichar")); break;
 			case "KeyCodeReleased": InternalKeyCodeReleased((ButtonCode)message.GetInt("code")); break;
 			case "CursorEntered": OnCursorEntered(); break;
 			case "CursorExited": OnCursorExited(); break;
@@ -1348,6 +1349,7 @@ public class Panel : IPanel
 			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
 			case "SetFocus": InternalSetFocus(); break;
 			case "KillFocus": InternalKillFocus((Panel?)message.GetPtr("newPanel")); break;
+			case "TextChanged": OnTextChanged((Panel)message.GetPtr("panel")!); break;
 			case "Delete": OnDelete(); break;
 			case "Close": OnClose(); break;
 			case "OnRequestFocus": OnRequestFocus(message.GetPtr<Panel>("subFocus")!, message.GetPtr<Panel>("defaultPanel")); break;
@@ -1356,6 +1358,10 @@ public class Panel : IPanel
 		if (vgui_print_messages.GetBool())
 			if (vgui_print_messages.GetInt() == 2 || !message.Name.Contains("Ticked"))
 				Msg($"Message from {from} to {this}: {message.Name}\n");
+	}
+
+	public virtual void OnTextChanged(Panel from) {
+
 	}
 
 	private void InternalSetFocus() {

@@ -15,6 +15,7 @@ public unsafe class SDL3_Window : IWindow
 {
 	private SDL_Window* window;
 	internal SDL_Window* HardwareHandle => window;
+	nint IWindow.GetHandle() => (nint)window;
 
 	public int ID => (int)SDL3.SDL_GetWindowID(window);
 
@@ -214,7 +215,6 @@ public unsafe class SDL3_Window : IWindow
 					HandleKeyEvent(ref ev);
 					break;
 				case SDL_EventType.SDL_EVENT_KEY_DOWN:
-
 					HandleKeyEvent(ref ev);
 					break;
 				case SDL_EventType.SDL_EVENT_TEXT_INPUT:
@@ -222,7 +222,7 @@ public unsafe class SDL3_Window : IWindow
 					if (!string.IsNullOrEmpty(text)) {
 						for (int i = 0; i < text.Length; i++) {
 							char ch = text[i];
-							foreach (var type in KEY_DOWN_THEN_UP)
+							foreach (var type in KEY_DOWN_THEN_UP) {
 								PostEvent(new() {
 									EventType = type,
 									VirtualKeyCode = 0,
@@ -230,6 +230,7 @@ public unsafe class SDL3_Window : IWindow
 									UTF8KeyUnmodified = ch,
 									ModifierKeyMask = KeyModifierMask
 								});
+							}
 						}
 					}
 					break;

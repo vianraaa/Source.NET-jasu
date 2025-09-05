@@ -64,9 +64,10 @@ public class VGuiInput : IVGuiInput
 	readonly ICommandLine CommandLine;
 	readonly VGui vgui;
 	readonly ISurface surface;
-
-	public VGuiInput(ICommandLine commandLine, VGui vgui, ISurface surface) {
+	readonly IInputSystem inputSystem;
+	public VGuiInput(ICommandLine commandLine, VGui vgui, ISurface surface, IInputSystem inputSystem) {
 		CommandLine = commandLine;
+		this.inputSystem = inputSystem;
 		this.vgui = vgui;
 		this.surface = surface;
 		KeyTrans[(int)ButtonCode.Key0] = "0)KEY_0";
@@ -377,10 +378,6 @@ public class VGuiInput : IVGuiInput
 		return true;
 	}
 
-	public void InternalKeyTyped(char unichar) {
-		throw new NotImplementedException();
-	}
-
 	public bool InternalMouseDoublePressed(ButtonCode code) {
 		throw new NotImplementedException();
 	}
@@ -644,6 +641,7 @@ public class VGuiInput : IVGuiInput
 		IPanel? wantedKeyFocus = CalculateNewKeyFocus();
 
 		if (context.KeyFocus != wantedKeyFocus) {
+			bool shouldEnable = false, shouldDisable = false;
 			if (context.KeyFocus != null) {
 				context.KeyFocus.InternalFocusChanged(true);
 
@@ -658,6 +656,7 @@ public class VGuiInput : IVGuiInput
 					dlg = dlg.GetParent();
 
 				dlg?.Repaint();
+				shouldDisable = true;
 			}
 			if (wantedKeyFocus != null) {
 				wantedKeyFocus.InternalFocusChanged(false);
@@ -671,7 +670,14 @@ public class VGuiInput : IVGuiInput
 					dlg = dlg.GetParent();
 
 				dlg?.Repaint();
+				shouldDisable = false;
+				shouldEnable = true;
 			}
+
+			if (shouldEnable)
+				inputSystem.StartTextInput();
+			else if (shouldDisable)
+				inputSystem.StopTextInput();
 
 			context.KeyFocus = wantedKeyFocus;
 			context.KeyFocus?.MoveToFront();
@@ -1028,6 +1034,14 @@ public class VGuiInput : IVGuiInput
 		context.KeyTyped[code - ButtonCode.KeyFirst] = true;
 
 		PostKeyMessage(new KeyValues("KeyCodeTyped").AddSubKey("code", (int)code));
+	}
+
+	public unsafe void InternalKeyTyped(char ch) {
+		ref InputContext context = ref GetInputContext(Context);
+		if (ch <= (int)ButtonCode.KeyLast)
+			context.KeyTyped[ch] = true;
+
+		PostKeyMessage(new KeyValues("KeyTyped").AddSubKey("unichar", (int)ch));
 	}
 
 	public bool InternalKeyCodeReleased(ButtonCode code) {
