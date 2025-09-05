@@ -1359,10 +1359,9 @@ public class MatSystemSurface : IMatSystemSurface
 
 	private void InternalSchemeSettingsTraverse(IPanel panel, bool forceApplySchemeSettings) {
 		panel.TraverseLevel(1);
-		IList<IPanel> children = (IList<IPanel>)panel.GetChildren();
 
-		for (int i = 0; i < children.Count(); ++i) {
-			IPanel child = children[i];
+		for (int i = 0; i < panel.GetChildCount(); ++i) {
+			IPanel child = panel.GetChild(i);
 			if (forceApplySchemeSettings || child.IsVisible()) {
 				InternalSchemeSettingsTraverse(child, forceApplySchemeSettings);
 			}
@@ -1376,10 +1375,8 @@ public class MatSystemSurface : IMatSystemSurface
 		panel.TraverseLevel(1);
 		panel.Solve();
 
-		IList<IPanel> children = (IList<IPanel>)panel.GetChildren();
-
-		for (int i = 0; i < children.Count(); ++i) {
-			IPanel child = children[i];
+		for (int i = 0; i < panel.GetChildCount(); ++i) {
+			IPanel child = panel.GetChild(i);
 			if (child.IsVisible()) {
 				InternalSolveTraverse(child);
 			}

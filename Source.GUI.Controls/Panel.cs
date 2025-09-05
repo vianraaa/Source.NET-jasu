@@ -332,7 +332,11 @@ public class Panel : IPanel
 		return Children.Count;
 	}
 
-	public IEnumerable<IPanel> GetChildren() => Children;
+	public IEnumerable<IPanel> GetChildren() {
+		foreach (IPanel child in Children) {
+			yield return child;
+		}
+	}
 
 	public ReadOnlySpan<char> GetClassName() => GetType().Name;
 
