@@ -50,7 +50,7 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 			PostActionSignal(new KeyValues("CommandSubmitted", "command", incoming[..len]));
 
 			Print("] ");
-			Print(command);
+			Print(incoming[..len]);
 			Print("\n");
 			Entry.SetText("");
 
@@ -141,16 +141,23 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 			}
 		}
 	}
+	public void Clear() {
+		History.SetText("");
+		History.GotoTextEnd();
+	}
 	public void ColorPrint(in Color clr, ReadOnlySpan<char> message) {
-
+		if (StatusVersion) 
+			Clear();
+		History.InsertColorChange(in clr);
+		History.InsertString(message);
 	}
 
 	public void DPrint(ReadOnlySpan<char> message) {
-
+		ColorPrint(DPrintColor, message);
 	}
 
 	public void Print(ReadOnlySpan<char> message) {
-
+		ColorPrint(PrintColor, message);
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {

@@ -1548,7 +1548,7 @@ public class TextEntry : Panel
 
 	public bool GetSelectedRange(out int cx0, out int cx1) {
 		if (Select[0] == -1) {
-			cx0 = cx1 = 0;
+			cx0 = cx1 = -1; // -1 may be better here
 			return false;
 		}
 

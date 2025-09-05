@@ -209,6 +209,7 @@ public interface ISurface
 	void PlaySound(ReadOnlySpan<char> fileName);
 	void DrawTexturedPolygon(Span<SurfaceVertex> verts, bool clipVertices = true);
 	bool IsCursorLocked();
+	void GetKernedCharWidth(IFont? font, char ch, char before, char after, out float w, out float flabcA);
 }
 
 public interface IMatSystemSurface : ISurface {

@@ -2,15 +2,19 @@
 
 public class ScrollBar : Panel {
 	static ScrollBar() => ChainToAnimationMap<ScrollBar>();
-	public ScrollBar(Panel parent, ReadOnlySpan<char> panelName, bool vertical) : base(parent, panelName) {
+	public ScrollBar(Panel parent, string panelName, bool vertical) : base(parent, panelName) {
 
 	}
 
 	public int GetValue() {
-		throw new NotImplementedException();
+		return 0; // todo
 	}
 
 	public void SetValue(int val) {
-		throw new NotImplementedException();
+		// todo
+	}
+
+	internal void GetRange(out int min, out int max) {
+		min = max = 0; // todo
 	}
 }

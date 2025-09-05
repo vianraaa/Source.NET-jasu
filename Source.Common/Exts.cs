@@ -57,6 +57,8 @@ public static class BitVecExts
 }
 public static class ClassUtils
 {
+	public static bool IsValidIndex<T>(this List<T> list, int index) => index >= 0 && index < list.Count;
+	public static bool IsValidIndex<T>(this List<T> list, long index) => index >= 0 && index < list.Count;
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : class, new() {
 		while (list.Count < ensureTo) {
 			list.Add(new T());

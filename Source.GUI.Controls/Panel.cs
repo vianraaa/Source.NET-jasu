@@ -819,8 +819,8 @@ public class Panel : IPanel
 		}
 	}
 
-	public void SetBgColor(in Color color) => BgColor = color;
-	public void SetFgColor(in Color color) => FgColor = color;
+	public virtual void SetBgColor(in Color color) => BgColor = color;
+	public virtual void SetFgColor(in Color color) => FgColor = color;
 
 	// This in theory will replicate the pointer logic?
 	private void ApplyOverridableColors() {

@@ -1632,4 +1632,8 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public bool IsCursorLocked() => CursorLocked;
+
+	public void GetKernedCharWidth(IFont? font, char ch, char before, char after, out float w, out float abcA) {
+		FontManager.GetKernedCharWidth(font, ch, before, after, out w, out abcA, out _);
+	}
 }

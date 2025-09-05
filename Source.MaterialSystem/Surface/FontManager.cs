@@ -441,7 +441,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		}
 	}
 
-	private void GetKernedCharWidth(IFont? font, char ch, char chBefore, char chAfter, out float flWide, out float flabcA, out float flabcC) {
+	public void GetKernedCharWidth(IFont? font, char ch, char chBefore, char chAfter, out float flWide, out float flabcA, out float flabcC) {
 		flWide = 0.0f;
 		flabcA = 0.0f;
 		flabcC = 0.0f;
