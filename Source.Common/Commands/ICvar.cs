@@ -5,13 +5,15 @@ namespace Source.Common.Commands;
 
 public delegate void FnChangeCallback(IConVar var, in ConVarChangeContext ctx);
 
-public interface IConsoleDisplayFunc {
+public interface IConsoleDisplayFunc
+{
 	public void ColorPrint(in Color clr, ReadOnlySpan<char> message);
 	public void Print(ReadOnlySpan<char> message);
 	public void DPrint(ReadOnlySpan<char> message);
 }
 
-public interface ICvarQuery {
+public interface ICvarQuery
+{
 	public bool AreConVarsLinkable(ConVar child, ConVar parent);
 }
 
@@ -36,9 +38,9 @@ public interface ICvar
 	public void InstallConsoleDisplayFunc(IConsoleDisplayFunc displayFunc);
 	public void RemoveConsoleDisplayFunc(IConsoleDisplayFunc displayFunc);
 
-	public void ConsoleColorPrintf(in Color clr, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[]? args);
-	public void ConsolePrintf([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[]? args);
-	public void ConsoleDPrintf([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[]? args);
+	public void ConsoleColorPrintf(in Color clr, ReadOnlySpan<char> format, params object?[]? args);
+	public void ConsolePrintf(ReadOnlySpan<char> format, params object?[]? args);
+	public void ConsoleDPrintf(ReadOnlySpan<char> format, params object?[]? args);
 
 	public void RevertFlaggedConVars(FCvar flag);
 }

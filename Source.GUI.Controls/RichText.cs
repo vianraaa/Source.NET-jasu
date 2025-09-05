@@ -629,6 +629,20 @@ public class RichText : Panel
 		}
 	}
 
+	public override void OnSizeChanged(int wide, int tall) {
+		base.OnSizeChanged(wide, tall);
+		InvalidateVerticalScrollbarSlider = true;
+		InvalidateLineBreakStream();
+		InvalidateLayout();
+
+		if (VertScrollBar?.IsVisible() ?? false) {
+			VertScrollBar?.MakeReadyForUse();
+			Interior?.SetBounds(0, 0, wide - (VertScrollBar?.GetWide() ?? 0), tall);
+		}
+		else
+			Interior?.SetBounds(0, 0, wide, tall);
+	}
+
 	private void RecalculateLineBreaks() {
 		if (!RecalcLineBreaks)
 			return;

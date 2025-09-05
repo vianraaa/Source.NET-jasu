@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Client;
 using Source.Common.Server;
@@ -8,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 
 namespace Source.Common.Commands;
 
@@ -39,19 +42,46 @@ public class Cvar(ICommandLine CommandLine, IServiceProvider services, ICvarQuer
 		}
 	}
 
-	public void ConsoleColorPrintf(in Color clr, [StringSyntax("CompositeFormat")] string format, params object?[]? args) {
+	public void ConsoleColorPrintf(in Color clr, ReadOnlySpan<char> format, params object?[]? args) {
+		if(DisplayFuncs.Count == 0) {
+			TempConsoleBuffer.EnsureCapacity(TempConsoleBuffer.Count + format.Length + 3);
+
+			TempConsoleBuffer.Add((char)CONSOLE_COLOR_PRINT);
+			ReadOnlySpan<char> cast = MemoryMarshal.Cast<int, char>([clr.GetRawColor()]);
+			TempConsoleBuffer.Add(cast[0]);
+			TempConsoleBuffer.Add(cast[1]);
+			for (int i = 0; i < format.Length; i++)
+				TempConsoleBuffer.Add(format[i]);
+		}
+
 		foreach (var func in DisplayFuncs)
-			func.ColorPrint(in clr, args == null ? format : string.Format(format, args));
+			func.ColorPrint(in clr, format);
 	}
 
-	public void ConsoleDPrintf([StringSyntax("CompositeFormat")] string format, params object?[]? args) {
+	public void ConsoleDPrintf( ReadOnlySpan<char> format, params object?[]? args) {
+		if (DisplayFuncs.Count == 0) {
+			TempConsoleBuffer.EnsureCapacity(TempConsoleBuffer.Count + format.Length + 1);
+
+			TempConsoleBuffer.Add((char)CONSOLE_DPRINT);
+			for (int i = 0; i < format.Length; i++)
+				TempConsoleBuffer.Add(format[i]);
+		}
+
 		foreach (var func in DisplayFuncs)
-			func.DPrint(args == null ? format : string.Format(format, args));
+			func.DPrint(format);
 	}
 
-	public void ConsolePrintf([StringSyntax("CompositeFormat")] string format, params object?[]? args) {
+	public void ConsolePrintf(ReadOnlySpan<char> format, params object?[]? args) {
+		if (DisplayFuncs.Count == 0) {
+			TempConsoleBuffer.EnsureCapacity(TempConsoleBuffer.Count + format.Length + 1);
+
+			TempConsoleBuffer.Add((char)CONSOLE_PRINT);
+			for (int i = 0; i < format.Length; i++)
+				TempConsoleBuffer.Add(format[i]);
+		}
+
 		foreach (var func in DisplayFuncs)
-			func.Print(args == null ? format : string.Format(format, args));
+			func.Print(format);
 	}
 
 	public ConCommand? FindCommand(ReadOnlySpan<char> name) {
@@ -92,6 +122,44 @@ public class Cvar(ICommandLine CommandLine, IServiceProvider services, ICvarQuer
 
 	public void InstallConsoleDisplayFunc(IConsoleDisplayFunc displayFunc) {
 		DisplayFuncs.Add(displayFunc);
+		DisplayQueuedMessages();
+	}
+
+	private readonly List<char> TempConsoleBuffer = new List<char>(1024);
+
+	const int CONSOLE_COLOR_PRINT = 0;
+	const int CONSOLE_PRINT = 1;
+	const int CONSOLE_DPRINT = 2;
+
+	private void DisplayQueuedMessages() {
+		Color clr = new();
+		Span<char> tempConsoleBuffer  = TempConsoleBuffer.AsSpan();
+		while (tempConsoleBuffer.Length > 0) {
+			int nType = tempConsoleBuffer[0]; tempConsoleBuffer = tempConsoleBuffer[1..];
+			if (nType == CONSOLE_COLOR_PRINT) {
+				clr.SetRawColor(MemoryMarshal.Cast<char, int>(tempConsoleBuffer)[0]);
+				tempConsoleBuffer = tempConsoleBuffer[2..];
+			}
+			ReadOnlySpan<char> temp = tempConsoleBuffer.SliceNullTerminatedString();
+
+			switch (nType) {
+				case CONSOLE_COLOR_PRINT:
+					ConsoleColorPrintf(clr, temp);
+					break;
+
+				case CONSOLE_PRINT:
+					ConsolePrintf(temp);
+					break;
+
+				case CONSOLE_DPRINT:
+					ConsoleDPrintf(temp);
+					break;
+			}
+
+			tempConsoleBuffer = tempConsoleBuffer[temp.Length..];
+		}
+
+		TempConsoleBuffer.Clear();
 	}
 
 	public void RegisterConCommand(ConCommandBase variable) {

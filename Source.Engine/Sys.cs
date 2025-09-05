@@ -45,7 +45,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 
 	ThreadLocal<bool> inSpew = new();
 	ThreadLocal<string> groupWrite = new();
-	private void Write(string group, ReadOnlySpan<char> str, in Color color) {
+	private void Write(string group, ReadOnlySpan<char> str, in Color color, bool routeInGame = false) {
 		if (!groupWrite.IsValueCreated)
 			groupWrite.Value = "";
 
@@ -53,6 +53,9 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		int bufferIdx = 0;
 		unsafe void writeTxt(ReadOnlySpan<char> sub, in Color color) {
 			Console.Write(sub.Pastel(color));
+			if (routeInGame) {
+				host.Con?.ColorPrintf(in color, sub);
+			}
 		}
 		void flushTxt(Span<char> buffer, in Color color) {
 			if (bufferIdx > 0) {
@@ -122,7 +125,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 					case SpewType.Error: color.SetColor(20, 70, 255, 255); break;
 					default: color = Dbg.GetSpewOutputColor(); break;
 				}
-				Write(group, msg, color);
+				Write(group, msg, color, true);
 			}
 			else {
 				Color color = new Color(255, 255, 255);

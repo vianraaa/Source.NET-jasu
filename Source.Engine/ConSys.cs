@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Source.Common.Commands;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class Con
+public class Con(ICvar cvar)
 {
 	public void Init() { }
 	public void Shutdown() { }
@@ -14,5 +16,9 @@ public class Con
 
 	internal void ClearNotify() {
 
+	}
+
+	public void ColorPrintf(in Color clr, ReadOnlySpan<char> fmt) {
+		cvar.ConsoleColorPrintf(in clr, fmt);
 	}
 }
