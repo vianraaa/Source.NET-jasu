@@ -1161,7 +1161,9 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void SetMinimized(IPanel panel, bool state) {
-		throw new NotImplementedException();
+		if (state) {
+			panel.SetVisible(false);
+		}
 	}
 
 	public void PlaySound(ReadOnlySpan<char> fileName) {

@@ -11,6 +11,7 @@ public class GameConsole(IEngineAPI engineAPI, ISurface Surface, ISchemeManager 
 		if (!Initialized)
 			return;
 		Surface.RestrictPaintToSinglePanel(null);
+		Console!.Activate();
 	}
 
 	public void Clear() {

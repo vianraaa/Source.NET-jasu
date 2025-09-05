@@ -4,7 +4,8 @@ using Source.GUI.Controls;
 namespace Game.UI;
 
 public class GameConsoleDialog : ConsoleDialog  {
-	public GameConsoleDialog(Panel? parent, string? name, bool statusVersion) : base(parent, name, statusVersion) {
+	public GameConsoleDialog() : base(null, "GameConsole", false) {
+		AddActionSignalTarget(this);
 	}
 
 	public override void OnKeyCodeTyped(ButtonCode code) {

@@ -11,6 +11,12 @@ public class ConsoleDialog : Frame
 	public override void PerformLayout() {
 		base.PerformLayout();
 	}
+
+	public override void Activate() {
+		base.Activate();
+		
+	}
+
 	public void Clear() { }
 	public void Hide() { }
 

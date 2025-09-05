@@ -113,7 +113,7 @@ public class Frame : EditablePanel
 
 	IPanel? PreviousModal;
 
-	public void Activate() {
+	public virtual void Activate() {
 		MoveToFront();
 		if (IsKeyboardInputEnabled())
 			RequestFocus();
