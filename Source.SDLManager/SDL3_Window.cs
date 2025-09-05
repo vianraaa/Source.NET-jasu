@@ -215,6 +215,7 @@ public unsafe class SDL3_Window : IWindow
 					break;
 				case SDL_EventType.SDL_EVENT_KEY_DOWN:
 
+					HandleKeyEvent(ref ev);
 					break;
 				case SDL_EventType.SDL_EVENT_TEXT_INPUT:
 					string? text = ev.text.GetText();

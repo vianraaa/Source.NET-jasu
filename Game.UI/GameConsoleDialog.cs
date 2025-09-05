@@ -10,6 +10,10 @@ public class GameConsoleDialog : ConsoleDialog  {
 
 	public override void OnKeyCodeTyped(ButtonCode code) {
 		base.OnKeyCodeTyped(code);
+
+		if (ConsolePanel.TextEntryHasFocus()) {
+
+		}
 	}
 	public override void OnCommand(ReadOnlySpan<char> command) {
 		base.OnCommand(command);

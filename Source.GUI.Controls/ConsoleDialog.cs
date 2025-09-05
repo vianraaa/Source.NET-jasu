@@ -10,15 +10,21 @@ public class TabCatchingTextEntry : TextEntry
 	public TabCatchingTextEntry(Panel? parent, string? name, Panel comp) : base(parent, name) {
 
 	}
+	public override void OnKeyCodeTyped(ButtonCode code) {
+		if (code == ButtonCode.KeyTab)
+			GetParent()!.OnKeyCodeTyped(code);
+		else if(code != ButtonCode.KeyEnter)
+			base.OnKeyCodeTyped(code);
+	}
 }
 public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 {
 	[Imported] public ICvar Cvar;
 
-	protected RichText History;
-	protected TextEntry Entry;
-	protected Button Submit;
-	protected Menu CompletionList;
+	internal RichText History;
+	internal TextEntry Entry;
+	internal Button Submit;
+	internal Menu CompletionList;
 
 	protected Color PrintColor, DPrintColor;
 
@@ -69,6 +75,29 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 		Cvar!.InstallConsoleDisplayFunc(this);
 	}
 
+	public override void OnKeyCodeTyped(ButtonCode code) {
+		base.OnKeyCodeTyped(code);
+
+		if (TextEntryHasFocus()) {
+			if (code == ButtonCode.KeyTab) {
+				bool reverse = false;
+				if (Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift)) 
+					reverse = true;
+				
+				// OnAutoComplete(reverse);
+				Entry.RequestFocus();
+			}
+			else if (code == ButtonCode.KeyDown) {
+				// OnAutoComplete(false);
+
+				Entry.RequestFocus();
+			}
+			else if (code == ButtonCode.KeyUp) {
+				// OnAutoComplete(true);
+				Entry.RequestFocus();
+			}
+		}
+	}
 	public void ColorPrint(in Color clr, string message) {
 		throw new NotImplementedException();
 	}
@@ -91,6 +120,8 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 		InvalidateLayout();
 	}
+
+
 
 	public override void PerformLayout() {
 		base.PerformLayout();
@@ -142,6 +173,10 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 	}
 
+	public bool TextEntryHasFocus() => Input.GetFocus() == Entry;
+
+	public void TextEntryRequestFocus() => Entry.RequestFocus();
+
 	const int MAX_HISTORY_ITEMS = 500;
 	class CompletionItem
 	{
@@ -155,7 +190,7 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 public class ConsoleDialog : Frame
 {
-	ConsolePanel ConsolePanel;
+	protected ConsolePanel ConsolePanel;
 
 	public ConsoleDialog(Panel? parent, string? name, bool statusVersion) : base(parent, name) {
 		SetVisible(false);
@@ -174,7 +209,7 @@ public class ConsoleDialog : Frame
 
 	public override void Activate() {
 		base.Activate();
-
+		ConsolePanel.Entry.RequestFocus();
 	}
 
 	public void Clear() { }

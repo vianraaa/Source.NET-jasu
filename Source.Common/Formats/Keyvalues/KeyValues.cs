@@ -609,7 +609,25 @@ public class KeyValues : IEnumerable<KeyValues>
 		return GetInt(name, defaultValue ? 1 : 0) != 0;
 	}
 
-	public object? GetPtr(string v) {
+	public object? GetPtr() {
 		return Value;
+	}
+
+	public T? GetPtr<T>() {
+		return (T?)Value;
+	}
+
+	public object? GetPtr(ReadOnlySpan<char> name) {
+		KeyValues? key = FindKey(name, false);
+		if (key != null)
+			return key.Value;
+		return default;
+	}
+
+	public T? GetPtr<T>(ReadOnlySpan<char> name) {
+		KeyValues? key = FindKey(name, false);
+		if (key != null)
+			return (T?)key.Value;
+		return default;
 	}
 }

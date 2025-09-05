@@ -161,4 +161,5 @@ public interface IVGuiInput
 	bool InternalKeyCodePressed(ButtonCode code);
 	void InternalKeyCodeTyped(ButtonCode data);
 	bool InternalKeyCodeReleased(ButtonCode code);
+	void OnKeyCodeUnhandled(ButtonCode code);
 }

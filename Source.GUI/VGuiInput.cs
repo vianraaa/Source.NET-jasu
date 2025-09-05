@@ -315,7 +315,7 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public bool GetShouldInvertCompositionString() {
-		throw new NotImplementedException();
+		return false;
 	}
 
 	public void HandleExplicitSetCursor() {
@@ -1038,5 +1038,9 @@ public class VGuiInput : IVGuiInput
 		context.KeyRepeater?.KeyUp(code);
 
 		return PostKeyMessage(new KeyValues("KeyCodeReleased").AddSubKey("code", (int)code));
+	}
+
+	public void OnKeyCodeUnhandled(ButtonCode code) {
+
 	}
 }

@@ -10,6 +10,7 @@ public enum PaintBackgroundType
 	BoxFade = 3
 }
 
+
 public enum PinCorner
 {
 	TopLeft = 0,

@@ -280,7 +280,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 									Type = InputEventType.FirstGuiEvent + 4,
 									Data = (int)scancode
 								};
-								IInputSystem._!.PostUserEvent(newEv);
+								PostUserEvent(newEv);
 							}
 
 							if (!ev.ModifierKeyMask.HasFlag(KeyModifier.Command) && ev.VirtualKeyCode >= 0 && ev.UTF8Key > 0) {
@@ -289,7 +289,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 									Type = InputEventType.FirstGuiEvent + 3,
 									Data = ev.UTF8Key
 								};
-								IInputSystem._!.PostUserEvent(newEv);
+								PostUserEvent(newEv);
 							}
 						}
 						break;

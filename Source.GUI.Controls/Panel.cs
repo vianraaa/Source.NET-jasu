@@ -549,10 +549,48 @@ public class Panel : IPanel
 		return (Flags & PanelFlags.IsMouseDisabledForThisPanelOnly) != 0;
 	}
 
+	// These implementations break everything. Fix later
+
 	public void MoveToBack() {
+		/*
+		if (Parent != null) {
+			Parent.Children.Remove(this);
+			Parent.Children.Insert(0, this);
+
+			int i = 1;
+			while (i < Parent.Children.Count) {
+				if (Parent.Children[i].ZPos < ZPos) {
+					Parent.Children[i - 1] = Parent.Children[i];
+					Parent.Children[i] = this;
+					i++;
+				}
+				else 
+					break;
+			}
+		}
+		*/
 	}
 
 	public void MoveToFront() {
+		/*
+		Surface.MovePopupToFront(this);
+
+		if (Parent != null) {
+			Parent.Children.Remove(this);
+			Parent.Children.Add(this);
+
+			int i = Parent.Children.Count - 2;
+			while (i >= 0) {
+				if (Parent.Children[i].ZPos > ZPos) {
+					Parent.Children[i + 1] =  Parent.Children[i];
+					Parent.Children[i]  = this;
+					i--;
+				}
+				else 
+					break;
+			}
+		}
+		*/
 	}
 
 
@@ -1213,11 +1251,92 @@ public class Panel : IPanel
 
 	static ConVar vgui_print_messages = new("0", FCvar.None);
 
+	public void InternalKeyCodePressed(ButtonCode code) {
+		if (!ShouldHandleInputMessage())
+			return;
+
+		if (IsKeyboardInputEnabled()) 
+			OnKeyCodePressed(code);
+		else 
+			CallParentFunction(new KeyValues("KeyCodePressed", "code", (int)code));
+	}
+
+	static bool SuppressRebindChecks = false;
+
+	public bool ShouldHandleInputMessage() {
+		if (Input.GetModalSubTree() == null)
+			return true;
+
+		bool childOfModal = false;
+		IPanel? subTree = Input.GetModalSubTree();
+		if (subTree == null)
+			childOfModal = true;
+		else if (HasParent(subTree)) 
+			childOfModal = true;
+
+		if (Input.ShouldModalSubTreeReceiveMessages())
+			return childOfModal;
+
+		return !childOfModal;
+	}
+
+	public void InternalKeyCodeTyped(ButtonCode code) {
+		if (!ShouldHandleInputMessage()) {
+			Input.OnKeyCodeUnhandled(code);
+			return;
+		}
+
+		if (IsKeyboardInputEnabled()) {
+			bool shift = Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift);
+			bool ctrl =  Input.IsKeyDown(ButtonCode.KeyLControl) || Input.IsKeyDown(ButtonCode.KeyRControl);
+			bool alt =   Input.IsKeyDown(ButtonCode.KeyLAlt) || Input.IsKeyDown(ButtonCode.KeyRAlt);
+
+			KeyModifier modifiers = 0;
+			if (shift) 
+				modifiers |= KeyModifier.Shift;
+			if (ctrl) 
+				modifiers |= KeyModifier.Control;
+			if (alt) 
+				modifiers |= KeyModifier.Alt;
+			
+
+			if (!SuppressRebindChecks && IsKeyRebound(code, modifiers)) {
+				return;
+			}
+
+			bool oldVal = SuppressRebindChecks;
+			SuppressRebindChecks = true;
+			OnKeyCodeTyped(code);
+			SuppressRebindChecks = oldVal;
+		}
+		else {
+			if (this == Surface.GetEmbeddedPanel()) 
+				Input.OnKeyCodeUnhandled(code);
+			
+			CallParentFunction(new KeyValues("KeyCodeTyped", "code", (int)code));
+		}
+	}
+
+	private bool IsKeyRebound(ButtonCode code, KeyModifier modifiers) {
+		return false;
+	}
+
+	public void InternalKeyCodeReleased(ButtonCode code) {
+		if (!ShouldHandleInputMessage())
+			return;
+
+		if (IsKeyboardInputEnabled()) 
+			OnKeyCodeReleased(code);
+		else 
+			CallParentFunction(new KeyValues("KeyCodeReleased", "code", (int)code));
+	}
+
+
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
-			case "KeyCodePressed": OnKeyCodePressed((ButtonCode)message.GetInt("code")); break;
-			case "KeyCodeTyped": OnKeyCodeTyped((ButtonCode)message.GetInt("code")); break;
-			case "KeyCodeReleased": OnKeyCodeReleased((ButtonCode)message.GetInt("code")); break;
+			case "KeyCodePressed": InternalKeyCodePressed((ButtonCode)message.GetInt("code")); break;
+			case "KeyCodeTyped": InternalKeyCodeTyped((ButtonCode)message.GetInt("code")); break;
+			case "KeyCodeReleased": InternalKeyCodeReleased((ButtonCode)message.GetInt("code")); break;
 			case "CursorEntered": OnCursorEntered(); break;
 			case "CursorExited": OnCursorExited(); break;
 			case "CursorMoved": OnCursorMoved(message.GetInt("xpos"), message.GetInt("ypos")); break;
@@ -1231,6 +1350,7 @@ public class Panel : IPanel
 			case "KillFocus": InternalKillFocus((Panel?)message.GetPtr("newPanel")); break;
 			case "Delete": OnDelete(); break;
 			case "Close": OnClose(); break;
+			case "OnRequestFocus": OnRequestFocus(message.GetPtr<Panel>("subFocus")!, message.GetPtr<Panel>("defaultPanel")); break;
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
 		if (vgui_print_messages.GetBool())

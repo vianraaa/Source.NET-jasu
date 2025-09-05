@@ -4,8 +4,6 @@ namespace Source.Common.Input;
 
 public interface IInputSystem
 {
-	public static IInputSystem? _;
-
 	public void AttachToWindow(IWindow window);
 	public void DetachFromWindow();
 
