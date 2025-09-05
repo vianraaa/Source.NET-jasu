@@ -143,10 +143,9 @@ public class MatSystemSurface : IMatSystemSurface
 	public void InternalThinkTraverse(IPanel panel) {
 		panel.TraverseLevel(1);
 		panel.Think();
-		IList<IPanel> children = (IList<IPanel>)panel.GetChildren(); // Annoying but the internal value is an IList so hopefully this works
 
-		for (int i = 0; i < children.Count(); i++) {
-			var child = children[i];
+		for (int i = 0; i < panel.GetChildCount(); i++) {
+			var child = panel.GetChild(i);
 			if (child.IsVisible()) {
 				InternalThinkTraverse(child);
 			}
