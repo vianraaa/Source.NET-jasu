@@ -3,6 +3,10 @@ using Source.Common.Input;
 using Source.Common.Launcher;
 using System.Text.RegularExpressions;
 using Source.Common.Commands;
+using SDL;
+using System.Runtime.InteropServices;
+
+
 
 
 
@@ -27,15 +31,31 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 	}
 
 	public int GetAvailableDrives(Span<char> buf) {
-		throw new NotImplementedException();
+		return 0;
 	}
 
-	public int GetClipboardText(int offset, Span<char> buf) {
-		throw new NotImplementedException();
+	public unsafe nuint GetClipboardText(nint offset, Span<char> buf) {
+		if (!SDL3.SDL_HasClipboardText())
+			return 0;
+
+		byte* clipboard = SDL3.Unsafe_SDL_GetClipboardText();
+		nuint len = SDL3.SDL_strlen(clipboard);
+		fixed (char* buffer = buf) {
+			byte* target = (byte*)buffer;
+			for (nuint i = (nuint)offset; i < len; i++)
+				target[i - (nuint)offset] = clipboard[i];
+		}
+
+		return len;
 	}
 
-	public int GetClipboardTextCount() {
-		throw new NotImplementedException();
+	public nuint GetClipboardTextCount() {
+		if (!SDL3.SDL_HasClipboardText())
+			return 0;
+
+		byte* clipboard = SDL3.Unsafe_SDL_GetClipboardText();
+		nuint len = SDL3.SDL_strlen(clipboard);
+		return len;
 	}
 
 	public bool GetCommandLineParamValue(ReadOnlySpan<char> paramName, Span<char> value) {
@@ -126,8 +146,9 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		throw new NotImplementedException();
 	}
 
-	public void SetClipboardText(ReadOnlySpan<char> text, int textLen) {
-		throw new NotImplementedException();
+	public unsafe void SetClipboardText(ReadOnlySpan<char> text, int textLen) {
+		fixed (char* ptr = text)
+			SDL3.SDL_SetClipboardText((byte*)ptr);
 	}
 
 	public bool SetRegistryInteger(ReadOnlySpan<char> key, int value) {
@@ -160,14 +181,14 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 	public ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName) {
 		foreach (var keyPath in possibleKeys) {
 			using var baseKey = Registry.LocalMachine.OpenSubKey(keyPath, false);
-			if (baseKey is null) 
+			if (baseKey is null)
 				continue;
 
 			foreach (var valueName in baseKey.GetValueNames()) {
 				var normalized = Regex.Replace(valueName, @"\s*\(.*?\)$", "").Trim();
 				if (fontName.Equals(normalized, StringComparison.OrdinalIgnoreCase)) {
 					var fontFile = baseKey.GetValue(valueName)?.ToString();
-					if (string.IsNullOrEmpty(fontFile)) 
+					if (string.IsNullOrEmpty(fontFile))
 						continue;
 
 					return Path.IsPathRooted(fontFile)

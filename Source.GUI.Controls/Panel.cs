@@ -1514,6 +1514,10 @@ public class Panel : IPanel
 			Msg($"VGUI: Initializing {type.Name}\n");
 		}
 	}
+
+	public virtual IPanel? GetDragPanel() {
+		return GetParent()?.GetDragPanel();
+	}
 }
 
 class FloatProperty : IPanelAnimationPropertyConverter

@@ -1,4 +1,6 @@
-﻿using Source.Common.Formats.Keyvalues;
+﻿using CommunityToolkit.HighPerformance;
+
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
@@ -72,7 +74,7 @@ public class TextEntry : Panel
 		int startIndex = GetStartDrawIndex(lineBreakIndexIndex);
 		int remembery = y;
 
-		int oldEnd = TextStream.Count();
+		int oldEnd = TextStream.Count;
 		int oldCursorPos = CursorPos;
 		int nCompStart = -1;
 		int nCompEnd = -1;
@@ -145,7 +147,7 @@ public class TextEntry : Panel
 			}
 		}
 		else {
-			for (int i = startIndex; i < TextStream.Count(); i++) {
+			for (int i = startIndex; i < TextStream.Count; i++) {
 				char ch = TextStream[i];
 				if (HideText)
 					ch = '*';
@@ -226,8 +228,7 @@ public class TextEntry : Panel
 	}
 
 	public override void OnSizeChanged(int newWide, int newTall) {
-		RecalculateBreaksIndex = 0;
-		LineBreaks.Clear();
+		FlushLineBreaks(false);
 
 		if (newWide > DrawWidth)
 			ScrollLeftForResize();
@@ -325,7 +326,7 @@ public class TextEntry : Panel
 		int startLine = 0;
 
 		if (VertScrollBar != null && !MouseDragSelection)
-			; // startLine = VertScrollBar.GetValue();
+			startLine = VertScrollBar.GetValue();
 		else {
 			IFont? font = Font;
 			int displayLines = GetTall() / (Surface.GetFontTall(font) + DRAW_OFFSET_Y);
@@ -340,15 +341,15 @@ public class TextEntry : Panel
 				if (cursorLine < CurrentStartLine) {
 					startLine = cursorLine;
 					if (VertScrollBar != null) {
-						// MoveScrollBar(1); 
-						// startLine = VertScrollBar.GetValue();
+						MoveScrollBar(1); 
+						startLine = VertScrollBar.GetValue();
 					}
 				}
 				else if (cursorLine > (CurrentStartLine + displayLines - 1)) {
 					startLine = cursorLine - displayLines + 1;
 					if (VertScrollBar != null) {
-						// MoveScrollBar(-1);
-						// startLine = VertScrollBar.GetValue();
+						MoveScrollBar(-1);
+						startLine = VertScrollBar.GetValue();
 					}
 				}
 			}
@@ -402,6 +403,14 @@ public class TextEntry : Panel
 
 	}
 
+	private void MoveScrollBar(int delta) {
+		if (VertScrollBar != null) {
+			int val = VertScrollBar.GetValue();
+			val -= (delta * 3);
+			VertScrollBar.SetValue(val);
+		}
+	}
+
 	int getCharWidth(IFont? font, char ch) {
 		if (!char.IsControl(ch)) {
 			Surface.GetCharABCwide(font, ch, out int a, out int b, out int c);
@@ -441,7 +450,7 @@ public class TextEntry : Panel
 		return 0;
 	}
 
-	List<char> TextStream = ['h', 'e', 'l', 'l', 'o'];
+	List<char> TextStream = [];
 	List<char> UndoTextStream = [];
 	List<int> LineBreaks = [-1];
 
@@ -601,13 +610,6 @@ public class TextEntry : Panel
 					GotoTextEnd();
 					break;
 
-				case ButtonCode.KeyUp:
-				case ButtonCode.KeyDown:
-					if (AllowNonAsciiCharacters)
-						FlipToLastIME();
-					else
-						fallThrough = true;
-					break;
 				default:
 					fallThrough = true;
 					break;
@@ -765,28 +767,101 @@ public class TextEntry : Panel
 		}
 	}
 
-	private void FlipToLastIME() {
-		throw new NotImplementedException();
-	}
-
 	private void GotoTextEnd() {
-		throw new NotImplementedException();
+		SelectCheck();
+		CursorPos = TextStream.Count;
+		PutCursorAtEnd = true;
+		ScrollRight();
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void GotoWordLeft() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		if (CursorPos < 1)
+			return;
+
+		while (--CursorPos >= 0)
+			if (!char.IsWhiteSpace(TextStream[CursorPos]))
+				break;
+
+
+		while (--CursorPos >= 0)
+			if (char.IsWhiteSpace(TextStream[CursorPos]))
+				break;
+
+		CursorPos++;
+
+		ScrollLeft();
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
+	}
+
+	private void ScrollLeft() {
+		if (Multiline)
+			return;
+
+		if (!HorizScrollingAllowed)
+			return;
+
+		if (CursorPos < CurrentStartIndex) {
+			if (CursorPos < 0)
+				CursorPos = 0;
+
+			CurrentStartIndex = CursorPos;
+		}
+
+		LayoutVerticalScrollBarSlider();
 	}
 
 	private void GotoWordRight() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		while (++CursorPos < TextStream.Count) 
+			if (char.IsWhiteSpace(TextStream[CursorPos]))
+				break;
+
+		while (++CursorPos < TextStream.Count) 
+			if (!char.IsWhiteSpace(TextStream[CursorPos]))
+				break;
+
+		if (CursorPos > TextStream.Count)
+			CursorPos = TextStream.Count;
+		
+		ScrollRight();
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void Undo() {
-		throw new NotImplementedException();
+		CursorPos = UndoCursorPos;
+
+		// I have a bad feeling about this...
+		UndoTextStream.CopyTo(TextStream.AsSpan());
+		TextStream.RemoveRange(UndoTextStream.Count, TextStream.Count - UndoTextStream.Count);
+
+		InvalidateLayout();
+		Repaint();
+		SelectNone();
 	}
 
-	private void SelectAllText(bool v) {
-		throw new NotImplementedException();
+	private void SelectAllText(bool resetCursorPos) {
+		if (TextStream.Count == 0)
+			Select[0] = -1;
+		else
+			Select[0] = 0;
+
+		Select[1] = TextStream.Count;
+
+		if (resetCursorPos)
+			CursorPos = Select[1];
 	}
 
 	private void InsertChar(char ch) {
@@ -817,7 +892,7 @@ public class TextEntry : Panel
 					if (RecalculateBreaksIndex == 0)
 						RecalculateLineBreaks();
 
-					if (LineBreaks[0] > TextStream.Count()) {
+					if (LineBreaks[0] > TextStream.Count) {
 						RecalculateBreaksIndex = -1;
 						RecalculateLineBreaks();
 					}
@@ -894,19 +969,16 @@ public class TextEntry : Panel
 	public const int BUFFER_SIZE = 999999;
 
 	private void SetCharAt(char ch, int index) {
-		if ((ch == '\n') || (ch == '\0')) {
-			RecalculateBreaksIndex = 0;
-			LineBreaks.Clear();
-			LineBreaks.Add(BUFFER_SIZE);
-		}
+		if ((ch == '\n') || (ch == '\0'))
+			FlushLineBreaks(true);
 
 		if (index < 0)
 			return;
 
-		if (index >= TextStream.Count()) {
+		if (index >= TextStream.Count)
 			while (TextStream.Count <= index + 1)
 				TextStream.Add('\0');
-		}
+
 		TextStream[index] = ch;
 		DataChanged = true;
 	}
@@ -932,51 +1004,414 @@ public class TextEntry : Panel
 	}
 
 	private void Backspace() {
-		throw new NotImplementedException();
+		if (!IsEditable())
+			return;
+
+		if (CursorPos == 0)
+			return;
+
+		if (TextStream.Count() == 0)
+			return;
+
+		SaveUndoState();
+
+		for (int i = CursorPos; i < TextStream.Count; ++i)
+			SetCharAt(TextStream[i], i - 1);
+
+		TextStream.RemoveAt(TextStream.Count - 1);
+
+		if (CursorPos == CurrentStartIndex)
+			if (CurrentStartIndex - 6 >= 0)
+				CurrentStartIndex -= 6;
+			else
+				CurrentStartIndex = 0;
+
+		CursorPos--;
+
+		DataChanged = true;
+
+		FlushLineBreaks(true);
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void GotoEndOfLine() {
-		throw new NotImplementedException();
+		SelectCheck();
+		CursorPos = GetCurrentLineEnd();
+		PutCursorAtEnd = true;
+
+		ScrollRight();
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
+	}
+
+	private int GetCurrentLineEnd() {
+		int i;
+		if (IsLineBreak(CursorPos)) {
+			for (i = 0; i < LineBreaks.Count - 1; ++i) 
+				if (CursorPos == LineBreaks[i])
+					break;
+			
+			if (!CursorIsAtEnd) {
+				if (i == LineBreaks.Count - 2)
+					return TextStream.Count;
+				else
+					return LineBreaks[i + 1];
+			}
+			else
+				return CursorPos;
+		}
+
+		for (i = 0; i < LineBreaks.Count - 1; i++) 
+			if (CursorPos < LineBreaks[i]) 
+				return LineBreaks[i];
+			
+		
+		return TextStream.Count;
+	}
+
+	private bool IsLineBreak(int index) {
+		for (int i = 0; i < LineBreaks.Count; ++i) 
+			if (index == LineBreaks[i])
+				return true;
+		
+		return false;
 	}
 
 	private void GotoTextStart() {
-		throw new NotImplementedException();
+		SelectCheck();
+		CursorPos = 0;     
+		PutCursorAtEnd = false;
+		CurrentStartIndex = 0; 
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void GotoFirstOfLine() {
-		throw new NotImplementedException();
+		SelectCheck();
+		CursorPos = GetCurrentLineStart();
+		PutCursorAtEnd = false;
+
+		CurrentStartIndex = CursorPos;
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
+	}
+
+	private int GetCurrentLineStart() {
+		if (!Multiline)           
+			return CurrentStartIndex;
+
+		int i;
+		if (IsLineBreak(CursorPos)) {
+			for (i = 0; i < LineBreaks.Count; ++i) {
+				if (CursorPos == LineBreaks[i])
+					break;
+			}
+			if (CursorIsAtEnd) {
+				if (i > 0) 
+					return LineBreaks[i - 1];
+				
+				return LineBreaks[0];
+			}
+			else
+				return CursorPos;
+		}
+
+		for (i = 0; i < LineBreaks.Count; ++i) {
+			if (CursorPos < LineBreaks[i]) {
+				if (i == 0)
+					return 0;
+				else
+					return LineBreaks[i - 1];
+			}
+		}
+
+		return 0;
 	}
 
 	private void GotoDown() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		if (CursorIsAtEnd) {
+			CursorPos--;
+			if (CursorPos < 0)
+				CursorPos = 0;
+		}
+
+		CursorToPixelSpace(CursorPos, out int cx, out int cy);
+
+		MoveCursor(GetCursorLine() + 1, cx);
+		if (!PutCursorAtEnd && CursorIsAtEnd) {
+			CursorPos++;
+			if (CursorPos > TextStream.Count) 
+				CursorPos = TextStream.Count;
+		}
+		LayoutVerticalScrollBarSlider();
+	}
+
+	private void MoveCursor(int line, int pixelsAcross) {
+		if (line < 0)
+			line = 0;
+		if (line >= LineBreaks.Count)
+			line = LineBreaks.Count - 1;
+
+		int yStart = GetYStart();
+
+		int x = DRAW_OFFSET_X, y = yStart;
+		int lineBreakIndexIndex = 0;
+		PixelsIndent = 0;
+		int i;
+		for (i = 0; i < TextStream.Count; i++) {
+			char ch = TextStream[i];
+
+			if (HideText) {
+				ch = '*';
+			}
+
+			if (LineBreaks[lineBreakIndexIndex] == i) {
+				if (lineBreakIndexIndex == line) {
+					PutCursorAtEnd = true;
+					CursorPos = i;
+					break;
+				}
+
+				AddAnotherLine(ref x, ref y);
+				lineBreakIndexIndex++;
+			}
+
+			int charWidth = getCharWidth(Font, ch);
+
+			if (line == lineBreakIndexIndex) {
+				if ((x + (charWidth / 2)) > pixelsAcross) {
+					CursorPos = i;
+					break;
+				}
+			}
+
+			x += charWidth;
+		}
+
+		if (i == TextStream.Count) 
+			GotoTextEnd();
+
+		LayoutVerticalScrollBarSlider();
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void Delete() {
-		throw new NotImplementedException();
+		if (!IsEditable())
+			return;
+
+		if (TextStream.Count == 0)
+			return;
+
+		if (!GetSelectedRange(out int x0, out int x1)) {
+			x0 = CursorPos;
+			x1 = x0 + 1;
+
+			if (CursorPos >= TextStream.Count)
+				return;
+		}
+
+		SaveUndoState();
+
+		int dif = x1 - x0;
+		for (int i = 0; i < dif; i++) 
+			TextStream.RemoveAt(x0);
+
+		ResetCursorBlink();
+
+		SelectNone();
+
+		CursorPos = x0;
+
+		DataChanged = true;
+
+		FlushLineBreaks(true);
+
+		CalcBreakIndex();
+
+		LayoutVerticalScrollBarSlider();
 	}
 
 	private void CopySelected() {
-		throw new NotImplementedException();
+		if (HideText)
+			return;
+
+		if (GetSelectedRange(out int x0, out int x1)) {
+			List<char> buf = [];
+			for (int i = x0; i < x1; i++) {
+				if (TextStream[i] == '\n')
+					buf.Add('\r');
+
+				buf.Add(TextStream[i]);
+			}
+			buf.Add('\0');
+			System.SetClipboardText(buf.AsSpan(), buf.Count);
+		}
+
+		RequestFocus();
+
+		if (DataChanged)
+			FireActionSignal();
 	}
 
 	private void Paste() {
-		throw new NotImplementedException();
+		if (!IsEditable())
+			return;
+
+		List<char> buf = [];
+		int bufferSize = (int)System.GetClipboardTextCount();
+		if (!AutoProgressOnHittingCharLimit)
+			bufferSize = MaxCharCount > 0 ? MaxCharCount + 1 : bufferSize;
+
+		buf.EnsureCapacity(bufferSize);
+		for (int i = 0; i < bufferSize; i++)
+			buf.Add('\0');
+
+		int len = (int)System.GetClipboardText(0, buf.AsSpan());
+		if (len < 1)
+			return;
+
+		SaveUndoState();
+		bool haveMovedFocusAwayFromCurrentEntry = false;
+
+		for (int i = 0; i < len && buf[i] != 0; i++) {
+			if (AutoProgressOnHittingCharLimit) {
+				if (TextStream.Count == MaxCharCount) {
+					RequestFocusNext();
+					Span<char> remainingText = buf.AsSpan()[i..];
+					System.SetClipboardText(remainingText, len - i - 1);
+					if (GetParent() != null && GetCurrentKeyFocus() != this) {
+						haveMovedFocusAwayFromCurrentEntry = true;
+						GetCurrentKeyFocus()?.SendMessage(new KeyValues("DoPaste"), this);
+					}
+					break;
+				}
+			}
+
+			InsertChar(buf[i]);
+		}
+
+		if (AutoProgressOnHittingCharLimit)
+			System.SetClipboardText(buf.AsSpan(), bufferSize);
+
+		DataChanged = true;
+		FireActionSignal();
+
+		if (!haveMovedFocusAwayFromCurrentEntry)
+			RequestFocus();
+	}
+
+	/// <summary>
+	/// Sets <see cref="RecalculateBreaksIndex"/> to 0, clears all line breaks, and if <paramref name="addBufferSize"/> is true, will add <see cref="BUFFER_SIZE"/> to LineBreaks automatically
+	/// </summary>
+	/// <param name="addBufferSize"></param>
+	private void FlushLineBreaks(bool addBufferSize) {
+		RecalculateBreaksIndex = 0;
+		LineBreaks.Clear();
+		if (addBufferSize)
+			LineBreaks.Add(BUFFER_SIZE);
 	}
 
 	private void DeleteSelected() {
-		throw new NotImplementedException();
+		if (!IsEditable())
+			return;
+
+		if (TextStream.Count == 0)
+			return;
+
+		if (!GetSelectedRange(out int x0, out int x1))
+			return;
+
+		SaveUndoState();
+
+		for (int i = 0, dif = x1 - x0; i < dif; ++i)
+			TextStream.RemoveAt(x0);
+
+		SelectNone();
+		ResetCursorBlink();
+
+		CursorPos = x0;
+
+		DataChanged = true;
+
+		FlushLineBreaks(true);
+		CalcBreakIndex();
+
+		LayoutVerticalScrollBarSlider();
 	}
 
 	private void GotoUp() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		if (CursorIsAtEnd) {
+			if ((GetCursorLine() - 1) == 0)
+			{
+				PutCursorAtEnd = true;
+				return;  
+			}
+			else
+				CursorPos--;
+		}
+
+		CursorToPixelSpace(CursorPos, out int cx, out int cy);
+		MoveCursor(GetCursorLine() - 1, cx);
 	}
 
 	private void GotoRight() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		if (IsLineBreak(CursorPos)) {
+			if (CursorIsAtEnd) {
+				PutCursorAtEnd = false;
+			}
+			else {
+				if (CursorPos < TextStream.Count) {
+					CursorPos++;
+				}
+			}
+		}
+		else {
+			if (CursorPos < TextStream.Count) {
+				CursorPos++;
+			}
+
+			if (IsLineBreak(CursorPos)) {
+				if (!CursorIsAtEnd)
+					PutCursorAtEnd = true;
+			}
+		}
+
+		ScrollRight();
+
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	private void GotoLeft() {
-		throw new NotImplementedException();
+		SelectCheck();
+
+		if (IsLineBreak(CursorPos)) 
+			if (!CursorIsAtEnd)
+				PutCursorAtEnd = true;
+		
+		if (!PutCursorAtEnd && CursorPos > 0) 
+			CursorPos--;
+
+		ScrollLeft();
+
+		ResetCursorBlink();
+		Repaint();
 	}
 
 	static readonly KeyValues TextNewLineActionSignal = new("TextNewLine");
@@ -997,29 +1432,110 @@ public class TextEntry : Panel
 		Repaint();
 	}
 
-	private IPanel? GetDragPanel() => null; // todo
+	public override IPanel? GetDragPanel() {
+		if (Input.IsMouseDown(ButtonCode.MouseLeft)) {
+			Input.GetCursorPos(out int x, out int y);
+			ScreenToLocal(ref x, ref y);
+			int cursor = PixelToCursorSpace(x, y);
+
+			bool check = GetSelectedRange(out int cx0, out int cx1);
+
+			if (check && cursor >= cx0 && cursor < cx1) 
+				return base.GetDragPanel();
+			
+			return null;
+		}
+
+		return base.GetDragPanel();
+	}
 
 	public int PixelToCursorSpace(int cx, int cy) {
-		return 0; // todo
+		GetSize(out int w, out int h);
+		cx = Math.Clamp(cx, 0, w + 100);
+		cy = Math.Clamp(cy, 0, h);
+
+		PutCursorAtEnd = false;
+
+		int fontTall = Surface.GetFontTall(Font);
+
+		int yStart = GetYStart();
+		int x = DRAW_OFFSET_X, y = yStart;
+		PixelsIndent = 0;
+		int lineBreakIndexIndex = 0;
+
+		int startIndex = GetStartDrawIndex(lineBreakIndexIndex);
+		bool onRightLine = false;
+		int i;
+		for (i = startIndex; i < TextStream.Count; i++) {
+			char ch = TextStream[i];
+			if (HideText) 
+				ch = '*';
+
+			if (LineBreaks[lineBreakIndexIndex] == i) {
+				AddAnotherLine(ref x, ref y);
+				lineBreakIndexIndex++;
+
+				if (onRightLine) {
+					PutCursorAtEnd = true;
+					return i;
+				}
+			}
+
+			if (cy < yStart) {
+				onRightLine = true;
+				PutCursorAtEnd = true; 
+			}
+			else if (cy >= y && (cy < (y + fontTall + DRAW_OFFSET_Y))) 
+				onRightLine = true;
+			
+
+			int wide = getCharWidth(Font, ch);
+
+			if (onRightLine) {
+				if (cx > GetWide()) { }
+				else if (cx < (DRAW_OFFSET_X + PixelsIndent) || cy < yStart) 
+
+					return i;
+
+				if (cx >= x && cx < (x + wide)) {
+					if (cx < (x + (wide * 0.5)))
+						return i;
+					else
+						return i + 1;
+				}
+			}
+			x += wide;
+		}
+
+		return i;
 	}
 
 	public bool GetSelectedRange(out int cx0, out int cx1) {
-		cx0 = cx1 = 0;
-		return false;
+		if (Select[0] == -1) {
+			cx0 = cx1 = 0;
+			return false;
+		}
+
+		cx0 = Select[0];
+		cx1 = Select[1];
+
+		if (cx1 < cx0) 
+			(cx1, cx0) = (cx0, cx1);
+
+		return true;
 	}
 
 
-	private bool SelectCheck(bool fromMouse) {
+	private bool SelectCheck(bool fromMouse = false) {
 		bool ret = true;
 		if (!HasFocus() || !(Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift))) {
 			bool deselect = true;
-			int cx0, cx1;
 			if (fromMouse && GetDragPanel() != null) {
 				Input.GetCursorPos(out int x, out int y);
 				ScreenToLocal(ref x, ref y);
 				int cursor = PixelToCursorSpace(x, y);
 
-				bool check = GetSelectedRange(out cx0, out cx1);
+				bool check = GetSelectedRange(out int cx0, out int cx1);
 
 				if (check && cursor >= cx0 && cursor < cx1) {
 					deselect = false;
@@ -1043,7 +1559,23 @@ public class TextEntry : Panel
 	}
 	public void SelectNoText() {
 		Select[0] = -1;
-		Select[1] = -1;
+		Select[1] = 0;
+	}
+
+	public void SetToFullWidth() {
+		if (Multiline)
+			return;
+
+		PerformLayout();
+		int wide = 2 * DRAW_OFFSET_X;
+
+		for (int i = 0; i < TextStream.Count; ++i)
+			wide += getCharWidth(Font, TextStream[i]);
+
+		int tall = (Surface.GetFontTall(Font) + DRAW_OFFSET_Y) + DRAW_OFFSET_Y + 2;
+
+		SetSize(wide, tall);
+		PerformLayout();
 	}
 
 	public void SetEditable(bool state) {
@@ -1060,6 +1592,25 @@ public class TextEntry : Panel
 	public void SetAllowNonAsciiCharacters(bool state) => AllowNonAsciiCharacters = state;
 	public void SetAllowNumericInputOnly(bool state) => AllowNumericInputOnly = state;
 	public void SelectAllOnFirstFocus(bool state) => ShouldSelectAllOnFirstFocus = state;
+	public void SelectAllOnFocusAlways(bool state) {
+		ShouldSelectAllOnFirstFocus = state;
+		ShouldSelectAllOnFocusAlways = state;
+	}
+	public override void OnSetFocus() {
+		if (ShouldSelectAllOnFirstFocus) {
+			Select[1] = TextStream.Count;
+			Select[0] = Select[1] > 0 ? 0 : -1;
+			CursorPos = Select[1];
+			if (!ShouldSelectAllOnFocusAlways)
+				ShouldSelectAllOnFirstFocus = false;
+		}
+		else if (Input.IsKeyDown(ButtonCode.KeyTab) || Input.WasKeyReleased(ButtonCode.KeyTab)) {
+			GotoTextEnd();
+			SelectNone();
+		}
+
+		base.OnSetFocus();
+	}
 
 	public override void ApplySettings(KeyValues resourceData) {
 		base.ApplySettings(resourceData);

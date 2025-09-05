@@ -12,9 +12,9 @@ public interface ISystem
 	double GetFrameTime();
 	double GetCurrentTime();
 	long GetTimeMillis();
-	int GetClipboardTextCount();
+	nuint GetClipboardTextCount();
 	void SetClipboardText(ReadOnlySpan<char> text, int textLen);
-	int GetClipboardText(int offset, Span<char> buf);
+	nuint GetClipboardText(nint offset, Span<char> buf);
 	bool SetRegistryString(ReadOnlySpan<char> key, ReadOnlySpan<char> value);
 	bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value);
 	bool SetRegistryInteger(ReadOnlySpan<char> key, int value);
