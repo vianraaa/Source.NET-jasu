@@ -43,6 +43,12 @@ public class Button : Label
 
 	[Imported] public ISystem System;
 
+	public override void OnMessage(KeyValues message, IPanel? from) {
+		switch (message.Name) {
+			case "Hotkey": DoClick(); return;
+			default: base.OnMessage(message, from); return;
+		}
+	}
 	public void Init() {
 		ButtonFlags |= ButtonFlags.UseCaptureMouse | ButtonFlags.ButtonBorderEnabled;
 		MouseClickMask = 0;

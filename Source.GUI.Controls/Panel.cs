@@ -314,10 +314,11 @@ public class Panel : IPanel
 		}
 	}
 
-	public void PostMessage(Panel target, KeyValues message, double delay = 0) {
+	public void PostMessage(IPanel target, KeyValues message, double delay = 0) {
 		VGui.PostMessage(target, message, this, delay);
 	}
 
+	protected bool PassUnhandledInput = true;
 	public void GetAbsPos(out int x, out int y) {
 		x = AbsX;
 		y = AbsY;
@@ -1331,6 +1332,7 @@ public class Panel : IPanel
 			CallParentFunction(new KeyValues("KeyCodeReleased", "code", (int)code));
 	}
 
+	public bool IsConsoleStylePanel() => false; // todo
 
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {

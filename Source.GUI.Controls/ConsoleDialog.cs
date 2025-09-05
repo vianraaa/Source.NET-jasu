@@ -4,6 +4,8 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
+using System.Diagnostics;
+
 namespace Source.GUI.Controls;
 
 public class TabCatchingTextEntry : TextEntry
@@ -38,6 +40,12 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 	public override void OnTextChanged(Panel p) { 
 	
+	}
+
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		if(command == "Submit") {
+			Debugger.Break();
+		}
 	}
 
 	public ConsolePanel(Panel? parent, string? panelName, bool statusVersion) : base(parent, panelName) {
@@ -131,7 +139,7 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 	public override void PerformLayout() {
 		base.PerformLayout();
 
-		// GetFocusNavGroup().SetDefaultButton(Submit);
+		GetFocusNavGroup().SetDefaultButton(Submit);
 
 		IScheme scheme = GetScheme()!;
 		Entry.SetBorder(scheme.GetBorder("DepressedButtonBorder"));

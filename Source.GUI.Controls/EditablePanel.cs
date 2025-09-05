@@ -1,11 +1,14 @@
-﻿using Source.Common.Engine;
+﻿using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+using Source.Common.Input;
 
 namespace Source.GUI.Controls;
 
-public class EditablePanel : Panel {
+public class EditablePanel : Panel
+{
 	[Imported] public IFileSystem fileSystem;
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
@@ -18,12 +21,40 @@ public class EditablePanel : Panel {
 	public virtual void LoadControlSettings(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> pathID, KeyValues keyValues, KeyValues conditions) {
 		// todo
 	}
+	static ConVar vgui_nav_lock_default_button = new(nameof(vgui_nav_lock_default_button), 0);
+	public override void OnKeyCodePressed(ButtonCode code) {
+		if (vgui_nav_lock_default_button.GetInt() == 0) {
+			ButtonCode nButtonCode = GetBaseButtonCode(code);
+
+			IPanel? panel = GetFocusNavGroup().GetCurrentDefaultButton();
+			if (panel != null && !IsConsoleStylePanel()) {
+				switch (nButtonCode) {
+					case ButtonCode.KeyEnter:
+						if (panel.IsVisible() && panel.IsEnabled()) {
+							PostMessage(panel, new KeyValues("Hotkey"));
+							return;
+						}
+						break;
+				}
+			}
+		}
+
+		if (!PassUnhandledInput)
+			return;
+
+		base.OnKeyCodePressed(code);
+	}
+
+	private ButtonCode GetBaseButtonCode(ButtonCode code) {
+		throw new NotImplementedException();
+	}
+
 	public override IPanel? GetCurrentKeyFocus() {
 		Panel focus = NavGroup.GetCurrentFocus();
 		if (focus == this)
 			return null;
 
-		if(focus != null) {
+		if (focus != null) {
 			if (focus.IsPopup())
 				return base.GetCurrentKeyFocus();
 
@@ -44,7 +75,6 @@ public class EditablePanel : Panel {
 	}
 
 	public FocusNavGroup GetFocusNavGroup() => NavGroup;
-
 	readonly FocusNavGroup NavGroup;
 }
 public class FocusNavGroup
@@ -56,7 +86,7 @@ public class FocusNavGroup
 
 	internal Panel? SetCurrentFocus(Panel focus, Panel? defaultPanel) {
 		CurrentFocus.SetTarget(focus);
-		if(defaultPanel == null) {
+		if (defaultPanel == null) {
 			if (CanButtonBeDefault(focus))
 				defaultPanel = focus;
 			else if (DefaultButton.TryGetTarget(out Panel? def))
@@ -74,9 +104,9 @@ public class FocusNavGroup
 
 		KeyValues data = new("CanBeDefaultButton");
 		bool result = false;
-		if (panel.RequestInfo(data)) 
+		if (panel.RequestInfo(data))
 			result = (data.GetInt("result") == 1);
-		
+
 		return result;
 	}
 
@@ -86,14 +116,27 @@ public class FocusNavGroup
 		if (panel == currentDefaultButton)
 			return;
 
-		if (sendCurrentDefaultButtonMessage && currentDefaultButton != null) 
+		if (sendCurrentDefaultButtonMessage && currentDefaultButton != null)
 			VGui.PostMessage(currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 0), null);
-		
+
 		CurrentDefaultButton.SetTarget(panel);
 
-		if (sendCurrentDefaultButtonMessage && currentDefaultButton != null) 
+		if (sendCurrentDefaultButtonMessage && currentDefaultButton != null)
 			VGui.PostMessage(currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 1), null);
 	}
 
 	public Panel? GetCurrentFocus() => CurrentFocus.TryGetTarget(out Panel? t) ? t : null;
+
+	internal void SetDefaultButton(Panel? submit) {
+		if ((DefaultButton.TryGetTarget(out Panel? d) && d == submit) || submit == null)
+			return;
+		DefaultButton.SetTarget(submit);
+		SetCurrentDefaultButton(submit);
+	}
+
+	internal IPanel? GetCurrentDefaultButton() {
+		if (CurrentDefaultButton.TryGetTarget(out Panel? t))
+			return t;
+		return null;
+	}
 }

@@ -71,7 +71,7 @@ public class TextEntry : Panel
 		PixelsIndent = 0;
 
 		int lineBreakIndexIndex = 0;
-		int startIndex = GetStartDrawIndex(lineBreakIndexIndex);
+		int startIndex = GetStartDrawIndex(ref lineBreakIndexIndex);
 		int remembery = y;
 
 		int oldEnd = TextStream.Count;
@@ -266,7 +266,7 @@ public class TextEntry : Panel
 		PixelsIndent = 0;
 		int lineBreakIndexIndex = 0;
 
-		for (int i = GetStartDrawIndex(lineBreakIndexIndex); i < TextStream.Count; i++) {
+		for (int i = GetStartDrawIndex(ref lineBreakIndexIndex); i < TextStream.Count; i++) {
 			char ch = TextStream[i];
 			if (HideText)
 				ch = '*';
@@ -319,7 +319,7 @@ public class TextEntry : Panel
 		return cursorLine;
 	}
 
-	private int GetStartDrawIndex(int lineBreakIndexIndex) {
+	private int GetStartDrawIndex(ref int lineBreakIndexIndex) {
 		int startIndex = 0;
 
 		int numLines = LineBreaks.Count;
@@ -452,7 +452,7 @@ public class TextEntry : Panel
 
 	List<char> TextStream = [];
 	List<char> UndoTextStream = [];
-	List<int> LineBreaks = [-1];
+	List<int> LineBreaks = [BUFFER_SIZE];
 
 	int CursorPos;
 	bool CursorIsAtEnd;
@@ -546,6 +546,43 @@ public class TextEntry : Panel
 		}
 	}
 
+	public void SetCatchEnterKey(bool state) {
+		CatchEnterKey = state;
+	}
+
+	public override void OnKeyCodePressed(ButtonCode code) {
+		if (code == ButtonCode.KeyEnter) {
+			if (!CatchEnterKey) {
+				base.OnKeyCodePressed(code);
+				return;
+			}
+		}
+
+		switch (code) {
+			case ButtonCode.KeyF1:
+			case ButtonCode.KeyF2:
+			case ButtonCode.KeyF3:
+			case ButtonCode.KeyF4:
+			case ButtonCode.KeyF5:
+			case ButtonCode.KeyF6:
+			case ButtonCode.KeyF7:
+			case ButtonCode.KeyF8:
+			case ButtonCode.KeyF9:
+			case ButtonCode.KeyF10:
+			case ButtonCode.KeyF11:
+			case ButtonCode.KeyF12:
+			case ButtonCode.KeyEscape:
+			case ButtonCode.KeyApp:
+				base.OnKeyCodePressed(code);
+				return;
+		}
+
+		if (code.IsMouseCode()) {
+			base.OnKeyCodePressed(code);
+			return;
+		}
+	}
+
 	public override void OnKeyCodeTyped(ButtonCode code) {
 		CursorIsAtEnd = PutCursorAtEnd;
 		PutCursorAtEnd = false;
@@ -598,7 +635,7 @@ public class TextEntry : Panel
 					}
 
 					if (SendNewLines)
-						PostActionSignal(new KeyValues("TextNewLine"));
+						PostActionSignal(TextNewLineActionSignal);
 
 					break;
 
@@ -1463,7 +1500,7 @@ public class TextEntry : Panel
 		PixelsIndent = 0;
 		int lineBreakIndexIndex = 0;
 
-		int startIndex = GetStartDrawIndex(lineBreakIndexIndex);
+		int startIndex = GetStartDrawIndex(ref lineBreakIndexIndex);
 		bool onRightLine = false;
 		int i;
 		for (i = startIndex; i < TextStream.Count; i++) {
