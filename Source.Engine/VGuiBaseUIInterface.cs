@@ -147,6 +147,7 @@ public class EngineVGui(
 
 	Common Common;
 	IGameUI staticGameUIFuncs;
+	IGameConsole staticGameConsole;
 	ISurface matSystemSurface;
 	IEngineClient engineClient;
 	ILocalize localize;
@@ -390,6 +391,16 @@ public class EngineVGui(
 
 		staticGameUIFuncs.Initialize(engineAPI);
 		staticGameUIFuncs.Start();
+
+		if (IsPC()) {
+			staticGameConsole = engineAPI.GetRequiredService<IGameConsole>();
+		}
+
+		if(staticGameConsole != null) {
+			staticGameConsole.Initialize();
+			staticGameConsole.SetParent(staticGameUIPanel);
+			staticGameConsole.Activate();
+		}
 
 		ActivateGameUI();
 	}

@@ -155,7 +155,7 @@ public interface ISurface
 
 	bool SupportsFeature(SurfaceFeature feature);
 
-	void RestrictPaintToSinglePanel(IPanel panel);
+	void RestrictPaintToSinglePanel(IPanel? panel);
 
 
 	void UnlockCursor();
