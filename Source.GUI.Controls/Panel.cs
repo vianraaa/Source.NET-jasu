@@ -256,7 +256,7 @@ public class Panel : IPanel
 	IBorder? Border;
 	IScheme? Scheme;
 	PanelFlags Flags;
-	readonly List<IPanel> Children = [];
+	readonly List<Panel> Children = [];
 	readonly List<OverrideableColorEntry> OverrideableColorEntries = [];
 
 	IPanel? SkipChild;
@@ -325,7 +325,7 @@ public class Panel : IPanel
 	}
 
 	public Panel GetChild(int index) {
-		return (Panel)Children[index];
+		return Children[index];
 	}
 
 	public int GetChildCount() {
@@ -480,7 +480,7 @@ public class Panel : IPanel
 
 		if (traversePopups) {
 			int i;
-			IList<IPanel> children = Children;
+			IList<Panel> children = Children;
 			int childCount = children.Count();
 			for (i = childCount - 1; i >= 0; i--) {
 				IPanel? panel = children[i];
@@ -506,7 +506,7 @@ public class Panel : IPanel
 		}
 		else {
 			if (IsWithin(x, y)) {
-				IList<IPanel> children = Children;
+				IList<Panel> children = Children;
 				int childCount = children.Count();
 				for (int i = childCount - 1; i >= 0; i--) {
 					IPanel? panel = children[i];
@@ -546,11 +546,41 @@ public class Panel : IPanel
 	}
 
 	public void MoveToBack() {
-		// also todo
+		if (Parent != null) {
+			Parent.Children.Remove(this);
+			Parent.Children.Insert(0, this);
+
+			int i = 1;
+			while (i < Parent.Children.Count) {
+				if (Parent.Children[i].ZPos < ZPos) {
+					Parent.Children[i - 1] = Parent.Children[i];
+					Parent.Children[i] = this;
+					i++;
+				}
+				else 
+					break;
+			}
+		}
 	}
 
 	public void MoveToFront() {
-		// todo... ugh
+		Surface.MovePopupToFront(this);
+
+		if (Parent != null) {
+			Parent.Children.Remove(this);
+			Parent.Children.Add(this);
+
+			int i = Parent.Children.Count - 2;
+			while (i >= 0) {
+				if (Parent.Children[i].ZPos > ZPos) {
+					Parent.Children[i + 1] =  Parent.Children[i];
+					Parent.Children[i]  = this;
+					i--;
+				}
+				else 
+					break;
+			}
+		}
 	}
 
 
@@ -810,8 +840,13 @@ public class Panel : IPanel
 	}
 
 	public void RequestFocus(int direction = 0) {
-	
+		OnRequestFocus(this, null);
 	}
+
+	public void CallParentFunction(KeyValues message) => GetParent()?.SendMessage(message, this);
+
+	public virtual void OnRequestFocus(Panel subFocus, Panel? defaultPanel) 
+		=> CallParentFunction(new KeyValues("OnRequestFocus").AddSubKey(new("subFocus", subFocus)).AddSubKey(new("defaultPanel", defaultPanel)));
 
 	public bool RequestFocusNext(IPanel existingPanel) {
 		throw new NotImplementedException();
@@ -1204,7 +1239,7 @@ public class Panel : IPanel
 		y += py;
 	}
 
-	static ConVar vgui_print_messages = new("1", FCvar.None);
+	static ConVar vgui_print_messages = new("0", FCvar.None);
 
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {

@@ -48,6 +48,12 @@ public class KeyValues : IEnumerable<KeyValues>
 
 		SetInt(value);
 	}
+	public KeyValues(ReadOnlySpan<char> name, object? instance) : base() {
+		node = new(this);
+		Name = new(name);
+
+		SetPtr(instance);
+	}
 
 	public KeyValues(ReadOnlySpan<char> name, ReadOnlySpan<char> firstKey, ReadOnlySpan<char> firstValue) : base() {
 		node = new(this);
@@ -557,7 +563,12 @@ public class KeyValues : IEnumerable<KeyValues>
 		return this;
 	}
 
-	public void SetPtr(string keyName, object? ptr) {
+	public void SetPtr(object? ptr) {
+		Value = ptr;
+		Type = Types.Pointer;
+	}
+
+	public void SetPtr(ReadOnlySpan<char> keyName, object? ptr) {
 		KeyValues? dat = FindKey(keyName, true);
 		if (dat != null) {
 			dat.Value = ptr;
@@ -566,7 +577,7 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 	public Color GetColor() {
-		if(Value is Color c) {
+		if (Value is Color c) {
 			return c;
 		}
 		return new(); // todo: proper implementation of this
