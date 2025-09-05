@@ -6,9 +6,9 @@ namespace Source.Common.Commands;
 public delegate void FnChangeCallback(IConVar var, in ConVarChangeContext ctx);
 
 public interface IConsoleDisplayFunc {
-	public void ColorPrint(in Color clr, string message);
-	public void Print(string message);
-	public void DPrint(string message);
+	public void ColorPrint(in Color clr, ReadOnlySpan<char> message);
+	public void Print(ReadOnlySpan<char> message);
+	public void DPrint(ReadOnlySpan<char> message);
 }
 
 public interface ICvarQuery {

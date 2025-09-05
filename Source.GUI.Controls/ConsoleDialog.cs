@@ -4,6 +4,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
+using System;
 using System.Diagnostics;
 
 namespace Source.GUI.Controls;
@@ -44,9 +45,36 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 	public override void OnCommand(ReadOnlySpan<char> command) {
 		if(command.Equals("submit", StringComparison.OrdinalIgnoreCase)) {
+			Span<char> incoming = stackalloc char[256];
+			Entry.GetText(incoming);
+			PostActionSignal(new KeyValues("CommandSubmitted", "command", incoming));
 
+			Print("] ");
+			Print(command);
+			Print("\n");
+			Entry.SetText("");
+
+			OnTextChanged(Entry);
+
+			// todo: History.GotoTextEnd();
+
+			int extraPtr = command.IndexOf(' ');
+			ReadOnlySpan<char> extra = null;
+			if (extraPtr != -1) {
+				extra = command[(extraPtr + 1)..];
+				command = command[..extraPtr];
+			}
+
+			if (command.Length > 0) 
+				AddToHistory(command, extra);
+			
+			// CompletionList.SetVisible(false);
 		}
 		base.OnCommand(command);
+	}
+
+	private void AddToHistory(ReadOnlySpan<char> command, ReadOnlySpan<char> extra) {
+
 	}
 
 	public ConsolePanel(Panel? parent, string? panelName, bool statusVersion) : base(parent, panelName) {
@@ -112,16 +140,16 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 			}
 		}
 	}
-	public void ColorPrint(in Color clr, string message) {
-		throw new NotImplementedException();
+	public void ColorPrint(in Color clr, ReadOnlySpan<char> message) {
+
 	}
 
-	public void DPrint(string message) {
-		throw new NotImplementedException();
+	public void DPrint(ReadOnlySpan<char> message) {
+
 	}
 
-	public void Print(string message) {
-		throw new NotImplementedException();
+	public void Print(ReadOnlySpan<char> message) {
+
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {

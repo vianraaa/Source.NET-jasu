@@ -341,7 +341,7 @@ public class TextEntry : Panel
 				if (cursorLine < CurrentStartLine) {
 					startLine = cursorLine;
 					if (VertScrollBar != null) {
-						MoveScrollBar(1); 
+						MoveScrollBar(1);
 						startLine = VertScrollBar.GetValue();
 					}
 				}
@@ -859,17 +859,17 @@ public class TextEntry : Panel
 	private void GotoWordRight() {
 		SelectCheck();
 
-		while (++CursorPos < TextStream.Count) 
+		while (++CursorPos < TextStream.Count)
 			if (char.IsWhiteSpace(TextStream[CursorPos]))
 				break;
 
-		while (++CursorPos < TextStream.Count) 
+		while (++CursorPos < TextStream.Count)
 			if (!char.IsWhiteSpace(TextStream[CursorPos]))
 				break;
 
 		if (CursorPos > TextStream.Count)
 			CursorPos = TextStream.Count;
-		
+
 		ScrollRight();
 
 		LayoutVerticalScrollBarSlider();
@@ -1089,10 +1089,10 @@ public class TextEntry : Panel
 	private int GetCurrentLineEnd() {
 		int i;
 		if (IsLineBreak(CursorPos)) {
-			for (i = 0; i < LineBreaks.Count - 1; ++i) 
+			for (i = 0; i < LineBreaks.Count - 1; ++i)
 				if (CursorPos == LineBreaks[i])
 					break;
-			
+
 			if (!CursorIsAtEnd) {
 				if (i == LineBreaks.Count - 2)
 					return TextStream.Count;
@@ -1103,27 +1103,27 @@ public class TextEntry : Panel
 				return CursorPos;
 		}
 
-		for (i = 0; i < LineBreaks.Count - 1; i++) 
-			if (CursorPos < LineBreaks[i]) 
+		for (i = 0; i < LineBreaks.Count - 1; i++)
+			if (CursorPos < LineBreaks[i])
 				return LineBreaks[i];
-			
-		
+
+
 		return TextStream.Count;
 	}
 
 	private bool IsLineBreak(int index) {
-		for (int i = 0; i < LineBreaks.Count; ++i) 
+		for (int i = 0; i < LineBreaks.Count; ++i)
 			if (index == LineBreaks[i])
 				return true;
-		
+
 		return false;
 	}
 
 	private void GotoTextStart() {
 		SelectCheck();
-		CursorPos = 0;     
+		CursorPos = 0;
 		PutCursorAtEnd = false;
-		CurrentStartIndex = 0; 
+		CurrentStartIndex = 0;
 
 		LayoutVerticalScrollBarSlider();
 		ResetCursorBlink();
@@ -1143,7 +1143,7 @@ public class TextEntry : Panel
 	}
 
 	private int GetCurrentLineStart() {
-		if (!Multiline)           
+		if (!Multiline)
 			return CurrentStartIndex;
 
 		int i;
@@ -1153,9 +1153,9 @@ public class TextEntry : Panel
 					break;
 			}
 			if (CursorIsAtEnd) {
-				if (i > 0) 
+				if (i > 0)
 					return LineBreaks[i - 1];
-				
+
 				return LineBreaks[0];
 			}
 			else
@@ -1188,7 +1188,7 @@ public class TextEntry : Panel
 		MoveCursor(GetCursorLine() + 1, cx);
 		if (!PutCursorAtEnd && CursorIsAtEnd) {
 			CursorPos++;
-			if (CursorPos > TextStream.Count) 
+			if (CursorPos > TextStream.Count)
 				CursorPos = TextStream.Count;
 		}
 		LayoutVerticalScrollBarSlider();
@@ -1236,7 +1236,7 @@ public class TextEntry : Panel
 			x += charWidth;
 		}
 
-		if (i == TextStream.Count) 
+		if (i == TextStream.Count)
 			GotoTextEnd();
 
 		LayoutVerticalScrollBarSlider();
@@ -1262,7 +1262,7 @@ public class TextEntry : Panel
 		SaveUndoState();
 
 		int dif = x1 - x0;
-		for (int i = 0; i < dif; i++) 
+		for (int i = 0; i < dif; i++)
 			TextStream.RemoveAt(x0);
 
 		ResetCursorBlink();
@@ -1392,10 +1392,9 @@ public class TextEntry : Panel
 		SelectCheck();
 
 		if (CursorIsAtEnd) {
-			if ((GetCursorLine() - 1) == 0)
-			{
+			if ((GetCursorLine() - 1) == 0) {
 				PutCursorAtEnd = true;
-				return;  
+				return;
 			}
 			else
 				CursorPos--;
@@ -1438,11 +1437,11 @@ public class TextEntry : Panel
 	private void GotoLeft() {
 		SelectCheck();
 
-		if (IsLineBreak(CursorPos)) 
+		if (IsLineBreak(CursorPos))
 			if (!CursorIsAtEnd)
 				PutCursorAtEnd = true;
-		
-		if (!PutCursorAtEnd && CursorPos > 0) 
+
+		if (!PutCursorAtEnd && CursorPos > 0)
 			CursorPos--;
 
 		ScrollLeft();
@@ -1477,9 +1476,9 @@ public class TextEntry : Panel
 
 			bool check = GetSelectedRange(out int cx0, out int cx1);
 
-			if (check && cursor >= cx0 && cursor < cx1) 
+			if (check && cursor >= cx0 && cursor < cx1)
 				return base.GetDragPanel();
-			
+
 			return null;
 		}
 
@@ -1505,7 +1504,7 @@ public class TextEntry : Panel
 		int i;
 		for (i = startIndex; i < TextStream.Count; i++) {
 			char ch = TextStream[i];
-			if (HideText) 
+			if (HideText)
 				ch = '*';
 
 			if (LineBreaks.Count > 0 && LineBreaks[lineBreakIndexIndex] == i) {
@@ -1520,17 +1519,17 @@ public class TextEntry : Panel
 
 			if (cy < yStart) {
 				onRightLine = true;
-				PutCursorAtEnd = true; 
+				PutCursorAtEnd = true;
 			}
-			else if (cy >= y && (cy < (y + fontTall + DRAW_OFFSET_Y))) 
+			else if (cy >= y && (cy < (y + fontTall + DRAW_OFFSET_Y)))
 				onRightLine = true;
-			
+
 
 			int wide = getCharWidth(Font, ch);
 
 			if (onRightLine) {
 				if (cx > GetWide()) { }
-				else if (cx < (DRAW_OFFSET_X + PixelsIndent) || cy < yStart) 
+				else if (cx < (DRAW_OFFSET_X + PixelsIndent) || cy < yStart)
 
 					return i;
 
@@ -1556,7 +1555,7 @@ public class TextEntry : Panel
 		cx0 = Select[0];
 		cx1 = Select[1];
 
-		if (cx1 < cx0) 
+		if (cx1 < cx0)
 			(cx1, cx0) = (cx0, cx1);
 
 		return true;
@@ -1689,5 +1688,50 @@ public class TextEntry : Panel
 		Font = font;
 		InvalidateLayout();
 		Repaint();
+	}
+
+	public int GetText(Span<char> outBuffer) {
+		int i, c;
+		for (i = 0, c = Math.Min(outBuffer.Length, TextStream.Count); i < c; i++) {
+			char ch = TextStream[i];
+			if (c == '\0')
+				break;
+			outBuffer[i] = ch;
+		}
+		return i;
+	}
+
+	public void SetText(ReadOnlySpan<char> text) {
+		if (text == null)
+			text = "";
+
+		if (text[0] == '#') {
+			ReadOnlySpan<char> localized = Localize.Find(text);
+			if (localized != null) {
+				SetText(text);
+				return;
+			}
+		}
+
+		TextStream.Clear();
+		TextStream.EnsureCapacity(text.Length);
+		int missed_count = 0;
+		for (int i = 0; i < text.Length; i++) {
+			if (text[i] == '\r')
+			{
+				missed_count++;
+				continue;
+			}
+			TextStream.Add(text[i]);
+			SetCharAt(text[i], i - missed_count);
+		}
+
+		GotoTextStart();
+		SelectNone();
+
+		DataChanged = false;
+
+		FlushLineBreaks(true);
+		InvalidateLayout();
 	}
 }

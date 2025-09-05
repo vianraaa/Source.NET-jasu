@@ -117,4 +117,11 @@ public class LocalizedStringTable(ISystem system, IFileSystem fileSystem) : ILoc
 	public ReadOnlySpan<char> GetValueByIndex(ulong hash) {
 		return Lookup.TryGetValue(hash, out string? value) ? value : null;
 	}
+
+	public ReadOnlySpan<char> Find(ReadOnlySpan<char> text) {
+		ulong index = FindIndex(text);
+		if (index == 0)
+			return null;
+		return GetValueByIndex(index);
+	}
 }
