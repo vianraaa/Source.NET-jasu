@@ -1508,7 +1508,7 @@ public class TextEntry : Panel
 			if (HideText) 
 				ch = '*';
 
-			if (LineBreaks[lineBreakIndexIndex] == i) {
+			if (LineBreaks.Count > 0 && LineBreaks[lineBreakIndexIndex] == i) {
 				AddAnotherLine(ref x, ref y);
 				lineBreakIndexIndex++;
 

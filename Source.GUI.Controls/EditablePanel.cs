@@ -24,7 +24,7 @@ public class EditablePanel : Panel
 	static ConVar vgui_nav_lock_default_button = new(nameof(vgui_nav_lock_default_button), 0);
 	public override void OnKeyCodePressed(ButtonCode code) {
 		if (vgui_nav_lock_default_button.GetInt() == 0) {
-			ButtonCode nButtonCode = GetBaseButtonCode(code);
+			ButtonCode nButtonCode = code.GetBaseButtonCode();
 
 			IPanel? panel = GetFocusNavGroup().GetCurrentDefaultButton();
 			if (panel != null && !IsConsoleStylePanel()) {
@@ -44,13 +44,15 @@ public class EditablePanel : Panel
 
 		base.OnKeyCodePressed(code);
 	}
+	public override void OnChildAdded(IPanel child) {
+		base.OnChildAdded(child);
 
-	private ButtonCode GetBaseButtonCode(ButtonCode code) {
-		throw new NotImplementedException();
+		if (child != null) {
+			child.AddActionSignalTarget(this);
+		}
 	}
-
 	public override IPanel? GetCurrentKeyFocus() {
-		Panel focus = NavGroup.GetCurrentFocus();
+		Panel? focus = NavGroup.GetCurrentFocus();
 		if (focus == this)
 			return null;
 

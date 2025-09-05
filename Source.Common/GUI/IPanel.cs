@@ -133,6 +133,7 @@ public interface IPanel : IDisposable
 	void OnTick();
 	void SendMessage(KeyValues parms, IPanel? from);
 	IPanel? FindChildByName(ReadOnlySpan<char> childName, bool recurseDown);
+	void AddActionSignalTarget(IPanel editablePanel);
 }
 
 public interface IAnimationController {

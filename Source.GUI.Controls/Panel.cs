@@ -1134,7 +1134,14 @@ public class Panel : IPanel
 
 	public bool HasFocus() => Input.GetFocus() == this;
 
-	public virtual void OnCommand(ReadOnlySpan<char> command) { }
+	public virtual void OnCommand(ReadOnlySpan<char> command) {
+		if (command.Equals("performlayout", StringComparison.OrdinalIgnoreCase)) 
+			InvalidateLayout();
+		else if (command.Equals("reloadscheme", StringComparison.OrdinalIgnoreCase)) 
+			InvalidateLayout(false, true);
+		else 
+			PostActionSignal(new KeyValues(command));
+	}
 	public virtual void OnMouseCaptureLost() {
 
 	}
@@ -1210,7 +1217,12 @@ public class Panel : IPanel
 		Dispose();
 	}
 
-	public virtual void OnKeyCodePressed(ButtonCode code) { }
+	public virtual void OnKeyCodePressed(ButtonCode code) {
+		bool handled = false;
+		if (!handled && !PassUnhandledInput)
+			return;
+		CallParentFunction(new KeyValues("KeyCodePressed").AddSubKey("code", (int)code));
+	}
 	public virtual void OnKeyCodeTyped(ButtonCode code) { }
 	public virtual void OnKeyTyped(char unichar) { }
 	public virtual void OnKeyCodeReleased(ButtonCode code) { }

@@ -74,6 +74,7 @@ public class MatSystemSurface : IMatSystemSurface
 	public int TextPosY;
 	IPanel DefaultEmbeddedPanel;
 	IPanel? EmbeddedPanel;
+	bool IsDefault;
 
 	IMesh? Mesh;
 	MeshBuilder meshBuilder;
@@ -85,6 +86,7 @@ public class MatSystemSurface : IMatSystemSurface
 	readonly IFileSystem FileSystem;
 	readonly FontManager FontManager;
 	readonly FontTextureCache FontTextureCache;
+	IVGui VGui;
 	IVGuiInput? VGuiInput;
 	readonly IInputSystem InputSystem;
 	readonly ClientGlobalVariables globals;
@@ -92,9 +94,19 @@ public class MatSystemSurface : IMatSystemSurface
 	readonly ILauncherManager launcherMgr;
 	readonly TextureDictionary TextureDictionary;
 
+	bool ProvidedInterfaces;
+
 	[MemberNotNull(nameof(VGuiInput))]
 	void LinkVGUI() {
-		VGuiInput ??= services.GetRequiredService<IVGui>().GetInput();
+		if (!ProvidedInterfaces) {
+			VGui ??= services.GetRequiredService<IVGui>();
+			VGuiInput ??= VGui.GetInput();
+			if (EmbeddedPanel is MatEmbeddedPanel embedded) {
+				embedded.VGui ??= VGui;
+				embedded.Input ??= VGuiInput;
+			}
+			ProvidedInterfaces = true;
+		}
 	}
 
 	public MatSystemSurface(IMaterialSystem materials, IShaderAPI shaderAPI, ICommandLine commandLine,
@@ -130,7 +142,7 @@ public class MatSystemSurface : IMatSystemSurface
 		DefaultEmbeddedPanel = new MatEmbeddedPanel() {
 			materials = materials,
 			Surface = this,
-			SchemeManager = schemeManager
+			SchemeManager = schemeManager,
 		};
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
 		this.launcherMgr = launcherMgr;
@@ -1164,6 +1176,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public void SetEmbeddedPanel(IPanel panel) {
 		EmbeddedPanel = panel;
+		IsDefault = EmbeddedPanel == DefaultEmbeddedPanel;
 		EmbeddedPanel.RequestFocus();
 	}
 

@@ -153,6 +153,10 @@ public static class ButtonCodeExts {
 		return (code >= ButtonCode.KeyPad0) && (code <= ButtonCode.KeyPadDecimal);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ButtonCode GetBaseButtonCode(this ButtonCode code) {
+		return code;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsPunctuation(this ButtonCode code) {
 		return (code >= ButtonCode.Key0) && (code <= ButtonCode.KeySpace) && !IsAlphaNumeric(code) && !IsSpace(code) && !IsKeypad(code);
 	}

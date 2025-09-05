@@ -43,9 +43,10 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 	}
 
 	public override void OnCommand(ReadOnlySpan<char> command) {
-		if(command == "Submit") {
-			Debugger.Break();
+		if(command.Equals("submit", StringComparison.OrdinalIgnoreCase)) {
+
 		}
+		base.OnCommand(command);
 	}
 
 	public ConsolePanel(Panel? parent, string? panelName, bool statusVersion) : base(parent, panelName) {
