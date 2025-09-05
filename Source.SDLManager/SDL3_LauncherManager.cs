@@ -12,7 +12,8 @@ using System.Runtime.InteropServices;
 
 namespace Source.SDLManager;
 
-internal static class SDL3_State {
+internal static class SDL3_State
+{
 	static bool ready = false;
 	internal static void InitializeIfRequired() {
 		if (ready) return;
@@ -179,10 +180,15 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 
 	ICursor[] DefaultCursors;
 
-	public ICursor? GetHardwareCursor(nint cursor) {
+	public ICursor? GetHardwareCursor(HCursor cursor) {
 		if (cursor <= 0) return null;
 		if (cursor >= (int)CursorCode.Last) return null;
 		return DefaultCursors[cursor];
+	}
+
+	public ICursor? GetSoftwareCursor(HCursor cursor, out float x, out float y) {
+		x = y = 0;
+		return null;
 	}
 
 	[MemberNotNull(nameof(DefaultCursors))]
@@ -203,6 +209,21 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		DefaultCursors[(nint)CursorCode.Hand] = new SDL3_Cursor(SDL_SystemCursor.SDL_SYSTEM_CURSOR_POINTER);
 
 		DefaultCursors[(nint)CursorCode.Arrow].Activate();
+	}
+	ICursor? lastCursor;
+	public void SetMouseCursor(ICursor? currentlySetCursor) {
+		lastCursor = currentlySetCursor;
+		currentlySetCursor?.Activate();
+	}
+
+	public void SetMouseVisible(bool state) {
+		if (state) {
+			SDL3.SDL_ShowCursor();
+			lastCursor?.Activate();
+		}
+		else {
+			SDL3.SDL_HideCursor();
+		}
 	}
 }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
@@ -30,14 +31,17 @@ public struct GameMessageHandler
 
 public class Game : IGame
 {
-	readonly ILauncherManager? launcherManager; 
-	readonly Sys Sys; 
-	readonly IFileSystem fileSystem; 
-	readonly IInputSystem inputSystem; 
-	readonly IMatSystemSurface surface; 
+	readonly ILauncherManager? launcherManager;
+	readonly Sys Sys;
+	readonly IFileSystem fileSystem;
+	readonly IInputSystem inputSystem;
+	readonly IMatSystemSurface surface;
 	readonly IEngine eng;
+	readonly Host Host;
 	readonly IServiceProvider services;
-	public Game(ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services) {
+	public Game(Host host, ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services) {
+		Host = host;
+
 		this.launcherManager = launcherManager;
 		this.Sys = Sys;
 		this.fileSystem = fileSystem;
@@ -53,7 +57,34 @@ public class Game : IGame
 	}
 	GameMessageHandler[] GameMessageHandlers;
 
-	public void HandleMsg_ActivateApp(in InputEvent ev) { }
+	void AppActivate(bool active) {
+		if (IsActiveApp() == active)
+			return;
+
+		SetCanPostActivateEvents(false);
+
+#if !SWDS
+		if (Host.Initialized) {
+			ClearIOStates();
+			if (!active)
+				services.GetRequiredService<IBaseClientDLL>()?.IN_DeactivateMouse();
+		}
+#endif
+		SetActiveApp(active);
+		SetCanPostActivateEvents(true);
+	}
+
+	private void ClearIOStates() {
+		throw new NotImplementedException();
+	}
+
+	private void SetCanPostActivateEvents(bool v) {
+
+	}
+
+	public void HandleMsg_ActivateApp(in InputEvent ev) {
+		AppActivate(ev.Data != 0);
+	}
 	public void HandleMsg_WindowMove(in InputEvent ev) { }
 	public void HandleMsg_Close(in InputEvent ev) {
 		if (eng.GetState() == IEngine.State.Active)
@@ -298,8 +329,10 @@ public class Game : IGame
 		throw new NotImplementedException();
 	}
 
+	bool ActiveApp;
+
 	public bool IsActiveApp() {
-		throw new NotImplementedException();
+		return ActiveApp;
 	}
 
 	public void PlayStartupVideos() {
@@ -313,7 +346,9 @@ public class Game : IGame
 	public void SetWindowSize(int w, int h) {
 
 	}
-
+	public void SetActiveApp(bool active) {
+		ActiveApp = active;
+	}
 	public void SetWindowXY(int x, int y) {
 
 	}

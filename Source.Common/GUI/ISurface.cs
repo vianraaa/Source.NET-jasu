@@ -144,9 +144,8 @@ public interface ISurface
 	void CreatePopup(IPanel panel, bool minimised, bool showTaskbarIcon = true, bool disabled = false, bool mouseInput = true, bool kbInput = true);
 	void SwapBuffers(IPanel panel);
 	void Invalidate(IPanel panel);
-	void SetCursor(CursorCode cursor) => SetCursor((nint)cursor);
-	void SetCursor(nint cursor);
-	void SetCursor(ICursor cursor);
+	void SetCursor(CursorCode cursor);
+	void SetCursor(HCursor cursor);
 	void SetCursorAlwaysVisible(bool visible);
 	bool IsCursorVisible();
 	void ApplyChanges();
@@ -209,6 +208,7 @@ public interface ISurface
 	void DrawChar(char c, FontDrawType drawType = FontDrawType.Default);
 	void PlaySound(ReadOnlySpan<char> fileName);
 	void DrawTexturedPolygon(Span<SurfaceVertex> verts, bool clipVertices = true);
+	bool IsCursorLocked();
 }
 
 public interface IMatSystemSurface : ISurface {

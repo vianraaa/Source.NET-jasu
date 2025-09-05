@@ -148,6 +148,7 @@ public class EngineVGui(
 	Common Common;
 	IGameUI staticGameUIFuncs;
 	IGameConsole staticGameConsole;
+	IGame game;
 	ISurface matSystemSurface;
 	IEngineClient engineClient;
 	ILocalize localize;
@@ -269,6 +270,7 @@ public class EngineVGui(
 		// Load gameui
 		Common = engineAPI.GetRequiredService<Common>();
 		matSystemSurface = engineAPI.GetRequiredService<ISurface>();
+		game = engineAPI.GetRequiredService<IGame>();
 		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
 		engineClient = engineAPI.GetRequiredService<IEngineClient>();
 		vgui = engineAPI.GetRequiredService<IVGui>();
@@ -461,6 +463,26 @@ public class EngineVGui(
 
 		staticGameUIFuncs.RunFrame();
 		vgui.RunFrame();
+
+		surface.CalculateMouseVisible();
+		VGui_ActivateMouse();
+	}
+
+	private void VGui_ActivateMouse() {
+		if (clientDLL == null)
+			return;
+
+		if (!game.IsActiveApp()) {
+			clientDLL.IN_DeactivateMouse();
+			return;
+		}
+
+		if (surface.IsCursorLocked()) {
+			clientDLL.IN_ActivateMouse();
+		}
+		else {
+			clientDLL.IN_DeactivateMouse();
+		}
 	}
 
 	readonly ConVar r_drawvgui = new("r_drawvgui", "1", FCvar.Cheat, "Enable the rendering of vgui panels");

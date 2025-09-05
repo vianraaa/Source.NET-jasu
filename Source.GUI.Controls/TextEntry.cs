@@ -7,7 +7,11 @@ namespace Source.GUI.Controls;
 
 public class TextEntry : Panel
 {
-	public TextEntry(Panel? parent, string? name) : base(parent, name) { }
+	public TextEntry(Panel? parent, string? name) : base(parent, name) {
+		SetTriplePressAllowed(true);
+
+		SetCursor(CursorCode.IBeam);
+	}
 
 	bool SendNewLines;
 	bool Wrap;

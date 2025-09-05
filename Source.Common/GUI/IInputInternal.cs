@@ -33,8 +33,8 @@ public interface IVGuiInput
 	bool WasMouseDoublePressed(ButtonCode code);
 	bool IsMouseDown(ButtonCode code);
 
-	void SetCursorOveride(ICursor? cursor);
-	ICursor? GetCursorOveride();
+	void SetCursorOveride(CursorCode cursor);
+	CursorCode GetCursorOveride();
 
 	bool WasMouseReleased(ButtonCode code);
 	bool WasKeyPressed(ButtonCode code);

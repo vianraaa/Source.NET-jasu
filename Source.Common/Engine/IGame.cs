@@ -30,6 +30,7 @@ public interface IGame
 
 	// Not Alt-Tabbed away
 	bool IsActiveApp();
+	void SetActiveApp(bool state);
 
 	void DispatchAllStoredGameMessages();
 }

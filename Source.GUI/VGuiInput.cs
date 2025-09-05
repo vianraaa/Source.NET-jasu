@@ -238,8 +238,10 @@ public class VGuiInput : IVGuiInput
 		throw new NotImplementedException();
 	}
 
-	public ICursor? GetCursorOveride() {
-		throw new NotImplementedException();
+	CursorCode cursorOverride;
+
+	public CursorCode GetCursorOveride() {
+		return cursorOverride;
 	}
 
 	public void GetCursorPos(out int x, out int y) {
@@ -286,11 +288,19 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public IPanel? GetModalSubTree() {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		if (Unsafe.IsNullRef(ref context))
+			return null;
+
+		return context.ModalSubTree;
 	}
 
 	public IPanel? GetMouseCapture() {
-		throw new NotImplementedException();
+		ref InputContext context = ref GetInputContext(Context);
+		if (Unsafe.IsNullRef(ref context))
+			return null;
+
+		return context.MouseCapture;
 	}
 
 	public IPanel? GetMouseOver() {
@@ -384,7 +394,7 @@ public class VGuiInput : IVGuiInput
 			vgui.PostMessage(context.MouseCapture, new KeyValues("MousePressed", "code", (int)code), null);
 			targetPanel = context.MouseCapture;
 
-			if (captureLost) 
+			if (captureLost)
 				SetMouseCapture(null);
 		}
 		else if ((context.MouseFocus != null) && IsChildOfModalPanel(context.MouseFocus)) {
@@ -414,9 +424,9 @@ public class VGuiInput : IVGuiInput
 		}
 
 
-		if (IsChildOfModalPanel(targetPanel)) 
+		if (IsChildOfModalPanel(targetPanel))
 			surface.SetTopLevelFocus(targetPanel);
-		
+
 		return filter;
 	}
 
@@ -437,8 +447,7 @@ public class VGuiInput : IVGuiInput
 					bool wantsMouse = panel!.IsMouseInputEnabled();
 					bool isVisible = !surface.IsMinimized(panel);
 
-					while (isVisible && panel != null && panel.GetParent() != null)
-					{
+					while (isVisible && panel != null && panel.GetParent() != null) {
 						isVisible = panel.IsVisible();
 						panel = panel.GetParent();
 					}
@@ -453,10 +462,10 @@ public class VGuiInput : IVGuiInput
 				focus ??= surface.GetEmbeddedPanel().IsWithinTraverse(x, y, false);
 			}
 		}
-		else 
+		else
 			focus = context.RootPanel.IsWithinTraverse(x, y, false);
 
-		if (!IsChildOfModalPanel(focus, false)) 
+		if (!IsChildOfModalPanel(focus, false))
 			focus = null;
 
 		return focus;
@@ -603,14 +612,13 @@ public class VGuiInput : IVGuiInput
 			if (IsChildOfModalPanel(context.KeyFocus))
 				vgui.PostMessage(context.KeyFocus, new KeyValues("KeyFocusTicked"), null);
 
-		if (context.MouseFocus != null)
+		if (context.MouseFocus != null) {
 			if (IsChildOfModalPanel(context.MouseFocus))
 				vgui.PostMessage(context.MouseFocus, new KeyValues("MouseFocusTicked"), null);
-
-			else if (context.AppModalPanel != null) {
-				// surface.SetCursor(vgui::dc_arrow);
-				// ^^ TODO: Default cursors... maybe this shouldnt be an interface type... we'll see later
-			}
+		}
+		else if (context.AppModalPanel != null) {
+			surface.SetCursor(CursorCode.Arrow);
+		}
 
 		int i;
 
@@ -678,7 +686,7 @@ public class VGuiInput : IVGuiInput
 		if (surface.GetPopupCount() > 0) {
 			int nIndex = surface.GetPopupCount();
 
-			 while (nIndex > 0) {
+			while (nIndex > 0) {
 				top = surface.GetPopup(--nIndex);
 
 				if (top != null && top.IsVisible() && top.IsKeyboardInputEnabled() && !surface.IsMinimized(top) && IsChildOfModalSubTree(top) && (root == null || top.HasParent(root))) {
@@ -763,8 +771,8 @@ public class VGuiInput : IVGuiInput
 		throw new NotImplementedException();
 	}
 
-	public void SetCursorOveride(ICursor? cursor) {
-		throw new NotImplementedException();
+	public void SetCursorOveride(CursorCode cursor) {
+		cursorOverride = cursor;
 	}
 
 	public void SetCursorPos(int x, int y) {
@@ -1001,7 +1009,7 @@ public class VGuiInput : IVGuiInput
 		bool filter = PostKeyMessage(new KeyValues("KeyCodePressed").AddSubKey("code", (int)code));
 		if (filter)
 			context.KeyRepeater?.KeyDown(code);
-		
+
 		return filter;
 	}
 

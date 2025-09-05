@@ -18,4 +18,6 @@ public interface IBaseClientDLL
 	bool DispatchUserMessage(int msgType, bf_read msgData);
 	bool Init();
 	bool HandleUiToggle();
+	void IN_DeactivateMouse();
+	void IN_ActivateMouse();
 }

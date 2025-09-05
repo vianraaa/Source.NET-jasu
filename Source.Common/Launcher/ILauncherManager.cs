@@ -32,5 +32,8 @@ public interface ILauncherManager
 	IWindow GetWindow();
 	int GetEvents(WindowEvent[] eventBuffer, int length);
 	void CenterWindow(int v2, int v3);
-	ICursor? GetHardwareCursor(nint cursor);
+	ICursor? GetHardwareCursor(HCursor cursor);
+	ICursor? GetSoftwareCursor(HCursor cursor, out float x, out float y);
+	void SetMouseCursor(ICursor? currentlySetCursor);
+	void SetMouseVisible(bool v);
 }

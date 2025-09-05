@@ -1,9 +1,10 @@
-﻿namespace Source.Common.GUI;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public interface ICursor {
-	public void Activate();
-}
-
+namespace Source.Common.GUI;
 public enum CursorCode : byte
 {
 	User,
@@ -25,4 +26,9 @@ public enum CursorCode : byte
 	Last,
 	AlwaysVisiblePush,
 	AlwaysVisiblePop
+}
+
+public interface ICursor
+{
+	void Activate();
 }

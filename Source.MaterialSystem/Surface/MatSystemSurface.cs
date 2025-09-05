@@ -287,8 +287,86 @@ public class MatSystemSurface : IMatSystemSurface
 			MovePopupToFront(panel);
 		}
 	}
+	bool NeedsMouse;
+	bool NeedsKeyboard;
 
 	public void CalculateMouseVisible() {
+		nint i;
+		NeedsMouse = false;
+		NeedsKeyboard = false;
+
+		LinkVGUI();
+
+		if (VGuiInput.GetMouseCapture() != null)
+			return;
+
+		nint c = GetPopupCount();
+		IPanel? modalSubTree = VGuiInput.GetModalSubTree();
+		if (modalSubTree != null) {
+			for (i = 0; i < c; i++) {
+				IPanel? pop = GetPopup((int)i);
+				bool isChildOfModalSubPanel = IsChildOfModalSubTree(pop);
+				if (!isChildOfModalSubPanel)
+					continue;
+
+				bool isVisible = pop.IsVisible();
+				IPanel? p = pop.GetParent();
+
+				while (p != null && isVisible) {
+					if (p.IsVisible() == false) {
+						isVisible = false;
+						break;
+					}
+					p = p.GetParent();
+				}
+
+				if (isVisible) {
+					NeedsMouse = NeedsMouse || pop.IsMouseInputEnabled();
+					NeedsKeyboard = NeedsKeyboard || pop.IsKeyboardInputEnabled();
+
+					if (NeedsMouse && NeedsKeyboard)
+						break;
+				}
+			}
+		}
+		else {
+			for (i = 0; i < c; i++) {
+				IPanel? pop = GetPopup((int)i);
+
+				bool isVisible = pop.IsVisible();
+				IPanel? p = pop.GetParent();
+
+				while (p != null && isVisible) {
+					if (p.IsVisible() == false) {
+						isVisible = false;
+						break;
+					}
+					p = p.GetParent();
+				}
+
+				if (isVisible) {
+					NeedsMouse = NeedsMouse || pop.IsMouseInputEnabled();
+					NeedsKeyboard = NeedsKeyboard || pop.IsKeyboardInputEnabled();
+
+					if (NeedsMouse && NeedsKeyboard)
+						break;
+				}
+			}
+		}
+
+		if (NeedsMouse) {
+			UnlockCursor();
+			if (CurrentHCursor == (nint)CursorCode.None) {
+				SetCursor(CursorCode.Arrow);
+			}
+		}
+		else {
+			SetCursor(CursorCode.None);
+			LockCursor();
+		}
+	}
+
+	private bool IsChildOfModalSubTree(IPanel pop) {
 		throw new NotImplementedException();
 	}
 
@@ -696,10 +774,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 	}
 
-	bool CursorAlwaysVisible;
-	ICursor? CurrentCursor;
-
-	public bool IsCursorVisible() => CursorAlwaysVisible || CurrentCursor != null;
+	public bool IsCursorVisible() => CursorAlwaysVisible || CurrentHCursor != (nint)CursorCode.None;
 
 	public bool IsMinimized(IPanel panel) {
 		return false;
@@ -714,7 +789,12 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void LockCursor() {
-		throw new NotImplementedException();
+		LockCursor(true);
+	}
+
+	public void LockCursor(bool state) {
+		CursorLocked = state;
+		ActivateCurrentCursor();
 	}
 
 	public void MovePopupToBack(IPanel panel) {
@@ -1019,25 +1099,68 @@ public class MatSystemSurface : IMatSystemSurface
 		throw new NotImplementedException();
 	}
 
-	public void SetCursor(ICursor cursor) {
-		cursor.Activate();
-		CurrentCursor = cursor;
+	public void SetCursor(CursorCode cursor) => SetCursor((HCursor)cursor);
+	public void SetCursor(HCursor cursor) {
+		if (CurrentHCursor != cursor) {
+			CurrentHCursor = cursor;
+			CursorSelect(cursor);
+		}
 	}
 
-	public void SetCursor(nint cursor) {
-		ICursor? realCursor = launcherMgr.GetHardwareCursor(cursor);
+	float SoftwareCursorOffsetX, SoftwareCursorOffsetY;
 
-		if (realCursor != null) {
-			SetCursor(realCursor);
+	private void CursorSelect(HCursor cursor) {
+		if ((cursor == (nint)CursorCode.AlwaysVisiblePush) || (cursor == (nint)CursorCode.AlwaysVisiblePop)) {
+			ForceCursorVisibleCount += (cursor == (nint)CursorCode.AlwaysVisiblePush ? 1 : -1);
+			Assert(ForceCursorVisibleCount >= 0);
+
+			if ((ForceCursorVisibleCount != 0) != CursorVisible)
+				ActivateCurrentCursor();
+
 			return;
 		}
 
-		throw new NotImplementedException("Software cursors not yet implemented!");
+		if (CursorLocked)
+			return;
+
+		switch ((CursorCode)cursor) {
+			case CursorCode.User:
+			case CursorCode.None:
+			case CursorCode.Blank:
+				CursorVisible = false;
+				break;
+
+			default:
+				Assert(false);
+				cursor = (nint)CursorCode.Arrow;
+				goto case CursorCode.Arrow;
+
+			case CursorCode.Arrow:
+			case CursorCode.WaitArrow:
+			case CursorCode.IBeam:
+			case CursorCode.Hourglass:
+			case CursorCode.Crosshair:
+			case CursorCode.Up:
+			case CursorCode.SizeNWSE:
+			case CursorCode.SizeNESW:
+			case CursorCode.SizeWE:
+			case CursorCode.SizeNS:
+			case CursorCode.SizeAll:
+			case CursorCode.No:
+			case CursorCode.Hand:
+				CursorVisible = true;
+				if (!SoftwareCursorActive) 
+					CurrentCursor = launcherMgr.GetHardwareCursor(cursor);
+				else 
+					CurrentCursor = launcherMgr.GetSoftwareCursor(cursor, out SoftwareCursorOffsetX, out SoftwareCursorOffsetY);
+
+				break;
+		}
+		ActivateCurrentCursor();
 	}
 
-
 	public void SetCursorAlwaysVisible(bool visible) {
-		throw new NotImplementedException();
+		CursorAlwaysVisible = visible;
 	}
 
 	public void SetEmbeddedPanel(IPanel panel) {
@@ -1111,7 +1234,7 @@ public class MatSystemSurface : IMatSystemSurface
 				return true;
 
 			case InputEventType.Gui_SetCursor:
-				// ActivateCurrentCursor(); // todo
+				ActivateCurrentCursor(); // todo
 				return true;
 
 			// All of IME is todo
@@ -1150,6 +1273,35 @@ public class MatSystemSurface : IMatSystemSurface
 		}
 
 		return false;
+	}
+
+	bool SoftwareCursorActive;
+	bool CursorVisible;
+	bool CursorAlwaysVisible;
+	bool CursorLocked;
+	int ForceCursorVisibleCount;
+
+	HCursor CurrentHCursor;
+	ICursor? CurrentCursor;
+	ICursor? CurrentlySetCursor;
+
+	private void ActivateCurrentCursor() {
+		if (SoftwareCursorActive) {
+			HideHardwareCursor();
+			return;
+		}
+
+		if (CursorVisible || ForceCursorVisibleCount > 0) {
+			if (CurrentCursor != CurrentlySetCursor) {
+				CurrentlySetCursor = CurrentCursor;
+				launcherMgr.SetMouseCursor(CurrentlySetCursor);
+				launcherMgr.SetMouseVisible(true);
+			}
+		}
+	}
+
+	private void HideHardwareCursor() {
+		throw new NotImplementedException();
 	}
 
 	public bool SetFontGlyphSet(IFont font, ReadOnlySpan<char> windowsFontName, int tall, int weight, int blur, int scanlines, SurfaceFontFlags flags, int rangeMin = 0, int rangeMax = 0) {
@@ -1256,7 +1408,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void UnlockCursor() {
-		throw new NotImplementedException();
+		LockCursor(false);
 	}
 
 	public void PaintSoftwareCursor() {
@@ -1469,4 +1621,6 @@ public class MatSystemSurface : IMatSystemSurface
 
 		return info.Valid;
 	}
+
+	public bool IsCursorLocked() => CursorLocked;
 }

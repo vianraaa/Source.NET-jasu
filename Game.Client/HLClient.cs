@@ -53,4 +53,12 @@ public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 	public bool HandleUiToggle() {
 		return false;
 	}
+
+	public void IN_DeactivateMouse() {
+
+	}
+
+	public void IN_ActivateMouse() {
+
+	}
 }

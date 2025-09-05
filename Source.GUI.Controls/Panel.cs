@@ -7,6 +7,7 @@ using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
 using System.Diagnostics;
@@ -159,6 +160,7 @@ public class Panel : IPanel
 	[Imported] public IVGuiInput Input;
 	[Imported] public IEngineAPI EngineAPI;
 	[Imported] public ILocalize Localize;
+	[Imported] public ILauncherManager Launcher;
 
 	private AnimationController? ac;
 	public AnimationController GetAnimationController() => ac ??= EngineAPI.GetRequiredService<AnimationController>();
@@ -180,6 +182,8 @@ public class Panel : IPanel
 
 		MouseInput = true;
 		KbInput = true;
+
+		Cursor = CursorCode.Arrow;
 	}
 
 	public IBorder? GetBorder() => Border;
@@ -820,11 +824,9 @@ public class Panel : IPanel
 		SetSize(wide, tall);
 	}
 
-	public void SetCursor(ICursor cursor) {
-		// todo
-	}
+	CursorCode Cursor;
 	public void SetCursor(CursorCode cursor) {
-		// todo
+		this.Cursor = cursor;
 	}
 
 	public void SetEnabled(bool state) {
@@ -1106,6 +1108,26 @@ public class Panel : IPanel
 	public virtual bool IsTriplePressAllowed() => TriplePressAllowed;
 	public virtual void OnMouseTriplePressed(ButtonCode code) { }
 
+	public CursorCode GetCursor() => Cursor;
+
+	public void InternalSetCursor() {
+		bool visible = IsVisible();
+		if (visible) {
+			IPanel? p = GetParent();
+			while (p != null) {
+				visible &= p.IsVisible();
+				p = p.GetParent();
+			}
+
+			if (visible && HasParent(Surface.GetEmbeddedPanel())) {
+				CursorCode cursor = GetCursor();
+				if (Input.GetCursorOveride() != 0)
+					cursor = Input.GetCursorOveride();
+				Surface.SetCursor((HCursor)cursor);
+			}
+		}
+	}
+
 	bool AutoDelete;
 	public virtual void SetAutoDelete(bool state) {
 		AutoDelete = state;
@@ -1139,7 +1161,14 @@ public class Panel : IPanel
 	public virtual void OnKeyTyped(char unichar) { }
 	public virtual void OnKeyCodeReleased(ButtonCode code) { }
 	public virtual void OnUnhandledMouseClick(ButtonCode code) { }
+	public void InternalKeyFocusTicked() {
+		OnKeyFocusTicked();
+	}
 	public virtual void OnKeyFocusTicked() { }
+	public void InternalMouseFocusTicked() {
+		InternalSetCursor();
+		OnMouseFocusTicked();
+	}
 	public virtual void OnMouseFocusTicked() { }
 	public virtual void OnClose() { }
 	public virtual void OnDelete() {
@@ -1153,8 +1182,8 @@ public class Panel : IPanel
 			case "CursorEntered": OnCursorEntered(); break;
 			case "CursorExited": OnCursorExited(); break;
 			case "CursorMoved": OnCursorMoved(message.GetInt("xpos"), message.GetInt("ypos")); break;
-			case "MouseFocusTicked": OnMouseFocusTicked(); break;
-			case "KeyFocusTicked": OnKeyFocusTicked(); break;
+			case "MouseFocusTicked": InternalMouseFocusTicked(); break;
+			case "KeyFocusTicked": InternalKeyFocusTicked(); break;
 			case "MouseCaptureLost": OnMouseCaptureLost(); break;
 			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
 			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
@@ -1164,7 +1193,7 @@ public class Panel : IPanel
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
 		// if (!message.Name.Contains("Ticked"))
-		// Msg($"Message: {message.Name}\n");
+		Msg($"Message: {message.Name}\n");
 	}
 
 	public void OnTick() {
