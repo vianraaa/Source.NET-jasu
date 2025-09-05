@@ -1193,7 +1193,7 @@ public class Panel : IPanel
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
 		// if (!message.Name.Contains("Ticked"))
-		Msg($"Message: {message.Name}\n");
+		// Msg($"Message: {message.Name}\n");
 	}
 
 	public void OnTick() {
