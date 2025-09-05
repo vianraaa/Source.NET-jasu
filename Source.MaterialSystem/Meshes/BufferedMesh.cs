@@ -62,8 +62,10 @@ public unsafe class BufferedMesh : Mesh
 
 		Mesh.PreLock();
 
-		if (!Mesh.HasEnoughRoom(vertexCount, indexCount))
+		if (!Mesh.HasEnoughRoom(vertexCount, indexCount)) {
+			Msg("Not enough room! Flushing!\n");
 			ShaderAPI.FlushBufferedPrimitives();
+		}
 
 		WasRendered = false;
 

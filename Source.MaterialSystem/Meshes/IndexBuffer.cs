@@ -37,6 +37,8 @@ public unsafe class IndexBuffer : IDisposable
 		}
 	}
 
+	public void FlushASAP() => Flush = true;
+
 	public short* Lock(bool readOnly, int indexCount, out int startIndex, int firstIndex) {
 		Assert(!Locked);
 		if (Dynamic) {

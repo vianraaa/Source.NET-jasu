@@ -932,6 +932,7 @@ public class TextEntry : Panel
 	}
 
 	private void Backspace() {
+		throw new NotImplementedException();
 	}
 
 	private void GotoEndOfLine() {
@@ -963,7 +964,7 @@ public class TextEntry : Panel
 	}
 
 	private void DeleteSelected() {
-
+		throw new NotImplementedException();
 	}
 
 	private void GotoUp() {
@@ -971,9 +972,11 @@ public class TextEntry : Panel
 	}
 
 	private void GotoRight() {
+		throw new NotImplementedException();
 	}
 
 	private void GotoLeft() {
+		throw new NotImplementedException();
 	}
 
 	static readonly KeyValues TextNewLineActionSignal = new("TextNewLine");

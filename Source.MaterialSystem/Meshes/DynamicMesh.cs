@@ -140,6 +140,10 @@ public unsafe class DynamicMesh : Mesh
 			s_PrimsCount = 1;
 
 			DrawMesh();
+			
+			// DEVIATION: Flush ASAP after a dynamic mesh draw call
+			VertexBuffer.FlushASAP();
+			IndexBuffer.FlushASAP();
 
 			s_Prims = null;
 		}

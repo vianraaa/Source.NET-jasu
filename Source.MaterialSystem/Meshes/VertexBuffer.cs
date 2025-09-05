@@ -43,6 +43,8 @@ public unsafe class VertexBuffer : IDisposable
 		ExternalMemory = false;
 	}
 
+	public void FlushASAP() => Flush = true;
+
 	public void RecomputeVAO() {
 		// Unlike the VBO, we do not need to destroy everything when the state changes
 		if (this.vao == -1) {
@@ -154,7 +156,7 @@ public unsafe class VertexBuffer : IDisposable
 	}
 
 	internal bool HasEnoughRoom(int numVertices) {
-		return NextLockOffset() + numVertices * VertexSize <= BufferSize;
+		return NextLockOffset() + (numVertices * VertexSize) <= BufferSize;
 	}
 
 	unsafe static nint dummyData = (nint)NativeMemory.AlignedAlloc(512, 16);
