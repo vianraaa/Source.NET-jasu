@@ -5,9 +5,42 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Source.GUI.Controls;
 
+public class RichTextInterior : Panel
+{
+	public RichTextInterior(RichText parent, string name) : base(parent, name) {
+		SetKeyboardInputEnabled(false);
+		SetMouseInputEnabled(false);
+		SetPaintBackgroundEnabled(false);
+		SetPaintEnabled(false);
+		RichText = parent;
+	}
+
+	RichText RichText;
+}
 public class RichText : Panel
 {
-	public RichText(Panel? parent, string? name) : base(parent, name) { }
+	struct Fade {
+		public double FadeStartTime;
+		public double FadeLength;
+		public double FadeSustain;
+		public int OriginalAlpha;
+	}
+	struct FormatStream {
+		public Color Color;
+		public int PixelsIndent;
+		public bool TextClickable;
+		public ulong ClickableTextAction;
+		public Fade Fade;
+		public nint TextStreamIndex;
+	}
+	public bool ResetFades;
+	public bool Interactive;
+	public bool UnusedScrollbarInvis;
+	public bool AllTextAlphaIsZero;
+
+	public RichText(Panel? parent, string? name) : base(parent, name) { 
+	
+	}
 
 
 	public void SetFont(IFont? font) {

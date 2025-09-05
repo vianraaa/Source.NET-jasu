@@ -1678,8 +1678,8 @@ public class TextEntry : Panel
 
 		SetBorder(scheme.GetBorder("ButtonDepressedBorder"));
 
-		if (Font == null) Font = scheme.GetFont("Default", IsProportional());
-		if (SmallFont == null) SmallFont = scheme.GetFont("DefaultVerySmall", IsProportional());
+		Font ??= scheme.GetFont("Default", IsProportional());
+		SmallFont ??= scheme.GetFont("DefaultVerySmall", IsProportional());
 
 		SetFont(Font);
 	}
@@ -1705,7 +1705,7 @@ public class TextEntry : Panel
 		if (text == null)
 			text = "";
 
-		if (text[0] == '#') {
+		if (text.Length > 0 && text[0] == '#') {
 			ReadOnlySpan<char> localized = Localize.Find(text);
 			if (localized != null) {
 				SetText(text);

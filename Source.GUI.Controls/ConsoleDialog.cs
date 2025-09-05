@@ -46,8 +46,8 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 	public override void OnCommand(ReadOnlySpan<char> command) {
 		if(command.Equals("submit", StringComparison.OrdinalIgnoreCase)) {
 			Span<char> incoming = stackalloc char[256];
-			Entry.GetText(incoming);
-			PostActionSignal(new KeyValues("CommandSubmitted", "command", incoming));
+			int len = Entry.GetText(incoming);
+			PostActionSignal(new KeyValues("CommandSubmitted", "command", incoming[..len]));
 
 			Print("] ");
 			Print(command);
@@ -116,6 +116,7 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 		Cvar!.InstallConsoleDisplayFunc(this);
 	}
+
 
 	public override void OnKeyCodeTyped(ButtonCode code) {
 		base.OnKeyCodeTyped(code);
@@ -240,6 +241,20 @@ public class ConsoleDialog : Frame
 
 		ConsolePanel = EngineAPI.New<ConsolePanel>(this, "ConsolePage", statusVersion);
 		ConsolePanel.AddActionSignalTarget(this);
+	}
+
+	public override void OnMessage(KeyValues message, IPanel? from) {
+		switch (message.Name) {
+			case "CommandSubmitted":
+				OnCommandSubmitted(message.GetString("command"));		
+				return;
+		}
+
+		base.OnMessage(message, from);
+	}
+
+	protected virtual void OnCommandSubmitted(ReadOnlySpan<char> command) {
+		PostActionSignal(new KeyValues("CommandSubmitted", "command", command));
 	}
 
 	public override void PerformLayout() {

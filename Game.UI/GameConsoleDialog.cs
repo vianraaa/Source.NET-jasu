@@ -1,4 +1,6 @@
-﻿using Source.Common.Input;
+﻿using Source.Common.Client;
+using Source.Common.Engine;
+using Source.Common.Input;
 using Source.GUI.Controls;
 
 namespace Game.UI;
@@ -15,6 +17,10 @@ public class GameConsoleDialog : ConsoleDialog  {
 
 		}
 	}
+
+	[Imported] public IEngineClient engine;
+
+	protected override void OnCommandSubmitted(ReadOnlySpan<char> command) => engine.ClientCmd_Unrestricted(command);
 	public override void OnCommand(ReadOnlySpan<char> command) {
 		base.OnCommand(command);
 	}

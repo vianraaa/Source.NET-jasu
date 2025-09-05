@@ -132,9 +132,9 @@ public unsafe class FreeTypeFont : BaseFont
 	}
 
 	internal override void GetCharRGBA(char ch, int rgbaWide, int rgbaTall, Span<byte> rgba) {
-		FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
+		FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_RENDER |FT_LOAD.FT_LOAD_DEFAULT);
 		FT_GlyphSlotRec_* slot = face->glyph;
-		FT_Render_Glyph(slot, FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
+		FT_Render_Glyph(slot, AntiAliased ? FT_Render_Mode_.FT_RENDER_MODE_MONO : FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
 		DrawBitmap(slot, rgbaWide, rgbaTall, rgba);
 	}
 
@@ -153,7 +153,16 @@ public unsafe class FreeTypeFont : BaseFont
 				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
 					continue;
 
-				byte coverage = row[x];
+				byte coverage;
+				if (AntiAliased) {
+					int byteIndex = x >> 3;
+					int bitIndex = 7 - (x & 7); 
+					coverage = (byte)((row[byteIndex] >> bitIndex) & 1);
+					coverage = (byte)(coverage * 255); 
+				}
+				else 
+					coverage = row[x];
+
 				int dstIndex = (dstY * rgbaWide + dstX) * 4;
 				rgba[dstIndex + 0] = 255;
 				rgba[dstIndex + 1] = 255;
