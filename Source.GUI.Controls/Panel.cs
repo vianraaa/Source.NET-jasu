@@ -550,41 +550,9 @@ public class Panel : IPanel
 	}
 
 	public void MoveToBack() {
-		if (Parent != null) {
-			Parent.Children.Remove(this);
-			Parent.Children.Insert(0, this);
-
-			int i = 1;
-			while (i < Parent.Children.Count) {
-				if (Parent.Children[i].ZPos < ZPos) {
-					Parent.Children[i - 1] = Parent.Children[i];
-					Parent.Children[i] = this;
-					i++;
-				}
-				else 
-					break;
-			}
-		}
 	}
 
 	public void MoveToFront() {
-		Surface.MovePopupToFront(this);
-
-		if (Parent != null) {
-			Parent.Children.Remove(this);
-			Parent.Children.Add(this);
-
-			int i = Parent.Children.Count - 2;
-			while (i >= 0) {
-				if (Parent.Children[i].ZPos > ZPos) {
-					Parent.Children[i + 1] =  Parent.Children[i];
-					Parent.Children[i]  = this;
-					i--;
-				}
-				else 
-					break;
-			}
-		}
 	}
 
 
