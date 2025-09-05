@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -161,6 +162,7 @@ public class Panel : IPanel
 	[Imported] public IEngineAPI EngineAPI;
 	[Imported] public ILocalize Localize;
 	[Imported] public ILauncherManager Launcher;
+	[Imported] public ISystem System;
 
 	private AnimationController? ac;
 	public AnimationController GetAnimationController() => ac ??= EngineAPI.GetRequiredService<AnimationController>();
@@ -378,9 +380,9 @@ public class Panel : IPanel
 		return "";
 	}
 
-	public IPanel? GetParent() {
-		return Parent;
-	}
+	public Panel? GetParent() => Parent;
+	IPanel? IPanel.GetParent() => Parent;
+	
 
 	public void GetPos(out int x, out int y) {
 		x = this.X;
@@ -808,7 +810,7 @@ public class Panel : IPanel
 	}
 
 	public void RequestFocus(int direction = 0) {
-
+	
 	}
 
 	public bool RequestFocusNext(IPanel existingPanel) {
@@ -1087,9 +1089,15 @@ public class Panel : IPanel
 	public bool HasFocus() => Input.GetFocus() == this;
 
 	public virtual void OnCommand(ReadOnlySpan<char> command) { }
-	public virtual void OnMouseCaptureLost() { }
-	public virtual void OnSetFocus() { }
-	public virtual void OnKillFocus() { }
+	public virtual void OnMouseCaptureLost() {
+
+	}
+	public virtual void OnSetFocus() {
+		Repaint();
+	}
+	public virtual void OnKillFocus(Panel? newPanel) {
+		Repaint();
+	}
 	public virtual void OnThink() { }
 	public virtual void OnChildAdded(IPanel child) { }
 	public virtual void OnSizeChanged(int newWide, int newTall) {
@@ -1169,11 +1177,35 @@ public class Panel : IPanel
 		InternalSetCursor();
 		OnMouseFocusTicked();
 	}
-	public virtual void OnMouseFocusTicked() { }
+	public virtual void OnMouseFocusTicked() {
+		// Send it to the parent
+		GetParent()?.OnMouseFocusTicked();
+	}
 	public virtual void OnClose() { }
 	public virtual void OnDelete() {
 		Dispose();
 	}
+
+	public void LocalToScreen(ref int x, ref int y) {
+		GetAbsPos(out int px, out int py);
+		x += px;
+		y += py;
+	}
+
+	public void ScreenToLocal(ref int x, ref int y) {
+		GetAbsPos(out int px, out int py);
+		x -= px;
+		y -= py;
+	}
+	public void ParentLocalToScreen(ref int x, ref int y) {
+		int px = 0, py = 0;
+		GetParent()?.GetAbsPos(out px, out py);
+		x += px;
+		y += py;
+	}
+
+	static ConVar vgui_print_messages = new("1", FCvar.None);
+
 	public virtual void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
 			case "KeyCodePressed": OnKeyCodePressed((ButtonCode)message.GetInt("code")); break;
@@ -1188,13 +1220,25 @@ public class Panel : IPanel
 			case "MousePressed": OnMousePressed((ButtonCode)message.GetInt("code")); break;
 			case "MouseReleased": OnMouseReleased((ButtonCode)message.GetInt("code")); break;
 			case "UnhandledMouseClick": OnUnhandledMouseClick((ButtonCode)message.GetInt("code")); break;
+			case "SetFocus": InternalSetFocus(); break;
+			case "KillFocus": InternalKillFocus((Panel?)message.GetPtr("newPanel")); break;
 			case "Delete": OnDelete(); break;
 			case "Close": OnClose(); break;
 			case "Command": OnCommand(message.GetString("command")); break;
 		}
-		// if (!message.Name.Contains("Ticked"))
-		// Msg($"Message: {message.Name}\n");
+		if (vgui_print_messages.GetBool())
+			if (vgui_print_messages.GetInt() == 2 || !message.Name.Contains("Ticked"))
+				Msg($"Message from {from} to {this}: {message.Name}\n");
 	}
+
+	private void InternalSetFocus() {
+		OnSetFocus();
+	}
+
+	private void InternalKillFocus(Panel? newPanel) {
+		OnKillFocus(newPanel);
+	}
+
 
 	public void OnTick() {
 		throw new NotImplementedException();
@@ -1288,7 +1332,7 @@ public class Panel : IPanel
 
 	IPanel? IPanel.FindChildByName(ReadOnlySpan<char> childName, bool recurseDown) => FindChildByName(childName, recurseDown);
 
-	private IPanel? FindChildByName(ReadOnlySpan<char> childName, bool recurseDown) {
+	public Panel? FindChildByName(ReadOnlySpan<char> childName, bool recurseDown) {
 		return null; // todo: impl
 	}
 

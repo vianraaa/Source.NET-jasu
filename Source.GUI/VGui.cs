@@ -196,4 +196,8 @@ public class VGui : IVGui
 	}
 
 	public IVGuiInput GetInput() => Input;
+
+	internal bool IsDispatchingMessages() {
+		return InDispatcher;
+	}
 }

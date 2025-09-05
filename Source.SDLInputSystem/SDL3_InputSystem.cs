@@ -258,6 +258,17 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 			for (int i = 0; i < events; i++) {
 				WindowEvent ev = eventBuffer[i];
 				switch (ev.EventType) {
+					case WindowEventType.AppActivate: {
+							InputEvent newEv = new();
+							newEv.Type = InputEventType.App_AppActivated;
+							newEv.Data = ev.ModifierKeyMask != 0 ? 1 : 0;
+
+							PostUserEvent(in newEv);
+							if (ev.ModifierKeyMask == 0) {
+								ResetInputState();
+							}
+						}
+						break;
 					case WindowEventType.KeyDown: {
 							if (MapVirtualKeyToButtonCode(ev.VirtualKeyCode, out ButtonCode virtualCode)) {
 								ButtonCode scancode = virtualCode;
@@ -324,6 +335,22 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 				}
 			}
 		}
+	}
+
+	private void ResetInputState() {
+		ReleaseAllButtons();
+		ZeroAnalogState(0, (int)AnalogCode.Last - 1);
+	}
+
+	private void ZeroAnalogState(int firstState, int lastState) {
+		InputState state = InputState;
+		memset(state.AnalogDelta.AsSpan()[firstState..lastState], 0);
+		memset(state.AnalogValue.AsSpan()[firstState..lastState], 0);
+	}
+
+	private void ReleaseAllButtons(int firstButton = 0, int lastButton = (int)ButtonCode.Last - 1) {
+		for (int i = firstButton; i <= lastButton; ++i) 
+			PostButtonReleasedEvent(InputEventType.IE_ButtonReleased, LastSampleTick, (ButtonCode)i, (ButtonCode)i);
 	}
 
 	private void UpdateMousePositionState(InputState state, short x, short y) {

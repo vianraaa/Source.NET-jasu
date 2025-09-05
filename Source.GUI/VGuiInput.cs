@@ -245,7 +245,14 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void GetCursorPos(out int x, out int y) {
-		throw new NotImplementedException();
+		if (IsDispatchingMessageQueue())
+			GetCursorPosition(out x, out y);
+		else
+			surface.SurfaceGetCursorPos(out x, out y);
+	}
+
+	private bool IsDispatchingMessageQueue() {
+		return vgui.IsDispatchingMessages();
 	}
 
 	public void GetCursorPosition(out int x, out int y) {
@@ -792,9 +799,9 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetMouseCapture(IPanel? panel) {
+		Msg("\n");
 		if (!IsChildOfModalPanel(panel))
 			return;
-
 
 		ref InputContext context = ref GetInputContext(Context);
 		Assert(!Unsafe.IsNullRef(ref context));

@@ -597,4 +597,8 @@ public class KeyValues : IEnumerable<KeyValues>
 	public bool GetBool(ReadOnlySpan<char> name, bool defaultValue) {
 		return GetInt(name, defaultValue ? 1 : 0) != 0;
 	}
+
+	public object? GetPtr(string v) {
+		return Value;
+	}
 }

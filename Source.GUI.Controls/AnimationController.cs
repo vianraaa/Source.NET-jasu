@@ -293,7 +293,7 @@ public class AnimationController : Panel, IAnimationController
 		if (!align.RelativePosition)
 			return 0;
 
-		Panel? panel = (Panel?)GetParent()?.FindChildByName(ScriptSymbols.String(align.AlignPanel), true);
+		Panel? panel = GetParent()?.FindChildByName(ScriptSymbols.String(align.AlignPanel), true);
 		if (panel == null)
 			return 0;
 		panel.GetBounds(out int x, out int y, out int w, out int h);
