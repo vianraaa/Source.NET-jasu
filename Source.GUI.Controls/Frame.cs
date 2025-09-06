@@ -334,7 +334,7 @@ public class Frame : EditablePanel
 		}
 	}
 
-	private void Close() {
+	public void Close() {
 		OnClose();
 	}
 

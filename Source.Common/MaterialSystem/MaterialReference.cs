@@ -1,4 +1,5 @@
 ﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.Utilities;
 
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
-
-public abstract class Reference<T> where T : class
-{
-	protected T? reference;
-	public static implicit operator T?(Reference<T> reference) => reference.reference;
-
-	public bool IsValid() => reference != null;
-	public T? Get() => reference!;
-}
 
 public class MaterialReference : Reference<IMaterial> {
 	IMaterialSystem? materials;

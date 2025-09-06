@@ -28,4 +28,8 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf) : IEngineCli
 	}
 
 	public void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString) => Cbuf.AddText(cmdString);
+	public void ExecuteClientCmd(ReadOnlySpan<char> cmdString) {
+		Cbuf.AddText(cmdString);
+		Cbuf.Execute();
+	}
 }

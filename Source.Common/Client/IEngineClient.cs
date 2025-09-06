@@ -45,4 +45,5 @@ public interface IEngineClient
 	int GetMaxClients();
 	ReadOnlySpan<char> GetLevelName();
 	void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString);
+	void ExecuteClientCmd(ReadOnlySpan<char> v);
 }

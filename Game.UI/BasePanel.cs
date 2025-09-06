@@ -588,4 +588,12 @@ public class BasePanel : Panel
 		InvalidateLayout();
 		GameMenu.SetVisible(true);
 	}
+
+	internal void OnLevelLoadingStarted() {
+		throw new NotImplementedException();
+	}
+
+	internal void OnLevelLoadingFinished() {
+		throw new NotImplementedException();
+	}
 }

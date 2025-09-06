@@ -1,15 +1,19 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Client;
 using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Engine;
 using Source.GUI;
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace Game.UI;
 
-public class GameUI : IGameUI
+public class GameUI(IEngineClient engine) : IGameUI
 {
 	public bool IsMainMenuVisible() {
 		throw new NotImplementedException();
@@ -39,22 +43,36 @@ public class GameUI : IGameUI
 	}
 
 	public void OnLevelLoadingFinished(bool error, ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
-		throw new NotImplementedException();
+		StopProgressBar(error, failureReason, extendedReason);
+
+		HideGameUI();
+
+		staticPanel.OnLevelLoadingFinished();
+	}
+
+	private void HideGameUI() {
+		engine.ExecuteClientCmd("gameui_hide");
 	}
 
 	public void OnLevelLoadingStarted(bool showProgressDialog) {
-		throw new NotImplementedException();
+		staticPanel.OnLevelLoadingStarted();
+		if (showProgressDialog)
+			StartProgressBar();
+		PlayGameStartupSound = false;
 	}
 
+	bool PlayGameStartupSound;
 	BasePanel staticPanel;
 	IEngineVGui enginevguifuncs;
 	ISurface Surface;
 	ILocalize localize;
+	IEngineAPI EngineAPI;
 
 	public void Initialize(IEngineAPI engineAPI) {
 		enginevguifuncs = engineAPI.GetRequiredService<IEngineVGui>();
 		Surface = engineAPI.GetRequiredService<ISurface>();
 		localize = engineAPI.GetRequiredService<ILocalize>();
+		EngineAPI = engineAPI.GetRequiredService<IEngineAPI>();
 
 		localize.AddFile("Resource/gameui_%language%.txt", "GAME", true);
 		engineAPI.GetRequiredService<ModInfo>().LoadCurrentGameInfo();
@@ -103,7 +121,64 @@ public class GameUI : IGameUI
 	}
 
 	public bool UpdateProgressBar(float progress, ReadOnlySpan<char> statusText) {
-		throw new NotImplementedException();
+		bool redraw = false;
+
+		if (ContinueProgressBar(progress)) 
+			redraw = true;
+
+		if (SetProgressBarStatusText(statusText)) 
+			redraw = true;
+
+		return redraw;
+	}
+
+	private bool SetProgressBarStatusText(ReadOnlySpan<char> statusText) {
+		if (LoadingDialog == null)
+			return false;
+
+		if (statusText == null)
+			return false;
+
+		if (statusText.Equals(PreviousStatusText, StringComparison.OrdinalIgnoreCase))
+			return false;
+
+		LoadingDialog.SetStatusText(statusText);
+		PreviousStatusText = new(statusText);
+		return true;
+	}
+
+	LoadingDialog? LoadingDialog;
+	string? PreviousStatusText;
+
+	public void StartProgressBar() {
+		LoadingDialog ??= EngineAPI.New<LoadingDialog>();
+		PreviousStatusText = null;
+		LoadingDialog.SetProgressPoint(0);
+		LoadingDialog.Open();
+	}
+
+	private bool ContinueProgressBar(float progress) {
+		if (LoadingDialog == null)
+			return false;
+
+		LoadingDialog.Activate();
+		return LoadingDialog.SetProgressPoint(progress);
+	}
+
+	public void StopProgressBar(bool error, ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
+		if (LoadingDialog == null && error) 
+			LoadingDialog = EngineAPI.New<LoadingDialog>(staticPanel);
+
+		if (LoadingDialog == null)
+			return;
+
+		if (error) {
+			LoadingDialog.DisplayGenericError(failureReason, extendedReason);
+		}
+		else {
+			LoadingDialog.Close();
+			LoadingDialog = null;
+		}
 	}
 
 	public bool IsInLevel() {
@@ -124,5 +199,9 @@ public class GameUI : IGameUI
 
 	public bool IsInBackgroundLevel() {
 		return false;
+	}
+
+	public bool HasLoadingBackgroundDialog() {
+		return LoadingDialog != null;
 	}
 }

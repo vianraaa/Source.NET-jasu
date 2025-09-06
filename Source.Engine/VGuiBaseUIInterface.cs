@@ -99,7 +99,7 @@ public class StaticPanel(Panel? parent, string name) : Panel(parent, name)
 public class EngineVGui(
 	Sys Sys, Net Net, IEngineAPI engineAPI, ISurface surface,
 	IMaterialSystem materials, ILauncherManager launcherMgr,
-	ICommandLine CommandLine, IFileSystem fileSystem, GameServer sv, Cbuf Cbuf, Sound Sound
+	ICommandLine CommandLine, IFileSystem fileSystem, GameServer sv, Cbuf Cbuf, Sound Sound, Host Host
 	) : IEngineVGuiInternal
 {
 	public static LoadingProgressDescription[] ListenServerLoadingProgressDescriptions = [
@@ -241,14 +241,9 @@ public class EngineVGui(
 		}
 
 		perc = perc * (1.0f - ProgressBias) + ProgressBias;
-
-		if (Sys.TextMode) {
-			Console.Title = ($"Progress: {desc.Description} [{new string('=', Convert.ToInt32(perc * 30)),-30}]\n");
+		if (staticGameUIFuncs.UpdateProgressBar((float)perc, desc.Description)) {
+			Host.View.RenderGuiOnly();
 		}
-		else {
-
-		}
-
 		LastProgressPoint = progress;
 	}
 	public void UpdateCustomProgressBar(float progress, ReadOnlySpan<char> desc) { }

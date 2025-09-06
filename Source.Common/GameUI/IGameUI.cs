@@ -35,4 +35,5 @@ public interface IGameUI
 	bool IsConsoleUI();
 	bool HasSavedThisMenuSession();
 	bool IsInBackgroundLevel();
+	bool HasLoadingBackgroundDialog();
 }

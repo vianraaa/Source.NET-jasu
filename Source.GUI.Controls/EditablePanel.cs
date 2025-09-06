@@ -12,15 +12,26 @@ public class EditablePanel : Panel
 	[Imported] public IFileSystem fileSystem;
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
+		BuildGroup = EngineAPI.New<BuildGroup>(this, this);
 		NavGroup = EngineAPI.New<FocusNavGroup>();
 	}
 
 	public override void ApplySettings(KeyValues resourceData) {
 
 	}
-	public virtual void LoadControlSettings(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> pathID, KeyValues keyValues, KeyValues conditions) {
-		// todo
+	public virtual void LoadControlSettings(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> pathID = default, KeyValues? keyValues = null, KeyValues? conditions = null) {
+		if (!fileSystem.FileExists(resourceName)) 
+			Msg($"Resource file \"{resourceName}\" not found on disk!\n");
+		
+		BuildGroup.LoadControlSettings(resourceName, pathID, keyValues, conditions);
+		ForceSubPanelsToUpdateWithNewDialogVariables();
+		InvalidateLayout();
 	}
+
+	private void ForceSubPanelsToUpdateWithNewDialogVariables() {
+		throw new NotImplementedException();
+	}
+
 	static ConVar vgui_nav_lock_default_button = new(nameof(vgui_nav_lock_default_button), 0);
 	public override void OnKeyCodePressed(ButtonCode code) {
 		if (vgui_nav_lock_default_button.GetInt() == 0) {
@@ -77,6 +88,7 @@ public class EditablePanel : Panel
 	}
 
 	public FocusNavGroup GetFocusNavGroup() => NavGroup;
+	BuildGroup BuildGroup;
 	readonly FocusNavGroup NavGroup;
 }
 public class FocusNavGroup
@@ -98,7 +110,6 @@ public class FocusNavGroup
 		SetCurrentDefaultButton(defaultPanel);
 		return defaultPanel;
 	}
-
 
 	private bool CanButtonBeDefault(Panel panel) {
 		if (panel == null)
