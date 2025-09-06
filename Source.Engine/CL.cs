@@ -203,7 +203,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	internal void TakeSnapshotAndSwap() {
-
+		Shader.SwapBuffers();
 	}
 
 	public void DumpStringTables() => cl.StringTableContainer?.Dump();

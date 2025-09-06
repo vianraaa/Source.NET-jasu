@@ -21,8 +21,6 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 		renderContext.ClearBuffers(true, true);
 
 		EngineVGui.Paint(PaintMode.UIPanels | PaintMode.Cursor);
-		// This function is a liar!
-		materials.SwapBuffers();
 	}
 
 	internal void RenderView() {
