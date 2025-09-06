@@ -32,4 +32,8 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf) : IEngineCli
 		Cbuf.AddText(cmdString);
 		Cbuf.Execute();
 	}
+
+	public bool IsLevelMainMenuBackground() => sv.IsLevelMainMenuBackground();
+
+	public bool IsPaused() => cl.IsPaused();
 }

@@ -39,7 +39,10 @@ public class GameUI(IEngineClient engine) : IGameUI
 	}
 
 	public void OnGameUIHidden() {
-		throw new NotImplementedException();
+		if (engine.GetMaxClients() <= 1) 
+			engine.ClientCmd_Unrestricted("unpause");
+
+		staticPanel.OnGameUIHidden();
 	}
 
 	public void OnLevelLoadingFinished(bool error, ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
@@ -151,7 +154,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 	string? PreviousStatusText;
 
 	public void StartProgressBar() {
-		LoadingDialog ??= EngineAPI.New<LoadingDialog>();
+		LoadingDialog ??= EngineAPI.New<LoadingDialog>(null);
 		PreviousStatusText = null;
 		LoadingDialog.SetProgressPoint(0);
 		LoadingDialog.Open();

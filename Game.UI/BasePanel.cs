@@ -590,10 +590,14 @@ public class BasePanel : Panel
 	}
 
 	internal void OnLevelLoadingStarted() {
-		throw new NotImplementedException();
+		LevelLoading = true;
 	}
 
 	internal void OnLevelLoadingFinished() {
-		throw new NotImplementedException();
+		LevelLoading = false;
+	}
+
+	internal void OnGameUIHidden() {
+
 	}
 }

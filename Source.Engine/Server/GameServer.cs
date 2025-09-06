@@ -102,10 +102,17 @@ public class GameServer : BaseServer
 	}
 
 	public void Init(bool dedicated) {
-		
+
 	}
 
 	public void Shutdown() {
 
+
+	}
+
+	bool bIsLevelMainMenuBackground;
+
+	internal bool IsLevelMainMenuBackground() {
+		return bIsLevelMainMenuBackground;
 	}
 }

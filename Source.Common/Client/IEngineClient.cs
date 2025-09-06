@@ -46,4 +46,6 @@ public interface IEngineClient
 	ReadOnlySpan<char> GetLevelName();
 	void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString);
 	void ExecuteClientCmd(ReadOnlySpan<char> v);
+	bool IsLevelMainMenuBackground();
+	bool IsPaused();
 }

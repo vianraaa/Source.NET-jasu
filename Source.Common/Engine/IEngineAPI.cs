@@ -58,10 +58,12 @@ public static class ImportUtils {
 			}
 		}
 
-		var argTypes = args.Select(a => a?.GetType()).ToArray();
+		var argTypes = args?.Select(a => a?.GetType()).ToArray();
 		var ctor = type.GetConstructors()
 		.FirstOrDefault(c => {
 			var parameters = c.GetParameters();
+			if (argTypes == null)
+				return parameters.Length == 0;
 			if (parameters.Length != argTypes.Length) return false;
 			for (int i = 0; i < parameters.Length; i++) {
 				if (argTypes[i] == null) {

@@ -71,10 +71,9 @@ public class Scr(IEngineAPI engineAPI)
 			Con.ClearNotify();
 			CenterStringOff();
 
-			if (clientDll != null)
-				clientDll.HudText(null);
+			EngineVGui!.OnLevelLoadingStarted();
 
-			EngineVGui?.OnLevelLoadingStarted();
+			clientDll?.HudText(null);
 
 			clientGlobalVariables.FrameTime = 0;
 

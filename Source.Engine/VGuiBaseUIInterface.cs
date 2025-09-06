@@ -195,6 +195,8 @@ public class EngineVGui(
 	}
 
 	public void OnLevelLoadingStarted() {
+		staticGameUIFuncs.OnLevelLoadingStarted(ShowProgressDialog);
+
 		LoadingStartTime = Sys.Time;
 		LoadingProgress.Clear();
 		LastProgressPoint = LevelLoadingProgress.None;
@@ -209,14 +211,45 @@ public class EngineVGui(
 		ShowProgressDialog = false;
 	}
 	public void OnLevelLoadingFinished() {
+		staticGameUIFuncs.OnLevelLoadingFinished(Sys.ExtendedError, Sys.DisconnectReason, Sys.ExtendedDisconnectReason);
 		LastProgressPoint = LevelLoadingProgress.None;
+
 		Sys.ExtendedError = false;
 		Sys.DisconnectReason = null;
 		Sys.ExtendedDisconnectReason = null;
+
+		HideGameUI();
 	}
+
+	bool NotAllowedToHideGameUI;
+
+	private bool HideGameUI() {
+		if (NotAllowedToHideGameUI)
+			return false;
+
+		ReadOnlySpan<char> levelName = engineClient.GetLevelName();
+		bool inNonBgLevel = levelName != null && levelName.Length > 0 && !engineClient.IsLevelMainMenuBackground();
+		if (inNonBgLevel) {
+			staticGameUIPanel.SetVisible(false);
+			staticGameUIPanel.SetPaintBackgroundEnabled(false);
+
+			staticClientDLLPanel.SetVisible(true);
+			staticClientDLLPanel.MoveToFront();
+			staticClientDLLPanel.SetMouseInputEnabled(true);
+
+			SetEngineVisible(true);
+
+			staticGameUIFuncs.OnGameUIHidden();
+		}
+		else {
+			if (levelName != null && levelName.Length > 0 && engineClient.GetMaxClients() <= 1 && engineClient.IsPaused())
+				Cbuf.AddText("unpause\n");
+		}
+		return true;
+	}
+
 	public void NotifyOfServerConnect(ReadOnlySpan<char> game, int IP, int connectionPort, int queryPort) { }
 	public void NotifyOfServerDisconnect() { }
-	public void EnabledProgressBarForNextLoad() { }
 	public void UpdateProgressBar(LevelLoadingProgress progress) {
 		if (!Sys.InMainThread())
 			return;
@@ -561,6 +594,10 @@ public class EngineVGui(
 
 	public void UpdateButtonState(in InputEvent ev) {
 		vgui.GetInput().UpdateButtonState(in ev);
+	}
+
+	public void EnabledProgressBarForNextLoad() {
+		ShowProgressDialog = true;
 	}
 
 	public bool Key_Event(in InputEvent ev) {

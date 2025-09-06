@@ -26,8 +26,8 @@ public class LoadingDialog : Frame
 	bool Center;
 	bool ConsoleStyle;
 	float ProgressFraction;
-
-	public LoadingDialog(Panel? parent = null) : base(parent, "LoadingDialog") {
+	
+	void Init() {
 		SetDeleteSelfOnClose(true);
 
 		SetSize(416, 100);
@@ -65,6 +65,9 @@ public class LoadingDialog : Frame
 
 		SetupControlSettings(false);
 	}
+	public LoadingDialog() : base(null, "LoadingDialog") => Init();
+	public LoadingDialog(Panel? parent) : base(parent, "LoadingDialog") => Init();
+	
 
 	private void SetupControlSettings(bool forceShowProgressText) {
 		ShowingVACInfo = false;
