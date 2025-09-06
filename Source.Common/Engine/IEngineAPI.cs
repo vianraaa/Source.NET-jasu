@@ -61,8 +61,6 @@ public static class ImportUtils {
 	/// </summary>
 	internal static IServiceProvider? EngineProvider { get; set; }
 
-	public static T New<T>(this IServiceProvider services, params object?[] parms) => throw new NotSupportedException("New<T> is no longer supported");
-
 	/// <summary>
 	/// Pulls a singleton instance out of the active engine provider.
 	/// </summary>
