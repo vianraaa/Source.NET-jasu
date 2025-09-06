@@ -22,17 +22,6 @@ public interface IEngineAPI : IServiceProvider
 }
 public delegate void PreInject(IServiceCollection services);
 
-
-/// <summary>
-/// Marks a field to be auto populated by the service collection.
-/// </summary>
-/// <typeparam name="T"></typeparam>
-[AttributeUsage(AttributeTargets.Field)]
-public class ImportedAttribute : Attribute
-{
-
-}
-
 public delegate void PreInjectInstance<T>(IServiceProvider services);
 
 /// <summary>
