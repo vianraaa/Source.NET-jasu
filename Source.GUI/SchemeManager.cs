@@ -26,7 +26,7 @@ public class SchemeManager : ISchemeManager
 
 
 	public void Init() {
-		Schemes.Add(services.New<Scheme>());
+		Schemes.Add(new Scheme());
 	}
 
 	public bool DeleteImage(ReadOnlySpan<char> imageName) {
@@ -102,7 +102,7 @@ public class SchemeManager : ISchemeManager
 			return null;
 		}
 
-		Scheme newScheme = initializedFirstScheme ? services.New<Scheme>() : Schemes[0];
+		Scheme newScheme = initializedFirstScheme ? new Scheme() : Schemes[0];
 		newScheme.LoadFromFile(sizingPanel, fileName, tag, data);
 		if (initializedFirstScheme)
 			Schemes.Add(newScheme);
