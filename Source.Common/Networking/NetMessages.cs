@@ -647,7 +647,6 @@ public class svc_GMod_ServerToClient : NetMessage
 				}
 				break;
 			default:
-
 				break;
 		}
 

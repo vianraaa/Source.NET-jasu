@@ -114,9 +114,9 @@ public class BuildGroup
 		}
 	}
 
-	private void ApplySettings(KeyValues resourceData) {
+	public void ApplySettings(KeyValues resourceData) {
 		for (KeyValues? controlKeys = resourceData.GetFirstSubKey(); controlKeys != null; controlKeys = controlKeys.GetNextKey()) {
-			bool bFound = false;
+			bool found = false;
 
 			if (controlKeys.Type != KeyValues.Types.None)
 				continue;
@@ -132,19 +132,18 @@ public class BuildGroup
 					continue;
 				}
 
-
 				Assert(panel);
 
 				ReadOnlySpan<char> panelName = panel.GetName();
 
 				if (panelName.Equals(keyName, StringComparison.OrdinalIgnoreCase)) {
 					panel.ApplySettings(controlKeys);
-					bFound = true;
+					found = true;
 					break;
 				}
 			}
 
-			if (!bFound)
+			if (!found)
 				if (keyName != null)
 					NewControl(controlKeys);
 		}
@@ -239,6 +238,7 @@ public class BuildGroup
 		if (!Panels.Contains(panel))
 			Panels.Add(panel);
 	}
+
 	public void PanelRemoved(Panel panel) {
 		Panels.Remove(panel);
 	}

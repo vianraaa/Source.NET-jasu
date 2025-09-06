@@ -10,6 +10,7 @@ using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
+using Source.Common.Utilities;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -140,13 +141,13 @@ public class PanelAnimationVarAttribute : Attribute
 		}
 
 		Panel.AddToAnimationMap(
-			t, 
-			attribute.Name ?? field.Name, 
-			attribute.Type ?? (typedefs.TryGetValue(field.FieldType, out string? name) ? name : field.FieldType.Name), 
-			field.Name, 
-			attribute.DefaultValue, 
-			false, 
-			get, 
+			t,
+			attribute.Name ?? field.Name,
+			attribute.Type ?? (typedefs.TryGetValue(field.FieldType, out string? name) ? name : field.FieldType.Name),
+			field.Name,
+			attribute.DefaultValue,
+			false,
+			get,
 			set
 		);
 	}
@@ -1571,12 +1572,22 @@ public class Panel : IPanel
 
 	public virtual PanelAnimationMap GetAnimMap() => PanelAnimationDictionary.FindOrAddPanelAnimationMap(GetType().Name);
 
+	static readonly Dictionary<UtlSymId_t, Type> PanelNames = [];
+
 	public static void InitializeControls() {
 		var types = ReflectionUtils.GetLoadedTypes().Where(type => typeof(Panel).IsAssignableFrom(type));
 		foreach (var type in types) {
 			ChainToAnimationMap(type);
 			Msg($"VGUI: Initializing {type.Name}\n");
+			PanelNames[new UtlSymbol(type.Name).Id] = type;
 		}
+	}
+
+	public static Panel? InstancePanel(ReadOnlySpan<char> className) {
+		UtlSymbol sym = new(className);
+		if (PanelNames.TryGetValue(sym, out Type? t))
+			return (Panel)Activator.CreateInstance(t)!;
+		return null;
 	}
 
 	public virtual IPanel? GetDragPanel() {

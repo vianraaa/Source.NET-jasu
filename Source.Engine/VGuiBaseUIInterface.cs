@@ -274,9 +274,9 @@ public class EngineVGui(
 		}
 
 		perc = perc * (1.0f - ProgressBias) + ProgressBias;
-		if (staticGameUIFuncs.UpdateProgressBar((float)perc, desc.Description)) {
+		if (staticGameUIFuncs.UpdateProgressBar((float)perc, desc.Description)) 
 			Host.View.RenderGuiOnly();
-		}
+		
 		LastProgressPoint = progress;
 	}
 	public void UpdateCustomProgressBar(float progress, ReadOnlySpan<char> desc) { }

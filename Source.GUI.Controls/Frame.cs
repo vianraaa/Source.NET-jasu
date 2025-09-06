@@ -7,7 +7,7 @@ using static System.Net.Mime.MediaTypeNames;
 namespace Source.GUI.Controls;
 public class FrameSystemButton : MenuButton
 {
-	public FrameSystemButton(Panel parent, string name, string text) : base(parent, name, text) {
+	public FrameSystemButton(Panel parent, string name) : base(parent, name, "") {
 	}
 
 	IImage? Enabled, Disabled;
@@ -32,12 +32,53 @@ public class FrameSystemButton : MenuButton
 	}
 }
 
+public class GripPanel : Panel {
+	public const int DEFAULT_SNAP_RANGE = 10;
+	Frame Frame;
+	bool Dragging;
+	int DragMultX;
+	int DragMultY;
+	IFont? MarlettFont;
+	int SnapRange;
+	public GripPanel(Frame dragFrame, ReadOnlySpan<char> name, int xdir, int ydir) : base(dragFrame, new(name)) {
+		Frame = dragFrame;
+		Dragging = false;
+		DragMultX = xdir;
+		DragMultY = ydir;
+		MarlettFont = null;
+		SetPaintEnabled(false);
+		SetPaintBackgroundEnabled(false);
+		SetPaintBorderEnabled(false);
+		SnapRange = DEFAULT_SNAP_RANGE;
+
+		if(xdir == 1 && ydir == 1) {
+			SetPaintEnabled(false);
+			SetPaintBackgroundEnabled(true);
+		}
+
+		// todo: SetBlockDragChaining
+	}
+
+	protected virtual void Moved(int dx, int dy) {
+
+	}
+}
+
+public class CaptionGripPanel : GripPanel {
+	public const int CAPTION_TITLE_BORDER = 7;
+	public const int CAPTION_TITLE_BORDER_SMALL = 0;
+
+	public CaptionGripPanel(Frame dragFrame, ReadOnlySpan<char> name) : base(dragFrame, name, 0, 0) {
+
+	}
+}
+
 public class FrameButton : Button
 {
 	public IBorder? BrightBorder, DepressedBorder, DisabledBorder;
 	public Color EnabledFgColor, EnabledBgColor, DisabledFgColor, DisabledBgColor;
 	public bool DisabledLook;
-	public FrameButton(Panel parent, string name, string text) : base(parent, name, text) {
+	public FrameButton(Panel parent, string name, ReadOnlySpan<char> text) : base(parent, name, new(text)) {
 
 	}
 
@@ -163,6 +204,57 @@ public class Frame : EditablePanel
 		CustomTitleFont = null;
 
 		SetTitle("#Frame_Untitled", parent != null ? false : true);
+		SetBuildGroup(GetBuildGroup());
+		SetMinimumSize(128, 66);
+		GetFocusNavGroup().SetFocusTopLevel(true);
+
+		SysMenu = null;
+
+		TopGrip = new GripPanel(this, "frame_topGrip", 0, -1);
+		BottomGrip = new GripPanel(this, "frame_bottomGrip", 0, 1);
+		LeftGrip = new GripPanel(this, "frame_leftGrip", -1, 0);
+		RightGrip = new GripPanel(this, "frame_rightGrip", 1, 0);
+		TopLeftGrip = new GripPanel(this, "frame_tlGrip", -1, -1);
+		TopRightGrip = new GripPanel(this, "frame_trGrip", 1, -1);
+		BottomLeftGrip = new GripPanel(this, "frame_blGrip", -1, 1);
+		BottomRightGrip = new GripPanel(this, "frame_brGrip", 1, 1);
+		CaptionGrip = new CaptionGripPanel(this, "frame_caption");
+		CaptionGrip.SetCursor(CursorCode.Arrow);
+
+		MinimizeButton = new FrameButton(this, "frame_minimize", "0");
+		MinimizeButton.AddActionSignalTarget(this);
+		MinimizeButton.SetCommand(new KeyValues("Minimize"));
+
+		MaximizeButton = new FrameButton(this, "frame_maximize", "1");
+		SetMaximizeButtonVisible(false);
+
+		Span<char> str = [(char)0x6F, '\0'];
+		MinimizeToSysTrayButton = new FrameButton(this, "frame_mintosystray", str);
+		MinimizeToSysTrayButton.SetCommand("MinimizeToSysTray");
+		// SetMinimizeToSysTrayButtonVisible(false);
+
+		CloseButton = new FrameButton(this, "frame_close", "r");
+		CloseButton.AddActionSignalTarget(this);
+		CloseButton.SetCommand(new KeyValues("CloseFrameButtonPressed"));
+
+		if (!Surface.SupportsFeature(SurfaceFeature.FrameMinimizeMaximize)) {
+			SetMinimizeButtonVisible(false);
+			SetMaximizeButtonVisible(false);
+		}
+
+		if (parent != null) {
+			SetMinimizeButtonVisible(false);
+			SetMaximizeButtonVisible(false);
+		}
+
+		MenuButton = new FrameSystemButton(this, "frame_menu");
+		// MenuButton.SetMenu(GetSysMenu());
+
+		SetupResizeCursors();
+	}
+
+	private void SetupResizeCursors() {
+
 	}
 
 	public void SetMenuButtonResponsive(bool state) => MenuButton?.SetResponsive(state);

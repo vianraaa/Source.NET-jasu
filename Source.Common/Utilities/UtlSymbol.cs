@@ -14,25 +14,26 @@ public struct UtlSymbol
 	public static readonly UtlSymId_t UTL_INVAL_SYMBOL = UtlSymId_t.MaxValue;
 	// Instance fields
 	private static UtlSymbolTableMT? SymbolTable;
-	private readonly UtlSymId_t Id;
+	private readonly UtlSymId_t id;
 	private readonly bool ValidId; // Trick because Id may equal 0 when uninitialized.
 
 	// Instance methods
 	public UtlSymbol() {
-		Id = UTL_INVAL_SYMBOL;
+		id = UTL_INVAL_SYMBOL;
 		ValidId = false;
 	}
-	public UtlSymbol(ReadOnlySpan<char> str) => Id = CurrTable().AddString(str);
+	public UtlSymbol(ReadOnlySpan<char> str) => id = CurrTable().AddString(str);
 	public UtlSymbol(string str) {
-		Id = CurrTable().AddString(str);
-		ValidId = Id != UTL_INVAL_SYMBOL;
+		id = CurrTable().AddString(str);
+		ValidId = id != UTL_INVAL_SYMBOL;
 	}
 	public UtlSymbol(in UtlSymbol symbol) {
-		Id = symbol.Id;
-		ValidId = Id != UTL_INVAL_SYMBOL;
+		id = symbol.id;
+		ValidId = id != UTL_INVAL_SYMBOL;
 	}
-	public readonly ReadOnlySpan<char> String() => CurrTable().String(Id);
-	public readonly bool IsValid() => ValidId && Id != UTL_INVAL_SYMBOL;
+	public readonly ReadOnlySpan<char> String() => CurrTable().String(id);
+	public readonly bool IsValid() => ValidId && id != UTL_INVAL_SYMBOL;
+	public readonly UtlSymId_t Id => ValidId ? id : UTL_INVAL_SYMBOL;
 
 	// Static members
 	static bool symbolsInitialized = false;
@@ -55,19 +56,19 @@ public struct UtlSymbol
 
 	// Operators
 	public static bool operator ==(UtlSymbol symbol, ReadOnlySpan<char> str) 
-		=> symbol.Id == UTL_INVAL_SYMBOL 
+		=> symbol.id == UTL_INVAL_SYMBOL 
 			? false 
 			: str == null 
-				? symbol.Id == 0 
-				: str.Hash() == symbol.Id;
+				? symbol.id == 0 
+				: str.Hash() == symbol.id;
 	public static bool operator !=(UtlSymbol symbol, ReadOnlySpan<char> str) 
-		=> symbol.Id == UTL_INVAL_SYMBOL 
+		=> symbol.id == UTL_INVAL_SYMBOL 
 			? false 
 			: str == null 
-				? symbol.Id == 0 
-				: str.Hash() != symbol.Id;
-	public static implicit operator UtlSymId_t(UtlSymbol symbol) => symbol.Id;
+				? symbol.id == 0 
+				: str.Hash() != symbol.id;
+	public static implicit operator UtlSymId_t(UtlSymbol symbol) => symbol.id;
 
-	public override readonly bool Equals(object? obj) => obj is UtlSymbol sym && sym.Id == Id;
-	public override readonly int GetHashCode() => Id.GetHashCode();
+	public override readonly bool Equals(object? obj) => obj is UtlSymbol sym && sym.id == id;
+	public override readonly int GetHashCode() => id.GetHashCode();
 }

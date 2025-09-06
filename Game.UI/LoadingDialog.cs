@@ -48,7 +48,6 @@ public class LoadingDialog : Frame
 		}
 
 		base.PerformLayout();
-
 		MoveToFront();
 	}
 
