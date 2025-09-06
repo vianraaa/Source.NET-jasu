@@ -83,7 +83,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 		// I have no idea why this one defines needed resource strings...
 		localize.AddFile("Resource/itemtest_%language%.txt", "GAME", true);
 
-		staticPanel = engineAPI.New<BasePanel>();
+		staticPanel = new BasePanel();
 		staticPanel.SetBounds(0, 0, 400, 300);
 		staticPanel.SetPaintBorderEnabled(false);
 		staticPanel.SetPaintBackgroundEnabled(true);
@@ -154,7 +154,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 	string? PreviousStatusText;
 
 	public void StartProgressBar() {
-		LoadingDialog ??= EngineAPI.New<LoadingDialog>(null);
+		LoadingDialog ??= new LoadingDialog(null);
 		PreviousStatusText = null;
 		LoadingDialog.SetProgressPoint(0);
 		LoadingDialog.Open();
@@ -170,7 +170,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 
 	public void StopProgressBar(bool error, ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
 		if (LoadingDialog == null && error) 
-			LoadingDialog = EngineAPI.New<LoadingDialog>(staticPanel);
+			LoadingDialog = new LoadingDialog(staticPanel);
 
 		if (LoadingDialog == null)
 			return;

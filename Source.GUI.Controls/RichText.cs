@@ -112,12 +112,12 @@ public class RichText : Panel
 		CursorPos = 0;
 		MouseSelection = false;
 		MouseDragSelection = false;
-		VertScrollBar = EngineAPI.New<ScrollBar>(this, "ScrollBar", true);
+		VertScrollBar = new ScrollBar(this, "ScrollBar", true);
 		VertScrollBar.AddActionSignalTarget(this);
 		RecalcSavedRenderState = true;
 		MaxCharCount = 64 * 1024;
 		AddActionSignalTarget(this);
-		Interior = EngineAPI.New<RichTextInterior>(this, null);
+		Interior = new RichTextInterior(this, null);
 		Select[0] = -1;
 		Select[1] = -1;
 		EditMenu = null;
@@ -712,7 +712,7 @@ public class RichText : Panel
 				if (renderState.TextClickable != CurrentTextClickable) {
 					if (renderState.TextClickable) {
 						if (clickableTextNum >= ClickableTextPanels.Count)
-							ClickableTextPanels.Add(EngineAPI.New<ClickPanel>(this));
+							ClickableTextPanels.Add(new ClickPanel(this));
 
 						ClickPanel? clickPanel = ClickableTextPanels[clickableTextNum++];
 						clickPanel.SetTextIndex(preI, preI);
@@ -772,7 +772,7 @@ public class RichText : Panel
 						int oldIndex = ClickableTextPanels[clickableTextNum - 1].GetTextIndex();
 
 						if (clickableTextNum >= ClickableTextPanels.Count)
-							ClickableTextPanels.Add(EngineAPI.New<ClickPanel>(this));
+							ClickableTextPanels.Add(new ClickPanel(this));
 
 						ClickPanel clickPanel = ClickableTextPanels[clickableTextNum++];
 						clickPanel.SetTextIndex(oldIndex, i);
@@ -790,7 +790,7 @@ public class RichText : Panel
 						int oldIndex = ClickableTextPanels[clickableTextNum - 1].GetTextIndex();
 
 						if (clickableTextNum >= ClickableTextPanels.Count)
-							ClickableTextPanels.Add(EngineAPI.New<ClickPanel>(this));
+							ClickableTextPanels.Add(new ClickPanel(this));
 
 						ClickPanel clickPanel = ClickableTextPanels[clickableTextNum++];
 						clickPanel.SetTextIndex(oldIndex, i);

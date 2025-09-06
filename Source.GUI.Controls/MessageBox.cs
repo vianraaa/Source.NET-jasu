@@ -20,13 +20,13 @@ public class MessageBox : Frame
 
 	public MessageBox(string title, string text, Panel? parent = null) : base(parent, null, false) {
 		SetTitle(title, true);
-		MessageLabel = EngineAPI.New<Label>(this, null, text);
+		MessageLabel = new Label(this, null, text);
 		Init();
 	}
 
 	public MessageBox(ReadOnlySpan<char> title, ReadOnlySpan<char> text, Panel? parent = null) : base(parent, null, false) {
 		SetTitle(title, true);
-		MessageLabel = EngineAPI.New<Label>(this, null, new string(text));
+		MessageLabel = new Label(this, null, new string(text));
 		Init();
 	}
 
@@ -41,11 +41,11 @@ public class MessageBox : Frame
 		SetCloseButtonVisible(false);
 		SetSizeable(false);
 
-		OkButton = EngineAPI.New<Button>(this, null, "#MessageBox_OK");
+		OkButton = new Button(this, null, "#MessageBox_OK");
 		OkButton.SetCommand("OnOk");
 		OkButton.AddActionSignalTarget(this);
 
-		CancelButton = EngineAPI.New<Button>(this, null, "#MessageBox_Cancel");
+		CancelButton = new Button(this, null, "#MessageBox_Cancel");
 		CancelButton.SetCommand("OnCancel");
 		CancelButton.AddActionSignalTarget(this);
 		CancelButton.SetVisible(false);

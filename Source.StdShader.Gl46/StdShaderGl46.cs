@@ -10,7 +10,7 @@ public class StdShaderGl46 : IShaderDLL
 	public StdShaderGl46(IServiceProvider engineAPI) {
 		foreach(var type in GetType().Assembly.GetTypes()) {
 			if (!type.IsAbstract && type.IsAssignableTo(typeof(BaseShader))) {
-				shaders.Add((BaseShader)engineAPI.New(type));
+				shaders.Add((BaseShader)Activator.CreateInstance(type)!);
 			}
 		}
 	}

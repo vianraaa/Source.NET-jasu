@@ -496,7 +496,7 @@ public class Frame : EditablePanel
 
 	public void SetTitle(ReadOnlySpan<char> title, bool surfaceTitle) {
 		if (Title == null) {
-			Title = EngineAPI.New<TextImage>("");
+			Title = new TextImage("");
 		}
 
 		bool localized = false;

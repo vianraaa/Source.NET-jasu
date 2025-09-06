@@ -12,8 +12,8 @@ public class EditablePanel : Panel
 	[Imported] public IFileSystem fileSystem;
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
-		BuildGroup = EngineAPI.New<BuildGroup>(this, this);
-		NavGroup = EngineAPI.New<FocusNavGroup>();
+		BuildGroup = new BuildGroup(this, this);
+		NavGroup = new FocusNavGroup();
 	}
 
 	public override void ApplySettings(KeyValues resourceData) {

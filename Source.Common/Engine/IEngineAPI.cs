@@ -34,51 +34,51 @@ public class ImportedAttribute : Attribute
 }
 
 public delegate void PreInjectInstance<T>(IServiceProvider services);
-public static class ImportUtils {
-	// TODO: profile this, how bad is this
-	// also is this a really bad idea? I don't know... but it sure is convenient
-	public static T New<T>(this IServiceProvider services, params object?[] args) {
-		Type type = typeof(T);
-		return (T)New(services, type, args);
+
+/// <summary>
+/// Used to sanity check the lifetime of a service locator scope.
+/// </summary>
+public ref struct ServiceLocatorScope {
+	IServiceProvider lifetimeServices;
+	public ServiceLocatorScope(IServiceProvider services) {
+		Assert(ImportUtils.EngineProvider == null);
+		ImportUtils.EngineProvider = lifetimeServices = services;
 	}
 
-	public static object New(this IServiceProvider services, Type type, params object?[] args) {
-		object instance = RuntimeHelpers.GetUninitializedObject(type);
-		foreach (var field in type.GetFields()) {
-			var attr = field.GetCustomAttribute<ImportedAttribute>();
-			if (attr != null) {
-				var tArg = field.FieldType;
-				object? service;
-				if (Nullable.GetUnderlyingType(tArg) != null) 
-					service = services.GetService(tArg);
-				else
-					service = services.GetRequiredService(tArg);
+	public void Dispose() {
+		Assert(ImportUtils.EngineProvider != null);
+		Assert(ImportUtils.EngineProvider == lifetimeServices);
+		ImportUtils.EngineProvider = null;
+	}
+}
 
-				field.SetValue(instance, service);
-			}
-		}
+public static class ImportUtils {
+	/// <summary>
+	/// A static instance of an IServiceProvider that acts as a common service locator for engine components.
+	/// While this is not an ideal way to do it, it is the most convenient way to place dependencies
+	/// within class instances, for things like entities, panels, etc. which usually will get generated
+	/// at a time in which all dependencies are available.
+	/// </summary>
+	internal static IServiceProvider? EngineProvider { get; set; }
 
-		var argTypes = args?.Select(a => a?.GetType()).ToArray();
-		var ctor = type.GetConstructors()
-		.FirstOrDefault(c => {
-			var parameters = c.GetParameters();
-			if (argTypes == null)
-				return parameters.Length == 0;
-			if (parameters.Length != argTypes.Length) return false;
-			for (int i = 0; i < parameters.Length; i++) {
-				if (argTypes[i] == null) {
-					if (parameters[i].ParameterType.IsValueType &&
-						Nullable.GetUnderlyingType(parameters[i].ParameterType) == null)
-						return false;
-				}
-				else if (!parameters[i].ParameterType.IsAssignableFrom(argTypes[i]))
-					return false;
-			}
-			return true;
-		});
+	public static T New<T>(this IServiceProvider services, params object?[] parms) => throw new NotSupportedException("New<T> is no longer supported");
 
-		AssertMsg(ctor != null, "EngineAPI.New<T> constructor is null!");
-		ctor!.Invoke(instance, args);
-		return instance;
+	/// <summary>
+	/// Pulls a singleton instance out of the active engine provider.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <returns></returns>
+	public static T Singleton<T>() where T : notnull {
+		Assert(EngineProvider != null);
+		return EngineProvider!.GetRequiredService<T>();
+	}
+	/// <summary>
+	/// Pulls a keyed singleton instance out of the active engine provider.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <returns></returns>
+	public static T KeyedSingleton<T>(object? key) where T : notnull {
+		Assert(EngineProvider != null);
+		return EngineProvider!.GetRequiredKeyedService<T>(key);
 	}
 }

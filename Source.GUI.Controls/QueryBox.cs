@@ -10,7 +10,7 @@ public class QueryBox : MessageBox
 	public QueryBox(string title, string queryText, Panel? parent = null) : base(title, queryText, parent) {
 		CancelButton?.DeletePanel();
 
-		CancelButton = EngineAPI.New<Button>(this, "CancelButton", "#QueryBox_Cancel");
+		CancelButton = new Button(this, "CancelButton", "#QueryBox_Cancel");
 		CancelButton.SetCommand("Cancel");
 		CancelButton.AddActionSignalTarget(this);
 

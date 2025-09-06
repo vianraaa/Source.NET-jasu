@@ -40,11 +40,11 @@ public class LoadingDialog : Frame
 		LastSecondaryProgressUpdateTime = 0.0f;
 		SecondaryProgressStartTime = 0.0f;
 
-		Progress = EngineAPI.New<ProgressBar>(this, "Progress");
-		Progress2 = EngineAPI.New<ProgressBar>(this, "Progress2");
-		InfoLabel = EngineAPI.New<Label>(this, "InfoLabel", "");
-		CancelButton = EngineAPI.New<Button>(this, "CancelButton", "#GameUI_Cancel");
-		TimeRemainingLabel = EngineAPI.New<Label>(this, "TimeRemainingLabel", "");
+		Progress = new ProgressBar(this, "Progress");
+		Progress2 = new ProgressBar(this, "Progress2");
+		InfoLabel = new Label(this, "InfoLabel", "");
+		CancelButton = new Button(this, "CancelButton", "#GameUI_Cancel");
+		TimeRemainingLabel = new Label(this, "TimeRemainingLabel", "");
 		CancelButton.SetCommand("Cancel");
 
 		if (ModInfo!.IsSinglePlayerOnly() == false && ConsoleStyle == true)

@@ -85,7 +85,7 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 		if (!StatusVersion)
 			SetMinimumSize(100, 100);
 
-		History = EngineAPI.New<RichText>(this, "ConsoleHistory");
+		History = new RichText(this, "ConsoleHistory");
 		History.SetAllowKeyBindingChainToParent(false);
 		History.MakeReadyForUse();
 
@@ -95,14 +95,14 @@ public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 
 		// History.GotoTextEnd();
 
-		Submit = EngineAPI.New<Button>(this, "ConsoleSubmit", "#Console_Submit");
+		Submit = new Button(this, "ConsoleSubmit", "#Console_Submit");
 		Submit.SetCommand("submit");
 		Submit.SetVisible(!StatusVersion);
 
 		// var completionList = new NonFocusableMenu(this, "CompletionList");
 		// completionList.SetVisible(false);
 
-		Entry = EngineAPI.New<TabCatchingTextEntry>(this, "ConsoleEntry", CompletionList);
+		Entry = new TabCatchingTextEntry(this, "ConsoleEntry", CompletionList);
 		Entry.AddActionSignalTarget(this);
 		Entry.SendNewLine(true);
 		// completionList.SetFocusPanel(Entry);
@@ -246,7 +246,7 @@ public class ConsoleDialog : Frame
 		SetVisible(false);
 		SetTitle("#Console_Title", true);
 
-		ConsolePanel = EngineAPI.New<ConsolePanel>(this, "ConsolePage", statusVersion);
+		ConsolePanel = new ConsolePanel(this, "ConsolePage", statusVersion);
 		ConsolePanel.AddActionSignalTarget(this);
 	}
 

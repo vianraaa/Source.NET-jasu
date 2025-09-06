@@ -136,15 +136,15 @@ public class Scheme : IScheme
 				ReadOnlySpan<char> borderType = kv.GetString("bordertype", null);
 				if (borderType != null && borderType.Length > 0) {
 					if (borderType.Equals("image", StringComparison.OrdinalIgnoreCase))
-						border = EngineAPI.New<ImageBorder>();
+						border = new ImageBorder();
 					else if (borderType.Equals("scalable_image", StringComparison.OrdinalIgnoreCase))
-						border = EngineAPI.New<ScalableImageBorder>();
+						border = new ScalableImageBorder();
 					else
 						Assert(false);
 				}
 
 				if (border == null)
-					border = EngineAPI.New<Border>();
+					border = new Border();
 
 				border.SetName(kv.Name);
 				border.ApplySchemeSettings(this, kv);

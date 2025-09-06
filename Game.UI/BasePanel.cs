@@ -66,7 +66,7 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 {
 	protected override void LayoutMenuBorder() { }
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
-		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
+		MenuItem item = new GameMenuItem(this, new string(itemName), new string(itemText));
 		item.AddActionSignalTarget(target);
 		item.SetCommand(command);
 		item.SetText(itemText);
@@ -74,7 +74,7 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 		return base.AddMenuItem(item);
 	}
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, KeyValues command, Panel? target, KeyValues? userData = null) {
-		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
+		MenuItem item = new GameMenuItem(this, new string(itemName), new string(itemText));
 		item.AddActionSignalTarget(target);
 		item.SetCommand(command);
 		item.SetText(itemText);
@@ -284,7 +284,7 @@ public class BasePanel : Panel
 			throw new NotImplementedException();
 		}
 		else {
-			QueryBox box = EngineAPI.New<QuitQueryBox>("#GameUI_QuitConfirmationTitle", "#GameUI_QuitConfirmationText", this);
+			QueryBox box = new QuitQueryBox("#GameUI_QuitConfirmationTitle", "#GameUI_QuitConfirmationText", this);
 			box.SetOKButtonText("#GameUI_Quit");
 			box.SetOKCommand(new KeyValues("Command", "command", "QuitNoConfirm"));
 			box.SetCancelCommand(new KeyValues("Command", "command", "ReleaseModalWindow"));
@@ -294,7 +294,7 @@ public class BasePanel : Panel
 	}
 
 	static BackgroundMenuButton CreateMenuButton(BasePanel parent, ReadOnlySpan<char> panelName, ReadOnlySpan<char> panelText) {
-		BackgroundMenuButton button = parent.EngineAPI.New<BackgroundMenuButton>(parent, new string(panelName));
+		BackgroundMenuButton button = new BackgroundMenuButton(parent, new string(panelName));
 		button.SetProportional(true);
 		button.SetCommand("OpenGameMenu");
 		button.SetText(panelText);
@@ -547,7 +547,7 @@ public class BasePanel : Panel
 	}
 
 	private GameMenu RecursiveLoadGameMenu(KeyValues datafile) {
-		GameMenu menu = EngineAPI.New<GameMenu>(this, new string(datafile.Name));
+		GameMenu menu = new GameMenu(this, new string(datafile.Name));
 		for (KeyValues? dat = datafile.GetFirstSubKey(); dat != null; dat = dat.GetNextKey()) {
 			ReadOnlySpan<char> label = dat.GetString("label", "<unknown>");
 			ReadOnlySpan<char> cmd = dat.GetString("command", null);
@@ -562,7 +562,7 @@ public class BasePanel : Panel
 
 	private void CreateGameLogo() {
 		if (ModInfo.UseGameLogo()) {
-			GameLogo = EngineAPI.New<MainMenuGameLogo>(this, "GameLogo");
+			GameLogo = new MainMenuGameLogo(this, "GameLogo");
 
 			GameLogo.MakeReadyForUse();
 			GameLogo.InvalidateLayout(true, true);

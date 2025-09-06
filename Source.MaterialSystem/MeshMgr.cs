@@ -75,7 +75,7 @@ public class MeshMgr
 		throw new NotImplementedException();
 	}
 
-	// We can't rely on imported engineAPI.New<>() calls here because it makes the dependency injection
+	// We can't rely on imported new () calls here because it makes the dependency injection
 	// system crash and burn
 	private TMesh InitMesh<TMesh>() where TMesh : Mesh, new() {
 		TMesh ret = new TMesh();

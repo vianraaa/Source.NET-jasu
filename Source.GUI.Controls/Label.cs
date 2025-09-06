@@ -23,7 +23,7 @@ public class Label : Panel
 	public Label(Panel? parent, string? panelName, string text) : base(parent, panelName) {
 		Init();
 
-		TextImage = EngineAPI.New<TextImage>(text);
+		TextImage = new TextImage(text);
 		TextImage.SetColor(new(0, 0, 0, 0));
 		SetText(text);
 		TextImageIndex = AddImage(TextImage, 0);

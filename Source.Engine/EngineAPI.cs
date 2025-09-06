@@ -48,6 +48,8 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 	}
 
 	public IEngineAPI.Result Run() {
+		using ServiceLocatorScope locatorScope = new(this);
+
 		provider.GetRequiredService<IMaterialSystem>().ModInit();
 
 		ConVar_Register();

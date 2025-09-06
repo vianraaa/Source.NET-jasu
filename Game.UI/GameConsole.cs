@@ -27,7 +27,7 @@ public class GameConsole(IEngineAPI engineAPI, ISurface Surface, ISchemeManager 
 	}
 
 	public void Initialize() {
-		Console = engineAPI.New<GameConsoleDialog>();
+		Console = new GameConsoleDialog();
 		Console.MakeReadyForUse();
 
 		Surface.GetScreenSize(out int swide, out int stall);
