@@ -70,11 +70,16 @@ public class Bootloader : IDisposable
 				.WithStdShader<StdShaderGl46>()
 				// Let the engine builder take over and inject engine-specific dependencies
 				.Build(dedicated: false);
+
 			// Generate our startup information
 			PreInit();
-			// AssertMsg(false, "Test");
+
+			// Start using this provider for the engine
+			using ServiceLocatorScope locatorScope = new(engineAPI);
+
 			// Run the game
 			var res = engineAPI.Run();
+
 			// If the engine requested a restart, re-loop
 			needsRestart = res == IEngineAPI.Result.InitRestart || res == IEngineAPI.Result.RunRestart;
 		} while (needsRestart);

@@ -105,13 +105,7 @@ public class AnimationController : Panel, IAnimationController
 	static SymbolTable ScriptSymbols = new();
 
 	// Static instance
-	public AnimationController(ISurface Surface, ISchemeManager SchemeManager, IVGui VGui, IVGuiInput Input, IEngineAPI EngineAPI, ILocalize Localize) {
-		this.Surface = Surface;
-		this.SchemeManager = SchemeManager;
-		this.VGui = VGui;
-		this.Input = Input;
-		this.EngineAPI = EngineAPI;
-		this.Localize = Localize;
+	public AnimationController() {
 		Init();
 	}
 	// Dynamic instance

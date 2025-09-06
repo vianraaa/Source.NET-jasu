@@ -144,6 +144,7 @@ public class MatSystemSurface : IMatSystemSurface
 			Surface = this,
 			SchemeManager = schemeManager,
 		};
+		Panel.AllowDependencyInjection = false; // We're good now
 		SetEmbeddedPanel(DefaultEmbeddedPanel);
 		this.launcherMgr = launcherMgr;
 	}

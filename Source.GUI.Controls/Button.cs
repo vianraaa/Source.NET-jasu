@@ -41,7 +41,7 @@ public class Button : Label
 	string? DepressedSoundName;
 	string? ReleasedSoundName;
 
-	[Imported] public ISystem System;
+	readonly public ISystem System = Singleton<ISystem>();
 
 	public override void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {

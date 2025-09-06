@@ -11,8 +11,8 @@ namespace Source.StdShader.Gl46;
 
 public abstract class BaseShader : IShader
 {
-	[Imported] public IMaterialSystemHardwareConfig HardwareConfig;
-	[Imported] public IShaderSystem ShaderSystem;
+	readonly public IMaterialSystemHardwareConfig HardwareConfig = Singleton<IMaterialSystemHardwareConfig>();
+	readonly public IShaderSystem ShaderSystem = Singleton<IShaderSystem>();
 
 	internal static IMaterialVar[]? Params;
 	internal static IShaderInit? ShaderInit;

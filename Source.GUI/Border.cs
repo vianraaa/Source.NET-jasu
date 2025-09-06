@@ -7,7 +7,7 @@ namespace Source.GUI;
 
 public class Border : IBorder
 {
-	[Imported] public ISurface Surface;
+	readonly public ISurface Surface = Singleton<ISurface>();
 
 	public string? Name;
 

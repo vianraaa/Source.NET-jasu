@@ -18,7 +18,7 @@ public class GameConsoleDialog : ConsoleDialog  {
 		}
 	}
 
-	[Imported] public IEngineClient engine;
+	readonly public IEngineClient engine = Singleton<IEngineClient>();
 
 	protected override void OnCommandSubmitted(ReadOnlySpan<char> command) => engine.ClientCmd_Unrestricted(command);
 	public override void OnCommand(ReadOnlySpan<char> command) {

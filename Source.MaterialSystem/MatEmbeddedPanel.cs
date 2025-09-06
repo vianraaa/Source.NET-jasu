@@ -5,7 +5,7 @@ namespace Source.MaterialSystem;
 
 public class MatEmbeddedPanel() : Panel(null, "MatSystemTopPanel")
 {
-	[Imported] public IMaterialSystem materials;
+	public IMaterialSystem materials = Singleton<IMaterialSystem>();
 	public override void OnThink() {
 		using MatRenderContextPtr renderContext = new(materials);
 		renderContext.GetViewport(out int x, out int y, out int width, out int height);

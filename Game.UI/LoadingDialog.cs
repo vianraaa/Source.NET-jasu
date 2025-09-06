@@ -8,8 +8,8 @@ namespace Game.UI;
 
 public class LoadingDialog : Frame
 {
-	[Imported] public IGameUI GameUI;
-	[Imported] public ModInfo ModInfo;
+	readonly public IGameUI GameUI = Singleton<IGameUI>();
+	readonly public ModInfo ModInfo = Singleton<ModInfo>();
 
 	ProgressBar Progress;
 	ProgressBar Progress2;
@@ -87,7 +87,7 @@ public class LoadingDialog : Frame
 	}
 
 	internal bool SetProgressPoint(float progress) {
-		throw new NotImplementedException();
+
 	}
 
 	internal void SetStatusText(ReadOnlySpan<char> statusText) {

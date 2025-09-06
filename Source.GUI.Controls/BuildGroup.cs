@@ -9,8 +9,8 @@ namespace Source.GUI.Controls;
 
 public class BuildGroup
 {
-	[Imported] public IFileSystem fileSystem;
-	[Imported] public ICommandLine CommandLine;
+	readonly public IFileSystem fileSystem = Singleton<IFileSystem>();
+	readonly public ICommandLine CommandLine = Singleton<ICommandLine>();
 
 	public string? ResourceName;
 	public string? ResourcePathID;
@@ -109,18 +109,18 @@ public class BuildGroup
 	}
 
 	private void ApplySettings(KeyValues? dat) {
-		throw new NotImplementedException();
+
 	}
 
 	private void DeleteAllControlsCreatedByControlSettingsFile() {
-		throw new NotImplementedException();
+
 	}
 
 	private void ProcessConditionalKeys(KeyValues? dat, KeyValues conditions) {
-		throw new NotImplementedException();
+
 	}
 
 	private void RegisterControlSettingsFile(ReadOnlySpan<char> controlResourceName, ReadOnlySpan<char> pathID) {
-		throw new NotImplementedException();
+
 	}
 }

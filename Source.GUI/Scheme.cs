@@ -21,10 +21,10 @@ public record struct FontRange
 
 public class Scheme : IScheme
 {
-	[Imported] public ISystem System;
-	[Imported] public ISurface Surface;
-	[Imported] public ISchemeManager SchemeManager;
-	[Imported] public IEngineAPI EngineAPI;
+	readonly public ISystem System = Singleton<ISystem>();
+	readonly public ISurface Surface = Singleton<ISurface>();
+	readonly public ISchemeManager SchemeManager = Singleton<ISchemeManager>();
+	readonly public IEngineAPI EngineAPI = Singleton<IEngineAPI>();
 
 	IPanel SizingPanel;
 	KeyValues Data;

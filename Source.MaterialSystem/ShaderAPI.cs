@@ -44,7 +44,7 @@ public enum CommitFuncType
 public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 {
 	public MeshMgr MeshMgr;
-	[Imported] public IShaderSystem ShaderManager;
+	public IShaderSystem ShaderManager;
 
 	public GraphicsDriver GetDriver() => Driver;
 	private bool ready;

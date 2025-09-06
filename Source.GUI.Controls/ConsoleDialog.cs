@@ -23,7 +23,7 @@ public class TabCatchingTextEntry : TextEntry
 }
 public class ConsolePanel : EditablePanel, IConsoleDisplayFunc
 {
-	[Imported] public ICvar Cvar;
+	readonly public ICvar Cvar = Singleton<ICvar>();
 
 	internal RichText History;
 	internal TextEntry Entry;

@@ -9,7 +9,7 @@ namespace Source.GUI.Controls;
 
 public class EditablePanel : Panel
 {
-	[Imported] public IFileSystem fileSystem;
+	readonly public IFileSystem fileSystem = Singleton<IFileSystem>();
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
 		BuildGroup = new BuildGroup(this, this);
@@ -29,7 +29,7 @@ public class EditablePanel : Panel
 	}
 
 	private void ForceSubPanelsToUpdateWithNewDialogVariables() {
-		throw new NotImplementedException();
+
 	}
 
 	static ConVar vgui_nav_lock_default_button = new(nameof(vgui_nav_lock_default_button), 0);
@@ -93,7 +93,7 @@ public class EditablePanel : Panel
 }
 public class FocusNavGroup
 {
-	[Imported] public IVGui VGui;
+	readonly public IVGui VGui = Singleton<IVGui>();
 	readonly WeakReference<Panel?> DefaultButton = new(null);
 	readonly WeakReference<Panel?> CurrentDefaultButton = new(null);
 	readonly WeakReference<Panel?> CurrentFocus = new(null);

@@ -12,7 +12,7 @@ namespace Source.GUI.Controls;
 
 public class Image : IImage
 {
-	[Imported] public ISurface Surface;
+	readonly public ISurface Surface = Singleton<ISurface>();
 
 	int X, Y, Width, Height;
 	Color Color;

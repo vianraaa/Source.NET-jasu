@@ -155,14 +155,18 @@ public class Panel : IPanel
 		AnimationPropertyConverters[hash] = converter;
 	}
 
-	[Imported] public ISurface Surface;
-	[Imported] public ISchemeManager SchemeManager;
-	[Imported] public IVGui VGui;
-	[Imported] public IVGuiInput Input;
-	[Imported] public IEngineAPI EngineAPI;
-	[Imported] public ILocalize Localize;
-	[Imported] public ILauncherManager Launcher;
-	[Imported] public ISystem System;
+	// These aren't made readonly since a few internal panel things don't like that.
+	// HACK: FORCE SOME DEPENDENCIES NOT TO LOAD DUE TO CYCLIC DEPENDENCIES.
+	// I REALLY HATE THIS.
+	public static bool AllowDependencyInjection = true;
+	public ISurface Surface = AllowDependencyInjection ? null! : Singleton<ISurface>();
+	public ISchemeManager SchemeManager = AllowDependencyInjection ? null! : Singleton<ISchemeManager>();
+	public IVGui VGui = AllowDependencyInjection ? null! : Singleton<IVGui>();
+	public IVGuiInput Input = AllowDependencyInjection ? null! : Singleton<IVGuiInput>();
+	public IEngineAPI EngineAPI = AllowDependencyInjection ? null! : Singleton<IEngineAPI>();
+	public ILocalize Localize = AllowDependencyInjection ? null! : Singleton<ILocalize>();
+	public ILauncherManager Launcher = AllowDependencyInjection ? null! : Singleton<ILauncherManager>();
+	public ISystem System = AllowDependencyInjection ? null! : Singleton<ISystem>();
 
 	private AnimationController? ac;
 	public AnimationController GetAnimationController() => ac ??= EngineAPI.GetRequiredService<AnimationController>();

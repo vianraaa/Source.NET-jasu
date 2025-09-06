@@ -153,7 +153,7 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 
 public class MainMenuGameLogo : EditablePanel
 {
-	[Imported] public IEngineClient engine;
+	readonly public IEngineClient engine = Singleton<IEngineClient>();
 
 	int OffsetX;
 	int OffsetY;
@@ -212,10 +212,10 @@ public class BasePanel : Panel
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 	GameMenu GameMenu;
 
-	[Imported] public IFileSystem FileSystem;
-	[Imported] public IGameUI GameUI;
-	[Imported] public IEngineClient engine;
-	[Imported] public ModInfo ModInfo;
+	readonly public IFileSystem FileSystem = Singleton<IFileSystem>();
+	readonly public IGameUI GameUI = Singleton<IGameUI>();
+	readonly public IEngineClient engine = Singleton<IEngineClient>();
+	readonly public ModInfo ModInfo = Singleton<ModInfo>();
 #pragma warning restore CS8618
 
 	TextureID BackgroundImageID = TextureID.INVALID;

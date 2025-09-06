@@ -192,6 +192,10 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 
 		// Everything else should be provided by the launcher!
 		ServiceProvider provider = this.BuildServiceProvider();
+
+		// Start using this provider for the engine
+		using ServiceLocatorScope locatorScope = new(provider);
+
 		EngineAPI api = (EngineAPI)provider.GetRequiredService<IEngineAPI>();
 		foreach(var field in populateLater) {
 			var attr = field.GetCustomAttribute<EngineComponentReferenceAttribute>()!;
