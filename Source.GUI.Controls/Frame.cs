@@ -1,6 +1,7 @@
 ﻿using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
+using Source.Common.Input;
 
 using static System.Net.Mime.MediaTypeNames;
 
@@ -32,14 +33,19 @@ public class FrameSystemButton : MenuButton
 	}
 }
 
-public class GripPanel : Panel {
+public class GripPanel : Panel
+{
 	public const int DEFAULT_SNAP_RANGE = 10;
 	Frame Frame;
 	bool Dragging;
 	int DragMultX;
 	int DragMultY;
+	readonly int[] DragOrgPos = new int[2];
+	readonly int[] DragOrgSize = new int[2];
+	readonly int[] DragStart = new int[2];
 	IFont? MarlettFont;
 	int SnapRange;
+
 	public GripPanel(Frame dragFrame, ReadOnlySpan<char> name, int xdir, int ydir) : base(dragFrame, new(name)) {
 		Frame = dragFrame;
 		Dragging = false;
@@ -51,7 +57,7 @@ public class GripPanel : Panel {
 		SetPaintBorderEnabled(false);
 		SnapRange = DEFAULT_SNAP_RANGE;
 
-		if(xdir == 1 && ydir == 1) {
+		if (xdir == 1 && ydir == 1) {
 			SetPaintEnabled(false);
 			SetPaintBackgroundEnabled(true);
 		}
@@ -59,12 +65,103 @@ public class GripPanel : Panel {
 		// todo: SetBlockDragChaining
 	}
 
-	protected virtual void Moved(int dx, int dy) {
+	public override void Paint() {
+		Surface.DrawSetTextFont(MarlettFont);
+		Surface.DrawSetTextPos(0, 0);
+		Surface.DrawSetTextColor(GetFgColor());
+		Surface.DrawChar('p');
+	}
+	public override void PaintBackground() {
+		base.PaintBackground();
+	}
+	public override void OnMouseReleased(ButtonCode code) {
+		Dragging = false;
+		Input.SetMouseCapture(null);
+	}
+	public override void OnMousePressed(ButtonCode code) {
+		if (code == ButtonCode.MouseLeft) {
+			Dragging = true;
+			Input.GetCursorPos(out int x, out int y);
+			DragStart[0] = x;
+			DragStart[1] = y;
+			Frame.GetPos(out DragOrgPos[0], out DragOrgPos[1]);
+			Frame.GetSize(out DragOrgSize[0], out DragOrgSize[1]);
+			Input.SetMouseCapture(this);
 
+			IPanel? focus = Input.GetFocus();
+			if (focus == null || !focus.HasParent(Frame)) 
+				Frame.RequestFocus();
+			
+			Frame.Repaint();
+		}
+		else 
+			GetParent()!.OnMousePressed(code);
+	}
+	public override void OnMouseCaptureLost() {
+		base.OnMouseCaptureLost();
+		Dragging = false;
+	}
+	protected virtual void Moved(int dx, int dy) {
+		if (!Frame.IsSizeable())
+			return;
+
+		int newX = DragOrgPos[0], newY = DragOrgPos[1];
+		int newWide = DragOrgSize[0], newTall = DragOrgSize[1];
+
+		Frame.GetMinimumSize(out int minWide, out int minTall);
+
+		newWide += (dx * DragMultX);
+		if (DragMultX == -1) 
+			if (newWide < minWide) 
+				dx = DragOrgSize[0] - minWide;
+		
+
+		newTall += (dy * DragMultY);
+		if (DragMultY == -1) {
+			if (newTall < minTall) 
+				dy = DragOrgSize[1] - minTall;
+			
+			newY += dy;
+		}
+
+		if (Frame.GetClipToParent()) {
+			if (newX < 0)
+				newX = 0;
+			if (newY < 0)
+				newY = 0;
+
+			Surface.GetScreenSize(out int sx, out int sy);
+
+			Frame.GetSize(out int w,  out int h);
+			if (newX + w > sx) {
+				newX = sx - w;
+			}
+			if (newY + h > sy) {
+				newY = sy - h;
+			}
+		}
+
+		Frame.SetPos(newX, newY);
+		Frame.SetSize(newWide, newTall);
+		Frame.InvalidateLayout();
+		Frame.Repaint();
+	}
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		bool issmall = ((Frame)GetParent()).IsSmallCaption();
+
+		MarlettFont = scheme.GetFont(issmall ? "MarlettSmall" : "Marlett", IsProportional());
+		SetFgColor(GetSchemeColor("FrameGrip.Color1", scheme));
+		SetBgColor(GetSchemeColor("FrameGrip.Color2", scheme));
+
+		ReadOnlySpan<char> snapRange = scheme.GetResourceString("Frame.AutoSnapRange");
+		if (snapRange != null && snapRange.Length > 0) 
+			SnapRange = int.TryParse(snapRange, out int r) ? r : 0;
 	}
 }
 
-public class CaptionGripPanel : GripPanel {
+public class CaptionGripPanel : GripPanel
+{
 	public const int CAPTION_TITLE_BORDER = 7;
 	public const int CAPTION_TITLE_BORDER_SMALL = 0;
 
@@ -101,10 +198,50 @@ public class FrameButton : Button
 		Repaint();
 	}
 
+	public override void OnMousePressed(ButtonCode code) {
+		if (!IsEnabled())
+			return;
+
+		if (!IsMouseClickEnabled(code))
+			return;
+
+		if (!IsUseCaptureMouseEnabled()) {
+			SetSelected(true);
+			Repaint();
+			Input.SetMouseCapture(this);
+		}
+	}
+
 	public static int GetButtonSide(Frame frame) {
 		if (frame.IsSmallCaption())
 			return 12;
 		return 18;
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		EnabledFgColor = GetSchemeColor("FrameTitleButton.FgColor", scheme);
+		EnabledBgColor = GetSchemeColor("FrameTitleButton.BgColor", scheme);
+
+		DisabledFgColor = GetSchemeColor("FrameTitleButton.DisabledFgColor", scheme);
+		DisabledBgColor = GetSchemeColor("FrameTitleButton.DisabledBgColor", scheme);
+
+		BrightBorder = scheme.GetBorder("TitleButtonBorder");
+		DepressedBorder = scheme.GetBorder("TitleButtonDepressedBorder");
+		DisabledBorder = scheme.GetBorder("TitleButtonDisabledBorder");
+
+		SetDisabledLook(DisabledLook);
+	}
+
+	public override IBorder? GetBorder(bool depressed, bool armed, bool selected, bool keyfocus) {
+		if (DisabledLook)
+			return DisabledBorder;
+
+		if (depressed)
+			return DepressedBorder;
+
+		return BrightBorder;
 	}
 }
 
@@ -391,7 +528,7 @@ public class Frame : EditablePanel
 		int offset = offset_start;
 
 		int top_border_offset = (int)((5 + 3) * scale);
-		if (SmallCaption) 
+		if (SmallCaption)
 			top_border_offset = (int)((3) * scale);
 
 		int side_border_offset = (int)(5 * scale);

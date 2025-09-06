@@ -121,7 +121,7 @@ public class Button : Label
 		base.PerformLayout();
 	}
 
-	public IBorder? GetBorder(bool depressed, bool armed, bool selected, bool keyfocus) {
+	public virtual IBorder? GetBorder(bool depressed, bool armed, bool selected, bool keyfocus) {
 		if (ButtonFlags.HasFlag(ButtonFlags.ButtonBorderEnabled)) {
 			if (depressed)
 				return DepressedBorder;
@@ -267,7 +267,7 @@ public class Button : Label
 		return (MouseClickMask & unchecked(1 << unchecked((int)(code + 1)))) != 0;
 	}
 
-	private bool IsUseCaptureMouseEnabled() => (ButtonFlags & ButtonFlags.UseCaptureMouse) != 0;
+	public bool IsUseCaptureMouseEnabled() => (ButtonFlags & ButtonFlags.UseCaptureMouse) != 0;
 	public void SetUseCaptureMouse(bool state) {
 		if (state) ButtonFlags |= ButtonFlags.UseCaptureMouse;
 		else ButtonFlags &= ~ButtonFlags.UseCaptureMouse;

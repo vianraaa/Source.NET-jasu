@@ -259,7 +259,7 @@ public class Panel : IPanel
 		Cursor = CursorCode.Arrow;
 	}
 
-	public IBorder? GetBorder() => Border;
+	public virtual IBorder? GetBorder() => Border;
 	public void SetBorder(IBorder? border) => Border = border;
 
 	public void MakeReadyForUse() {
