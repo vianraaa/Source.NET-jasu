@@ -49,7 +49,7 @@ public class ProgressBar : Panel
 
 	public void SetProgress(double progress) {
 		if(progress != Progress) {
-			progress = Math.Clamp(progress, 0, 1);
+			Progress = Math.Clamp(progress, 0, 1);
 			Repaint();
 		}
 	}
