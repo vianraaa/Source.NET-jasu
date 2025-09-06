@@ -2,8 +2,10 @@
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.Utilities;
 
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace Source.GUI.Controls;
 
@@ -15,12 +17,16 @@ public class BuildGroup
 	public string? ResourceName;
 	public string? ResourcePathID;
 	public Panel? BuildContext;
+	public Panel? CurrentPanel;
 	public Panel? ParentPanel;
 
 	public BuildGroup(Panel? parentPanel, Panel? contextPanel) {
 		this.ParentPanel = parentPanel;
-		this.BuildContext = contextPanel;	
+		this.BuildContext = contextPanel;
 	}
+
+	public List<Panel> Panels = [];
+	public List<UtlSymbol> RegisteredControlSettingsFiles = [];
 
 	readonly Dictionary<ulong, KeyValues?> DictCachedResFiles = [];
 	static ConVar vgui_cache_res_files = new("1", 0);
@@ -60,16 +66,16 @@ public class BuildGroup
 			if (pathID == null)
 				bSuccess = dat.LoadFromFile(fileSystem, controlResourceName, "SKIN");
 
-			if (!bSuccess) 
+			if (!bSuccess)
 				bSuccess = dat.LoadFromFile(fileSystem, controlResourceName, pathID);
 
 			if (bSuccess) {
 				deleteKeys = true;
 				shouldCacheKeys = true;
 			}
-			else 
+			else
 				Warning($"Failed to load {controlResourceName}\n");
-			
+
 			break;
 		}
 
@@ -86,12 +92,12 @@ public class BuildGroup
 
 		ResourceName = new(controlResourceName);
 
-		if (pathID != null) 
+		if (pathID != null)
 			ResourcePathID = new(pathID);
 
 		DeleteAllControlsCreatedByControlSettingsFile();
 
-		ApplySettings(dat);
+		ApplySettings(dat!);
 
 		if (ParentPanel != null) {
 			ParentPanel.InvalidateLayout();
@@ -108,19 +114,132 @@ public class BuildGroup
 		}
 	}
 
-	private void ApplySettings(KeyValues? dat) {
+	private void ApplySettings(KeyValues resourceData) {
+		for (KeyValues? controlKeys = resourceData.GetFirstSubKey(); controlKeys != null; controlKeys = controlKeys.GetNextKey()) {
+			bool bFound = false;
 
+			if (controlKeys.Type != KeyValues.Types.None)
+				continue;
+
+			ReadOnlySpan<char> keyName = controlKeys.Name;
+
+			for (int i = 0; i < Panels.Count; i++) {
+				Panel? panel = Panels[i];
+
+				if (panel == null) {
+					Panels.RemoveAt(i);
+					--i;
+					continue;
+				}
+
+
+				Assert(panel);
+
+				ReadOnlySpan<char> panelName = panel.GetName();
+
+				if (panelName.Equals(keyName, StringComparison.OrdinalIgnoreCase)) {
+					panel.ApplySettings(controlKeys);
+					bFound = true;
+					break;
+				}
+			}
+
+			if (!bFound)
+				if (keyName != null)
+					NewControl(controlKeys);
+		}
+	}
+
+	private Panel? NewControl(KeyValues controlKeys, int x = 0, int y = 0) {
+		Panel? newPanel = null;
+		if (controlKeys != null) {
+			KeyValues? keyVal = new KeyValues("ControlFactory", "ControlName", controlKeys.GetString("ControlName"));
+			BuildContext!.RequestInfo(keyVal);
+			newPanel = (Panel?)keyVal.GetPtr("PanelPtr");
+		}
+		else {
+			return null;
+		}
+
+		if (newPanel != null) {
+			newPanel.SetParent(ParentPanel);
+			newPanel.SetBuildGroup(this);
+			newPanel.SetPos(x, y);
+
+			newPanel.SetName(controlKeys.Name);
+			newPanel.ApplySettings(controlKeys);
+
+			newPanel.AddActionSignalTarget(ParentPanel);
+			newPanel.SetBuildModeEditable(true);
+			newPanel.SetBuildModeDeletable(true);
+
+			newPanel.SetAutoDelete(true);
+		}
+
+		return newPanel;
 	}
 
 	private void DeleteAllControlsCreatedByControlSettingsFile() {
+		for (int i = 1; i < Panels.Count; i++) {
+			if (Panels[i] == null) {
+				Panels.RemoveAt(i);
+				--i;
+				continue;
+			}
 
+			if (Panels[i].IsBuildModeDeletable()) {
+				Panels[i].DeletePanel();
+				Panels.RemoveAt(i);
+				--i;
+			}
+		}
+
+		CurrentPanel = BuildContext;
+		CurrentPanel!.InvalidateLayout();
+		BuildContext!.Repaint();
 	}
 
-	private void ProcessConditionalKeys(KeyValues? dat, KeyValues conditions) {
+	private void ProcessConditionalKeys(KeyValues? data, KeyValues conditions) {
+		if (data != null) {
+			KeyValues? subKey = data.GetFirstSubKey();
+			if (subKey == null)
+				return;
 
+			for (; subKey != null; subKey = subKey.GetNextKey()) {
+				ProcessConditionalKeys(subKey, conditions);
+
+				KeyValues? cond = conditions.GetFirstSubKey();
+				for (; cond != null; cond = cond.GetNextKey()) {
+					KeyValues? conditionBlock = subKey.FindKey(cond.Name);
+					if (conditionBlock != null) {
+						KeyValues? overridingKey;
+						for (overridingKey = conditionBlock.GetFirstSubKey(); overridingKey != null; overridingKey = overridingKey.GetNextKey()) {
+							KeyValues? existingKey = subKey.FindKey(overridingKey.Name);
+							if (existingKey != null)
+								existingKey.SetStringValue(overridingKey.GetString());
+							else {
+								KeyValues copy = overridingKey.MakeCopy();
+								subKey.AddSubKey(copy);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void RegisterControlSettingsFile(ReadOnlySpan<char> controlResourceName, ReadOnlySpan<char> pathID) {
+		UtlSymbol symbol = new(controlResourceName);
 
+		if (!RegisteredControlSettingsFiles.Contains(symbol))
+			RegisteredControlSettingsFiles.Add(symbol);
+	}
+
+	public void PanelAdded(Panel panel) {
+		if (!Panels.Contains(panel))
+			Panels.Add(panel);
+	}
+	public void PanelRemoved(Panel panel) {
+		Panels.Remove(panel);
 	}
 }

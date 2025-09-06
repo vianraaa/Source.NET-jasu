@@ -56,6 +56,28 @@ public enum PanelFlags
 	All = 0xFFFF,
 }
 
+public enum BuildModeFlags {
+	Editable = 1 << 0,
+	Deletable = 1 << 1,
+	SaveXPos_RightAligned = 1 << 2,
+	SaveXPos_CenterAligned= 1 << 3,
+	SaveYPos_BottomAligned = 1 << 4,
+	SaveYPos_CenterAligned= 1 << 5,
+	SaveWideFull = 1 << 6,
+	SaveTallFull = 1 << 7,
+	SaveProportionalToParent= 1 << 8,
+	SaveWideProportional = 1 << 9,
+	SaveTallProportional = 1 << 10,
+	SaveXPosProportionalSelf = 1 << 11,
+	SaveYPosProportionalSelf = 1 << 12,
+	SaveWideProportionalTall = 1 << 13,
+	SaveTallProportionalWide = 1 << 14,
+	SaveXposProportionalParent = 1 << 15,
+	SaveYposProportionalParent = 1 << 16,
+	SaveWideProportionalSelf = 1 << 17,
+	SaveTallProportionalSelf = 1 << 18,
+}
+
 public interface IPanelAnimationPropertyConverter
 {
 	void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry);
@@ -260,6 +282,7 @@ public class Panel : IPanel
 	IBorder? Border;
 	IScheme? Scheme;
 	PanelFlags Flags;
+	BuildModeFlags BuildModeFlags;
 	readonly List<Panel> Children = [];
 	readonly List<OverrideableColorEntry> OverrideableColorEntries = [];
 
@@ -1535,6 +1558,28 @@ public class Panel : IPanel
 
 	public virtual IPanel? GetDragPanel() {
 		return GetParent()?.GetDragPanel();
+	}
+
+	public bool IsBuildModeEditable() => true;
+	public bool IsBuildModeDeletable() => BuildModeFlags.HasFlag(BuildModeFlags.Deletable);
+
+	internal void SetBuildModeDeletable(bool state) {
+		if (state) BuildModeFlags |= BuildModeFlags.Deletable; else BuildModeFlags &= ~BuildModeFlags.Deletable;
+	}
+
+	internal void SetBuildModeEditable(bool state) {
+		if (state) BuildModeFlags |= BuildModeFlags.Editable; else BuildModeFlags &= ~BuildModeFlags.Editable;
+	}
+
+	BuildGroup? BuildGroup;
+
+	internal void SetBuildGroup(BuildGroup? buildGroup) {
+		if (BuildGroup == buildGroup)
+			return;
+
+		BuildGroup = buildGroup;
+
+		BuildGroup?.PanelAdded(this);
 	}
 }
 

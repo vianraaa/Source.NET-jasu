@@ -102,7 +102,7 @@ public class AnimationController : Panel, IAnimationController
 	ulong Wide;
 	ulong Tall;
 
-	static SymbolTable ScriptSymbols = new();
+	static UtlSymbolTable ScriptSymbols = new();
 
 	// Static instance
 	public AnimationController() {

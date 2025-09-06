@@ -25,7 +25,6 @@ public class KeyValues : IEnumerable<KeyValues>
 	public string Name = "";
 	public Types Type;
 	public object? Value;
-	public string? RawValue;
 
 	bool useEscapeSequences = false;
 	bool evaluateConditionals = false;
@@ -291,9 +290,7 @@ public class KeyValues : IEnumerable<KeyValues>
 		return didAnything;
 	}
 
-	private void DetermineValueType(string input) {
-		RawValue = input;
-
+	private void DetermineValueType(string input) { 
 		// Try Int32
 		if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i32)) {
 			Value = i32;
@@ -629,5 +626,15 @@ public class KeyValues : IEnumerable<KeyValues>
 		if (key != null)
 			return (T?)key.Value;
 		return default;
+	}
+
+	public void SetStringValue(ReadOnlySpan<char> str) {
+		Value = null;
+
+		if (str == null)
+			str = "";
+
+		Value = new string(str);
+		Type = Types.String;
 	}
 }

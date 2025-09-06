@@ -87,7 +87,14 @@ public class LoadingDialog : Frame
 	}
 
 	internal bool SetProgressPoint(float progress) {
+		if (!ShowingVACInfo) 
+			SetupControlSettings(false);
+		
 
+		int nOldDrawnSegments = Progress.GetDrawnSegmentCount();
+		Progress.SetProgress(progress);
+		int nNewDrawSegments = Progress.GetDrawnSegmentCount();
+		return nOldDrawnSegments != nNewDrawSegments;
 	}
 
 	internal void SetStatusText(ReadOnlySpan<char> statusText) {
