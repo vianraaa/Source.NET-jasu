@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using static Source.Common.Networking.svc_ClassInfo;
@@ -56,16 +57,17 @@ public enum PanelFlags
 	All = 0xFFFF,
 }
 
-public enum BuildModeFlags {
+public enum BuildModeFlags
+{
 	Editable = 1 << 0,
 	Deletable = 1 << 1,
 	SaveXPos_RightAligned = 1 << 2,
-	SaveXPos_CenterAligned= 1 << 3,
+	SaveXPos_CenterAligned = 1 << 3,
 	SaveYPos_BottomAligned = 1 << 4,
-	SaveYPos_CenterAligned= 1 << 5,
+	SaveYPos_CenterAligned = 1 << 5,
 	SaveWideFull = 1 << 6,
 	SaveTallFull = 1 << 7,
-	SaveProportionalToParent= 1 << 8,
+	SaveProportionalToParent = 1 << 8,
 	SaveWideProportional = 1 << 9,
 	SaveTallProportional = 1 << 10,
 	SaveXPosProportionalSelf = 1 << 11,
@@ -137,11 +139,30 @@ public class PanelAnimationVarAttribute : Attribute
 			set = methodBuilder.CreateDelegate<PanelSetFunc>();
 		}
 
-		Panel.AddToAnimationMap(t, attribute.Name ?? field.Name, attribute.Type ?? field.FieldType.Name switch {
-			"Single" => "float",
-			_ => field.FieldType.Name
-		}, field.Name, attribute.DefaultValue, false, get, set);
+		Panel.AddToAnimationMap(
+			t, 
+			attribute.Name ?? field.Name, 
+			attribute.Type ?? (typedefs.TryGetValue(field.FieldType, out string? name) ? name : field.FieldType.Name), 
+			field.Name, 
+			attribute.DefaultValue, 
+			false, 
+			get, 
+			set
+		);
 	}
+
+	static readonly Dictionary<Type, string> typedefs = new() {
+		{ typeof(sbyte), "sbyte" },
+		{ typeof(byte), "byte" },
+		{ typeof(short), "short" },
+		{ typeof(ushort), "ushort" },
+		{ typeof(int), "int" },
+		{ typeof(uint), "uint" },
+		{ typeof(long), "long" },
+		{ typeof(ulong), "ulong" },
+		{ typeof(float), "float" },
+		{ typeof(double), "double" }
+	};
 }
 
 public class Panel : IPanel
@@ -164,8 +185,10 @@ public class Panel : IPanel
 		initialized = true;
 
 		AddPropertyConverter("float", floatConverter);
+		AddPropertyConverter("int", intConverter);
 	}
 	static readonly FloatProperty floatConverter = new();
+	static readonly IntProperty intConverter = new();
 
 	public static void AddPropertyConverter(ReadOnlySpan<char> typeName, IPanelAnimationPropertyConverter converter) {
 		var hash = typeName.Hash();
@@ -220,7 +243,7 @@ public class Panel : IPanel
 	public void MakeReadyForUse() {
 		Surface.SolveTraverse(this, true);
 	}
-	public float GetAlpha() => Alpha;
+	public int GetAlpha() => (int)Alpha;
 	public void SetAlpha(float value) => Alpha = value;
 
 
@@ -414,7 +437,7 @@ public class Panel : IPanel
 
 	public Panel? GetParent() => Parent;
 	IPanel? IPanel.GetParent() => Parent;
-	
+
 
 	public void GetPos(out int x, out int y) {
 		x = this.X;
@@ -883,7 +906,7 @@ public class Panel : IPanel
 
 	public void CallParentFunction(KeyValues message) => GetParent()?.SendMessage(message, this);
 
-	public virtual void OnRequestFocus(Panel subFocus, Panel? defaultPanel) 
+	public virtual void OnRequestFocus(Panel subFocus, Panel? defaultPanel)
 		=> CallParentFunction(new KeyValues("OnRequestFocus").AddSubKey(new("subFocus", subFocus)).AddSubKey(new("defaultPanel", defaultPanel)));
 
 	public bool RequestFocusNext(IPanel? existingPanel = null) {
@@ -1162,11 +1185,11 @@ public class Panel : IPanel
 	public bool HasFocus() => Input.GetFocus() == this;
 
 	public virtual void OnCommand(ReadOnlySpan<char> command) {
-		if (command.Equals("performlayout", StringComparison.OrdinalIgnoreCase)) 
+		if (command.Equals("performlayout", StringComparison.OrdinalIgnoreCase))
 			InvalidateLayout();
-		else if (command.Equals("reloadscheme", StringComparison.OrdinalIgnoreCase)) 
+		else if (command.Equals("reloadscheme", StringComparison.OrdinalIgnoreCase))
 			InvalidateLayout(false, true);
-		else 
+		else
 			PostActionSignal(new KeyValues(command));
 	}
 	public virtual void OnMouseCaptureLost() {
@@ -1295,9 +1318,9 @@ public class Panel : IPanel
 		if (!ShouldHandleInputMessage())
 			return;
 
-		if (IsKeyboardInputEnabled()) 
+		if (IsKeyboardInputEnabled())
 			OnKeyCodePressed(code);
-		else 
+		else
 			CallParentFunction(new KeyValues("KeyCodePressed", "code", (int)code));
 	}
 
@@ -1311,7 +1334,7 @@ public class Panel : IPanel
 		IPanel? subTree = Input.GetModalSubTree();
 		if (subTree == null)
 			childOfModal = true;
-		else if (HasParent(subTree)) 
+		else if (HasParent(subTree))
 			childOfModal = true;
 
 		if (Input.ShouldModalSubTreeReceiveMessages())
@@ -1328,17 +1351,17 @@ public class Panel : IPanel
 
 		if (IsKeyboardInputEnabled()) {
 			bool shift = Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift);
-			bool ctrl =  Input.IsKeyDown(ButtonCode.KeyLControl) || Input.IsKeyDown(ButtonCode.KeyRControl);
-			bool alt =   Input.IsKeyDown(ButtonCode.KeyLAlt) || Input.IsKeyDown(ButtonCode.KeyRAlt);
+			bool ctrl = Input.IsKeyDown(ButtonCode.KeyLControl) || Input.IsKeyDown(ButtonCode.KeyRControl);
+			bool alt = Input.IsKeyDown(ButtonCode.KeyLAlt) || Input.IsKeyDown(ButtonCode.KeyRAlt);
 
 			KeyModifier modifiers = 0;
-			if (shift) 
+			if (shift)
 				modifiers |= KeyModifier.Shift;
-			if (ctrl) 
+			if (ctrl)
 				modifiers |= KeyModifier.Control;
-			if (alt) 
+			if (alt)
 				modifiers |= KeyModifier.Alt;
-			
+
 
 			if (!SuppressRebindChecks && IsKeyRebound(code, modifiers)) {
 				return;
@@ -1350,9 +1373,9 @@ public class Panel : IPanel
 			SuppressRebindChecks = oldVal;
 		}
 		else {
-			if (this == Surface.GetEmbeddedPanel()) 
+			if (this == Surface.GetEmbeddedPanel())
 				Input.OnKeyCodeUnhandled(code);
-			
+
 			CallParentFunction(new KeyValues("KeyCodeTyped", "code", (int)code));
 		}
 	}
@@ -1365,9 +1388,9 @@ public class Panel : IPanel
 		if (!ShouldHandleInputMessage())
 			return;
 
-		if (IsKeyboardInputEnabled()) 
+		if (IsKeyboardInputEnabled())
 			OnKeyCodeReleased(code);
-		else 
+		else
 			CallParentFunction(new KeyValues("KeyCodeReleased", "code", (int)code));
 	}
 
@@ -1597,5 +1620,21 @@ class FloatProperty : IPanelAnimationPropertyConverter
 
 	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
 		entry.Set(panel, float.TryParse(entry.DefaultValue, out float r) ? r : 0);
+	}
+}
+class IntProperty : IPanelAnimationPropertyConverter
+{
+	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		object? data = entry.Get(panel);
+		if (data == null) return;
+		kv.SetFloat(entry.ScriptName, (int)data);
+	}
+
+	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		entry.Set(panel, kv.GetInt(entry.ScriptName));
+	}
+
+	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
+		entry.Set(panel, int.TryParse(entry.DefaultValue, out int r) ? r : 0);
 	}
 }

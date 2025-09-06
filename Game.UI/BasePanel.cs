@@ -275,7 +275,7 @@ public class BasePanel : Panel
 		}
 	}
 
-	private void OnOpenQuitConfirmationDialog() {
+	public void OnOpenQuitConfirmationDialog() {
 		if (GameUI.IsConsoleUI()) {
 			throw new NotImplementedException();
 		}
@@ -599,5 +599,9 @@ public class BasePanel : Panel
 
 	internal void OnGameUIHidden() {
 
+	}
+
+	public int GetMenuAlpha() {
+		return GameMenu.GetAlpha();
 	}
 }

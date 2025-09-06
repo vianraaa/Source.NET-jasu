@@ -126,7 +126,7 @@ public interface IPanel : IDisposable
 	void SetTopmostPopup(bool state);
 	void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false);
 
-	float GetAlpha();
+	int GetAlpha();
 	void SetAlpha(float alpha);
 	void TraverseLevel(int v);
 	void SetPopup(bool v);

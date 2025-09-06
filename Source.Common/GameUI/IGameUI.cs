@@ -36,4 +36,7 @@ public interface IGameUI
 	bool HasSavedThisMenuSession();
 	bool IsInBackgroundLevel();
 	bool HasLoadingBackgroundDialog();
+	void ShowLoadingBackgroundDialog();
+	void HideLoadingBackgroundDialog();
+	void SetLoadingBackgroundDialog(IPanel? panel);
 }

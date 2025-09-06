@@ -8,6 +8,7 @@ using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Engine;
 using Source.GUI;
+using Source.GUI.Controls;
 
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -15,20 +16,34 @@ namespace Game.UI;
 
 public class GameUI(IEngineClient engine) : IGameUI
 {
+	public BasePanel? BasePanel() => staticPanel;
+
 	public bool IsMainMenuVisible() {
-		throw new NotImplementedException();
+		BasePanel? basePanel = BasePanel();
+		if (basePanel != null)
+			return (basePanel.IsVisible() && basePanel.GetMenuAlpha() > 0);
+		return false;
 	}
 
 	public void OnConfirmQuit() {
-		throw new NotImplementedException();
+		BasePanel()!.OnOpenQuitConfirmationDialog();
 	}
 
+	string? GameIP;
+	int GameConnectionPort;
+	int GameQueryPort;
+
 	public void OnConnectToServer(ReadOnlySpan<char> game, int ip, int connectionPort, int queryPort) {
-		throw new NotImplementedException();
+		GameIP = new(game);
+		GameConnectionPort = connectionPort;
+		GameQueryPort = queryPort;
 	}
 
 	public void OnDisconnectFromServer(byte steamLoginFailure) {
-		throw new NotImplementedException();
+		GameIP = null;
+		GameConnectionPort = 0;
+		GameQueryPort = 0;
+
 	}
 
 	bool ActivatedUI;
@@ -205,6 +220,30 @@ public class GameUI(IEngineClient engine) : IGameUI
 	}
 
 	public bool HasLoadingBackgroundDialog() {
-		return LoadingDialog != null;
+		return LoadingBackgroundDialog != null;
+	}
+
+	Panel? LoadingBackgroundDialog;
+
+	public void ShowLoadingBackgroundDialog() {
+		if (LoadingBackgroundDialog != null) {
+			LoadingBackgroundDialog.SetParent(staticPanel);
+			LoadingBackgroundDialog.PerformApplySchemeSettings();
+			LoadingBackgroundDialog.SetVisible(true);
+			LoadingBackgroundDialog.MoveToFront();
+			LoadingBackgroundDialog.SendMessage(new KeyValues("activate"), staticPanel);
+		}
+	}
+
+	public void SetLoadingBackgroundDialog(IPanel? panel) {
+		LoadingBackgroundDialog = (Panel?)panel;
+	}
+	public void HideLoadingBackgroundDialog() {
+		if (LoadingBackgroundDialog != null) {
+			LoadingBackgroundDialog.SetParent(null);
+			LoadingBackgroundDialog.SetVisible(false);
+			LoadingBackgroundDialog.MoveToBack();
+			LoadingBackgroundDialog.SendMessage(new KeyValues("deactivate"), staticPanel);
+		}
 	}
 }

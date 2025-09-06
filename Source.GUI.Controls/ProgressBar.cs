@@ -25,7 +25,12 @@ public class ProgressBar : Panel
 	string? DialogVar;
 
 	public ProgressBar(Panel? parent, string name) {
-
+		Progress = 0;
+		DialogVar = null;
+		SetSegmentInfo(4, 8);
+		SetBarInset(4);
+		SetMargin(0);
+		ProgressDirection = ProgressDir.East;
 	}
 
 	public void SetSegmentInfo(int gap, int width) {

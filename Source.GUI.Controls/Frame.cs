@@ -233,6 +233,97 @@ public class Frame : EditablePanel
 	const int CAPTION_TITLE_BORDER = 7;
 	const int CAPTION_TITLE_BORDER_SMALL = 0;
 
+	const int DRAGGER_SIZE = 5;
+	const int CORNER_SIZE = 5;
+	const int BOTTOM_RIGHT_SIZE = 18;
+	const int CAPTION_HEIGHT = 23;
+	public int GetDraggerSize() => SmallCaption ? 3 : DRAGGER_SIZE;
+	public int GetCornerSize() => SmallCaption ? 6 : CORNER_SIZE;
+	public int GetBottomRightSize() => SmallCaption ? 12 : BOTTOM_RIGHT_SIZE;
+	public int GetCaptionHeight() => SmallCaption ? 12 : CAPTION_HEIGHT;
+
+	public override void PerformLayout() {
+		base.PerformLayout();
+
+		GetSize(out int wide, out int tall);
+
+		int DRAGGER_SIZE = GetDraggerSize();
+		int CORNER_SIZE = GetCornerSize();
+		int CORNER_SIZE2 = CORNER_SIZE * 2;
+		int BOTTOMRIGHTSIZE = GetBottomRightSize();
+
+		TopGrip?.SetBounds(CORNER_SIZE, 0, wide - CORNER_SIZE2, DRAGGER_SIZE);
+		LeftGrip?.SetBounds(0, CORNER_SIZE, DRAGGER_SIZE, tall - CORNER_SIZE2);
+		TopLeftGrip?.SetBounds(0, 0, CORNER_SIZE, CORNER_SIZE);
+		TopRightGrip?.SetBounds(wide - CORNER_SIZE, 0, CORNER_SIZE, CORNER_SIZE);
+		BottomLeftGrip?.SetBounds(0, tall - CORNER_SIZE, CORNER_SIZE, CORNER_SIZE);
+
+		BottomGrip?.SetBounds(CORNER_SIZE, tall - DRAGGER_SIZE, wide - (CORNER_SIZE + BOTTOMRIGHTSIZE), DRAGGER_SIZE);
+		RightGrip?.SetBounds(wide - DRAGGER_SIZE, CORNER_SIZE, DRAGGER_SIZE, tall - (CORNER_SIZE + BOTTOMRIGHTSIZE));
+
+		BottomRightGrip?.SetBounds(wide - BOTTOMRIGHTSIZE, tall - BOTTOMRIGHTSIZE, BOTTOMRIGHTSIZE, BOTTOMRIGHTSIZE);
+
+		CaptionGrip?.SetSize(wide - 10, GetCaptionHeight());
+
+		TopGrip?.MoveToFront();
+		BottomGrip?.MoveToFront();
+		LeftGrip?.MoveToFront();
+		RightGrip?.MoveToFront();
+		TopLeftGrip?.MoveToFront();
+		TopRightGrip?.MoveToFront();
+		BottomLeftGrip?.MoveToFront();
+		BottomRightGrip?.MoveToFront();
+
+		MaximizeButton?.MoveToFront();
+		MenuButton?.MoveToFront();
+		MinimizeButton?.MoveToFront();
+		MinimizeToSysTrayButton?.MoveToFront();
+		MenuButton?.SetBounds(5 + 2, 5 + 3, GetCaptionHeight() - 5, GetCaptionHeight() - 5);
+
+		float scale = 1;
+		if (IsProportional()) {
+			Surface.GetScreenSize(out int screenW, out int screenH);
+			Surface.GetProportionalBase(out int proW, out int proH);
+
+			scale = ((float)(screenH) / (float)(proH));
+		}
+
+		int offset_start = (int)(20 * scale);
+		int offset = offset_start;
+
+		int top_border_offset = (int)((5 + 3) * scale);
+		if (SmallCaption) 
+			top_border_offset = (int)((3) * scale);
+
+		int side_border_offset = (int)(5 * scale);
+
+		if (CloseButton?.IsVisible() ?? false) {
+			CloseButton.SetPos((wide - side_border_offset) - offset, top_border_offset);
+			offset += offset_start;
+			LayoutProportional(CloseButton);
+
+		}
+		if (MinimizeToSysTrayButton?.IsVisible() ?? false) {
+			MinimizeToSysTrayButton.SetPos((wide - side_border_offset) - offset, top_border_offset);
+			offset += offset_start;
+			LayoutProportional(MinimizeToSysTrayButton);
+		}
+		if (MaximizeButton?.IsVisible() ?? false) {
+			MaximizeButton.SetPos((wide - side_border_offset) - offset, top_border_offset);
+			offset += offset_start;
+			LayoutProportional(MaximizeButton);
+		}
+		if (MinimizeButton?.IsVisible() ?? false) {
+			MinimizeButton.SetPos((wide - side_border_offset) - offset, top_border_offset);
+			offset += offset_start;
+			LayoutProportional(MinimizeButton);
+		}
+	}
+
+	private void LayoutProportional(FrameButton closeButton) {
+		throw new NotImplementedException();
+	}
+
 	public void GetClientArea(out int x, out int y, out int wide, out int tall) {
 		x = ClientInsetX;
 		y = 0;

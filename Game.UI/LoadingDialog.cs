@@ -26,14 +26,39 @@ public class LoadingDialog : Frame
 	bool Center;
 	bool ConsoleStyle;
 	float ProgressFraction;
-	
+
+	[PanelAnimationVar("0")] int AdditionalIndentX;
+	[PanelAnimationVar("0")] int AdditionalIndentY;
+
+	public override void PerformLayout() {
+		if (Center) {
+			MoveToCenterOfScreen();
+		}
+		else {
+			Surface.GetWorkspaceBounds(out int x, out int y, out int screenWide, out int screenTall);
+			GetSize(out int wide, out int tall);
+
+			x = screenWide - (wide + 10);
+			y = screenTall - (tall + 10);
+
+			x -= AdditionalIndentX;
+			y -= AdditionalIndentY;
+
+			SetPos(x, y);
+		}
+
+		base.PerformLayout();
+
+		MoveToFront();
+	}
+
 	void Init() {
 		SetDeleteSelfOnClose(true);
 
 		SetSize(416, 100);
 		SetTitle("#GameUI_Loading", true);
 
-		Center = GameUI!.HasLoadingBackgroundDialog();
+		Center = !GameUI!.HasLoadingBackgroundDialog();
 
 		ShowingSecondaryProgress = false;
 		SecondaryProgress = 0.0f;
@@ -67,14 +92,14 @@ public class LoadingDialog : Frame
 	}
 	public LoadingDialog() : base(null, "LoadingDialog") => Init();
 	public LoadingDialog(Panel? parent) : base(parent, "LoadingDialog") => Init();
-	
+
 
 	private void SetupControlSettings(bool forceShowProgressText) {
 		ShowingVACInfo = false;
 
-		if (ModInfo.IsSinglePlayerOnly() && !forceShowProgressText) 
+		if (ModInfo.IsSinglePlayerOnly() && !forceShowProgressText)
 			LoadControlSettings("Resource/LoadingDialogNoBannerSingle.res");
-		else 
+		else
 			LoadControlSettings("Resource/LoadingDialogNoBanner.res");
 	}
 
@@ -83,13 +108,45 @@ public class LoadingDialog : Frame
 	}
 
 	internal void Open() {
-		throw new NotImplementedException();
+		SetTitle("#GameUI_Loading", true);
+
+		HideOtherDialogs(true);
+		base.Activate();
+
+		Progress.SetVisible(true);
+		if (ModInfo.IsSinglePlayerOnly())
+			InfoLabel.SetVisible(true);
+
+		InfoLabel.SetText("");
+
+		CancelButton.SetText("#GameUI_Cancel");
+		CancelButton.SetCommand("Cancel");
+	}
+
+	private void HideOtherDialogs(bool hide) {
+		if (hide) {
+			if (GameUI.HasLoadingBackgroundDialog()) {
+				GameUI.ShowLoadingBackgroundDialog();
+				MoveToFront();
+				Input.SetAppModalSurface(this);
+			}
+			else 
+				Surface.RestrictPaintToSinglePanel(this);
+		}
+		else {
+			if (GameUI.HasLoadingBackgroundDialog()) {
+				GameUI.HideLoadingBackgroundDialog();
+				Input.SetAppModalSurface(null);
+			}
+			else 
+				Surface.RestrictPaintToSinglePanel(null);
+		}
 	}
 
 	internal bool SetProgressPoint(float progress) {
-		if (!ShowingVACInfo) 
+		if (!ShowingVACInfo)
 			SetupControlSettings(false);
-		
+
 
 		int nOldDrawnSegments = Progress.GetDrawnSegmentCount();
 		Progress.SetProgress(progress);
