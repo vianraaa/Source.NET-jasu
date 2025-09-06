@@ -1,0 +1,72 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+namespace Source.Common.Utilities;
+
+public interface ISymbolTable {
+	UtlSymId_t AddString(ReadOnlySpan<char> str);
+	UtlSymId_t Find(ReadOnlySpan<char> str);
+	ReadOnlySpan<char> String(UtlSymId_t symbol);
+	nint GetNumStrings();
+	void RemoveAll();
+}
+
+public class UtlSymbolTable(bool caseInsensitive = false) : ISymbolTable
+{
+	readonly Dictionary<UtlSymId_t, string> Symbols = [];
+
+	public UtlSymId_t AddString(ReadOnlySpan<char> str) {
+		UtlSymId_t hash = str.Hash(invariant: caseInsensitive);
+		if (!Symbols.ContainsKey(hash))
+			Symbols[hash] = new(str);
+		return hash;
+	}
+
+	public UtlSymId_t Find(ReadOnlySpan<char> str) {
+		UtlSymId_t hash = str.Hash(invariant: caseInsensitive);
+		if (Symbols.ContainsKey(hash))
+			return hash;
+		return 0;
+	}
+
+	public ReadOnlySpan<char> String(UtlSymId_t symbol) {
+		if (Symbols.TryGetValue(symbol, out string? str))
+			return str;
+		return null;
+	}
+
+	public virtual nint GetNumStrings() => Symbols.Count;
+	public virtual void RemoveAll() => Symbols.Clear();
+}
+
+public class UtlSymbolTableMT(bool caseInsensitive = false) : ISymbolTable
+{
+	readonly ConcurrentDictionary<UtlSymId_t, string> Symbols = [];
+
+	public UtlSymId_t AddString(ReadOnlySpan<char> str) {
+		UtlSymId_t hash = str.Hash(invariant: caseInsensitive);
+		if (!Symbols.ContainsKey(hash))
+			Symbols[hash] = new(str);
+		return hash;
+	}
+
+	public UtlSymId_t Find(ReadOnlySpan<char> str) {
+		UtlSymId_t hash = str.Hash(invariant: caseInsensitive);
+		if (Symbols.ContainsKey(hash))
+			return hash;
+		return 0;
+	}
+
+	public ReadOnlySpan<char> String(UtlSymId_t symbol) {
+		if (Symbols.TryGetValue(symbol, out string? str))
+			return str;
+		return null;
+	}
+	public nint GetNumStrings() => Symbols.Count;
+	public void RemoveAll() => Symbols.Clear();
+}
