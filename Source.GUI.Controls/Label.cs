@@ -9,6 +9,8 @@ namespace Source.GUI.Controls;
 
 public class Label : Panel
 {
+	public static Panel Create_Label() => new Label(null, null, "Label");
+
 	protected Alignment ContentAlignment;
 	protected ColorState TextColorState;
 	protected string? FontOverrideName;

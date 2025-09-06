@@ -84,8 +84,10 @@ public class EditablePanel : Panel
 	public override void OnChildAdded(IPanel child) {
 		base.OnChildAdded(child);
 
-		if (child != null) {
-			child.AddActionSignalTarget(this);
+		Panel? panel = (Panel?)child;
+		if (panel != null) {
+			panel.SetBuildGroup(BuildGroup);
+			panel.AddActionSignalTarget(this);
 		}
 	}
 	public override IPanel? GetCurrentKeyFocus() {

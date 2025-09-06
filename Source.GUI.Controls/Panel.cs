@@ -11,9 +11,12 @@ using Source.Common.Input;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Utilities;
+using Source.GUI.Controls;
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -58,6 +61,22 @@ public enum PanelFlags
 	All = 0xFFFF,
 }
 
+public enum RoundedCorners
+{
+	TopLeft = 1 << 0,
+	TopRight = 1 << 1,
+	BottomLeft = 1 << 2,
+	BottomRight = 1 << 3,
+	All = TopLeft | TopRight | BottomLeft | BottomRight,
+}
+
+public enum Operator
+{
+	Add,
+	Sub,
+	Set
+}
+
 public enum BuildModeFlags
 {
 	Editable = 1 << 0,
@@ -75,7 +94,7 @@ public enum BuildModeFlags
 	SaveYPosProportionalSelf = 1 << 12,
 	SaveWideProportionalTall = 1 << 13,
 	SaveTallProportionalWide = 1 << 14,
-	SaveXposProportionalParent = 1 << 15,
+	SaveXPosProportionalParent = 1 << 15,
 	SaveYposProportionalParent = 1 << 16,
 	SaveWideProportionalSelf = 1 << 17,
 	SaveTallProportionalSelf = 1 << 18,
@@ -234,6 +253,8 @@ public class Panel : IPanel
 
 		MouseInput = true;
 		KbInput = true;
+
+		RoundedCorners = RoundedCorners.All;
 
 		Cursor = CursorCode.Arrow;
 	}
@@ -409,8 +430,515 @@ public class Panel : IPanel
 		}
 	}
 
-	public virtual void ApplySettings(KeyValues resourceData) {
+	public void InternalInitDefaultValues(PanelAnimationMap map) {
+		Flags &= ~PanelFlags.NeedsDefaultSettingsApplied;
+		Span<PanelAnimationMapEntry> entries = map.Entries.AsSpan();
+		int c = entries.Length;
+		for (int i = 0; i < c; i++) {
+			ref PanelAnimationMapEntry e = ref entries[i];
+			Assert(!Unsafe.IsNullRef(ref e));
+			IPanelAnimationPropertyConverter? converter = FindConverter(e.Type);
+			converter?.InitFromDefault(this, ref e);
+		}
 
+		if (map.BaseMap != null)
+			InternalInitDefaultValues(map.BaseMap);
+	}
+
+	public void InternalApplySettings(PanelAnimationMap map, KeyValues resources) {
+		for (KeyValues? kv = resources.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
+			ReadOnlySpan<char> varname = kv.Name;
+
+			ref PanelAnimationMapEntry entry = ref FindPanelAnimationEntry(varname, GetAnimMap());
+			if (!Unsafe.IsNullRef(ref entry)) {
+				IPanelAnimationPropertyConverter? converter = FindConverter(entry.Type);
+				converter?.SetData(this, resources, ref entry);
+			}
+		}
+	}
+
+	string? NavUpName;
+	Panel? NavUp;
+	string? NavDownName;
+	Panel? NavDown;
+	string? NavLeftName;
+	Panel? NavLeft;
+	string? NavRightName;
+	Panel? NavRight;
+
+	string? NavToRelayName;
+	Panel? NavToRelay;
+	string? NavActivateName;
+	Panel? NavActivate;
+	string? NavBackName;
+	Panel? NavBack;
+
+	public Panel? SetNavUp(Panel? nav) {
+		Panel? last = NavUp;
+		NavUp = nav;
+		if (nav != null)
+			NavUpName = new(nav.GetName());
+		else
+			NavUpName = null;
+		return last;
+	}
+	public Panel? SetNavDown(Panel? nav) {
+		Panel? last = NavDown;
+		NavDown = nav;
+		if (nav != null)
+			NavDownName = new(nav.GetName());
+		else
+			NavDownName = null;
+		return last;
+	}
+	public Panel? SetNavLeft(Panel? nav) {
+		Panel? last = NavLeft;
+		NavLeft = nav;
+		if (nav != null)
+			NavLeftName = new(nav.GetName());
+		else
+			NavLeftName = null;
+		return last;
+	}
+	public Panel? SetNavRight(Panel? nav) {
+		Panel? last = NavRight;
+		NavRight = nav;
+		if (nav != null)
+			NavRightName = new(nav.GetName());
+		else
+			NavRightName = null;
+		return last;
+	}
+	public Panel? SetNavToRelay(Panel? nav) {
+		Panel? last = NavToRelay;
+		NavToRelay = nav;
+		return last;
+	}
+	public Panel? SetNavActivate(Panel? nav) {
+		Panel? last = NavActivate;
+		NavActivate = nav;
+		return last;
+	}
+	public Panel? SetNavBack(Panel? nav) {
+		Panel? last = NavBack;
+		NavBack = nav;
+		return last;
+	}
+
+	public void SetNavUp(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavUp = null;
+			NavUpName = new(controlName);
+		}
+	}
+	public void SetNavDown(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavDown = null;
+			NavDownName = new(controlName);
+		}
+	}
+	public void SetNavLeft(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavLeft = null;
+			NavLeftName = new(controlName);
+		}
+	}
+	public void SetNavRight(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavRight = null;
+			NavRightName = new(controlName);
+		}
+	}
+	public void SetNavToRelay(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavToRelay = null;
+			NavToRelayName = new(controlName);
+		}
+	}
+	public void SetNavActivate(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavActivate = null;
+			NavActivateName = new(controlName);
+		}
+	}
+	public void SetNavBack(ReadOnlySpan<char> controlName) {
+		if (controlName != null && controlName.Length > 0 && GetParent() != null) {
+			NavBack = null;
+			NavBackName = new(controlName);
+		}
+	}
+
+	RoundedCorners RoundedCorners;
+
+	static int ComputeWide(Panel panel, ref BuildModeFlags buildFlags, KeyValues resourceData, int parentWide, int parentTall, bool computingOther) {
+		int wide = panel.GetWide();
+
+		ReadOnlySpan<char> str = resourceData.GetString("wide", null);
+		if (str != null) {
+			if (str[0] == 'f' || str[0] == 'F') {
+				buildFlags |= BuildModeFlags.SaveWideFull;
+				str = str[1..];
+			}
+			else {
+				if (str[0] == 'o' || str[0] == 'O') {
+					str = str[1..];
+					if (computingOther) {
+						Warning($"Wide and Tall of panel {panel.GetName()} are set to be each other!\n");
+						return 0;
+					}
+
+					buildFlags |= BuildModeFlags.SaveWideProportionalTall;
+					wide = ComputeTall(panel, ref buildFlags, resourceData, parentWide, parentTall, true);
+
+					if (panel.IsProportional()) 
+						wide = panel.SchemeManager.GetProportionalNormalizedValue(wide);
+				}
+				else if (str[0] == 'p' || str[0] == 'P') {
+					buildFlags |= BuildModeFlags.SaveWideProportional;
+					str = str[1..];
+				}
+				else if (str[0] == 's' || str[0] == 'S') {
+					buildFlags |= BuildModeFlags.SaveWideProportionalSelf;
+					str = str[1..];
+				}
+			}
+
+			float flWide = float.TryParse(str, out float __r) ? __r : 0;
+			if (!buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) 
+				wide = int.TryParse(str, out int __r2) ? __r2 : 0;
+			
+
+			if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) {
+				wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
+				wide = (int)(wide * flWide);
+			}
+			else if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportional)) {
+				wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
+				wide = parentWide - wide;
+				wide = (int)(wide * flWide);
+			}
+			else if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalSelf)) {
+				wide = (int)(panel.GetWide() * flWide);
+			}
+			else {
+				if (panel.IsProportional())
+					wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
+
+				if (buildFlags.HasFlag(BuildModeFlags.SaveWideFull))
+					wide = parentWide - wide;
+			}
+		}
+
+		return wide;
+	}
+	static int ComputeTall(Panel panel, ref BuildModeFlags buildFlags, KeyValues resourceData, int parentWide, int parentTall, bool computingOther) {
+		int tall = panel.GetTall();
+
+		ReadOnlySpan<char> str = resourceData.GetString("tall", null);
+		if (str != null) {
+			if (str[0] == 'f' || str[0] == 'F') {
+				buildFlags |= BuildModeFlags.SaveTallFull;
+				str = str[1..];
+			}
+			else {
+				if (str[0] == 'o' || str[0] == 'O') {
+					str = str[1..];
+					if (computingOther) {
+						Warning($"Wide and Tall of panel {panel.GetName()} are set to be each other!\n");
+						return 0;
+					}
+
+					buildFlags |= BuildModeFlags.SaveTallProportionalWide;
+					tall = ComputeWide(panel, ref buildFlags, resourceData, parentWide, parentTall, true);
+					if (panel.IsProportional()) 
+						tall = panel.SchemeManager.GetProportionalNormalizedValue(tall);
+				}
+				else if (str[0] == 'p' || str[0] == 'P') {
+					buildFlags |= BuildModeFlags.SaveTallProportional;
+					str = str[1..];
+				}
+				else if (str[0] == 's' || str[0] == 'S') {
+					buildFlags |= BuildModeFlags.SaveTallProportionalSelf;
+					str = str[1..];
+				}
+			}
+
+			float flTall = float.TryParse(str, out float __r) ? __r : 0;
+			if (!buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) 
+				tall = int.TryParse(str, out int __r2) ? __r2 : 0;
+			
+			if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) {
+				tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
+				tall = (int)(tall * flTall);
+			}
+			else if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportional)) {
+				tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
+				tall = parentTall - tall;
+				tall = (int)(tall * flTall);
+			}
+			else if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalSelf)) {
+				tall = (int)(panel.GetTall() * flTall);
+			}
+			else {
+				if (panel.IsProportional()) 
+					tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
+			
+				if (buildFlags.HasFlag(BuildModeFlags.SaveTallFull) )
+					tall = parentTall - tall;
+			}
+		}
+
+		return tall;
+	}
+	static BuildModeFlags ComputePos(Panel panel, ReadOnlySpan<char> input, ref int pos, in int size, in int parentSize, in bool x, Operator op) {
+		BuildModeFlags flagRightAlign = x ? BuildModeFlags.SaveXPos_RightAligned : BuildModeFlags.SaveYPos_BottomAligned;
+		BuildModeFlags nFlagCenterAlign = x ? BuildModeFlags.SaveXPos_CenterAligned : BuildModeFlags.SaveYPos_CenterAligned;
+		BuildModeFlags flagProportionalSelf = x ? BuildModeFlags.SaveXPosProportionalSelf : BuildModeFlags.SaveYPosProportionalSelf;
+		BuildModeFlags flagProportionalParent = x ? BuildModeFlags.SaveXPosProportionalParent : BuildModeFlags.SaveYposProportionalParent;
+
+		BuildModeFlags flags = 0;
+		int posDelta = 0;
+		if (input != null) {
+			if (input[0] == 'r' || input[0] == 'R') {
+				flags |= flagRightAlign;
+				input = input[1..];
+			}
+			else if (input[0] == 'c' || input[0] == 'C') {
+				flags |= nFlagCenterAlign;
+				input = input[1..];
+			}
+
+			if (input[0] == 's' || input[0] == 'S') {
+				flags |= flagProportionalSelf;
+				input = input[1..];
+			}
+			else if (input[0] == 'p' || input[0] == 'P') {
+				flags |= flagProportionalParent;
+				input = input[1..];
+			}
+
+			int newPos = int.TryParse(input, out int __r1) ? __r1 : 0;
+			float flPos = float.TryParse(input, out float __r2) ? __r2 : 0;
+
+			float flProportion = 1;
+			if (panel.IsProportional()) {
+				int nOldPos = newPos;
+				newPos = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, newPos);
+				flProportion = (float)newPos / nOldPos;
+			}
+
+			if (flags.HasFlag(flagProportionalSelf))
+				posDelta = (int)(size * flPos);
+			else if (flags.HasFlag(flagProportionalParent))
+				posDelta = (int)(parentSize * flPos);
+			else
+				posDelta = newPos;
+
+			if (flags.HasFlag(flagRightAlign))
+				newPos = parentSize - posDelta;
+			else if (flags.HasFlag(nFlagCenterAlign))
+				newPos = (parentSize / 2) + posDelta;
+			else
+				newPos = posDelta;
+
+			switch (op) {
+				case Operator.Add:
+					pos += newPos;
+					break;
+				case Operator.Sub:
+					pos -= newPos;
+					break;
+				case Operator.Set:
+					pos = newPos;
+					break;
+			}
+
+			if (input[0] == '-' || input[0] == '+')
+				input = input[1..];
+
+			while (input.Length > 0 && (char.IsDigit(input[0]) || input[0] == '.'))
+				input = input[1..];
+
+			if (input != null && input.Length > 0) {
+				switch (input[0]) {
+					case '+':
+						ComputePos(panel, input[1..], ref pos, size, parentSize, x, Operator.Add);
+						break;
+					case '-':
+						ComputePos(panel, input[1..], ref pos, size, parentSize, x, Operator.Sub);
+						break;
+				}
+			}
+
+		}
+
+		return flags;
+	}
+
+	public virtual void ApplySettings(KeyValues resourceData) {
+		if (Flags.HasFlag(PanelFlags.NeedsDefaultSettingsApplied))
+			InternalInitDefaultValues(GetAnimMap());
+
+		InternalApplySettings(GetAnimMap(), resourceData);
+
+		BuildModeFlags &= ~(BuildModeFlags.SaveXPos_RightAligned | BuildModeFlags.SaveXPos_CenterAligned
+							| BuildModeFlags.SaveYPos_BottomAligned | BuildModeFlags.SaveYPos_CenterAligned
+							| BuildModeFlags.SaveWideFull | BuildModeFlags.SaveTallFull
+							| BuildModeFlags.SaveProportionalToParent
+							| BuildModeFlags.SaveWideProportional | BuildModeFlags.SaveTallProportional
+							| BuildModeFlags.SaveXPosProportionalSelf | BuildModeFlags.SaveYPosProportionalSelf
+							| BuildModeFlags.SaveWideProportionalTall | BuildModeFlags.SaveTallProportionalWide
+							| BuildModeFlags.SaveXPosProportionalParent | BuildModeFlags.SaveYposProportionalParent
+							| BuildModeFlags.SaveWideProportionalSelf | BuildModeFlags.SaveTallProportionalSelf);
+
+		Surface.GetScreenSize(out int alignScreenWide, out int alignScreenTall);
+
+		int screenWide = alignScreenWide;
+		int screenTall = alignScreenTall;
+
+		if (Surface.IsScreenSizeOverrideActive()) {
+			Surface.ForceScreenSizeOverride(false, 0, 0);
+			Surface.GetScreenSize(out screenWide, out screenTall);
+
+			Surface.ForceScreenSizeOverride(true, alignScreenWide, alignScreenTall);
+		}
+
+		int parentX = 0;
+		int parentY = 0;
+
+		if (resourceData.GetInt("proportionalToParent", 0) == 1) {
+			BuildModeFlags |= BuildModeFlags.SaveProportionalToParent;
+			GetParent()?.GetBounds(out parentX, out parentY, out alignScreenWide, out alignScreenTall);
+		}
+
+		int wide = ComputeWide(this, ref BuildModeFlags, resourceData, alignScreenWide, alignScreenTall, false);
+		int tall = ComputeTall(this, ref BuildModeFlags, resourceData, alignScreenWide, alignScreenTall, false);
+
+		GetPos(out int x, out int y);
+		ReadOnlySpan<char> xstr = resourceData.GetString("xpos", null);
+		ReadOnlySpan<char> ystr = resourceData.GetString("ypos", null);
+		BuildModeFlags |= ComputePos(this, xstr, ref x, wide, alignScreenWide, true, Operator.Set);
+		BuildModeFlags |= ComputePos(this, ystr, ref y, tall, alignScreenTall, false, Operator.Set);
+
+
+		bool usesTitleSafeArea = false;
+		int titleSafeWide = 0;
+		int titleSafeTall = 0;
+
+		Rectangle excludeEdgeFromTitleSafe = new();
+		excludeEdgeFromTitleSafe.X = 0;
+		excludeEdgeFromTitleSafe.Y = 0;
+		excludeEdgeFromTitleSafe.Width = 0;
+		excludeEdgeFromTitleSafe.Height = 0;
+
+		SetNavUp(resourceData.GetString("navUp"));
+		SetNavDown(resourceData.GetString("navDown"));
+		SetNavLeft(resourceData.GetString("navLeft"));
+		SetNavRight(resourceData.GetString("navRight"));
+		SetNavToRelay(resourceData.GetString("navToRelay"));
+		SetNavActivate(resourceData.GetString("navActivate"));
+		SetNavBack(resourceData.GetString("navBack"));
+
+		SetPos(x, y);
+
+		if (resourceData.FindKey("zpos") != null)
+			SetZPos(resourceData.GetInt("zpos"));
+
+		if (usesTitleSafeArea) {
+			if (BuildModeFlags.HasFlag(BuildModeFlags.SaveWideFull)) {
+				if (excludeEdgeFromTitleSafe.X == 0)
+					wide -= titleSafeWide;
+
+				if (excludeEdgeFromTitleSafe.Width == 0)
+					wide -= titleSafeWide;
+			}
+
+			if (BuildModeFlags.HasFlag(BuildModeFlags.SaveTallFull)) {
+				if (excludeEdgeFromTitleSafe.Y == 0)
+					tall -= titleSafeTall;
+
+				if (excludeEdgeFromTitleSafe.Height == 0)
+					tall -= titleSafeTall;
+			}
+		}
+
+		SetSize(wide, tall);
+
+		ApplyAutoResizeSettings(resourceData);
+
+		if (resourceData.GetInt("IgnoreScheme", 0) != 0)
+			PerformApplySchemeSettings();
+
+		int state = resourceData.GetInt("visible", 1);
+		if (state == 0)
+			SetVisible(false);
+		else if (state == 1)
+			SetVisible(true);
+
+
+		SetEnabled(resourceData.GetInt("enabled", 1) != 0);
+
+		bool mouseEnabled = resourceData.GetInt("mouseinputenabled", 1) != 0;
+		if (!mouseEnabled)
+			SetMouseInputEnabled(false);
+
+		SetTabPosition(resourceData.GetInt("tabPosition", 0));
+
+		ReadOnlySpan<char> tooltip = resourceData.GetString("tooltiptext", null);
+		// if (tooltip != null && tooltip.Length > 0)
+		// GetTooltip()?.SetText(tooltip);
+
+		int paintBackground = resourceData.GetInt("paintbackground", -1);
+		if (paintBackground >= 0)
+			SetPaintBackgroundEnabled(paintBackground != 0);
+
+		int paintBorder = resourceData.GetInt("paintborder", -1);
+		if (paintBorder >= 0)
+			SetPaintBorderEnabled(paintBorder != 0);
+
+		ReadOnlySpan<char> border = resourceData.GetString("border", "");
+		if (border != null && border.Length > 0) {
+			IScheme? scheme = GetScheme();
+			SetBorder(scheme!.GetBorder(border));
+		}
+
+		ReadOnlySpan<char> newName = resourceData.GetString("fieldName", null);
+		if (newName != null)
+			SetName(newName);
+
+
+		int actionSignalLevel = resourceData.GetInt("actionsignallevel", -1);
+		if (actionSignalLevel != -1) {
+			Panel? pActionSignalTarget = this;
+			while ((actionSignalLevel--) != 0) {
+				pActionSignalTarget = pActionSignalTarget.GetParent();
+			}
+			AddActionSignalTarget(pActionSignalTarget);
+		}
+
+		// ForceStereoRenderToFrameBuffer = resourceData.GetBool("ForceStereoRenderToFrameBuffer", false);
+
+		int roundedCorners = resourceData.GetInt("RoundedCorners", -1);
+		if (roundedCorners >= 0)
+			RoundedCorners = (RoundedCorners)roundedCorners;
+		// TODO: Pin corners
+
+		ReadOnlySpan<char> pKeyboardInputEnabled = resourceData.GetString("keyboardinputenabled", null);
+		if (pKeyboardInputEnabled != null && pKeyboardInputEnabled.Length > 0) {
+			SetKeyboardInputEnabled(int.TryParse(pKeyboardInputEnabled, out int _r) && _r != 0);
+		}
+
+		OnChildSettingsApplied(resourceData, this);
+	}
+
+	private void ApplyAutoResizeSettings(KeyValues resourceData) {
+		// TODO: pin corners
+	}
+
+	public virtual void OnChildSettingsApplied(KeyValues resources, Panel child) {
+		Panel? parent = GetParent();
+		if (parent != null)
+			parent.OnChildSettingsApplied(resources, child);
 	}
 
 	public virtual IPanel? GetCurrentKeyFocus() {
@@ -1572,21 +2100,37 @@ public class Panel : IPanel
 
 	public virtual PanelAnimationMap GetAnimMap() => PanelAnimationDictionary.FindOrAddPanelAnimationMap(GetType().Name);
 
+	delegate Panel CreatePanelFactoryFn();
+	static readonly Dictionary<UtlSymId_t, CreatePanelFactoryFn> PanelFactories = [];
 	static readonly Dictionary<UtlSymId_t, Type> PanelNames = [];
 
 	public static void InitializeControls() {
 		var types = ReflectionUtils.GetLoadedTypes().Where(type => typeof(Panel).IsAssignableFrom(type));
+		int count = 0;
 		foreach (var type in types) {
 			ChainToAnimationMap(type);
-			Msg($"VGUI: Initializing {type.Name}\n");
-			PanelNames[new UtlSymbol(type.Name).Id] = type;
+			//Msg($"VGUI: Initializing {type.Name}\n");
+
+			UtlSymbol nameSymbol = new(type.Name);
+			MethodInfo? method = type.GetMethod($"Create_{type.Name}", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+			if (method != null)
+				PanelFactories[nameSymbol] = method.CreateDelegate<CreatePanelFactoryFn>();
+
+			PanelNames[nameSymbol] = type;
+
+			count++;
 		}
+		Msg($"Initialized {count} VGUI controls in all currently loaded assemblies\n");
 	}
 
 	public static Panel? InstancePanel(ReadOnlySpan<char> className) {
 		UtlSymbol sym = new(className);
+		if (PanelFactories.TryGetValue(sym, out CreatePanelFactoryFn? fn))
+			return fn();
+
 		if (PanelNames.TryGetValue(sym, out Type? t))
 			return (Panel)Activator.CreateInstance(t)!;
+
 		return null;
 	}
 

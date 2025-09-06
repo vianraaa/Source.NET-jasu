@@ -1637,4 +1637,18 @@ public class MatSystemSurface : IMatSystemSurface
 	public void GetKernedCharWidth(IFont? font, char ch, char before, char after, out float w, out float abcA) {
 		FontManager.GetKernedCharWidth(font, ch, before, after, out w, out abcA, out _);
 	}
+
+	public bool IsScreenPosOverrideActive() => ScreenSizeOverride.Active;
+	public bool IsScreenSizeOverrideActive() => ScreenSizeOverride.Active;
+
+	public void ForceScreenPosOffset(bool active, int x, int y) {
+		ScreenPosOverride.Active = active;
+		ScreenPosOverride.X = x;
+		ScreenPosOverride.Y = y;
+	}
+	public void ForceScreenSizeOverride(bool active, int w, int h) {
+		ScreenSizeOverride.Active = active;
+		ScreenSizeOverride.X = w;
+		ScreenSizeOverride.Y = h;
+	}
 }

@@ -26,7 +26,7 @@ public class Scheme : IScheme
 	readonly public ISchemeManager SchemeManager = Singleton<ISchemeManager>();
 	readonly public IEngineAPI EngineAPI = Singleton<IEngineAPI>();
 
-	IPanel SizingPanel;
+	IPanel? SizingPanel;
 	KeyValues Data;
 	KeyValues BaseSettings;
 	KeyValues Colors;
@@ -485,4 +485,5 @@ public class Scheme : IScheme
 
 		return setting;
 	}
+	public IPanel? GetSizingPanel() => SizingPanel;
 }

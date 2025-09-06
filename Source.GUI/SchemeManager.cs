@@ -84,6 +84,24 @@ public class SchemeManager : ISchemeManager
 		return LoadSchemeFromFileEx(null, fileName, tag);
 	}
 
+	public int GetProportionalScaledValueEx(IScheme scheme, int normalizedValue) {
+		if (scheme == null) {
+			Assert(false);
+			return GetProportionalScaledValue(normalizedValue);
+		}
+
+		Scheme? p = (Scheme?)scheme;
+		if (p == null)
+			throw new Exception();
+
+		IPanel sizing = p.GetSizingPanel();
+		if (sizing == null)
+			return GetProportionalScaledValue(normalizedValue);
+
+		sizing.GetSize(out int w, out int h);
+		return GetProportionalScaledValue_(w, h, normalizedValue);
+	}
+
 	public IScheme? LoadSchemeFromFileEx(IPanel? sizingPanel, ReadOnlySpan<char> fileName, ReadOnlySpan<char> tag) {
 		IScheme? scheme = FindLoadedScheme(fileName);
 		if (scheme != null) {

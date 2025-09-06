@@ -16,6 +16,8 @@ public enum ProgressDir
 
 public class ProgressBar : Panel
 {
+	public static Panel Create_ProgressBar() => new ProgressBar(null, null);
+
 	protected ProgressDir ProgressDirection;
 	protected double Progress;
 	int SegmentGap;
@@ -24,7 +26,7 @@ public class ProgressBar : Panel
 	int BarMargin;
 	string? DialogVar;
 
-	public ProgressBar(Panel? parent, string name) {
+	public ProgressBar(Panel? parent, string? name) : base(parent, name) {
 		Progress = 0;
 		DialogVar = null;
 		SetSegmentInfo(4, 8);

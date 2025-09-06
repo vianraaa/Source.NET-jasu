@@ -210,6 +210,10 @@ public interface ISurface
 	void DrawTexturedPolygon(Span<SurfaceVertex> verts, bool clipVertices = true);
 	bool IsCursorLocked();
 	void GetKernedCharWidth(IFont? font, char ch, char before, char after, out float w, out float flabcA);
+	bool IsScreenPosOverrideActive();
+	bool IsScreenSizeOverrideActive();
+	void ForceScreenPosOffset(bool active, int x, int y);
+	void ForceScreenSizeOverride(bool active, int w, int h);
 }
 
 public interface IMatSystemSurface : ISurface {

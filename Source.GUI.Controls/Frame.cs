@@ -95,9 +95,16 @@ public class FrameButton : Button
 			SetDepressedColor(DisabledFgColor, DisabledBgColor);
 		}
 	}
+
 	public override void PerformLayout() {
 		base.PerformLayout();
 		Repaint();
+	}
+
+	public static int GetButtonSide(Frame frame) {
+		if (frame.IsSmallCaption())
+			return 12;
+		return 18;
 	}
 }
 
@@ -412,8 +419,18 @@ public class Frame : EditablePanel
 		}
 	}
 
-	private void LayoutProportional(FrameButton closeButton) {
-		throw new NotImplementedException();
+	private void LayoutProportional(FrameButton button) {
+		float scale = 1.0f;
+
+		if (IsProportional()) {
+			Surface.GetScreenSize(out int screenW, out int screenH);
+			Surface.GetProportionalBase(out int proW, out int proH);
+
+			scale = (float)screenH / proH;
+		}
+
+		button.SetSize((int)(FrameButton.GetButtonSide(this) * scale), (int)(FrameButton.GetButtonSide(this) * scale));
+		button.SetTextInset((int)(MathF.Ceiling(2 * scale)), (int)(MathF.Ceiling(1 * scale)));
 	}
 
 	public void GetClientArea(out int x, out int y, out int wide, out int tall) {
@@ -705,4 +722,8 @@ public class Frame : EditablePanel
 	public void SetMoveable(bool state) => Moveable = state;
 	public bool GetClipToParent() => ClipToParent;
 	public void SetClipToParent(bool state) => ClipToParent = state;
+
+	public bool IsSmallCaption() {
+		return SmallCaption;
+	}
 }
