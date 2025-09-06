@@ -23,10 +23,17 @@ public class MenuItem : Button {
 
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
+
+		SetDefaultColor(GetSchemeColor("Menu.TextColor", GetFgColor(), scheme), GetSchemeColor("Menu.BgColor", GetBgColor(), scheme));
+		SetArmedColor(GetSchemeColor("Menu.ArmedTextColor", GetFgColor(), scheme), GetSchemeColor("Menu.ArmedBgColor", GetBgColor(), scheme));
+		SetDepressedColor(GetSchemeColor("Menu.ArmedTextColor", GetFgColor(), scheme), GetSchemeColor("Menu.ArmedBgColor", GetBgColor(), scheme));
+
 		SetTextInset(int.TryParse(scheme.GetResourceString("Menu.TextInset"), out int r) ? r : 0, 0);
 
-		Menu? parent = GetParentMenu();
-		if (parent != null)
-			parent.ForceCalculateWidth();
+		GetParentMenu()?.ForceCalculateWidth();
+	}
+
+	internal bool IsCheckable() {
+		return false;
 	}
 }

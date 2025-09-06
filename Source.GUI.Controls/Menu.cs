@@ -9,6 +9,8 @@ public class MenuSeparator : Panel
 
 public class Menu : Panel
 {
+	Color BorderDark;
+
 	public const int MENU_SEPARATOR_HEIGHT = 3;
 	public Alignment Alignment;
 
@@ -20,7 +22,7 @@ public class Menu : Panel
 	protected List<int> VisibleSortedItems = [];
 	protected List<MenuSeparator> SeparatorPanels = [];
 
-	protected bool recalculateWidth = true;
+	protected bool RecalculateWidth = true;
 	int MenuItemHeight;
 	bool SizedForScrollBar;
 	int FixedWidth;
@@ -35,6 +37,25 @@ public class Menu : Panel
 
 	}
 
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		SetFgColor(GetSchemeColor("Menu.TextColor", scheme));
+		SetBgColor(GetSchemeColor("Menu.BgColor", scheme));
+
+		BorderDark = scheme.GetColor("BorderDark", new(255, 255, 255, 0));
+
+		foreach (var menuItem in MenuItems) {
+			if (menuItem.IsCheckable()) {
+				// todo;
+			}
+		}
+
+		RecalculateWidth = true;
+		CalculateWidth();
+
+		InvalidateLayout();
+	}
+
 	public Menu(Panel parent, string panelName) : base(parent, panelName) {
 		Scroller = new ScrollBar(this, "MenuScrollBar", true);
 		Scroller.SetVisible(false);
@@ -44,12 +65,12 @@ public class Menu : Panel
 		SetVisible(false);
 		MakePopup(false);
 		SetParent(parent);
-		recalculateWidth = true;
+		RecalculateWidth = true;
 
 		if (IsProportional()) {
 			// todo
 		}
-		else 
+		else
 			MenuItemHeight = DEFAULT_MENU_ITEM_HEIGHT;
 	}
 
@@ -62,13 +83,13 @@ public class Menu : Panel
 		MenuItems.Add(panel);
 		SortedItems.Add(itemID);
 		InvalidateLayout(false);
-		recalculateWidth = true;
+		RecalculateWidth = true;
 		panel.SetContentAlignment(Alignment);
 
 		if (ItemFont != null)
 			panel.SetFont(ItemFont);
 
-		if(UseFallbackFont && FallbackItemFont != null) {
+		if (UseFallbackFont && FallbackItemFont != null) {
 			Label l = panel;
 			TextImage? ti = l.GetTextImage();
 			if (ti != null)
@@ -197,7 +218,7 @@ public class Menu : Panel
 		}
 
 		if (FixedWidth == 0) {
-			recalculateWidth = true;
+			RecalculateWidth = true;
 			CalculateWidth();
 		}
 		else if (FixedWidth > 0) {
@@ -249,7 +270,7 @@ public class Menu : Panel
 	}
 
 	private void CalculateWidth() {
-		if (!recalculateWidth)
+		if (!RecalculateWidth)
 			return;
 
 		MenuWide = 0;
@@ -265,10 +286,10 @@ public class Menu : Panel
 		if (MenuWide < MinimumWidth)
 			MenuWide = MinimumWidth;
 
-		recalculateWidth = false;
+		RecalculateWidth = false;
 	}
 
-	private void LayoutMenuBorder() {
+	protected virtual void LayoutMenuBorder() {
 		IScheme? scheme = GetScheme();
 		IBorder? menuBorder = scheme?.GetBorder("MenuBorder");
 		if (menuBorder != null)
@@ -277,13 +298,12 @@ public class Menu : Panel
 
 	private void MakeItemsVisibleInScrollRange(int maxVisibleItems, int numPixelsAvailable) {
 		int i;
-		foreach(var item in MenuItems)
-	{
+		foreach (var item in MenuItems) {
 			item.SetBounds(0, 0, 0, 0);
 		}
-		for (i = 0; i < SeparatorPanels.Count; ++i) 
+		for (i = 0; i < SeparatorPanels.Count; ++i)
 			SeparatorPanels[i].SetVisible(false);
-		
+
 
 		VisibleSortedItems.Clear();
 
@@ -372,7 +392,7 @@ public class Menu : Panel
 	}
 
 	public void ForceCalculateWidth() {
-		recalculateWidth = true;
+		RecalculateWidth = true;
 		CalculateWidth();
 		PerformLayout();
 	}

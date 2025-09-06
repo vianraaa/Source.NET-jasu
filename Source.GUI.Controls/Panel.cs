@@ -801,7 +801,7 @@ public class Panel : IPanel
 	}
 
 	private void PaintBorder() {
-		Border!.Paint(this);
+		Border?.Paint(this);
 	}
 
 	public void PerformApplySchemeSettings() {

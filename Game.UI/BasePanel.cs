@@ -64,6 +64,7 @@ public enum BackgroundState
 
 public class GameMenu(Panel parent, string name) : Menu(parent, name)
 {
+	protected override void LayoutMenuBorder() { }
 	public virtual int AddMenuItem(ReadOnlySpan<char> itemName, ReadOnlySpan<char> itemText, ReadOnlySpan<char> command, Panel? target, KeyValues? userData = null) {
 		MenuItem item = EngineAPI.New<GameMenuItem>(this, new string(itemName), new string(itemText));
 		item.AddActionSignalTarget(target);
@@ -194,6 +195,9 @@ public class BackgroundMenuButton : Button
 		SetDepressedColor(new(255, 255, 0, 255), new(0, 0, 0, 0));
 		SetContentAlignment(Alignment.West);
 		SetBorder(null);
+		SetDefaultBorder(null);
+		SetDepressedBorder(null);
+		SetKeyFocusBorder(null);
 		SetTextInset(0, 0);
 	}
 }
