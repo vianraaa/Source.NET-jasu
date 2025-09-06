@@ -120,11 +120,11 @@ public class ProgressBar : Panel
 
 		Surface.DrawSetColor(GetFgColor());
 		for (int i = 0; i < segmentsDrawn; i++) {
-			PaintSegment(x, y, tall, wide);
+			PaintSegment(ref x, ref y, tall, wide);
 		}
 	}
 
-	private void PaintSegment(int x, int y, int tall, int wide) {
+	private void PaintSegment(ref int x, ref int y, int tall, int wide) {
 		switch (ProgressDirection) {
 			case ProgressDir.East:
 				x += SegmentGap;
