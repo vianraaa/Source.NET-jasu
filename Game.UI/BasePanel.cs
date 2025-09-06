@@ -90,10 +90,14 @@ public class GameMenu(Panel parent, string name) : Menu(parent, name)
 				if (kv == null)
 					continue;
 
-				if (!isInGame && kv.GetInt("OnlyInGame") != 0)
-					shouldBeVisible = false;
-				else if (isMultiplayer && kv.GetInt("notmulti") != 0)
-					shouldBeVisible = false;
+				bool vrEnabled = false, vrActive = false;
+
+				if (!isInGame && kv.GetInt("OnlyInGame") != 0) shouldBeVisible = false;
+				if (!isInGame && !isMultiplayer && kv.GetInt("notsingle") != 0) shouldBeVisible = false;
+				else if (isMultiplayer && kv.GetInt("notmulti") != 0) shouldBeVisible = false;
+				else if (!vrEnabled && kv.GetInt("OnlyWhenVREnabled") != 0) shouldBeVisible = false;
+				else if (!vrEnabled && kv.GetInt("OnlyWhenVRActive") != 0) shouldBeVisible = false;
+				else if (vrEnabled && kv.GetInt("OnlyWhenVRInactive") != 0) shouldBeVisible = false;
 
 				menuItem.SetVisible(shouldBeVisible);
 			}
