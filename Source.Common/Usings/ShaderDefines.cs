@@ -3,9 +3,16 @@ using Source.Common.ShaderLib;
 
 namespace Source;
 
+public enum ShaderRenderTarget : ShaderAPITextureHandle_t
+{
+	Backbuffer = -1,
+	Depthbuffer = -1,
+	None = -2
+}
+
 public static class ShaderDefines
 {
-	public const ShaderAPITextureHandle_t INVALID_SHADERAPI_TEXTURE_HANDLE = -1;
+	public const ShaderAPITextureHandle_t INVALID_SHADERAPI_TEXTURE_HANDLE = 0;
 
 
 	public static bool IsFlagSet(Span<IMaterialVar> shaderParams, int flag) => (shaderParams[(int)ShaderMaterialVars.Flags].GetIntValue() & flag) != 0;

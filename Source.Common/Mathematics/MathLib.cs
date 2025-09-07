@@ -19,6 +19,20 @@ public static class MathLib
 		return (value * value) * (3 - 2 * value);
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int CeilPow2(int input) {
+		int retval = 1;
+		while (retval < input)
+			retval <<= 2;
+		return retval;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int FloorPow2(int input) {
+		int retval = 1;
+		while (retval < input)
+			retval <<= 1;
+		return retval >> 1;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double Bias(double x, double biasAmount) {
 		double fRet = Math.Pow(x, Math.Log(biasAmount) * -1.4427);
 		Assert(!double.IsNaN(fRet));

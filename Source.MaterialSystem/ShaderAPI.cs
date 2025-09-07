@@ -12,7 +12,9 @@ using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.MaterialSystem.Meshes;
+
 using System.Numerics;
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace Source.MaterialSystem;
@@ -49,6 +51,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public GraphicsDriver GetDriver() => Driver;
 	private bool ready;
 
+	uint renderFBO;
+
 	public bool OnDeviceInit() {
 		AcquireInternalRenderTargets();
 
@@ -57,7 +61,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		ShaderManager.Init();
 		MeshMgr.Init();
 		Device!.SetSwapInterval(0);
-
 
 		InitRenderState();
 
@@ -117,7 +120,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	private void AcquireInternalRenderTargets() {
-
+		renderFBO = glCreateFramebuffer();
 	}
 
 	public void InitRenderState() {
@@ -405,6 +408,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public bool InitDevice(IWindow window, in ShaderDeviceInfo deviceInfo) {
 		IGraphicsProvider graphics = services.GetRequiredService<IGraphicsProvider>();
+		SetPresentParameters(in deviceInfo);
 		Device = graphics.CreateContext(in deviceInfo, window);
 		if (Device == null)
 			return false;
@@ -632,8 +636,24 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			glTextureStorage2D((uint)handle, mipCount, ImageLoader.GetGLImageInternalFormat(imageFormat), width, height);
 		}
 	}
-	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool v) {
-		throw new NotImplementedException();
+
+	public ShaderAPITextureHandle_t CreateTextureHandle() {
+		ShaderAPITextureHandle_t handle = 0;
+		CreateTextureHandles(new Span<ShaderAPITextureHandle_t>(ref handle));
+		return handle;
+	}
+
+	public unsafe void CreateTextureHandles(Span<int> textureHandles) {
+		int idxCreating = 0;
+		fixed (ShaderAPITextureHandle_t* handles = textureHandles)
+			glCreateTextures(GL_TEXTURE_2D, textureHandles.Length, (uint*)handles);
+	}
+
+	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool texture) {
+		ShaderAPITextureHandle_t handle = CreateTextureHandle();
+		glObjectLabel(GL_TEXTURE, (uint)handle, $"ShaderAPI Depth Texture '{debugName}'");
+		glTextureStorage2D((uint)handle, 0, GL_DEPTH24_STENCIL8, width, height);
+		return handle;
 	}
 
 	internal bool IsTexture(ShaderAPITextureHandle_t handle) {
@@ -727,5 +747,33 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	public bool DoRenderTargetsNeedSeparateDepthBuffer() {
 		return true;
+	}
+
+	public void EnableLinearColorSpaceFrameBuffer(bool v) {
+		throw new NotImplementedException();
+	}
+
+	public void SetRenderTargetEx(int renderTargetID, ShaderAPITextureHandle_t colorTextureHandle = -1, ShaderAPITextureHandle_t depthTextureHandle = -1) {
+		FlushBufferedPrimitives();
+
+		if (colorTextureHandle == -1 && depthTextureHandle == -1) {
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			return;
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, renderFBO);
+
+		if (colorTextureHandle == -2)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, 0, 0);
+		else if (colorTextureHandle >= 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, (uint)colorTextureHandle, 0);
+
+		if (depthTextureHandle == -2)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, 0, 0);
+		else if (depthTextureHandle >= 0)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, (uint)depthTextureHandle, 0);
+
+		var status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		Assert(status == GL_FRAMEBUFFER_COMPLETE, "Framebuffer incomplete");
 	}
 }

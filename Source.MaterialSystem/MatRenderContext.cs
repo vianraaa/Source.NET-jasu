@@ -5,6 +5,7 @@ using Source.Common.Utilities;
 
 using System.Diagnostics;
 using System.Numerics;
+using System.Xml.Linq;
 
 namespace Source.MaterialSystem;
 
@@ -25,7 +26,6 @@ public class MatRenderContext : IMatRenderContextInternal
 			item.Matrix = Matrix4x4.Identity;
 		}
 		RenderTargetStackElement initialElement = new() {
-			RenderTargets = [null, null, null, null],
 			DepthTexture = null,
 			ViewX = 0,
 			ViewY = 0,
@@ -39,7 +39,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	RefStack<MatrixStackItem>[] MatrixStacks;
 	bool[] MatrixStacksDirtyStates;
 	MaterialMatrixMode matrixMode;
-	ShaderViewport viewport = new(0, 0, 0, 0, 0, 1);
+	ShaderViewport ActiveViewport = new(0, 0, 0, 0, 0, 1);
 	public ref MatrixStackItem CurMatrixItem => ref MatrixStacks[(int)matrixMode].Top();
 	public ref RenderTargetStackElement CurRenderTargetStack => ref RenderTargetStack.Top();
 
@@ -62,9 +62,9 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public unsafe void DepthRange(double near, double far) {
-		viewport.MinZ = (float)near;
-		viewport.MaxZ = (float)far;
-		fixed (ShaderViewport* pVp = &viewport) 
+		ActiveViewport.MinZ = (float)near;
+		ActiveViewport.MaxZ = (float)far;
+		fixed (ShaderViewport* pVp = &ActiveViewport)
 			shaderAPI.SetViewports(new(pVp, 1));
 	}
 
@@ -72,17 +72,17 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	}
 
-	public void Flush(bool flushHardware) {
-
+	public void Flush(bool flushHardware = false) {
+		shaderAPI.FlushBufferedPrimitives();
 	}
 
 	public void GetViewport(out int x, out int y, out int width, out int height) {
 		Assert(RenderTargetStack.Count > 0);
 		ref RenderTargetStackElement element = ref RenderTargetStack.Top();
-		if(element.ViewW <= 0 || element.ViewH <= 0) {
+		if (element.ViewW <= 0 || element.ViewH <= 0) {
 			x = y = 0;
-			ITexture? renderTarget = element.RenderTargets[0];
-			if(renderTarget == null) {
+			ITexture? renderTarget = element.RenderTarget0;
+			if (renderTarget == null) {
 				shaderAPI.GetBackBufferDimensions(out width, out height);
 			}
 			else {
@@ -180,7 +180,7 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	public void PopMatrix() {
 		shaderAPI.PopMatrix(); // We need to tell ShaderAPI *NOW* so it can flush primitives trigger matrix sync etc
-		// ^^ is NOT source behavior. But I think, for all intents and purposes, it will act as such (we'll see if I eat my words on that)
+							   // ^^ is NOT source behavior. But I think, for all intents and purposes, it will act as such (we'll see if I eat my words on that)
 		RefStack<MatrixStackItem> curStack = MatrixStacks[(int)matrixMode];
 		curStack.Pop();
 		CurrentMatrixChanged();
@@ -243,7 +243,7 @@ public class MatRenderContext : IMatRenderContextInternal
 
 	public void ForceSyncMatrix(MaterialMatrixMode mode) {
 		ref MatrixStackItem top = ref MatrixStacks[(int)mode].Top();
-		if(MatrixStacksDirtyStates[(int)matrixMode] ) {
+		if (MatrixStacksDirtyStates[(int)matrixMode]) {
 			bool setMode = matrixMode != mode;
 			if (setMode)
 				shaderAPI.MatrixMode(mode);
@@ -263,12 +263,12 @@ public class MatRenderContext : IMatRenderContextInternal
 	}
 
 	public void SyncMatrices() {
-		if(!ShouldValidateMatrices() && AllowLazyMatrixSync()) {
+		if (!ShouldValidateMatrices() && AllowLazyMatrixSync()) {
 			for (int i = 0; i < (int)MaterialMatrixMode.Count; i++) {
 				ref MatrixStackItem top = ref MatrixStacks[i].Top();
-				if(MatrixStacksDirtyStates[i]) {
+				if (MatrixStacksDirtyStates[i]) {
 					shaderAPI.MatrixMode((MaterialMatrixMode)i);
-					if(!top.Matrix.IsIdentity) {
+					if (!top.Matrix.IsIdentity) {
 						shaderAPI.LoadMatrix(in top.Matrix);
 					}
 					else {
@@ -304,5 +304,77 @@ public class MatRenderContext : IMatRenderContextInternal
 		Matrix4x4 matrix = MathLib.CreateOpenGLOrthoOffCenter((float)left, (float)right, (float)bottom, (float)top, (float)near, (float)far);
 		item = Matrix4x4.Multiply(item, matrix);
 		CurrentMatrixChanged();
+	}
+
+	private void CommitRenderTargetAndViewport() {
+		Assert(RenderTargetStack.Count > 0);
+
+		ref RenderTargetStackElement element = ref RenderTargetStack.Top();
+
+		for (int rt = 0, size = element.Size; rt < size; rt++) {
+			if (element[rt] == null) {
+				shaderAPI.SetRenderTargetEx(rt);
+
+				if (rt == 0) {
+					if ((element.ViewW < 0) || (element.ViewH < 0)) {
+						ActiveViewport.TopLeftX = 0;
+						ActiveViewport.TopLeftY = 0;
+						shaderAPI.GetBackBufferDimensions(out ActiveViewport.Width, out ActiveViewport.Height);
+						shaderAPI.SetViewports(new Span<ShaderViewport>(ref ActiveViewport));
+					}
+					else {
+						ActiveViewport.TopLeftX = element.ViewX;
+						ActiveViewport.TopLeftY = element.ViewY;
+						ActiveViewport.Width = element.ViewW;
+						ActiveViewport.Height = element.ViewH;
+						shaderAPI.SetViewports(new Span<ShaderViewport>(ref ActiveViewport));
+					}
+				}
+			}
+			else {
+				ITextureInternal texInt = (ITextureInternal)element[rt]!;
+				texInt.SetRenderTarget(rt, element.DepthTexture);
+
+				if (rt == 0) {
+					if (element[rt]!.GetImageFormat() == Common.Bitmap.ImageFormat.RGBA16161616F)
+						shaderAPI.EnableLinearColorSpaceFrameBuffer(true);
+					else
+						shaderAPI.EnableLinearColorSpaceFrameBuffer(false);
+
+					if ((element.ViewW < 0) || (element.ViewH < 0)) {
+						ActiveViewport.TopLeftX = 0;
+						ActiveViewport.TopLeftY = 0;
+						ActiveViewport.Width = element[rt]!.GetActualWidth();
+						ActiveViewport.Height = element[rt]!.GetActualHeight();
+						shaderAPI.SetViewports(new Span<ShaderViewport>(ref ActiveViewport));
+					}
+					else {
+						ActiveViewport.TopLeftX = element.ViewX;
+						ActiveViewport.TopLeftY = element.ViewY;
+						ActiveViewport.Width = element.ViewW;
+						ActiveViewport.Height = element.ViewH;
+						shaderAPI.SetViewports(new Span<ShaderViewport>(ref ActiveViewport));
+					}
+				}
+			}
+		}
+	}
+
+	public void PushRenderTargetAndViewport(ITexture? thisTexture) {
+		RenderTargetStackElement element = new(thisTexture, 0, 0, -1, -1);
+		RenderTargetStack.Push(element);
+		CommitRenderTargetAndViewport();
+	}
+
+	public void PopRenderTargetAndViewport() {
+		if (RenderTargetStack.Count == 0) {
+			AssertMsg(false, "MatRenderContext.PopRenderTargetAndViewport: Stack is empty!\n");
+			return;
+		}
+
+		Flush();
+
+		RenderTargetStack.Pop();
+		CommitRenderTargetAndViewport();
 	}
 }

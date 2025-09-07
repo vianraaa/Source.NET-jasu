@@ -204,6 +204,8 @@ public interface IMatRenderContext
 	void GetRenderTargetDimensions(out int screenWidth, out int screenHeight);
 	void Scale(float x, float y, float z);
 	void Ortho(double left, double top, double right, double bottom, double near, double far);
+	void PushRenderTargetAndViewport(ITexture? thisTexture);
+	void PopRenderTargetAndViewport();
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -223,86 +225,30 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 		ctx.BeginRender();
 	}
 
-	public readonly void Dispose() {
-		ctx.EndRender();
-	}
-
-	public void BeginRender() {
-		ctx.BeginRender();
-	}
-
-	public void EndRender() {
-		ctx.EndRender();
-	}
-
-	public void Flush(bool flushHardware) {
-		ctx.Flush(flushHardware);
-	}
-
-	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) {
-		ctx.ClearBuffers(clearColor, clearDepth, clearStencil);
-	}
-
-	public void Viewport(int x, int y, int width, int height) {
-		ctx.Viewport(x, y, width, height);
-	}
-
-	public void GetViewport(out int x, out int y, out int width, out int height) {
-		ctx.GetViewport(out x, out y, out width, out height);
-	}
-
+	public readonly void Dispose() => ctx.EndRender();
+	public void BeginRender() => ctx.BeginRender();
+	public void EndRender() => ctx.EndRender();
+	public void Flush(bool flushHardware) => ctx.Flush(flushHardware);
+	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) => ctx.ClearBuffers(clearColor, clearDepth, clearStencil);
+	public void Viewport(int x, int y, int width, int height) => ctx.Viewport(x, y, width, height);
+	public void GetViewport(out int x, out int y, out int width, out int height) => ctx.GetViewport(out x, out y, out width, out height);
 	public void ClearColor3ub(byte r, byte g, byte b) => ctx.ClearColor3ub(r, g, b);
 	public void ClearColor4ub(byte r, byte g, byte b, byte a) => ctx.ClearColor4ub(r, g, b, a);
-
-	public void DepthRange(double near, double far) {
-		ctx.DepthRange(near, far);
-	}
-
-	public void MatrixMode(MaterialMatrixMode mode) {
-		ctx.MatrixMode(mode);
-	}
-
-	public void PushMatrix() {
-		ctx.PushMatrix();
-	}
-
-	public void LoadIdentity() {
-		ctx.LoadIdentity();
-	}
-
-	public void Bind(IMaterial material, object? proxyData) {
-		ctx.Bind(material, proxyData);
-	}
-
-	public IMaterial? GetCurrentMaterial() {
-		return ctx.GetCurrentMaterial();
-	}
-
-	public void PopMatrix() {
-		ctx.PopMatrix();
-	}
-
-	public IShaderAPI GetShaderAPI() {
-		return ctx.GetShaderAPI();
-	}
-
-	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) {
-		return ctx.GetDynamicMesh(buffered, vertexOverride, indexOverride, autoBind);
-	}
-
-	public bool InFlashlightMode() {
-		return ctx.InFlashlightMode();
-	}
-
-	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) {
+	public void DepthRange(double near, double far) => ctx.DepthRange(near, far);
+	public void MatrixMode(MaterialMatrixMode mode) => ctx.MatrixMode(mode);
+	public void PushMatrix() => ctx.PushMatrix();
+	public void LoadIdentity() => ctx.LoadIdentity();
+	public void Bind(IMaterial material, object? proxyData) => ctx.Bind(material, proxyData);
+	public IMaterial? GetCurrentMaterial() => ctx.GetCurrentMaterial();
+	public void PopMatrix() => ctx.PopMatrix();
+	public IShaderAPI GetShaderAPI() => ctx.GetShaderAPI();
+	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) =>
+		ctx.GetDynamicMesh(buffered, vertexOverride, indexOverride, autoBind);
+	public bool InFlashlightMode() => ctx.InFlashlightMode();
+	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) =>
 		ctx.GetRenderTargetDimensions(out screenWidth, out screenHeight);
-	}
-
-	public void Scale(float x, float y, float z) {
-		ctx.Scale(x, y, z);
-	}
-
-	public void Ortho(double left, double top, double right, double bottom, double near, double far) {
-		ctx.Ortho(left, top, right, bottom, near, far);
-	}
+	public void Scale(float x, float y, float z) => ctx.Scale(x, y, z);
+	public void Ortho(double left, double top, double right, double bottom, double near, double far) => ctx.Ortho(left, top, right, bottom, near, far);
+	public void PushRenderTargetAndViewport(ITexture? thisTexture) => ctx.PushRenderTargetAndViewport(thisTexture);
+	public void PopRenderTargetAndViewport() => ctx.PopRenderTargetAndViewport();
 }

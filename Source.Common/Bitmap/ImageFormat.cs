@@ -40,6 +40,7 @@ public enum ImageFormat
 	RGBA32323232F,
 
 	// Depth-stencil texture formats for shadow depth mapping
+	// TODO: Separate formats for Nvidia vs. ATI...??????????????????? Is this even needed now
 	NV_DST16,      // 
 	NV_DST24,      //
 	NV_IntZ,       // Vendor-specific depth-stencil texture

@@ -9,6 +9,8 @@ public interface ITextureInternal : ITexture
 	}
 
 	void Bind(Sampler sampler, int frame);
+	int GetTextureHandle(int v);
 	void OnRestore();
 	void Precache();
+	bool SetRenderTarget(int rt, ITexture? depthTexture = null);
 }

@@ -42,4 +42,6 @@ public interface IShaderAPI : IShaderDynamicAPI
 	int GetCurrentDynamicVBSize();
 	void TexSubImage2D(int mip, int face, int x, int y, int z, int width, int height, ImageFormat srcFormat, int srcStride, Span<byte> imageData);
 	bool DoRenderTargetsNeedSeparateDepthBuffer();
+	void EnableLinearColorSpaceFrameBuffer(bool v);
+	void SetRenderTargetEx(int rt, ShaderAPITextureHandle_t colorTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.Backbuffer, ShaderAPITextureHandle_t depthTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.Depthbuffer);
 }

@@ -241,9 +241,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 		return false;
 	}
 
-	public bool SupportsNonPow2Textures() {
-		throw new NotImplementedException();
-	}
+	public bool SupportsNonPow2Textures() => true;
 
 	public bool SupportsOverbright() {
 		throw new NotImplementedException();

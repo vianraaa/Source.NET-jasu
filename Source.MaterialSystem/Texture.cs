@@ -8,6 +8,7 @@ using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 
 using System;
@@ -398,7 +399,16 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		// Render Targets just need to be cleared, they have no upload
 		if (IsRenderTarget()) {
-			throw new NotImplementedException();
+			if (!IsDepthTextureFormat(ImageFormat)) {
+				using MatRenderContextPtr renderContext = new(materials);
+				ITexture? thisTexture = GetEmbeddedTexture(0);
+				renderContext.PushRenderTargetAndViewport(thisTexture);    
+				ShaderAPI.ClearColor4ub(0, 0, 0, 0xFF);                                 
+				ShaderAPI.ClearBuffers(true, false, false, DimsActual.Width, DimsActual.Height); 
+				renderContext.PopRenderTargetAndViewport();                                     
+			}
+
+			return;
 		}
 
 		// Blit down the texture faces, frames, and mips into the board memory
@@ -410,6 +420,15 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		ReleaseScratchVTFTexture(vtfTexture);
 		vtfTexture = null;
 	}
+
+	private ITexture? GetEmbeddedTexture(int index) => index == 0 ? this : null;
+
+	private bool IsDepthTextureFormat(ImageFormat imageFormat) => imageFormat == ImageFormat.NV_DST16 ||
+			 imageFormat == ImageFormat.ATI_DST24 ||
+			 imageFormat == ImageFormat.NV_IntZ ||
+			 imageFormat == ImageFormat.NV_RawZ ||
+			 imageFormat == ImageFormat.ATI_DST16 ||
+			 imageFormat == ImageFormat.ATI_DST24;
 
 	private void WriteDataToShaderAPITexture(ushort frameCount, int faceCount, int firstFace, ushort mipCount, IVTFTexture? vtfTexture, ImageFormat imageFormat) {
 		if ((Flags & (uint)TextureFlags.StagingMemory) > 0)
@@ -1028,10 +1047,10 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			SetName(newName.SliceNullTerminatedString());
 		}
 
-		if (renderTargetFlags.HasFlag(CreateRenderTargetFlags.HDR)) 
-			if (HardwareConfig.GetHDRType() == HDRType.Float) 
+		if (renderTargetFlags.HasFlag(CreateRenderTargetFlags.HDR))
+			if (HardwareConfig.GetHDRType() == HDRType.Float)
 				format = ImageFormat.RGBA16161616F;
-			
+
 		int nFrameCount = 1;
 
 		TextureFlags flags = TextureFlags.NoMip | TextureFlags.RenderTarget;
@@ -1051,19 +1070,123 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		OriginalRTHeight = (ushort)h;
 		ImageFormatInfo fmtInfo = ImageLoader.ImageFormatInfo(format);
 
-		if (fmtInfo.AlphaBits > 1) 
+		if (fmtInfo.AlphaBits > 1)
 			flags |= TextureFlags.EightBitAlpha;
-		else if (fmtInfo.AlphaBits == 1) 
+		else if (fmtInfo.AlphaBits == 1)
 			flags |= TextureFlags.OneBitAlpha;
-		
-		ApplyRenderTargetSizeMode(w, h, format);
+
+		ApplyRenderTargetSizeMode(ref w, ref h, format);
 
 		Init(w, h, 1, format, (int)flags, nFrameCount);
 		TextureGroupName = TEXTURE_GROUP_RENDER_TARGET;
 	}
 
-	private void ApplyRenderTargetSizeMode(int w, int h, ImageFormat format) {
-		throw new NotImplementedException();
+	readonly MaterialSystem_Config g_config = Singleton<MaterialSystem_Config>();
+
+	private void ApplyRenderTargetSizeMode(ref int width, ref int height, ImageFormat format) {
+		width = OriginalRTWidth;
+		height = OriginalRTHeight;
+
+		switch (RenderTargetSizeMode) {
+			case RenderTargetSizeMode.FullFrameBuffer: {
+					materials.GetRenderTargetFrameBufferDimensions(out width, out height);
+					if (!HardwareConfig.SupportsNonPow2Textures()) {
+						width = MathLib.FloorPow2(width + 1);
+						height = MathLib.FloorPow2(height + 1);
+					}
+				}
+				break;
+
+			case RenderTargetSizeMode.FullFrameBufferRoundedUp: {
+					materials.GetRenderTargetFrameBufferDimensions(out width, out height);
+					if (!HardwareConfig.SupportsNonPow2Textures()) {
+						width = MathLib.CeilPow2(width);
+						height = MathLib.CeilPow2(height);
+					}
+				}
+				break;
+
+			case RenderTargetSizeMode.Picmip: {
+					materials.GetRenderTargetFrameBufferDimensions(out int fbWidth, out int fbHeight);
+					int picmip = g_config.SkipMipLevels;
+					while (picmip > 0) {
+						width >>= 1;
+						height >>= 1;
+						picmip--;
+					}
+
+					while (width > fbWidth) {
+						width >>= 1;
+					}
+					while (height > fbHeight) {
+						height >>= 1;
+					}
+				}
+				break;
+
+			case RenderTargetSizeMode.Default: {
+					Assert((width & (width - 1)) == 0);
+					Assert((height & (height - 1)) == 0);
+					materials.GetRenderTargetFrameBufferDimensions(out int fbWidth, out int fbHeight);
+					while (width > fbWidth) {
+						width >>= 1;
+					}
+					while (height > fbHeight) {
+						height >>= 1;
+					}
+				}
+				break;
+
+			case RenderTargetSizeMode.HDR: {
+					materials.GetRenderTargetFrameBufferDimensions(out width, out height);
+					width >>= 2;
+					height >>= 2;
+				}
+				break;
+
+			case RenderTargetSizeMode.Offscreen: {
+					materials.GetRenderTargetFrameBufferDimensions(out int fbWidth, out int fbHeight);
+					while ((width > fbWidth) || (height > fbHeight)) {
+						width >>= 1;
+						height >>= 1;
+					}
+				}
+				break;
+
+			case RenderTargetSizeMode.Literal: break;
+			case RenderTargetSizeMode.LiteralPicmip: break;
+			default:
+				Assert(RenderTargetSizeMode == RenderTargetSizeMode.NoChange);
+				Assert(OriginalRenderTargetType == RenderTargetType.NoDepth);
+				break;
+		}
+	}
+
+	public bool SetRenderTarget(int renderTargetID, ITexture? depthTexture = null) {
+		if ((Flags & (int)TextureFlags.RenderTarget) == 0)
+			return false;
+
+		Assert(HasBeenAllocated());
+		ShaderAPITextureHandle_t textureHandle = TextureHandles![0];
+		ShaderAPITextureHandle_t depthTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.Depthbuffer;
+
+		if ((Flags & (int)TextureFlags.DepthRenderTarget) != 0) {
+			Assert(FrameCount >= 2);
+			depthTextureHandle = TextureHandles[1];
+		}
+		else if ((Flags & (int)TextureFlags.NoDepthBuffer) != 0) 
+			depthTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.None;
+		
+
+		if (depthTexture != null) 
+			depthTextureHandle = ((ITextureInternal)depthTexture).GetTextureHandle(0);
+
+		ShaderAPI.SetRenderTargetEx(renderTargetID, textureHandle, depthTextureHandle);
+		return true;
+	}
+
+	public int GetTextureHandle(int v) {
+		return TextureHandles![v];
 	}
 
 	Vector3 Reflectivity;

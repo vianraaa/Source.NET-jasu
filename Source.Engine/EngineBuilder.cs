@@ -113,6 +113,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		// static singletons/god classes - if we're gonna use DI we might as
 		// well go all the way with it...
 		this.AddSingleton<CL>();
+		this.AddSingleton<MatSysInterface>();
 		this.AddSingleton<SV>();
 		this.AddSingleton<Sys>();
 		this.AddSingleton<Host>();

@@ -440,7 +440,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			case MaterialRenderTargetDepth.None:
 				rtType = RenderTargetType.NoDepth;
 				break;
-			case  MaterialRenderTargetDepth.Only:
+			case MaterialRenderTargetDepth.Only:
 				rtType = RenderTargetType.OnlyDepth;
 				break;
 			case MaterialRenderTargetDepth.Shared:
@@ -451,10 +451,21 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		ITextureInternal? tex = TextureSystem.CreateRenderTargetTexture(rtName, w, h, sizeMode, format, rtType, textureFlags, renderTargetFlags);
 
-		if (!AllocatingRenderTargets) 
+		if (!AllocatingRenderTargets)
 			EndRenderTargetAllocation();
-		
+
 		return tex;
+	}
+
+	int RT_FB_WidthOverride;
+	int RT_FB_HeightOverride;
+
+	public void GetRenderTargetFrameBufferDimensions(out int fbWidth, out int fbHeight) {
+		if (RT_FB_WidthOverride > 0 && RT_FB_HeightOverride > 0) {
+			fbWidth = RT_FB_WidthOverride;
+			fbHeight = RT_FB_HeightOverride;
+		}
+		else ShaderAPI.GetBackBufferDimensions(out fbWidth, out fbHeight);
 	}
 
 	public event Action? Restore;
@@ -473,11 +484,54 @@ public struct MatrixStackItem
 
 public struct RenderTargetStackElement
 {
-	public ITexture?[] RenderTargets;
+	public ITexture? RenderTarget0;
+	public ITexture? RenderTarget1;
+	public ITexture? RenderTarget2;
+	public ITexture? RenderTarget3;
+
+	public readonly ITexture? this[int index] => index switch {
+		0 => RenderTarget0,
+		1 => RenderTarget1,
+		2 => RenderTarget2,
+		3 => RenderTarget3,
+		_ => null
+	};
+
 	public ITexture? DepthTexture;
 
 	public int ViewX;
 	public int ViewY;
 	public int ViewW;
 	public int ViewH;
+
+	public readonly int Size =>
+		(RenderTarget0 != null ? 1 : 0) +
+		(RenderTarget1 != null ? 1 : 0) +
+		(RenderTarget2 != null ? 1 : 0) +
+		(RenderTarget3 != null ? 1 : 0);
+
+	public RenderTargetStackElement(int viewX, int viewY, int viewW, int viewH) {
+		this.ViewX = viewX;
+		this.ViewY = viewY;
+		this.ViewW = viewW;
+		this.ViewH = viewH;
+	}
+	public RenderTargetStackElement(ITexture? rt0, int viewX, int viewY, int viewW, int viewH) : this(viewX, viewY, viewW, viewH) {
+		RenderTarget0 = rt0;
+	}
+	public RenderTargetStackElement(ITexture? rt0, ITexture? rt1, int viewX, int viewY, int viewW, int viewH) : this(viewX, viewY, viewW, viewH) {
+		RenderTarget0 = rt0;
+		RenderTarget1 = rt1;
+	}
+	public RenderTargetStackElement(ITexture? rt0, ITexture? rt1, ITexture? rt2, int viewX, int viewY, int viewW, int viewH) : this(viewX, viewY, viewW, viewH) {
+		RenderTarget0 = rt0;
+		RenderTarget1 = rt1;
+		RenderTarget2 = rt2;
+	}
+	public RenderTargetStackElement(ITexture? rt0, ITexture? rt1, ITexture? rt2, ITexture? rt3, int viewX, int viewY, int viewW, int viewH) : this(viewX, viewY, viewW, viewH) {
+		RenderTarget0 = rt0;
+		RenderTarget1 = rt1;
+		RenderTarget2 = rt2;
+		RenderTarget3 = rt3;
+	}
 }
