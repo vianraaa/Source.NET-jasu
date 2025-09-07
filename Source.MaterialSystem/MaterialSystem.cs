@@ -424,8 +424,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		}
 	}
 
-	public ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, CompiledVtfFlags flags) {
+	public ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, TextureFlags flags) {
 		return TextureSystem.CreateProceduralTexture(textureName, textureGroup, wide, tall, 1, format, flags)!;
+	}
+
+	public ImageFormat GetBackBufferFormat() {
+		throw new NotImplementedException();
 	}
 
 	public event Action? Restore;

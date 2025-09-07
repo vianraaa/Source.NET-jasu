@@ -11,26 +11,28 @@ using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 
-public class MaterialReference : Reference<IMaterial> {
-	IMaterialSystem? materials;
-	public void Init(IMaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, bool complain = true) => throw new NotImplementedException();
-	public void Init(IMaterialSystem materials, ReadOnlySpan<char> materialName, KeyValues keyValues) => throw new NotImplementedException();
-	public void Init(IMaterialSystem materials, MaterialReference reference) => this.reference = reference.reference;
-	public void Init(IMaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
+public class MaterialReference : Reference<IMaterial>
+{
+	readonly IMaterialSystem materials = Singleton<IMaterialSystem>();
+
+	public void Init(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, bool complain = true) => throw new NotImplementedException();
+	public void Init(ReadOnlySpan<char> materialName, KeyValues keyValues) => throw new NotImplementedException();
+	public void Init(MaterialReference reference) => this.reference = reference.reference;
+	public void Init(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
 		IMaterial? mat = materials.FindProceduralMaterial(materialName, textureGroupName, keyValues);
 		Assert(mat != null);
-		Init(materials, mat);
+		Init(mat);
 	}
-	void Init(IMaterialSystem materials, IMaterial material) {
-		this.materials = materials;
+
+	void Init(IMaterial material) {
 		if (reference != material) {
 			Shutdown();
 			reference = material;
 		}
 	}
 
-	private void Shutdown() {
-		if(reference != null && materials != null) {
+	private void Shutdown(bool deleteIfUnreferenced = false) {
+		if (reference != null && materials != null) {
 			reference = null;
 		}
 	}

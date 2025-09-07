@@ -271,8 +271,8 @@ public class FontTextureCache
 				newPage.Wide,
 				newPage.Tall,
 				ImageFormat.RGBA8888,
-				CompiledVtfFlags.PointSample | CompiledVtfFlags.ClampS| CompiledVtfFlags.ClampT |
-				CompiledVtfFlags.NoMip | CompiledVtfFlags.NoLOD | CompiledVtfFlags.Procedural| CompiledVtfFlags.SingleCopy
+				TextureFlags.PointSample | TextureFlags.ClampS| TextureFlags.ClampT |
+				TextureFlags.NoMip | TextureFlags.NoLOD | TextureFlags.Procedural| TextureFlags.SingleCopy
 			);
 
 			CreateFontMaterials(ref newPage, pTexture);

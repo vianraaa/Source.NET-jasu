@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace Source.Common;
 
 [Flags]
-public enum CompiledVtfFlags : uint
+public enum TextureFlags : uint
 {
 	// flags from the *.txt config file
 	PointSample = 0x00000001,

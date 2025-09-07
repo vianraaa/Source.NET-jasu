@@ -301,9 +301,9 @@ public class MatSystemTexture(IMaterialSystem materials)
 				width,
 				height,
 				format,
-				CompiledVtfFlags.ClampS | CompiledVtfFlags.ClampT |
-				CompiledVtfFlags.NoMip | CompiledVtfFlags.NoLOD |
-				CompiledVtfFlags.Procedural | CompiledVtfFlags.SingleCopy | CompiledVtfFlags.PointSample);
+				TextureFlags.ClampS | TextureFlags.ClampT |
+				TextureFlags.NoMip | TextureFlags.NoLOD |
+				TextureFlags.Procedural | TextureFlags.SingleCopy | TextureFlags.PointSample);
 
 			KeyValues vmtTKeyValues = new KeyValues("UnlitGeneric");
 			vmtTKeyValues.SetInt("$vertexcolor", 1);

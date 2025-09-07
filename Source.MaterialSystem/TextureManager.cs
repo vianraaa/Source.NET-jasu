@@ -36,13 +36,13 @@ public class TextureManager : ITextureManager
 		Color color2 = new();
 
 
-		errorTexture = CreateProceduralTexture("error", TEXTURE_GROUP_OTHER, ERROR_TEXTURE_SIZE, ERROR_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
+		errorTexture = CreateProceduralTexture("error", TEXTURE_GROUP_OTHER, ERROR_TEXTURE_SIZE, ERROR_TEXTURE_SIZE, 1, ImageFormat.RGB888, TextureFlags.NoMip | TextureFlags.SingleCopy)!;
 		color.R = color.G = color.B = 0; color.A = 128;
 		color2.R = color2.B = color2.A = 255; color2.G = 0;
 		ErrorRegen = new CheckerboardTexture(4, color, color2);
 		errorTexture.SetTextureRegenerator(ErrorRegen);
 
-		whiteTexture = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, CompiledVtfFlags.NoMip | CompiledVtfFlags.SingleCopy)!;
+		whiteTexture = CreateProceduralTexture("white", TEXTURE_GROUP_OTHER, WHITE_TEXTURE_SIZE, WHITE_TEXTURE_SIZE, 1, ImageFormat.RGB888, TextureFlags.NoMip | TextureFlags.SingleCopy)!;
 		color.R = color.G = color.B = color.A = 255;
 		CreateSolidTexture(whiteTexture, color);
 
@@ -55,7 +55,7 @@ public class TextureManager : ITextureManager
 	private void CreateSolidTexture(ITexture tex, Color color) 
 		=> tex.SetTextureRegenerator(new SolidTexture(color));
 
-	public ITextureInternal? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, CompiledVtfFlags flags, ITextureRegenerator? generator = null) {
+	public ITextureInternal? CreateProceduralTexture(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat imageFormat, TextureFlags flags, ITextureRegenerator? generator = null) {
 		name = name.SliceNullTerminatedString();
 		Texture newTexture = new(MaterialSystem);
 		newTexture.InitProceduralTexture(name, textureGroup, w, h, d, imageFormat, flags, generator);

@@ -14,6 +14,9 @@ public static class MaterialDefines
 	public static bool IsPlatformOpenGL() => true;
 	public const int MATERIAL_MAX_PATH = 256;
 
+	public const string FULL_FRAME_FRAMEBUFFER = "_rt_FullFrameFB";
+	public const string FULL_FRAME_FRAMEBUFFER_INDEXED = FULL_FRAME_FRAMEBUFFER + "%d";
+
 	// These are const strings rather than an enum since they refer to strings
 	// Just have MaterialDefines in your projects global defines if you want them
 	// or global-use MaterialDefines.cs

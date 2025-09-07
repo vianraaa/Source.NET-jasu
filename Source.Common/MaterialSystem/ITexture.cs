@@ -59,7 +59,7 @@ public interface ITexture : IDisposable
 	void SwapContents(ITexture other);
 
 	/// <summary>
-	/// Likely returns <see cref="CompiledVtfFlags"/>
+	/// Likely returns <see cref="TextureFlags"/>
 	/// </summary>
 	/// <returns></returns>
 	int GetFlags();

@@ -173,19 +173,19 @@ public sealed class VTFTexture : IVTFTexture
 			ref ImageFormatInfo info = ref ImageLoader.ImageFormatInfo(fmt);
 			int alphaBits = info.AlphaBits;
 			if (alphaBits > 1) {
-				Flags |= (int)(CompiledVtfFlags.EightBitAlpha);
-				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+				Flags |= (int)(TextureFlags.EightBitAlpha);
+				Flags &= ~(int)(TextureFlags.OneBitAlpha);
 			}
 			if (alphaBits <= 1) {
-				Flags &= ~(int)(CompiledVtfFlags.EightBitAlpha);
+				Flags &= ~(int)(TextureFlags.EightBitAlpha);
 				if (alphaBits == 0) {
-					Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha);
+					Flags &= ~(int)(TextureFlags.OneBitAlpha);
 				}
 			}
 		}
 		else {
 			if ((fmt == ImageFormat.DXT5) || (fmt == ImageFormat.ATI2N) || (fmt == ImageFormat.ATI1N)) {
-				Flags &= ~(int)(CompiledVtfFlags.OneBitAlpha | CompiledVtfFlags.EightBitAlpha);
+				Flags &= ~(int)(TextureFlags.OneBitAlpha | TextureFlags.EightBitAlpha);
 			}
 		}
 
@@ -360,7 +360,7 @@ public sealed class VTFTexture : IVTFTexture
 			depth = 1;
 		}
 
-		if ((flags & (int)CompiledVtfFlags.EnvMap) != 0) {
+		if ((flags & (int)TextureFlags.EnvMap) != 0) {
 			if (width != height) {
 				Warning("Height and width must be equal for cubemaps!\n");
 				return false;
@@ -388,7 +388,7 @@ public sealed class VTFTexture : IVTFTexture
 
 		// THIS CAUSED A BUG!!!  We want all of the mip levels in the vtf file even with nomip in case we have lod.
 		// NOTE: But we don't want more than 1 mip level for procedural textures
-		if ((flags & (uint)(CompiledVtfFlags.NoMip | CompiledVtfFlags.Procedural)) == (uint)(CompiledVtfFlags.NoMip | CompiledVtfFlags.Procedural)) {
+		if ((flags & (uint)(TextureFlags.NoMip | TextureFlags.Procedural)) == (uint)(TextureFlags.NoMip | TextureFlags.Procedural)) {
 			forceMipCount = 1;
 		}
 
@@ -399,7 +399,7 @@ public sealed class VTFTexture : IVTFTexture
 	
 		FrameCount = frameCount;
 
-		FaceCount = (flags & (uint)CompiledVtfFlags.EnvMap) != 0 ? 6 : 1;
+		FaceCount = (flags & (uint)TextureFlags.EnvMap) != 0 ? 6 : 1;
 
 		// Need to do this because Shutdown deallocates the low-res image
 		LowResImageWidth = LowResImageHeight = 0;
@@ -426,8 +426,8 @@ public sealed class VTFTexture : IVTFTexture
 		throw new NotImplementedException();
 	}
 
-	public bool IsCubeMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.EnvMap) == CompiledVtfFlags.EnvMap;
-	public bool IsNormalMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.Normal) == CompiledVtfFlags.Normal;
+	public bool IsCubeMap() => ((TextureFlags)Flags & TextureFlags.EnvMap) == TextureFlags.EnvMap;
+	public bool IsNormalMap() => ((TextureFlags)Flags & TextureFlags.Normal) == TextureFlags.Normal;
 
 	public bool IsVolumeTexture() => Depth > 1;
 
@@ -483,14 +483,14 @@ public sealed class VTFTexture : IVTFTexture
 			return false;
 
 		header.Flags |= (uint)forceFlags;
-		var flags = (CompiledVtfFlags)header.Flags;
+		var flags = (TextureFlags)header.Flags;
 
 
-		if ((flags & CompiledVtfFlags.EnvMap) == CompiledVtfFlags.EnvMap && header.Width != header.Height) {
+		if ((flags & TextureFlags.EnvMap) == TextureFlags.EnvMap && header.Width != header.Height) {
 			Dbg.Warning("*** Encountered VTF non-square cubemap!\n");
 			return false;
 		}
-		if ((flags & CompiledVtfFlags.EnvMap) == CompiledVtfFlags.EnvMap && header.Depth != 1) {
+		if ((flags & TextureFlags.EnvMap) == TextureFlags.EnvMap && header.Depth != 1) {
 			Dbg.Warning("*** Encountered VTF volume texture cubemap!\n");
 			return false;
 		}
@@ -510,7 +510,7 @@ public sealed class VTFTexture : IVTFTexture
 		Flags = (int)header.Flags;
 		FrameCount = header.NumFrames;
 
-		FaceCount = (Flags & (int)CompiledVtfFlags.EnvMap) == (int)CompiledVtfFlags.EnvMap ? (int)CubeMapFaceIndex.Count : 1;
+		FaceCount = (Flags & (int)TextureFlags.EnvMap) == (int)TextureFlags.EnvMap ? (int)CubeMapFaceIndex.Count : 1;
 		MipCount = ComputeMipCount();
 
 		FinestMipmapLevel = 0;

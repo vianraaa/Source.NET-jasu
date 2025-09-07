@@ -126,7 +126,15 @@ public struct MaterialVideoMode
 	public int Height;           // windowed mode, it'll use the window size
 	public ImageFormat Format;   // use ImageFormats (ignored for windowed mode)
 	public int RefreshRate;      // 0 == default (ignored for windowed mode)
-};
+}
+
+public enum CreateRenderTargetFlags
+{
+	HDR = 0x00000001,
+	AutoMipmap = 0x00000002,
+	UnfilterableOk = 0x00000004,
+}
+
 public enum RenderTargetSizeMode
 {
 	NoChange = 0,
@@ -139,6 +147,14 @@ public enum RenderTargetSizeMode
 	ReplayScreenshot = 7,
 	Literal = 8,
 	LiteralPicmip = 9
+}
+
+public enum MaterialRenderTargetDepth
+{
+	Shared,
+	Separate,
+	None,
+	Only
 }
 
 public interface IMaterialSystem
@@ -157,7 +173,8 @@ public interface IMaterialSystem
 	IMaterial? FindMaterial(ReadOnlySpan<char> filename, ReadOnlySpan<char> textureGroup, bool complain = false, ReadOnlySpan<char> complainPrefix = default);
 	IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
 	void RestoreShaderObjects(IServiceProvider services, int changeFlags);
-	ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, CompiledVtfFlags flags);
+	ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, TextureFlags flags);
+	ImageFormat GetBackBufferFormat();
 }
 
 public interface IMatRenderContext

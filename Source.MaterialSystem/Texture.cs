@@ -104,13 +104,13 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new NotImplementedException();
 	}
 
-	public bool IsCubeMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.EnvMap) != 0;
+	public bool IsCubeMap() => ((TextureFlags)Flags & TextureFlags.EnvMap) != 0;
 	public bool IsError() => ((InternalTextureFlags)InternalFlags & InternalTextureFlags.Error) != 0;
-	public bool IsMipmapped() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.NoMip) == 0;
-	public bool IsNormalMap() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.Normal) != 0;
-	public bool IsProcedural() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.Procedural) != 0;
-	public bool IsRenderTarget() => ((CompiledVtfFlags)Flags & CompiledVtfFlags.RenderTarget) != 0;
-	public bool IsTranslucent() => ((((CompiledVtfFlags)Flags) & CompiledVtfFlags.OneBitAlpha) | (((CompiledVtfFlags)Flags) & CompiledVtfFlags.EightBitAlpha)) != 0;
+	public bool IsMipmapped() => ((TextureFlags)Flags & TextureFlags.NoMip) == 0;
+	public bool IsNormalMap() => ((TextureFlags)Flags & TextureFlags.Normal) != 0;
+	public bool IsProcedural() => ((TextureFlags)Flags & TextureFlags.Procedural) != 0;
+	public bool IsRenderTarget() => ((TextureFlags)Flags & TextureFlags.RenderTarget) != 0;
+	public bool IsTranslucent() => ((((TextureFlags)Flags) & TextureFlags.OneBitAlpha) | (((TextureFlags)Flags) & TextureFlags.EightBitAlpha)) != 0;
 	public bool IsVolumeTexture() => DimsMapping.Depth > 1;
 
 	public bool SaveToFile(ReadOnlySpan<char> fileName) {
@@ -145,7 +145,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		DimsAllocated.MipCount = 0;
 		StreamingMips = 0;
 
-		Flags &= ~(uint)CompiledVtfFlags.DepthRenderTarget;
+		Flags &= ~(uint)TextureFlags.DepthRenderTarget;
 		Flags |= (uint)flags;
 
 		ResidenceTarget = ResidencyType.None;
@@ -188,10 +188,10 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			return;
 
 		int nAdditionalFlags = 0;
-		if ((Flags & (uint)CompiledVtfFlags.Streamable) != 0) {
+		if ((Flags & (uint)TextureFlags.Streamable) != 0) {
 			// If we were previously streamed in, make sure we still do this time around.
-			nAdditionalFlags = (int)CompiledVtfFlags.StreamableCoarse;
-			Assert((Flags & (long)CompiledVtfFlags.StreamableFine) == 0);
+			nAdditionalFlags = (int)TextureFlags.StreamableCoarse;
+			Assert((Flags & (long)TextureFlags.StreamableFine) == 0);
 		}
 
 		IVTFTexture vtfTexture = GetScratchVTFTexture();
@@ -235,7 +235,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		DimsMapping.Width = 32;
 		DimsMapping.Height = 32;
 		DimsMapping.Depth = 1;
-		Flags = (uint)CompiledVtfFlags.NoMip;
+		Flags = (uint)TextureFlags.NoMip;
 		SetErrorTexture(true);
 		FrameCount = 1;
 		if (TextureHandles == null)
@@ -250,7 +250,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	private void AllocateTextureHandles() {
 		Assert(TextureHandles == null);
 		Assert(FrameCount > 0);
-		if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) != 0)
+		if ((Flags & (uint)TextureFlags.DepthRenderTarget) != 0)
 			Assert(FrameCount >= 2);
 
 		TextureHandles = new ShaderAPITextureHandle_t[FrameCount];
@@ -354,7 +354,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			FrameCount != oldFrameCount) {
 
 			const bool canStretchRectTextures = true;
-			bool shouldMigrateTextures = ((Flags & (uint)CompiledVtfFlags.StreamableFine) != 0) && FrameCount == oldFrameCount;
+			bool shouldMigrateTextures = ((Flags & (uint)TextureFlags.StreamableFine) != 0) && FrameCount == oldFrameCount;
 
 			// If we're just streaming in more data--or demoting ourselves, do a migration instead. 
 			if (copyFromCurrent || (canStretchRectTextures && shouldMigrateTextures)) {
@@ -367,7 +367,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			else {
 				// If we're doing a wholesale copy, we need to restore these values that will be cleared by FreeShaderAPITextures.
 				// Record them here, restore them below.
-				uint restoreStreamingFlag = (Flags & (uint)CompiledVtfFlags.Streamable);
+				uint restoreStreamingFlag = (Flags & (uint)TextureFlags.Streamable);
 				ResidencyType restoreResidenceCurrent = ResidenceCurrent;
 				ResidencyType restoreResidenceTarget = ResidenceTarget;
 
@@ -409,7 +409,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private void WriteDataToShaderAPITexture(ushort frameCount, int faceCount, int firstFace, ushort mipCount, IVTFTexture? vtfTexture, ImageFormat imageFormat) {
-		if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+		if ((Flags & (uint)TextureFlags.StagingMemory) > 0)
 			return;
 
 		for (int i = 0; i < FrameCount; i++) {
@@ -443,7 +443,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		int count = FrameCount;
 
 		CreateTextureFlags createFlags = 0;
-		if ((Flags & (uint)CompiledVtfFlags.EnvMap) > 0 && materials.HardwareConfig.SupportsCubeMaps()) {
+		if ((Flags & (uint)TextureFlags.EnvMap) > 0 && materials.HardwareConfig.SupportsCubeMaps()) {
 			createFlags |= CreateTextureFlags.Cubemap;
 		}
 
@@ -451,41 +451,41 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 						(ImageFormat == ImageFormat.RGB323232F) || (ImageFormat == ImageFormat.RGBA32323232F);
 
 		// Don't do sRGB on floating point textures
-		if ((Flags & (uint)CompiledVtfFlags.SRGB) > 0 && !bIsFloat) {
+		if ((Flags & (uint)TextureFlags.SRGB) > 0 && !bIsFloat) {
 			createFlags |= CreateTextureFlags.SRGB;    // for Posix/GL only
 		}
 
-		if ((Flags & (uint)CompiledVtfFlags.RenderTarget) > 0) {
+		if ((Flags & (uint)TextureFlags.RenderTarget) > 0) {
 			createFlags |= CreateTextureFlags.RenderTarget;
 
 			// This here is simply so we can use a different call to
 			// create the depth texture below	
-			if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0 && (count == 2)) //nCount must be 2 on pc
+			if ((Flags & (uint)TextureFlags.DepthRenderTarget) > 0 && (count == 2)) //nCount must be 2 on pc
 			{
 				--count;
 			}
 		}
 		else {
 			// If it's not a render target, use the texture manager in dx
-			if ((Flags & (uint)CompiledVtfFlags.StagingMemory) > 0)
+			if ((Flags & (uint)TextureFlags.StagingMemory) > 0)
 				createFlags |= CreateTextureFlags.SysMem;
 			else {
 				createFlags |= CreateTextureFlags.Managed;
 			}
 		}
 
-		if ((Flags & (uint)CompiledVtfFlags.PointSample) > 0) {
+		if ((Flags & (uint)TextureFlags.PointSample) > 0) {
 			createFlags |= CreateTextureFlags.UnfilterableOK;
 		}
 
-		if ((Flags & (uint)CompiledVtfFlags.VertexTexture) > 0) {
+		if ((Flags & (uint)TextureFlags.VertexTexture) > 0) {
 			createFlags |= CreateTextureFlags.VertexTexture;
 		}
 
 		int nCopies = 1;
 		if (IsProcedural()) {
 			// This is sort of hacky... should we store the # of copies in the VTF?
-			if ((Flags & (uint)CompiledVtfFlags.SingleCopy) == 0) {
+			if ((Flags & (uint)TextureFlags.SingleCopy) == 0) {
 				// FIXME: That 6 there is heuristically what I came up with what I
 				// need to get eyes not to stall on map alyx3. We need a better way
 				// of determining how many copies of the texture we should store.
@@ -495,7 +495,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		// For depth only render target: adjust texture width/height
 		// Currently we just leave it the same size, will update with further testing
-		int shaderApiCreateTextureDepth = ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) != 0 && (OriginalRenderTargetType == RenderTargetType.OnlyDepth)) ? 1 : DimsAllocated.Depth;
+		int shaderApiCreateTextureDepth = ((Flags & (uint)TextureFlags.DepthRenderTarget) != 0 && (OriginalRenderTargetType == RenderTargetType.OnlyDepth)) ? 1 : DimsAllocated.Depth;
 
 		// Create all animated texture frames in a single call
 		materials.ShaderAPI.CreateTextures(
@@ -506,7 +506,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		int accountingCount = count;
 
 		// Create the depth render target buffer
-		if ((Flags & (uint)CompiledVtfFlags.DepthRenderTarget) > 0) {
+		if ((Flags & (uint)TextureFlags.DepthRenderTarget) > 0) {
 			Assert(count == 1);
 
 			Span<char> debugName = stackalloc char[128];
@@ -565,7 +565,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			fileHandle?.Dispose();
 		}
 
-		if ((Flags & (uint)CompiledVtfFlags.StreamableFine) == 0) {
+		if ((Flags & (uint)TextureFlags.StreamableFine) == 0) {
 			TexDimensions actual = DimsActual, allocated = DimsAllocated;
 
 			Init(DimsMapping.Width, DimsMapping.Height, DimsMapping.Depth, vtfTexture.Format(), vtfTexture.Flags(), vtfTexture.FrameCount());
@@ -659,7 +659,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			(srcFormat == ImageFormat.UVLX8888) || (srcFormat == ImageFormat.RGBA16161616) ||
 			(srcFormat == ImageFormat.RGBA16161616F))
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(srcFormat, false);
-		else if ((Flags & (uint)(CompiledVtfFlags.EightBitAlpha | CompiledVtfFlags.OneBitAlpha)) != 0)
+		else if ((Flags & (uint)(TextureFlags.EightBitAlpha | TextureFlags.OneBitAlpha)) != 0)
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.BGRA8888);
 		else if (srcFormat == ImageFormat.I8)
 			dstFormat = materials.ShaderAPI.GetNearestSupportedFormat(ImageFormat.I8);
@@ -708,7 +708,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	private unsafe int ComputeMipSkipCount(ReadOnlySpan<char> readOnlySpan, TexDimensions mappingDims, bool ignorePicmip, IVTFTexture? vtfTexture, uint flags, ushort desiredDimensionLimit, ref ushort streamingMips, out TextureLODControlSettings cachedFileLodSettings, out TexDimensions dimsActual, out TexDimensions dimsAllocated, out uint outStripFlags) {
 		TexDimensions actualDims = mappingDims, allocatedDims = new();
 
-		bool bTextureMigration = (Flags & (uint)CompiledVtfFlags.Streamable) != 0;
+		bool bTextureMigration = (Flags & (uint)TextureFlags.Streamable) != 0;
 		uint stripFlags = 0;
 
 		int nClampX = actualDims.Width;  // no clamping (clamp to texture dimensions)
@@ -801,7 +801,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		// If we're streaming, cut down what we're loading.
 		// We can only stream things that have a mipmap pyramid (not just a single mipmap).
 		bool bHasSetAllocation = false;
-		if ((Flags & (uint)CompiledVtfFlags.Streamable) == (uint)CompiledVtfFlags.StreamableCoarse) {
+		if ((Flags & (uint)TextureFlags.Streamable) == (uint)TextureFlags.StreamableCoarse) {
 			if (actualDims.MipCount > 1) {
 				allocatedDims.Width = actualDims.Width;
 				allocatedDims.Height = actualDims.Height;
@@ -827,7 +827,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			}
 			else {
 				// Clear out that we're streaming, this isn't a texture we can stream.
-				stripFlags |= (uint)CompiledVtfFlags.StreamableCoarse;
+				stripFlags |= (uint)TextureFlags.StreamableCoarse;
 			}
 		}
 
@@ -848,19 +848,19 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private ushort ComputeActualMipCount(TexDimensions actualDims, uint flags) {
-		if ((flags & (uint)CompiledVtfFlags.EnvMap) > 0) {
+		if ((flags & (uint)TextureFlags.EnvMap) > 0) {
 			if (materials.HardwareConfig.SupportsMipmappedCubemaps()) {
 				return 1;
 			}
 		}
 
-		if ((flags & (uint)CompiledVtfFlags.NoMip) != 0) {
+		if ((flags & (uint)TextureFlags.NoMip) != 0) {
 			return 1;
 		}
 
 		// Unless ALLMIPS is set, we stop mips at 32x32
 		const int nMaxMipSize = 32;
-		if ((false && (Flags & (uint)CompiledVtfFlags.AllMips) == 0) || (true && (Flags & (uint)CompiledVtfFlags.Border) > 0))
+		if ((false && (Flags & (uint)TextureFlags.AllMips) == 0) || (true && (Flags & (uint)TextureFlags.Border) > 0))
 			{
 				int nNumMipLevels = 1;
 				int h = actualDims.Width;
@@ -878,7 +878,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private IVTFTexture? ReconstructProceduralBits() {
-		bool ignorePicmip = (Flags & (uint)(CompiledVtfFlags.StagingMemory | CompiledVtfFlags.IgnorePicmip)) != 0;
+		bool ignorePicmip = (Flags & (uint)(TextureFlags.StagingMemory | TextureFlags.IgnorePicmip)) != 0;
 		ComputeActualSize(ignorePicmip);
 
 		IVTFTexture texture = GetScratchVTFTexture();
@@ -937,7 +937,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	private IVTFTexture ReconstructPartialProceduralBits(in Rectangle rect, out Rectangle vtfRect) {
-		bool ignorePicmip = (Flags & (uint)(CompiledVtfFlags.StagingMemory | CompiledVtfFlags.IgnorePicmip)) != 0;
+		bool ignorePicmip = (Flags & (uint)(TextureFlags.StagingMemory | TextureFlags.IgnorePicmip)) != 0;
 		ComputeActualSize(ignorePicmip);
 
 		int sizeFactor = 1;
@@ -981,22 +981,22 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		subRect.Height = (int)MathF.Ceiling((rect.Y + rect.Height) * flInvShrink) - rect.Y;
 	}
 
-	internal void InitProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat format, CompiledVtfFlags flags, ITextureRegenerator? generator) {
-		Assert((flags & (CompiledVtfFlags.RenderTarget | CompiledVtfFlags.DepthRenderTarget)) == 0);
+	internal void InitProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int w, int h, int d, ImageFormat format, TextureFlags flags, ITextureRegenerator? generator) {
+		Assert((flags & (TextureFlags.RenderTarget | TextureFlags.DepthRenderTarget)) == 0);
 
 		SetName(textureName);
 
 		// Eliminate flags that are inappropriate...
-		flags &= ~CompiledVtfFlags.HintDXT5 | CompiledVtfFlags.OneBitAlpha | CompiledVtfFlags .EightBitAlpha | CompiledVtfFlags.RenderTarget | CompiledVtfFlags.DepthRenderTarget;
+		flags &= ~TextureFlags.HintDXT5 | TextureFlags.OneBitAlpha | TextureFlags .EightBitAlpha | TextureFlags.RenderTarget | TextureFlags.DepthRenderTarget;
 
 		// Insert required flags
-		flags |= CompiledVtfFlags.Procedural;
+		flags |= TextureFlags.Procedural;
 		int nAlphaBits = ImageLoader.ImageFormatInfo(format).AlphaBits;
 		if (nAlphaBits > 1) {
-			flags |= CompiledVtfFlags.EightBitAlpha;
+			flags |= TextureFlags.EightBitAlpha;
 		}
 		else if (nAlphaBits == 1) {
-			flags |= CompiledVtfFlags.OneBitAlpha;
+			flags |= TextureFlags.OneBitAlpha;
 		}
 
 		// Procedural textures are always one frame only

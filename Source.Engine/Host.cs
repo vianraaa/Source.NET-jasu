@@ -38,6 +38,7 @@ public class Host(
 
 	public ClientGlobalVariables clientGlobalVariables;
 	public CL CL;
+	public MatSysInterface MatSysInterface;
 	public SV SV;
 	public ServerGlobalVariables serverGlobalVariables;
 	public Cbuf Cbuf;
@@ -564,6 +565,7 @@ public class Host(
 #if !SWDS
 		if (!dedicated) {
 			CL = engineAPI.InitSubsystem<CL>()!;
+			MatSysInterface = engineAPI.InitSubsystem<MatSysInterface>()!;
 			EngineVGui = engineAPI.InitSubsystem<EngineVGui>()!;
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
 			HostState = engineAPI.GetRequiredService<IHostState>();

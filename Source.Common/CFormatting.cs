@@ -237,6 +237,10 @@ public static class CFormatUtils
 
 public static class CFormatting
 {
+	public static unsafe void strcpy(Span<char> target, ReadOnlySpan<char> str) {
+		str = str.SliceNullTerminatedString();
+		str[..(Math.Min(target.Length, str.Length) - 1)].CopyTo(target);
+	}
 	public static unsafe int sprintf(Span<char> target, ReadOnlySpan<char> format, params object?[] args) {
 		CFormatReader reader = new(format);
 		return sprintf(target, ref reader, args);
