@@ -1,10 +1,15 @@
 ﻿
+using Source.Common.Client;
+using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Engine.Client;
 
+using System.Drawing;
+
 namespace Source.Engine;
 
-public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem materials, Render EngineRenderer, Shader Shader, ClientState cl)
+public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem materials,
+	Render EngineRenderer, Shader Shader, ClientState cl, IBaseClientDLL ClientDLL, IVideoMode videomode)
 {
 	public void RenderGuiOnly() {
 		materials.BeginFrame(Host.FrameTime);
@@ -29,7 +34,8 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 			RenderGuiOnly_NoSwap();
 		}
 		else {
-			// todo!
+			ViewRects screenrect = videomode.GetClientViewRect();
+			ClientDLL.View_Render(screenrect);
 		}
 	}
 }

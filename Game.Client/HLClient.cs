@@ -4,13 +4,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
+using Source.Common.Engine;
 
 namespace Game.Client;
 
-public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
+public class HLClient(ViewRender view, IInput input, UserMessages usermessages) : IBaseClientDLL
 {
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
+		services.AddSingleton<ViewRender>();
+		services.AddSingleton<IViewRender>(x => x.GetRequiredService<ViewRender>());
 	}
 
 	public void IN_SetSampleTime(double frameTime) {
@@ -39,6 +42,7 @@ public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 	}
 
 	public bool Init() {
+		view.Init();
 		return true;
 	}
 
@@ -60,5 +64,12 @@ public class HLClient(IInput input, UserMessages usermessages) : IBaseClientDLL
 
 	public void IN_ActivateMouse() {
 
+	}
+
+	public void View_Render(ViewRects rects) {
+		ref ViewRect rect = ref rects[0];
+		if (rect.Width == 0 || rect.Height == 0)
+			return;
+		view.Render(rects);
 	}
 }

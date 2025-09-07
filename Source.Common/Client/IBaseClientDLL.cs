@@ -1,4 +1,5 @@
 ﻿using Source.Common.Bitbuffers;
+using Source.Common.Engine;
 
 namespace Source.Common.Client;
 
@@ -20,4 +21,5 @@ public interface IBaseClientDLL
 	bool HandleUiToggle();
 	void IN_DeactivateMouse();
 	void IN_ActivateMouse();
+	void View_Render(ViewRects screenrect);
 }

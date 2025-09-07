@@ -1,0 +1,70 @@
+﻿using Source.Common.Engine;
+using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
+using Source.Common.Server;
+
+using System.Numerics;
+
+namespace Source.Common.Client;
+
+public enum DrawFlags
+{
+	RenderRefraction = 0x1,
+	RenderReflection = 0x2,
+	ClipZ = 0x4,
+	ClipBelow = 0x8,
+	RenderUnderwater = 0x10,
+	RenderAbovewater = 0x20,
+	RenderWater = 0x40,
+	SSAODepthPass = 0x100,
+	WaterHeight = 0x200,
+	DrawSSAO = 0x400,
+	DrawSkybox = 0x800,
+	FudgeUp = 0x1000,
+	DrawEntities = 0x2000,
+	UNUSED3 = 0x4000,
+	UNUSED4 = 0x8000,
+	UNUSED5 = 0x10000,
+	SaveGameScreenshot = 0x20000,
+	ClipSkybox = 0x40000,
+	ShadowDepthMap = 0x100000
+}
+
+/// <summary>
+/// View setup and rendering.
+/// </summary>
+public interface IViewRender
+{
+	void Init();
+	void LevelInit();
+	void LevelShutdown();
+	void Shutdown();
+	void OnRenderStart();
+	void Render(ViewRects rect);
+	void RenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw);
+	DrawFlags GetDrawFlags();
+	void StartPitchDrift();
+	void StopPitchDrift();
+	ref VPlane GetFrustum();
+	bool ShouldDrawBrushModels();
+	ViewSetup GetPlayerViewSetup();
+	ViewSetup GetViewSetup();
+	void DisableVis();
+	int BuildWorldListsNumber();
+	void SetCheapWaterStartDistance(float cheapWaterStartDistance);
+	void SetCheapWaterEndDistance(float cheapWaterEndDistance);
+	void GetWaterLODParams(ref float cheapWaterStartDistance, ref float cheapWaterEndDistance);
+	void DriftPitch();
+	void SetScreenOverlayMaterial(IMaterial? pMaterial);
+	IMaterial? GetScreenOverlayMaterial();
+	void WriteSaveGameScreenshot(ReadOnlySpan<char> pFilename);
+	void WriteSaveGameScreenshotOfSize(ReadOnlySpan<char> pFilename, int width, int height, bool bCreatePowerOf2Padded = false, bool bWriteVTF = false);
+	void QueueOverlayRenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw);
+	float GetZNear();
+	float GetZFar();
+	void GetScreenFadeDistances(out float min, out float max);
+	// C_BaseEntity? GetCurrentlyDrawingEntity();
+	// void SetCurrentlyDrawingEntity(C_BaseEntity ent);
+	bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, ViewSetup shadowView);
+	void FreezeFrame(float flFreezeTime);
+}

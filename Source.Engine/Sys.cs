@@ -153,4 +153,6 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		Warning(v);
 		AssertMsg(false, v);
 	}
+
+	public bool InEditMode() => false;
 }

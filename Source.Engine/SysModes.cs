@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 namespace Source.Engine;
 
 
-public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials, RenderUtils renderUtils, ICommandLine CommandLine) : IVideoMode
+public class VideoMode_Common(Sys Sys, IServiceProvider services, IFileSystem fileSystem, IMaterialSystem materials, RenderUtils renderUtils, ICommandLine CommandLine) : IVideoMode
 {
 	VMode mode = new();
 	bool Windowed;
@@ -32,6 +32,35 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 	int UIHeight;
 	int StereoWidth;
 	int StereoHeight;
+
+	// View rects. Never shrinks
+	readonly ViewRects ClientViewRect = [new()];
+
+	public ViewRects GetClientViewRect() {
+		RecomputeClientViewRect();
+		return ClientViewRect;
+	}
+
+	private void RecomputeClientViewRect() {
+		if (!Sys.InEditMode()) {
+			if (!ClientViewRectDirty)
+				return;
+		}
+
+		ClientViewRectDirty = false;
+
+		MatRenderContextPtr renderContext = new(materials);
+
+		renderContext.GetRenderTargetDimensions(out int width, out int height);
+		ref ViewRect viewrect = ref ClientViewRect[0];
+		viewrect.X = 0;
+		viewrect.Y = 0;
+		viewrect.Width = width;
+		viewrect.Height = height;
+
+		if (width == 0 || height == 0)
+			ClientViewRectDirty = true;
+	}
 
 	public ref VMode RequestedWindowVideoMode() {
 		return ref mode;
@@ -234,8 +263,8 @@ public class VideoMode_Common(IServiceProvider services, IFileSystem fileSystem,
 		return false;
 	}
 }
-public class VideoMode_MaterialSystem(IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem, RenderUtils renderUtils, ICommandLine commandLine)
-	: VideoMode_Common(services, fileSystem, materials, renderUtils, commandLine)
+public class VideoMode_MaterialSystem(Sys Sys, IMaterialSystem materials, IGame game, IServiceProvider services, IFileSystem fileSystem, RenderUtils renderUtils, ICommandLine commandLine)
+	: VideoMode_Common(Sys, services, fileSystem, materials, renderUtils, commandLine)
 {
 	bool SetModeOnce;
 	public override bool SetMode(int width, int height, bool windowed) {
