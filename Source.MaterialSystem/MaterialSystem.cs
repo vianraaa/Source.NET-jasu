@@ -412,18 +412,21 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	// TODO: How much of this is needed these days... I'm fairly sure not a lot of it
 	bool AllocatingRenderTargets;
-	internal void BeginRenderTargetAllocation() {
+	public void BeginRenderTargetAllocation() {
 		AllocatingRenderTargets = true;
 	}
 
-	internal void EndRenderTargetAllocation() {
+	public void EndRenderTargetAllocation() {
 		ShaderAPI.FlushBufferedPrimitives();
 		AllocatingRenderTargets = false;
 
+		// I believe this step is unnecessary (and breaks how textures work rn)
+		/*
 		if (ShaderAPI.CanDownloadTextures()) {
 			ShaderDevice.ReleaseResources();
 			ShaderDevice.ReacquireResources();
 		}
+		*/
 	}
 
 	public ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, TextureFlags flags) {

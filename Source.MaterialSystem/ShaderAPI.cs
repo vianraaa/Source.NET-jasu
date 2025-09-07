@@ -652,7 +652,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool texture) {
 		ShaderAPITextureHandle_t handle = CreateTextureHandle();
 		glObjectLabel(GL_TEXTURE, (uint)handle, $"ShaderAPI Depth Texture '{debugName}'");
-		glTextureStorage2D((uint)handle, 0, GL_DEPTH24_STENCIL8, width, height);
+		glTextureStorage2D((uint)handle, 1, GL_DEPTH24_STENCIL8, width, height);
 		return handle;
 	}
 
@@ -750,7 +750,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void EnableLinearColorSpaceFrameBuffer(bool v) {
-		throw new NotImplementedException();
+		// I'm dealing with this later
 	}
 
 	public void SetRenderTargetEx(int renderTargetID, ShaderAPITextureHandle_t colorTextureHandle = -1, ShaderAPITextureHandle_t depthTextureHandle = -1) {
@@ -764,16 +764,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		glBindFramebuffer(GL_FRAMEBUFFER, renderFBO);
 
 		if (colorTextureHandle == -2)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, 0, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
 		else if (colorTextureHandle >= 0)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, (uint)colorTextureHandle, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (uint)colorTextureHandle, 0);
 
 		if (depthTextureHandle == -2)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, 0, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
 		else if (depthTextureHandle >= 0)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, (uint)depthTextureHandle, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, (uint)depthTextureHandle, 0);
 
 		var status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		Assert(status == GL_FRAMEBUFFER_COMPLETE, "Framebuffer incomplete");
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }

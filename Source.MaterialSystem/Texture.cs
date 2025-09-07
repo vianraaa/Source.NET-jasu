@@ -539,7 +539,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 					DimsAllocated.Width,
 					DimsAllocated.Height,
 					debugName,
-					(OriginalRenderTargetType == RenderTargetType.OnlyDepth));
+					OriginalRenderTargetType == RenderTargetType.OnlyDepth);
 			accountingCount += 1;
 		}
 

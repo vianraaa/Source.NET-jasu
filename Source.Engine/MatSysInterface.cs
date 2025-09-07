@@ -19,8 +19,10 @@ public class MatSysInterface(IMaterialSystem materials)
 	}
 
 	private void InitWellKnownRenderTargets() {
+		materials.BeginRenderTargetAllocation();
 		FullFrameFBTexture0.Init(CreateFullFrameFBTexture(0));
 		FullFrameFBTexture0.Init(CreateFullFrameFBTexture(1));
+		materials.EndRenderTargetAllocation();
 	}
 
 	private ITexture CreateFullFrameFBTexture(int textureIndex, CreateRenderTargetFlags extraFlags = 0) {
