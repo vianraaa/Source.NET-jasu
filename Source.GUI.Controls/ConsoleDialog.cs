@@ -276,7 +276,9 @@ public class ConsoleDialog : Frame
 		ConsolePanel.Entry.RequestFocus();
 	}
 
-	public void Clear() { }
+	public void Clear() {
+		ConsolePanel.Clear();
+	}
 	public void Hide() { }
 
 	public void Print(ReadOnlySpan<char> msg) { }

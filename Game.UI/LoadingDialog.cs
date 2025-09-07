@@ -106,7 +106,42 @@ public class LoadingDialog : Frame
 	}
 
 	internal void DisplayGenericError(ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
-		throw new NotImplementedException();
+		Activate();
+
+		SetupControlSettingsForErrorDisplay("Resource/LoadingDialogError.res");
+
+		if (extendedReason != null && extendedReason.Length > 0) {
+			ReadOnlySpan<char> fail = failureReason[0] == '#' ? Localize.Find(failureReason) : failureReason;
+			ReadOnlySpan<char> ext = extendedReason[0] == '#' ? Localize.Find(extendedReason) : extendedReason;
+
+			InfoLabel.SetText(string.Concat(fail, ext));
+		}
+		else
+			InfoLabel.SetText(failureReason.Trim('\n'));
+
+		InfoLabel.GetContentSize(out int wide, out int tall);
+		InfoLabel.GetPos(out int x, out int y);
+		SetTall(tall + y + 50);
+
+		CancelButton.GetPos(out int buttonX, out int buttonY);
+		CancelButton.SetPos(buttonX, tall + y + 6);
+		CancelButton.RequestFocus();
+	}
+
+	private void SetupControlSettingsForErrorDisplay(ReadOnlySpan<char> settingsFile) {
+		Center = true;
+		SetTitle("#GameUI_Disconnected", true);
+		InfoLabel.SetText("");
+		LoadControlSettings(settingsFile);
+		HideOtherDialogs(true);
+
+		base.Activate();
+
+		Progress.SetVisible(false);
+		InfoLabel.SetVisible(true);
+		CancelButton.SetText("#GameUI_Close");
+		CancelButton.SetCommand("Close");
+		InfoLabel.InvalidateLayout();
 	}
 
 	internal void Open() {
@@ -130,7 +165,7 @@ public class LoadingDialog : Frame
 				MoveToFront();
 				Input.SetAppModalSurface(this);
 			}
-			else 
+			else
 				Surface.RestrictPaintToSinglePanel(this);
 		}
 		else {
@@ -138,7 +173,7 @@ public class LoadingDialog : Frame
 				GameUI.HideLoadingBackgroundDialog();
 				Input.SetAppModalSurface(null);
 			}
-			else 
+			else
 				Surface.RestrictPaintToSinglePanel(null);
 		}
 	}

@@ -66,7 +66,7 @@ public class MessageBox : Frame
 	}
 	public void SetOKCommand(KeyValues? command) => OkCommand = command;
 	public void SetCancelCommand(KeyValues? command) => CancelCommand = command;
-	public void DoModal(Frame? frameOver = null) {
+	public virtual void DoModal(Frame? frameOver = null) {
 		ShowWindow(frameOver);
 		Input.SetAppModalSurface(this);
 	}

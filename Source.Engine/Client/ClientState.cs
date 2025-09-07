@@ -29,6 +29,9 @@ public class ClientState : BaseClientState
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
+	readonly Lazy<IEngineClient> engineClient_LAZY;
+	IEngineClient engineClient => engineClient_LAZY.Value;
+	readonly IServiceProvider services;
 	readonly Scr Scr;
 
 
@@ -92,7 +95,7 @@ public class ClientState : BaseClientState
 	readonly Common Common;
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
-		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient)
+		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -104,8 +107,11 @@ public class ClientState : BaseClientState
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
 		this.Common = Common;
+		this.services = services;
+		engineClient_LAZY = new(ProduceEngineClient);
 	}
 
+	private IEngineClient ProduceEngineClient() => services.GetRequiredService<IEngineClient>();
 	public override void Clear()
 	{
 		base.Clear();
@@ -165,6 +171,15 @@ public class ClientState : BaseClientState
 
 		// CL_ClearState
 		Clear(); // RaphaelIT7: Works for now though we should implement CL_ClearState at a later point
+
+		if (showMainMenu)
+			Scr.EndLoadingPlaque();
+
+		EngineVGui!.NotifyOfServerDisconnect();
+		if (showMainMenu && !engineClient.IsDrawingLoadingImage()) 
+			EngineVGui?.ActivateGameUI();
+
+		HostState.OnClientDisconnected();
 	}
 	public override void FullConnect(NetAddress adr) {
 		base.FullConnect(adr);
@@ -179,8 +194,6 @@ public class ClientState : BaseClientState
 	public override void SetServerTickCount(int tick) => ClockDriftMgr.ServerTick = tick;
 	public override void ConnectionClosing(string reason) {
 		if (SignOnState > SignOnState.None) {
-			ConMsg("Disconnect: %s.\n", reason);
-
 			if (reason != null && reason.Length > 0 && reason[0] == '#')
 				Common.ExplainDisconnection(true, reason);
 			else

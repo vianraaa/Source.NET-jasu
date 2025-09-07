@@ -206,6 +206,25 @@ public class QuitQueryBox : QueryBox
 	public QuitQueryBox(string title, string queryText, Panel? parent = null) : base(title, queryText, parent) {
 
 	}
+
+	IGameUI GameUI = Singleton<IGameUI>();
+
+	public override void DoModal(Frame? frameOver) {
+		base.DoModal(frameOver);
+		Surface.RestrictPaintToSinglePanel(this);
+		GameUI.PreventEngineHideGameUI();
+	}
+	public override void OnKeyCodeTyped(ButtonCode code) {
+		if (code == ButtonCode.KeyEscape)
+			Close();
+		else
+			base.OnKeyCodeTyped(code);
+	}
+	public override void OnClose() {
+		base.OnClose();
+		Surface.RestrictPaintToSinglePanel(null);
+		GameUI.AllowEngineHideGameUI();
+	}
 }
 public class BasePanel : Panel
 {
@@ -260,7 +279,7 @@ public class BasePanel : Panel
 			case "ResumeGame": break;
 			case "Disconnect": break;
 			case "DisconnectNoConfirm": break;
-			case "ReleaseModalWindow": break;
+			case "ReleaseModalWindow": Surface.RestrictPaintToSinglePanel(null); break;
 			case "ShowSigninUI": break;
 			case "ShowDeviceSelector": break;
 			case "SignInDenied": break;

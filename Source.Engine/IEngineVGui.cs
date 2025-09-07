@@ -20,6 +20,7 @@ public enum PaintMode {
 }
 public interface IEngineVGui
 {
+	void ClearConsole();
 	public IPanel GetPanel(VGuiPanelType type);
 	public bool IsGameUIVisible();
 	bool Key_Event(in InputEvent ev);

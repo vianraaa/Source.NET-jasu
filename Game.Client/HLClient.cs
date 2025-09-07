@@ -43,6 +43,7 @@ public class HLClient(ViewRender view, IInput input, UserMessages usermessages) 
 
 	public bool Init() {
 		view.Init();
+		input.Init();
 		return true;
 	}
 

@@ -21,7 +21,7 @@ namespace Source.Engine;
 /// Common functionality
 /// </summary>
 /// <param name="providers"></param>
-public class Common(IServiceProvider providers, ILocalize? Localize)
+public class Common(IServiceProvider providers, ILocalize? Localize, Sys Sys)
 {
 	readonly static CharacterSet BreakSet = new("{}()");
 	readonly static CharacterSet BreakSetIncludingColons = new("{}()':");
@@ -36,7 +36,7 @@ public class Common(IServiceProvider providers, ILocalize? Localize)
 
 		initInfo.FileSystem = engineAPI.GetRequiredService<IFileSystem>();
 		initInfo.DirectoryName = new(fullModPath);
-		if(initInfo.DirectoryName == null) 
+		if (initInfo.DirectoryName == null)
 			initInfo.DirectoryName = Host.GetCurrentGame();
 
 		Host.CheckGore();
@@ -72,10 +72,12 @@ public class Common(IServiceProvider providers, ILocalize? Localize)
 
 	public void ExplainDisconnection(bool print, ReadOnlySpan<char> disconnectReason) {
 		if (print && disconnectReason != null) {
-			if(disconnectReason.Length > 0 && disconnectReason[0] == '#') 
+			if (disconnectReason.Length > 0 && disconnectReason[0] == '#')
 				disconnectReason = Localize == null ? disconnectReason : Localize.Find(disconnectReason);
 
 			ConMsg($"{disconnectReason}\n");
 		}
+		Sys.DisconnectReason = new(disconnectReason);
+		Sys.ExtendedError = true;
 	}
 }

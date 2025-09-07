@@ -14,9 +14,18 @@ public class Con(ICvar cvar)
 	public void Shutdown() { }
 	public void Execute() { }
 
+	// TODO: ConPanel
+
 	internal void ClearNotify() {
 
 	}
+
+	public void Clear() {
+		Singleton<IEngineVGui>().ClearConsole();
+		ClearNotify();
+	}
+
+	[ConCommand] void clear() => Clear();
 
 	public void ColorPrintf(in Color clr, ReadOnlySpan<char> fmt) {
 		cvar.ConsoleColorPrintf(in clr, fmt);

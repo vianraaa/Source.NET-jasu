@@ -566,7 +566,7 @@ public class RichText : Panel
 
 		Span<char> unicode = stackalloc char[1024];
 
-		if (text[0] == '#') {
+		if (text.Length > 0 && text[0] == '#') {
 			ResolveLocalizedTextAndVariables(text, unicode);
 			SetText(unicode);
 			return;

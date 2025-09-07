@@ -593,6 +593,7 @@ public class Host(
 		if (!sv.IsDedicated()) {
 			cl.Disconnect(reason, showMainMenu);
 		}
+		HostState.GameShutdown();
 #endif
 	}
 

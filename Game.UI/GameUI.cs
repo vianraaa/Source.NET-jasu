@@ -169,7 +169,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 	string? PreviousStatusText;
 
 	public void StartProgressBar() {
-		LoadingDialog ??= new LoadingDialog(null);
+		LoadingDialog ??= new LoadingDialog(staticPanel);
 		PreviousStatusText = null;
 		LoadingDialog.SetProgressPoint(0);
 		LoadingDialog.Open();
@@ -192,6 +192,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 
 		if (error) {
 			LoadingDialog.DisplayGenericError(failureReason, extendedReason);
+			LoadingDialog = null; // DEVIATION: Set it to null anyway. Otherwise surface rendering breaks. A hack for a problem that should be further investigated.
 		}
 		else {
 			LoadingDialog.Close();
@@ -246,4 +247,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 			LoadingBackgroundDialog.SendMessage(new KeyValues("deactivate"), staticPanel);
 		}
 	}
+
+	public void PreventEngineHideGameUI() => engine.ExecuteClientCmd("gameui_preventescape");
+	public void AllowEngineHideGameUI() => engine.ExecuteClientCmd("gameui_allowescape");
 }

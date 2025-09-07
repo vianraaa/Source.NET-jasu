@@ -82,6 +82,8 @@ public interface IEngineVGuiInternal : IEngineVGui
 	public void ShowErrorMessage();
 	void Simulate();
 	void Paint(PaintMode paintMode);
+	void ActivateGameUI();
+	bool HideGameUI();
 }
 
 public class EnginePanel(Panel? parent, string name) : EditablePanel(parent, name)
@@ -222,8 +224,9 @@ public class EngineVGui(
 	}
 
 	bool NotAllowedToHideGameUI;
+	bool NotAllowedToShowGameUI;
 
-	private bool HideGameUI() {
+	public bool HideGameUI() {
 		if (NotAllowedToHideGameUI)
 			return false;
 
@@ -279,10 +282,40 @@ public class EngineVGui(
 		
 		LastProgressPoint = progress;
 	}
-	public void UpdateCustomProgressBar(float progress, ReadOnlySpan<char> desc) { }
-	public void StartCustomProgress() { }
-	public void FinishCustomProgress() { }
-	public void ShowErrorMessage() { }
+	public void UpdateCustomProgressBar(float progress, ReadOnlySpan<char> desc) {
+		if (staticGameUIFuncs == null)
+			return;
+
+		if (staticGameUIFuncs.UpdateProgressBar(progress, localize.Find(desc))) 
+			Host.View.RenderGuiOnly();
+	}
+	public void StartCustomProgress() {
+		if (staticGameUIFuncs == null)
+			return;
+
+		staticGameUIFuncs.OnLevelLoadingStarted(true);
+		SaveProgress = staticGameUIFuncs.SetShowProgressText(true);
+	}
+	public void FinishCustomProgress() {
+		if (staticGameUIFuncs == null)
+			return;
+
+		staticGameUIFuncs.SetShowProgressText(SaveProgress);
+		staticGameUIFuncs.OnLevelLoadingFinished(false, "", "");
+	}
+	public void ShowErrorMessage() {
+		if (staticGameUIFuncs == null || !Sys.ExtendedError)
+			return;
+
+		staticGameUIFuncs.OnLevelLoadingFinished(Sys.ExtendedError, Sys.DisconnectReason, Sys.ExtendedDisconnectReason);
+		LastProgressPoint = LevelLoadingProgress.None;
+
+		Sys.ExtendedError = false;
+		Sys.DisconnectReason = null;
+		Sys.ExtendedDisconnectReason = null;
+
+		HideGameUI();
+	}
 
 	public bool IsGameUIVisible() {
 		throw new NotImplementedException();
@@ -444,7 +477,7 @@ public class EngineVGui(
 
 		indentBuff = indentBuff[..i];
 
-		ConMsg($"{indentBuff}{name} popup == {panel.IsPopup()} kb == {panel.IsKeyboardInputEnabled()} mouse == {panel.IsMouseInputEnabled()}\n");
+		ConMsg($"    {indentBuff}{name} popup == {panel.IsPopup()} kb == {panel.IsKeyboardInputEnabled()} mouse == {panel.IsMouseInputEnabled()}\n");
 
 		int children = panel.GetChildCount();
 		for (i = 0; i < children; i++) {
@@ -452,12 +485,30 @@ public class EngineVGui(
 			DumpPanels_r(child, level + 1);
 		}
 	}
+	private void SetNotAllowedToHideGameUI(bool state) => NotAllowedToHideGameUI = state;
+	private void SetNotAllowedToShowGameUI(bool state) => NotAllowedToShowGameUI = state;
+	void SetGameDLLPanelsVisible(bool show) {
+		staticGameDLLPanel?.SetVisible(show);
+	}
+	[ConCommand()] void gameui_hide() => HideGameUI();
+	[ConCommand()] void gameui_activate() => ActivateGameUI();
+	[ConCommand()] void gameui_preventescape() => SetNotAllowedToHideGameUI(true);
+
+	[ConCommand()] void gameui_allowescapetoshow() => SetNotAllowedToShowGameUI(false);
+
+
+	[ConCommand()] void gameui_preventescapetoshow() => SetNotAllowedToShowGameUI(true);
+	[ConCommand()] void gameui_allowescape() => SetNotAllowedToHideGameUI(false);
 	[ConCommand(helpText: "Dump panel tree.")]
 	void dump_panels() {
+		Msg($"State:\n");
+		Msg($"    Restricted panel: {surface.GetRestrictedPanel()}\n");
+		Msg($"    Input app modal: {Singleton<IVGuiInput>().GetAppModalSurface()}\n");
+		Msg($"Panels:\n");
 		DumpPanels_r(surface.GetEmbeddedPanel(), 0);
 	}
 
-	private void ActivateGameUI() {
+	public void ActivateGameUI() {
 		if (staticGameUIFuncs == null)
 			return;
 
@@ -670,5 +721,9 @@ public class EngineVGui(
 
 	private bool IsDebugSystemVisible() {
 		return false; // Would require staticDebugSystemPanel... todo then
+	}
+
+	public void ClearConsole() {
+		staticGameConsole?.Clear();
 	}
 }

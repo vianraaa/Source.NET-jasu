@@ -48,4 +48,5 @@ public interface IEngineClient
 	void ExecuteClientCmd(ReadOnlySpan<char> v);
 	bool IsLevelMainMenuBackground();
 	bool IsPaused();
+	bool IsDrawingLoadingImage();
 }

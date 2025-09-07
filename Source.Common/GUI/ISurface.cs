@@ -154,6 +154,7 @@ public interface ISurface
 
 	bool SupportsFeature(SurfaceFeature feature);
 
+	IPanel? GetRestrictedPanel();
 	void RestrictPaintToSinglePanel(IPanel? panel);
 
 

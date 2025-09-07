@@ -1068,6 +1068,7 @@ public class MatSystemSurface : IMatSystemSurface
 		}
 	}
 
+	public IPanel? GetRestrictedPanel() => RestrictedPanel;
 	public void RestrictPaintToSinglePanel(IPanel? panel) {
 		LinkVGUI();
 		if (panel != null && RestrictedPanel != null && RestrictedPanel == VGuiInput.GetAppModalSurface())

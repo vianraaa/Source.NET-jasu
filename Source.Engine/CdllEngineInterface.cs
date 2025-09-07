@@ -4,7 +4,7 @@ using Source.Engine.Server;
 
 namespace Source.Engine;
 
-public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf) : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -16,6 +16,8 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf) : IEngineCli
 	public void GetMainMenuBackgroundName(Span<char> dest) {
 		"kagami".CopyTo(dest);
 	}
+
+	public bool IsDrawingLoadingImage() => Scr.DrawLoading;
 
 	public int GetMaxClients() => cl.MaxClients;
 

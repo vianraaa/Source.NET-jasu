@@ -609,8 +609,6 @@ public class Frame : EditablePanel
 
 
 	public override void OnClose() {
-		base.OnClose();
-
 		if (Input.GetAppModalSurface() == this) {
 			Input.ReleaseAppModalSurface();
 			if (PreviousModal != null) {

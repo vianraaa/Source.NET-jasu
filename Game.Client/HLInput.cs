@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
+using Source.Common.Engine;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
 using Source.Engine.Client;
@@ -12,10 +13,11 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Client;
 
-public class HLInput(IServiceProvider provider, ClientState cl) : IInput {
+public class HLInput(IServiceProvider provider) : IInput {
 	readonly Lazy<IBaseClientDLL> clientDLLLzy = new(provider.GetRequiredService<IBaseClientDLL>);
 	IBaseClientDLL clientDLL => clientDLLLzy.Value;
 
+	ClientState cl;
 
 	public const int MULTIPLAYER_BACKUP = 90;
 	UserCmd[] Commands = new UserCmd[MULTIPLAYER_BACKUP];
@@ -86,5 +88,9 @@ public class HLInput(IServiceProvider provider, ClientState cl) : IInput {
 	public void DecodeUserCmdFromBuffer(bf_read buf, int sequenceNumber) {
 		ref UserCmd cmd = ref Commands[MathLib.Modulo(sequenceNumber, MULTIPLAYER_BACKUP)];
 		UserCmd.ReadUsercmd(buf, ref cmd, ref UserCmd.NULL);
+	}
+
+	public void Init() {
+		cl = Singleton<ClientState>();
 	}
 }

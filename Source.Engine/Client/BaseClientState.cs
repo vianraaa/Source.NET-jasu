@@ -570,15 +570,20 @@ public abstract class BaseClientState(
 		return true;
 	}
 	public virtual void Disconnect(string? reason, bool showMainMenu) {
+		ConnectTime = -float.MaxValue;
+		RetryNumber = 0;
+		GameServerSteamID = 0;
+
 		if (SignOnState == SignOnState.None)
 			return;
+
+		SignOnState = SignOnState.None;
 
 		if (NetChannel != null) {
 			NetChannel.Shutdown(reason ?? "Disconnect by user.");
 			NetChannel = null;
 		}
 
-		SignOnState = SignOnState.None;
 	}
 	public virtual void SendConnectPacket(int challengeNr, int authProtocol, ulong gameServerSteamID, bool gameServerSecure) {
 		string serverName;
@@ -650,6 +655,7 @@ public abstract class BaseClientState(
 
 		return true;
 	}
+	Common Common = Singleton<Common>();
 	public virtual void CheckForResend() {
 		if (SignOnState != SignOnState.Challenge) return;
 
@@ -662,8 +668,8 @@ public abstract class BaseClientState(
 			return;
 		}
 
-		if (RetryNumber >= 5) {
-			ConMsg($"Connection failed after {RetryNumber} retries.\n");
+		if (RetryNumber >= GetConnectionRetryNumber()) {
+			Common.ExplainDisconnection(true, $"Connection failed after {RetryNumber} retries.\n");
 			Disconnect("Connection failed", true);
 			return;
 		}
