@@ -1015,7 +1015,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 	}
 
-	readonly HardwareConfig HardwareConfig = Singleton<HardwareConfig>();
+	readonly IMaterialSystemHardwareConfig HardwareConfig = Singleton<IMaterialSystemHardwareConfig>();
 	readonly IShaderAPI ShaderAPI = Singleton<IShaderAPI>();
 
 	static int rtTexID = 0;
@@ -1032,8 +1032,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			if (HardwareConfig.GetHDRType() == HDRType.Float) 
 				format = ImageFormat.RGBA16161616F;
 			
-		
-
 		int nFrameCount = 1;
 
 		TextureFlags flags = TextureFlags.NoMip | TextureFlags.RenderTarget;
