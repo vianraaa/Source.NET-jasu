@@ -987,9 +987,9 @@ public class Panel : IPanel
 		tall = H;
 	}
 
-	public int GetTabPosition() {
-		throw new NotImplementedException();
-	}
+	int TabPosition;
+
+	public int GetTabPosition() => TabPosition;
 
 	public void SetSkipChildDuringPainting(Panel child) => SkipChild = child;
 
@@ -1309,7 +1309,7 @@ public class Panel : IPanel
 	public Color GetBgColor() => BgColor;
 	public Color GetFgColor() => FgColor;
 
-	public virtual void SetTabPosition(int pos) { }
+	public virtual void SetTabPosition(int pos) => TabPosition = pos;
 
 	public virtual void PaintBackground() {
 		GetSize(out int wide, out int tall);

@@ -141,7 +141,6 @@ public class LoadingDialog : Frame
 	private void SetupControlSettingsForErrorDisplay(ReadOnlySpan<char> settingsFile) {
 		Center = true;
 		SetTitle("#GameUI_Disconnected", true);
-		InfoLabel.SetText("");
 		LoadControlSettings(settingsFile);
 		HideOtherDialogs(true);
 
@@ -151,6 +150,7 @@ public class LoadingDialog : Frame
 		InfoLabel.SetVisible(true);
 		CancelButton.SetText("#GameUI_Close");
 		CancelButton.SetCommand("Close");
+
 		InfoLabel.InvalidateLayout();
 	}
 

@@ -318,7 +318,7 @@ public class EngineVGui(
 	}
 
 	public bool IsGameUIVisible() {
-		throw new NotImplementedException();
+		return staticGameUIPanel != null && staticGameUIPanel.IsVisible();
 	}
 
 	public void VGui_PlaySound(ReadOnlySpan<char> fileName) {
@@ -477,7 +477,14 @@ public class EngineVGui(
 
 		indentBuff = indentBuff[..i];
 
-		ConMsg($"    {indentBuff}{name} popup == {panel.IsPopup()} kb == {panel.IsKeyboardInputEnabled()} mouse == {panel.IsMouseInputEnabled()}\n");
+		ConMsg($"    {indentBuff}{name}    -     ");
+		ConMsg($"      {(panel.IsPopup() ? "popup" : "")}");
+		ConMsg($" {(panel.IsKeyboardInputEnabled() ? "kb" : "")}");
+		ConMsg($" {(panel.IsMouseInputEnabled() ? "mouse" : "")}");
+		ConMsg($" {(panel.IsEnabled() ? "enabled" : "")}");
+		ConMsg($" {(panel.IsVisible() ? "visible" : "")}");
+		ConMsg($" {(panel.IsFullyVisible() ? "fullvis" : "")}");
+		ConMsg("\n");
 
 		int children = panel.GetChildCount();
 		for (i = 0; i < children; i++) {

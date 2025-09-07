@@ -607,7 +607,10 @@ public class Frame : EditablePanel
 		wide = (wide - ClientInsetX) - x;
 	}
 
-
+	public override void LoadControlSettings(ReadOnlySpan<char> resourceName, ReadOnlySpan<char> pathID = default, KeyValues? keyValues = null, KeyValues? conditions = null) {
+		base.LoadControlSettings(resourceName, pathID, keyValues, conditions);
+		GetFocusNavGroup().GetDefaultPanel()?.RequestFocus();
+	}
 	public override void OnClose() {
 		if (Input.GetAppModalSurface() == this) {
 			Input.ReleaseAppModalSurface();

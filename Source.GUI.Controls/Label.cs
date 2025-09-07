@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.HighPerformance;
 
 using Source.Common.Engine;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 
 using static System.Net.Mime.MediaTypeNames;
@@ -260,6 +261,108 @@ public class Label : Panel
 		TextImageIndex = -1;
 	}
 
+	public override void ApplySettings(KeyValues resourceData) {
+		base.ApplySettings(resourceData);
+
+		ReadOnlySpan<char> labelText = resourceData.GetString("labelText", null);
+		if (labelText != null && labelText.Length > 0) {
+			if (labelText[0] == '%' && labelText[labelText.Length - 1] == '%') {
+				// TODO: What is this exactly
+			}
+			else 
+				SetText(labelText);
+		}
+
+		ReadOnlySpan<char> alignmentString = resourceData.GetString("textAlignment", "");
+		Alignment align = (Alignment)(-1);
+
+		if (!alignmentString.Equals("north-west", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.Northwest;
+		else if (!alignmentString.Equals("north", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.North;
+		else if (!alignmentString.Equals("north-east", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.Northeast;
+		else if (!alignmentString.Equals("west", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.West;
+		else if (!alignmentString.Equals("center", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.Center;
+		else if (!alignmentString.Equals("east", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.East;
+		else if (!alignmentString.Equals("south-west", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.Southwest;
+		else if (!alignmentString.Equals("south", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.South;
+		else if (!alignmentString.Equals("south-east", StringComparison.OrdinalIgnoreCase))
+			align = Alignment.Southeast;
+
+
+		if (align != (Alignment)(-1))
+			SetContentAlignment(align);
+
+
+		ReadOnlySpan<char> associateName = resourceData.GetString("associate", "");
+		if (associateName.Length > 0) {
+			// todo
+		}
+
+		if (resourceData.GetInt("dulltext", 0) == 1)
+			SetTextColorState(ColorState.Dull);
+		else if (resourceData.GetInt("brighttext", 0) == 1)
+			SetTextColorState(ColorState.Bright);
+		else
+			SetTextColorState(ColorState.Normal);
+
+
+		ReadOnlySpan<char> overrideFont = resourceData.GetString("font", "");
+		IScheme scheme = GetScheme()!;
+
+		if (overrideFont.Length > 0) {
+			FontOverrideName = new(overrideFont.SliceNullTerminatedString());
+			SetFont(scheme.GetFont(FontOverrideName, IsProportional()));
+		}
+		else if (FontOverrideName != null) {
+			FontOverrideName = null;
+			SetFont(scheme.GetFont("Default", IsProportional()));
+		}
+
+		bool bWrapText = resourceData.GetInt("centerwrap", 0) > 0;
+		SetCenterWrap(bWrapText);
+
+		AutoWideToContents = resourceData.GetInt("auto_wide_tocontents", 0) > 0;
+
+		bWrapText = resourceData.GetInt("wrap", 0) > 0;
+		SetWrap(bWrapText);
+
+		int inset_x = resourceData.GetInt("textinsetx", TextInsetX);
+		int inset_y = resourceData.GetInt("textinsety", TextInsetY);
+
+		UseProportionalInsets = resourceData.GetInt("use_proportional_insets", 0) > 0;
+		if (UseProportionalInsets)
+			inset_x = SchemeManager.GetProportionalScaledValueEx(GetScheme()!, inset_x);
+
+		SetTextInset(inset_x, inset_y);
+
+		bool bAllCaps = resourceData.GetInt("allcaps", 0) > 0;
+		SetAllCaps(bAllCaps);
+
+		InvalidateLayout(true);
+	}
+	bool AllCaps;
+	public void SetWrap(bool wrap) {
+		Wrap = wrap;
+		TextImage!.SetWrap(Wrap);
+		InvalidateLayout();
+	}
+	public void SetCenterWrap(bool wrap) {
+		CenterWrap = wrap;
+		TextImage!.SetCenterWrap(CenterWrap);
+		InvalidateLayout();
+	}
+	public void SetAllCaps(bool allcaps) {
+		AllCaps = allcaps;
+		TextImage!.SetAllCaps(AllCaps);
+		InvalidateLayout();
+	}
 	public override void Paint() {
 		ComputeAlignment(out int tx0, out int ty0, out int tx1, out int ty1);
 

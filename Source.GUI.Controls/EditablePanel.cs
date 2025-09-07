@@ -5,8 +5,6 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Source.GUI.Controls;
 
 public class EditablePanel : Panel
@@ -15,7 +13,7 @@ public class EditablePanel : Panel
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
 		BuildGroup = new BuildGroup(this, this);
-		NavGroup = new FocusNavGroup();
+		NavGroup = new FocusNavGroup(this);
 	}
 
 	public virtual BuildGroup? GetBuildGroup() {
@@ -125,10 +123,15 @@ public class FocusNavGroup
 	readonly WeakReference<Panel?> DefaultButton = new(null);
 	readonly WeakReference<Panel?> CurrentDefaultButton = new(null);
 	readonly WeakReference<Panel?> CurrentFocus = new(null);
+	readonly Panel MainPanel;
 
 	bool TopLevelFocus;
 
-	internal Panel? SetCurrentFocus(Panel focus, Panel? defaultPanel) {
+	public FocusNavGroup(Panel panel) {
+		MainPanel = panel;
+	}
+
+	public Panel? SetCurrentFocus(Panel focus, Panel? defaultPanel) {
 		CurrentFocus.SetTarget(focus);
 		if (defaultPanel == null) {
 			if (CanButtonBeDefault(focus))
@@ -141,7 +144,7 @@ public class FocusNavGroup
 		return defaultPanel;
 	}
 
-	private bool CanButtonBeDefault(Panel panel) {
+	public bool CanButtonBeDefault(Panel panel) {
 		if (panel == null)
 			return false;
 
@@ -153,7 +156,7 @@ public class FocusNavGroup
 		return result;
 	}
 
-	private void SetCurrentDefaultButton(Panel? panel, bool sendCurrentDefaultButtonMessage = true) {
+	public void SetCurrentDefaultButton(Panel? panel, bool sendCurrentDefaultButtonMessage = true) {
 		CurrentDefaultButton.TryGetTarget(out Panel? currentDefaultButton);
 
 		if (panel == currentDefaultButton)
@@ -170,20 +173,33 @@ public class FocusNavGroup
 
 	public Panel? GetCurrentFocus() => CurrentFocus.TryGetTarget(out Panel? t) ? t : null;
 
-	internal void SetDefaultButton(Panel? submit) {
+	public void SetDefaultButton(Panel? submit) {
 		if ((DefaultButton.TryGetTarget(out Panel? d) && d == submit) || submit == null)
 			return;
 		DefaultButton.SetTarget(submit);
 		SetCurrentDefaultButton(submit);
 	}
 
-	internal IPanel? GetCurrentDefaultButton() {
+	public IPanel? GetCurrentDefaultButton() {
 		if (CurrentDefaultButton.TryGetTarget(out Panel? t))
 			return t;
 		return null;
 	}
 
-	internal void SetFocusTopLevel(bool state) {
+	public void SetFocusTopLevel(bool state) {
 		TopLevelFocus = state;
+	}
+
+	public Panel? GetDefaultPanel() {
+		for (int i = 0; i < MainPanel.GetChildCount(); i++) {
+			Panel? child = MainPanel.GetChild(i);
+			if (child == null)
+				continue;
+
+			if (child.GetTabPosition() == 1) 
+				return child;
+		}
+
+		return null; 
 	}
 }

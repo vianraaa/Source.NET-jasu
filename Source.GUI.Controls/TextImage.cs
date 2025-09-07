@@ -471,4 +471,16 @@ public class TextImage : Image
 		UseFallbackFont = true;
 		FallbackFont = fallbackItemFont;
 	}
+
+	internal void SetAllCaps(bool allCaps) {
+		AllCaps = allCaps;
+	}
+
+	internal void SetCenterWrap(bool wrap) {
+		WrapCenter = wrap;
+	}
+
+	internal void SetWrap(bool wrap) {
+		Wrap = wrap;
+	}
 }
