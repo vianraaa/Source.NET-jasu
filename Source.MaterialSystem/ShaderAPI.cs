@@ -352,6 +352,13 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		throw new NotImplementedException();
 	}
 
+	public ImageFormat GetBackBufferFormat() {
+		// MaterialSystem is a prison of an architecture and I don't know how to reliably pass this information thru at the moment.
+		// If other formats are used this will need to be changed. For now this will work fine.
+		// It seems like IMaterialSystem::GetBackBufferFormat -> ShaderDevice::GetBackBufferFormat -> retrieve
+		// PresentParameters.BackBufferFormat but what actually sets that I'm not sure yet
+		return ImageFormat.RGBA8888;
+	}
 	public void GetBackBufferDimensions(out int width, out int height) {
 		width = PresentParameters.DisplayMode.Width;
 		height = PresentParameters.DisplayMode.Height;

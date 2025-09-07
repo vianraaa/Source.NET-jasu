@@ -36,6 +36,7 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void ClearColor3ub(byte r, byte g, byte b);
 	void ClearColor4ub(byte r, byte g, byte b, byte a);
 	void GetBackBufferDimensions(out int width, out int height);
+	ImageFormat GetBackBufferFormat();
 	void BeginFrame();
 	void EndFrame();
 	int GetCurrentDynamicVBSize();

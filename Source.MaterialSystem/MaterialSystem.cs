@@ -428,9 +428,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		return TextureSystem.CreateProceduralTexture(textureName, textureGroup, wide, tall, 1, format, flags)!;
 	}
 
-	public ImageFormat GetBackBufferFormat() {
-		throw new NotImplementedException();
-	}
 
 	public event Action? Restore;
 

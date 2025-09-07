@@ -174,7 +174,6 @@ public interface IMaterialSystem
 	IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues);
 	void RestoreShaderObjects(IServiceProvider services, int changeFlags);
 	ITexture CreateProceduralTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroup, int wide, int tall, ImageFormat format, TextureFlags flags);
-	ImageFormat GetBackBufferFormat();
 }
 
 public interface IMatRenderContext
