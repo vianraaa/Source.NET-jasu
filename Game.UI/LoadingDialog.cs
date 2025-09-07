@@ -1,4 +1,5 @@
 ﻿using Source.Common;
+using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
@@ -53,6 +54,15 @@ public class LoadingDialog : Frame
 	public override void OnClose() {
 		HideOtherDialogs(false);
 		base.OnClose();
+	}
+	IEngineClient engine = Singleton<IEngineClient>();
+	public override void OnCommand(ReadOnlySpan<char> command) {
+		if (command.Equals("Cancel", StringComparison.OrdinalIgnoreCase)) {
+			engine.ClientCmd_Unrestricted("disconnect\n");
+			Close();
+		}
+		else
+			base.OnCommand(command);
 	}
 	void Init() {
 		SetDeleteSelfOnClose(true);
