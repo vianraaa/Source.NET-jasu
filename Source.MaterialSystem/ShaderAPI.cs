@@ -724,4 +724,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			lastBoardUploadHash = currHash;
 		}
 	}
+
+	public bool DoRenderTargetsNeedSeparateDepthBuffer() {
+		return true;
+	}
 }

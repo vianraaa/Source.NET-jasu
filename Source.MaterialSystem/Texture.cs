@@ -1,6 +1,8 @@
 ﻿// TODO: Remove unused flags that aren't applicable in our use cases.
 // (although this goal applies to the entire project, frankly)
 
+using FreeTypeSharp;
+
 using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
@@ -14,6 +16,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Security.Principal;
@@ -582,10 +585,10 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		return vtfTexture;
 	}
 
-	private bool SLoadTextureBitsFromFile(ref IVTFTexture vtfTexture, IFileHandle fileHandle, uint flags, 
-										  ref TextureLODControlSettings settings, ushort desiredDimensionLimit, 
-										  ref ushort streamingMips, ReadOnlySpan<char> name, Span<char> cacheFileName, 
-										  out TexDimensions dimsMapping, out TexDimensions dimsActual, out TexDimensions dimsAllocated, 
+	private bool SLoadTextureBitsFromFile(ref IVTFTexture vtfTexture, IFileHandle fileHandle, uint flags,
+										  ref TextureLODControlSettings settings, ushort desiredDimensionLimit,
+										  ref ushort streamingMips, ReadOnlySpan<char> name, Span<char> cacheFileName,
+										  out TexDimensions dimsMapping, out TexDimensions dimsActual, out TexDimensions dimsAllocated,
 										  out uint stripFlags) {
 		// TODO; finish the complexities of texture loading
 		vtfTexture!.Unserialize(fileHandle.Stream, false);
@@ -860,19 +863,18 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		// Unless ALLMIPS is set, we stop mips at 32x32
 		const int nMaxMipSize = 32;
-		if ((false && (Flags & (uint)TextureFlags.AllMips) == 0) || (true && (Flags & (uint)TextureFlags.Border) > 0))
-			{
-				int nNumMipLevels = 1;
-				int h = actualDims.Width;
-				int w = actualDims.Height;
-				while (Math.Min(w, h) > nMaxMipSize) {
-					++nNumMipLevels;
+		if ((false && (Flags & (uint)TextureFlags.AllMips) == 0) || (true && (Flags & (uint)TextureFlags.Border) > 0)) {
+			int nNumMipLevels = 1;
+			int h = actualDims.Width;
+			int w = actualDims.Height;
+			while (Math.Min(w, h) > nMaxMipSize) {
+				++nNumMipLevels;
 
-					w >>= 1;
-					h >>= 1;
-				}
-				return (ushort)nNumMipLevels;
+				w >>= 1;
+				h >>= 1;
 			}
+			return (ushort)nNumMipLevels;
+		}
 
 		return (ushort)ImageLoader.GetNumMipMapLevels(actualDims.Width, actualDims.Height, actualDims.Depth);
 	}
@@ -884,7 +886,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		IVTFTexture texture = GetScratchVTFTexture();
 		texture.Init(DimsActual.Width, DimsActual.Height, DimsActual.Depth, ComputeActualFormat(ImageFormat), (int)Flags, FrameCount);
 
-		if(TextureRegenerator != null) {
+		if (TextureRegenerator != null) {
 			Rectangle rect = new();
 			rect.X = rect.Y = 0;
 			rect.Width = DimsActual.Width;
@@ -892,7 +894,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			TextureRegenerator.RegenerateTextureBits(this, texture, in rect);
 		}
 		else { // TODO
-			//materials.TextureSystem.GenerateErrorTexture(this, texture);
+			   //materials.TextureSystem.GenerateErrorTexture(this, texture);
 		}
 		return texture;
 	}
@@ -917,7 +919,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 				for (int iMip = 0; iMip < DimsActual.MipCount; ++iMip) {
 					vtfTexture.ComputeMipLevelSubRect(in vtfRect, iMip, out mipRect);
 					stride = vtfTexture.RowSizeInBytes(iMip);
-					
+
 					Span<byte> bits = vtfTexture.ImageData(frame, iFace + firstFace, iMip, mipRect.X, mipRect.Y, 0);
 
 					materials.ShaderAPI.TexSubImage2D(
@@ -942,9 +944,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		int sizeFactor = 1;
 		int width = GetActualWidth();
-		if (width != 0) 
+		if (width != 0)
 			sizeFactor = GetMappingWidth() / width;
-		
+
 		int mipSkipCount = 0;
 		while (sizeFactor > 1) {
 			sizeFactor >>= 1;
@@ -958,11 +960,11 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		vtfTexture.Init(DimsActual.Width, DimsActual.Height, DimsActual.Depth,
 			ComputeActualFormat(ImageFormat), (int)Flags, FrameCount);
 
-		if (TextureRegenerator != null) 
+		if (TextureRegenerator != null)
 			TextureRegenerator.RegenerateTextureBits(this, vtfTexture, vtfRect);
-		else 
+		else
 			materials.TextureSystem.GenerateErrorTexture(this, vtfTexture);
-		
+
 
 		return vtfTexture;
 	}
@@ -987,7 +989,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		SetName(textureName);
 
 		// Eliminate flags that are inappropriate...
-		flags &= ~TextureFlags.HintDXT5 | TextureFlags.OneBitAlpha | TextureFlags .EightBitAlpha | TextureFlags.RenderTarget | TextureFlags.DepthRenderTarget;
+		flags &= ~TextureFlags.HintDXT5 | TextureFlags.OneBitAlpha | TextureFlags.EightBitAlpha | TextureFlags.RenderTarget | TextureFlags.DepthRenderTarget;
 
 		// Insert required flags
 		flags |= TextureFlags.Procedural;
@@ -1011,6 +1013,59 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 	public void OnRestore() {
 
+	}
+
+	readonly HardwareConfig HardwareConfig = Singleton<HardwareConfig>();
+	readonly IShaderAPI ShaderAPI = Singleton<IShaderAPI>();
+
+	static int rtTexID = 0;
+	public void InitRenderTarget(ReadOnlySpan<char> rtName, int w, int h, RenderTargetSizeMode sizeMode, ImageFormat format, RenderTargetType type, TextureFlags textureFlags, CreateRenderTargetFlags renderTargetFlags) {
+		if (rtName != null)
+			SetName(rtName);
+		else {
+			Span<char> newName = stackalloc char[128];
+			sprintf(newName, "__render_target_%d", rtTexID++);
+			SetName(newName.SliceNullTerminatedString());
+		}
+
+		if (renderTargetFlags.HasFlag(CreateRenderTargetFlags.HDR)) 
+			if (HardwareConfig.GetHDRType() == HDRType.Float) 
+				format = ImageFormat.RGBA16161616F;
+			
+		
+
+		int nFrameCount = 1;
+
+		TextureFlags flags = TextureFlags.NoMip | TextureFlags.RenderTarget;
+		flags |= textureFlags;
+
+		if (type == RenderTargetType.NoDepth) {
+			flags |= TextureFlags.NoDepthBuffer;
+		}
+		else if (type == RenderTargetType.WithDepth || type == RenderTargetType.OnlyDepth || ShaderAPI.DoRenderTargetsNeedSeparateDepthBuffer()) {
+			flags |= TextureFlags.DepthRenderTarget;
+			++nFrameCount;
+		}
+
+		OriginalRenderTargetType = type;
+		RenderTargetSizeMode = sizeMode;
+		OriginalRTWidth = (ushort)w;
+		OriginalRTHeight = (ushort)h;
+		ImageFormatInfo fmtInfo = ImageLoader.ImageFormatInfo(format);
+
+		if (fmtInfo.AlphaBits > 1) 
+			flags |= TextureFlags.EightBitAlpha;
+		else if (fmtInfo.AlphaBits == 1) 
+			flags |= TextureFlags.OneBitAlpha;
+		
+		ApplyRenderTargetSizeMode(w, h, format);
+
+		Init(w, h, 1, format, (int)flags, nFrameCount);
+		TextureGroupName = TEXTURE_GROUP_RENDER_TARGET;
+	}
+
+	private void ApplyRenderTargetSizeMode(int w, int h, ImageFormat format) {
+		throw new NotImplementedException();
 	}
 
 	Vector3 Reflectivity;

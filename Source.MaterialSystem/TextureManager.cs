@@ -2,9 +2,11 @@
 using Source.Common.Bitmap;
 using Source.Common.MaterialSystem;
 using Source.Common.MaterialSystem.TextureRegenerators;
+using Source.Common.Utilities;
 
 using Steamworks;
 
+using System;
 using System.Drawing;
 
 using static Source.UnmanagedUtils;
@@ -16,6 +18,13 @@ public class TextureManager : ITextureManager
 	public ITextureInternal CreateFileTexture(ReadOnlySpan<char> fileName, ReadOnlySpan<char> textureGroupName) {
 		Texture tex = new(MaterialSystem);
 		tex.InitFileTexture(fileName, textureGroupName);
+		return tex;
+	}
+
+
+	private ITextureInternal? CreateRenderTarget(ReadOnlySpan<char> rtName, int w, int h, RenderTargetSizeMode sizeMode, ImageFormat format, RenderTargetType type, TextureFlags textureFlags, CreateRenderTargetFlags renderTargetFlags) {
+		Texture tex = new(MaterialSystem);
+		tex.InitRenderTarget(rtName, w, h, sizeMode, format, type, textureFlags, renderTargetFlags);
 		return tex;
 	}
 
@@ -128,5 +137,25 @@ public class TextureManager : ITextureManager
 
 	internal void GenerateErrorTexture(Texture texture, IVTFTexture vtfTexture) {
 		ErrorRegen.RegenerateTextureBits(texture, vtfTexture, default);
+	}
+
+	internal ITextureInternal? CreateRenderTargetTexture(ReadOnlySpan<char> rtName, int w, int h, RenderTargetSizeMode sizeMode, ImageFormat format, RenderTargetType type, TextureFlags textureFlags, CreateRenderTargetFlags renderTargetFlags) {
+		ITextureInternal? texture;
+		if(rtName != null) {
+			texture = FindTexture(rtName);
+			if(texture != null) {
+				((Texture)texture)!.InitRenderTarget(texture.GetName(), w, h, sizeMode, format, type, textureFlags, renderTargetFlags);
+				texture.Download();
+				return texture;
+			}
+		}
+
+		texture = CreateRenderTarget(rtName, w, h, sizeMode, format, type, textureFlags, renderTargetFlags);
+		if (texture == null)
+			return null;
+
+		TextureList[new UtlSymbol(rtName)] = texture;
+		texture.Download();
+		return texture;
 	}
 }

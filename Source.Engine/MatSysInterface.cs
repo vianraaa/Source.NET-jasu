@@ -32,11 +32,11 @@ public class MatSysInterface(IMaterialSystem materials)
 			strcpy(textureName, MaterialDefines.FULL_FRAME_FRAMEBUFFER);
 
 		CreateRenderTargetFlags rtFlags = extraFlags | CreateRenderTargetFlags.HDR;
-		return materials.CreateNamedRenderTargetTextureEx2(
+		return materials.CreateNamedRenderTargetTextureEx(
 			textureName.SliceNullTerminatedString(),
-			1, 1, RenderTargetSizeMode.FullFrameBuffer, 
-			materials.GetBackBufferFormat(), MaterialRenderTargetDepth.Shared,
+			1, 1, RenderTargetSizeMode.FullFrameBuffer,
+			materials.GetRenderContext().GetShaderAPI().GetBackBufferFormat(), MaterialRenderTargetDepth.Shared,
 			TextureFlags.ClampS | TextureFlags.ClampT,
-			rtFlags)
+			rtFlags)!;
 	}
 }

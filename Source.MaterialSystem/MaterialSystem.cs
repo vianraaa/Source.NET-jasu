@@ -409,9 +409,11 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		Restore?.Invoke();
 		TextureSystem.RestoreNonRenderTargetTextures();
 	}
+
+	// TODO: How much of this is needed these days... I'm fairly sure not a lot of it
 	bool AllocatingRenderTargets;
 	internal void BeginRenderTargetAllocation() {
-
+		AllocatingRenderTargets = true;
 	}
 
 	internal void EndRenderTargetAllocation() {
@@ -428,6 +430,32 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		return TextureSystem.CreateProceduralTexture(textureName, textureGroup, wide, tall, 1, format, flags)!;
 	}
 
+	public ITexture? CreateNamedRenderTargetTextureEx(ReadOnlySpan<char> rtName, int w, int h, RenderTargetSizeMode sizeMode, ImageFormat format, MaterialRenderTargetDepth depthMode, TextureFlags textureFlags, CreateRenderTargetFlags renderTargetFlags) {
+		RenderTargetType rtType;
+
+		switch (depthMode) {
+			case MaterialRenderTargetDepth.Separate:
+				rtType = RenderTargetType.WithDepth;
+				break;
+			case MaterialRenderTargetDepth.None:
+				rtType = RenderTargetType.NoDepth;
+				break;
+			case  MaterialRenderTargetDepth.Only:
+				rtType = RenderTargetType.OnlyDepth;
+				break;
+			case MaterialRenderTargetDepth.Shared:
+			default:
+				rtType = RenderTargetType.RenderTarget;
+				break;
+		}
+
+		ITextureInternal? tex = TextureSystem.CreateRenderTargetTexture(rtName, w, h, sizeMode, format, rtType, textureFlags, renderTargetFlags);
+
+		if (!AllocatingRenderTargets) 
+			EndRenderTargetAllocation();
+		
+		return tex;
+	}
 
 	public event Action? Restore;
 

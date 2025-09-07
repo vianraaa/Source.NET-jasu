@@ -134,7 +134,7 @@ public class MatSystemSurface : IMatSystemSurface
 		vmtKeyValues.SetInt("$ignorez", 1);
 		vmtKeyValues.SetInt("$no_fullbright", 1);
 
-		White.Init(materials, "VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
+		White.Init("VGUI_White", TEXTURE_GROUP_OTHER, vmtKeyValues);
 
 		InitInput();
 		InitCursors();
