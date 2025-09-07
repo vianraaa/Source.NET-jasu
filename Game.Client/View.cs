@@ -73,24 +73,7 @@ public class ViewRender : IViewRender
 	}
 
 	public void Init() {
-		m_bDrawOverlay = false;
 
-		m_pDrawEntities = cvar->FindVar("r_drawentities");
-		m_pDrawBrushModels = cvar->FindVar("r_drawbrushmodels");
-
-		beams->InitBeams();
-		tempents->Init();
-
-		m_TranslucentSingleColor.Init("debug/debugtranslucentsinglecolor", TEXTURE_GROUP_OTHER);
-		m_ModulateSingleColor.Init("engine/modulatesinglecolor", TEXTURE_GROUP_OTHER);
-
-		extern CMaterialReference g_material_WriteZ;
-		g_material_WriteZ.Init("engine/writez", TEXTURE_GROUP_OTHER);
-
-		// FIXME:  
-		QAngle angles;
-		engine->GetViewAngles(angles);
-		AngleVectors(angles, &m_vecLastFacing);
 	}
 
 	public void LevelInit() {
