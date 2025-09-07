@@ -578,7 +578,6 @@ public abstract class BaseClientState(
 			NetChannel = null;
 		}
 
-		Msg($"Disconnect: {reason}\n");
 		SignOnState = SignOnState.None;
 	}
 	public virtual void SendConnectPacket(int challengeNr, int authProtocol, ulong gameServerSteamID, bool gameServerSecure) {

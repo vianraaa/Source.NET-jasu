@@ -138,8 +138,8 @@ public class EngineVGui(
 		new(LevelLoadingProgress.SendClientInfo,                80,     0,      "#LoadingProgress_SendClientInfo"),
 		new(LevelLoadingProgress.SendSignonData,                85,     0,      "#LoadingProgress_SignonData"),
 		new(LevelLoadingProgress.SignOnSpawn,                   90,     0,      null),
-		new(LevelLoadingProgress.FullyConnected,                95,     0,      null),
-		new(LevelLoadingProgress.ReadyToPlay,                   99,     0,      null),
+		new(LevelLoadingProgress.FullyConnected,                95,     0,      "Fully connected!"),
+		new(LevelLoadingProgress.ReadyToPlay,                   99,     0,      "Ready to play!"),
 	];
 
 	LoadingProgressDescription[]? activeDescriptions = null;

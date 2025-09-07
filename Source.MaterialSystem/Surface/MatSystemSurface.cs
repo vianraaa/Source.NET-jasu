@@ -870,7 +870,7 @@ public class MatSystemSurface : IMatSystemSurface
 		zPos = 0;
 		if (panel == GetEmbeddedPanel()) {
 			if (RestrictedPanel != null) {
-				RestrictedPanel.GetParent()!.PaintTraverse(true);
+				RestrictedPanel.GetParent()?.PaintTraverse(true);
 			}
 			else {
 				panel.PaintTraverse(forceRepaint: true);

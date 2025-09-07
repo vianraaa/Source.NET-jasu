@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 using Source.Common.Compression;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -19,10 +21,12 @@ namespace Source.Engine;
 /// Common functionality
 /// </summary>
 /// <param name="providers"></param>
-public class Common(IServiceProvider providers)
+public class Common(IServiceProvider providers, ILocalize? Localize)
 {
 	readonly static CharacterSet BreakSet = new("{}()");
 	readonly static CharacterSet BreakSetIncludingColons = new("{}()':");
+
+	public static string Gamedir { get; private set; }
 
 	public void InitFilesystem(ReadOnlySpan<char> fullModPath) {
 		CFSSearchPathsInit initInfo = new();
@@ -41,6 +45,8 @@ public class Common(IServiceProvider providers)
 		initInfo.MountHDContent = false; // Study this further
 
 		FileSystem.LoadSearchPaths(in initInfo);
+
+		Gamedir = initInfo.ModPath ?? "";
 	}
 
 	public bool Initialized { get; private set; }
@@ -62,5 +68,14 @@ public class Common(IServiceProvider providers)
 			return false;
 
 		return true;
+	}
+
+	public void ExplainDisconnection(bool print, ReadOnlySpan<char> disconnectReason) {
+		if (print && disconnectReason != null) {
+			if(disconnectReason.Length > 0 && disconnectReason[0] == '#') 
+				disconnectReason = Localize == null ? disconnectReason : Localize.Find(disconnectReason);
+
+			ConMsg($"{disconnectReason}\n");
+		}
 	}
 }

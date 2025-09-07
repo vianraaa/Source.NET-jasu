@@ -89,7 +89,8 @@ public class ClientState : BaseClientState
 	public static ConVar cl_allowdownload = new("1", FCvar.Archive, "Client downloads customization files");
 	public static ConVar cl_downloadfilter = new("all", FCvar.Archive, "Determines which files can be downloaded from the server (all, none, nosounds, mapsonly)");
 
-	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv,
+	readonly Common Common;
+	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
 		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
@@ -102,6 +103,7 @@ public class ClientState : BaseClientState
 		this.ClockDriftMgr = new(this, Host, host_state);
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
+		this.Common = Common;
 	}
 
 	public override void Clear()
@@ -175,7 +177,19 @@ public class ClientState : BaseClientState
 	public override void SetClientTickCount(int tick) => ClockDriftMgr.ClientTick = tick;
 	public override int GetServerTickCount() => ClockDriftMgr.ServerTick;
 	public override void SetServerTickCount(int tick) => ClockDriftMgr.ServerTick = tick;
+	public override void ConnectionClosing(string reason) {
+		if (SignOnState > SignOnState.None) {
+			ConMsg("Disconnect: %s.\n", reason);
 
+			if (reason != null && reason.Length > 0 && reason[0] == '#')
+				Common.ExplainDisconnection(true, reason);
+			else
+				Common.ExplainDisconnection(true, $"Disconnect: {reason}.\n");
+			
+			Scr.EndLoadingPlaque();
+			Host.Disconnect(true, reason);
+		}
+	}
 	public override bool SetSignonState(SignOnState state, int count) {
 		if (!base.SetSignonState(state, count)) {
 			CL.Retry();

@@ -119,7 +119,7 @@ public sealed class MaterialVar : IMaterialVar
 	}
 
 	public override void SetMatrixValue(in Matrix4x4 matrix) {
-		Dbg.Warning("setmatrixvalue\n");
+
 	}
 
 	public override void SetStringValue(ReadOnlySpan<char> val) {

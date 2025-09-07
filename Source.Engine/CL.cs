@@ -28,6 +28,7 @@ public class CL(IServiceProvider services, Net Net,
 {
 	public ClientState cl;
 	public IBaseClientDLL ClientDLL;
+	public IEngineClient engineClient;
 	public void ApplyAddAngle() {
 
 	}
@@ -45,6 +46,7 @@ public class CL(IServiceProvider services, Net Net,
 		cl.Clear();
 
 		ClientDLL = services.GetRequiredService<IBaseClientDLL>();
+		engineClient = services.GetRequiredService<IEngineClient>();
 	}
 
 	public void ReadPackets(bool finalTick) {
@@ -143,7 +145,24 @@ public class CL(IServiceProvider services, Net Net,
 
 	public void FullyConnected() {
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.FullyConnected);
-		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ReadyToPlay);
+		// Static prop manager level init client
+		// Flush dynamic models
+		// Purge unused models
+		// Shutdown preload data
+		// Pending pure file reloads
+		// Level init post entity
+
+		// Start notifying dependencies
+		int ip = 0;
+		short port = 0;
+		int queryPort = 0;
+		// TODO ^^^^^^^ requires some changes in netchannels.
+		EngineVGui!.NotifyOfServerConnect(Common.Gamedir, ip, port, queryPort);
+		EngineVGui!.UpdateProgressBar(LevelLoadingProgress.ReadyToPlay);
+		// MDL cache end map load
+
+		Scr.EndLoadingPlaque();
+		// EndLoadingUpdates();
 	}
 
 	public void Connect(string address, string sourceTag) {
@@ -152,7 +171,7 @@ public class CL(IServiceProvider services, Net Net,
 			Net.SetMultiplayer(true);
 			EngineVGui?.EnabledProgressBarForNextLoad();
 			Scr.BeginLoadingPlaque();
-			EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SignOnSpawn);
+			EngineVGui?.UpdateProgressBar(LevelLoadingProgress.BeginConnect);
 		}
 		else {
 			cl.Disconnect("Connecting to local host", false);

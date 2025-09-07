@@ -50,7 +50,10 @@ public class LoadingDialog : Frame
 		base.PerformLayout();
 		MoveToFront();
 	}
-
+	public override void OnClose() {
+		HideOtherDialogs(false);
+		base.OnClose();
+	}
 	void Init() {
 		SetDeleteSelfOnClose(true);
 
@@ -116,8 +119,6 @@ public class LoadingDialog : Frame
 		if (ModInfo.IsSinglePlayerOnly())
 			InfoLabel.SetVisible(true);
 
-		InfoLabel.SetText("");
-
 		CancelButton.SetText("#GameUI_Cancel");
 		CancelButton.SetCommand("Cancel");
 	}
@@ -154,6 +155,6 @@ public class LoadingDialog : Frame
 	}
 
 	internal void SetStatusText(ReadOnlySpan<char> statusText) {
-		throw new NotImplementedException();
+		InfoLabel.SetText(statusText);
 	}
 }

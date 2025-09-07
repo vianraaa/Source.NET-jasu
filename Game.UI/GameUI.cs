@@ -154,7 +154,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 		if (LoadingDialog == null)
 			return false;
 
-		if (statusText == null)
+		if (statusText == null || statusText.Length <= 0)
 			return false;
 
 		if (statusText.Equals(PreviousStatusText, StringComparison.OrdinalIgnoreCase))
