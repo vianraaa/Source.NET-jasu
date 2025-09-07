@@ -805,7 +805,6 @@ public class VGuiInput : IVGuiInput
 	}
 
 	public void SetMouseCapture(IPanel? panel) {
-		Msg("\n");
 		if (!IsChildOfModalPanel(panel))
 			return;
 

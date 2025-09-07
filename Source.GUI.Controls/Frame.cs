@@ -101,6 +101,19 @@ public class GripPanel : Panel
 		base.OnMouseCaptureLost();
 		Dragging = false;
 	}
+	public override void OnCursorMoved(int x, int y) {
+		if (!Dragging)
+			return;
+
+		if (!Input.IsMouseDown(ButtonCode.MouseLeft)) {
+			OnMouseReleased(ButtonCode.MouseLeft);
+			return;
+		}
+
+		Input.GetCursorPos(out x, out y);
+		Moved((x - DragStart[0]), (y - DragStart[1]));
+		Frame.Repaint();
+	}
 	protected virtual void Moved(int dx, int dy) {
 		if (!Frame.IsSizeable())
 			return;
