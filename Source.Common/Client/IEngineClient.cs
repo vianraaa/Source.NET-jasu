@@ -3,8 +3,8 @@
 /// <summary>
 /// Engine player info. (replica of player_info_s)
 /// </summary>
-public struct EnginePlayerInfo {
-	public string Name;
+public struct PlayerInfo {
+	public InlineArray256<char> Name;
 	public int UserID;
 	public string GUID;
 	public uint FriendsID;
@@ -49,4 +49,5 @@ public interface IEngineClient
 	bool IsLevelMainMenuBackground();
 	bool IsPaused();
 	bool IsDrawingLoadingImage();
+	bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo);
 }

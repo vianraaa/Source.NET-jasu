@@ -21,10 +21,10 @@ public interface INetworkStringTable
 	public int GetEntryBits();
 	public void SetTick(int tick);
 	public bool ChangedSinceTick(int tick);
-	public int AddString(bool isServer, string value, int length = -1, byte[]? userData = null);
+	public int AddString(bool isServer, string value, int length = -1, ReadOnlySpan<byte> userData = default);
 	public string? GetString(int stringNumber);
-	public void SetStringUserData(int stringNumber, int length, byte[] userData);
-	public byte[]? GetStringUserData(int stringNumber, out int length);
+	public void SetStringUserData(int stringNumber, int length, ReadOnlySpan<byte> userData);
+	public Span<byte> GetStringUserData(int stringNumber);
 	public int FindStringIndex(string value);
 	public void SetStringChangedCallback(object? context, StringChangedDelegate callback);
 }

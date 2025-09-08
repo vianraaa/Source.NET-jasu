@@ -560,3 +560,27 @@ public static class ReflectionUtils
 /// </summary
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class EngineComponentAttribute : Attribute;
+
+public static class SpanExts {
+	public static int ClampedCopyTo<T>(this ReadOnlySpan<T> source, Span<T> dest) {
+		if (dest.Length < source.Length) {
+			// We only copy as much as we can fit.
+			source[..dest.Length].CopyTo(dest);
+			return dest.Length;
+		}
+
+		source.CopyTo(dest);
+		return source.Length;
+	}
+
+	public static int ClampedCopyTo<T>(this Span<T> source, Span<T> dest) {
+		if (dest.Length < source.Length) {
+			// We only copy as much as we can fit.
+			source[..dest.Length].CopyTo(dest);
+			return dest.Length;
+		}
+
+		source.CopyTo(dest);
+		return source.Length;
+	}
+}

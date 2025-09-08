@@ -33,7 +33,7 @@ public abstract class BaseServer : IServer
 	public virtual int GetClassBits() => ServerClassBits;
 	public abstract int GetNetStats(in float avgIn, out float avgOut);
 	public abstract int GetNumPlayers();
-	public abstract bool GetPlayerInfo(int clientIndex, out EnginePlayerInfo pinfo);
+	public abstract bool GetPlayerInfo(int clientIndex, out PlayerInfo pinfo);
 	public virtual bool IsActive() => State >= ServerState.Active;
 	public virtual bool IsLoading() => State == ServerState.Loading;
 	public virtual bool IsDedicated() => Dedicated;

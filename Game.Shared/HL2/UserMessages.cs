@@ -60,18 +60,5 @@ public partial class UserMessages {
 		Register("NetworkedVar", -1);
 		Register("BreakModel", -1);
 		Register("CheapBreakModel", -1);
-
-		HookMessage("SayText", (msg) => {
-			int client = msg.ReadByte();
-			string? str = msg.ReadString(256);
-			bool wantsToChat = msg.ReadByte() > 0;
-
-			if (wantsToChat) {
-				Dbg.ConMsg($"[Client #{client}]: {str}\n");
-			}
-			else {
-				// todo
-			}
-		});
 	}
 }

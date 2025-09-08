@@ -69,7 +69,7 @@ public class NetworkStringTableItem
 		return -1;
 	}
 
-	public bool SetUserData(int tick, int length, byte[]? userData) {
+	public bool SetUserData(int tick, int length, ReadOnlySpan<byte> userData) {
 		if (length > MAX_USERDATA_SIZE)
 			throw new ArgumentOutOfRangeException(nameof(length), "Length exceeds MAX_USERDATA_SIZE");
 
@@ -79,7 +79,7 @@ public class NetworkStringTableItem
 		}
 		else {
 			UserData = new byte[length];
-			Array.Copy(userData, UserData, length);
+			userData.ClampedCopyTo(UserData);
 			UserDataLength = length;
 		}
 
@@ -87,7 +87,7 @@ public class NetworkStringTableItem
 		return true;
 	}
 
-	public byte[]? GetUserData(out int length) {
+	public Span<byte> GetUserData(out int length) {
 		length = UserDataLength;
 		return UserData;
 	}
@@ -237,7 +237,7 @@ public class NetworkStringTable : INetworkStringTable
 		return LastChangedTick > iTick;
 	}
 
-	public int AddString(bool isServer, string value, int length, byte[]? userData) {
+	public int AddString(bool isServer, string value, int length, ReadOnlySpan<byte> userData = default) {
 		/*if (!value)
 		{
 			ConMsg("Warning:  Can't add NULL string to table %s\n", m_pszTableName);
@@ -340,7 +340,7 @@ public class NetworkStringTable : INetworkStringTable
 		return null;
 	}
 
-	public void SetStringUserData(int stringNumber, int length, byte[] userData) {
+	public void SetStringUserData(int stringNumber, int length, ReadOnlySpan<byte> userData) {
 		if (Locked) {
 			DevMsg("Warning! CNetworkStringTable::SetStringUserData (%s): changing entry %i while locked.\n", GetTableName(), stringNumber);
 		}
@@ -358,7 +358,7 @@ public class NetworkStringTable : INetworkStringTable
 		}
 	}
 
-	public byte[]? GetStringUserData(int stringNumber, out int length) {
+	public Span<byte> GetStringUserData(int stringNumber) {
 		INetworkStringDict dict = Items;
 		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;
@@ -366,7 +366,7 @@ public class NetworkStringTable : INetworkStringTable
 		}
 
 		NetworkStringTableItem p = dict.Element(stringNumber);
-		return p.GetUserData(out length);
+		return p.GetUserData(out int length)[..length];
 	}
 
 	public int FindStringIndex(string value) {
@@ -393,7 +393,7 @@ public class NetworkStringTable : INetworkStringTable
 
 		if (ChangeFunc != null) {
 			int userDataSize;
-			byte[]? pUserData = item.GetUserData(out userDataSize);
+			Span<byte> pUserData = item.GetUserData(out userDataSize);
 			// Ignore it's yapping, when this is called GetString should always return a valid thing.
 			ChangeFunc(CallbackObject, this, stringNumber, GetString(stringNumber), pUserData);
 		}

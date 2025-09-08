@@ -38,4 +38,28 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : I
 	public bool IsLevelMainMenuBackground() => sv.IsLevelMainMenuBackground();
 
 	public bool IsPaused() => cl.IsPaused();
+
+	public bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo) {
+		playerIndex--;
+		if (playerIndex >= cl.MaxClients || playerIndex <= 0) {
+			playerInfo = new();
+			return false;
+		}
+
+		Assert(cl.UserInfoTable != null);
+		if (cl.UserInfoTable == null) {
+			playerInfo = new();
+			return false;
+		}
+
+		Assert(playerIndex < cl.UserInfoTable.GetNumStrings());
+		if (playerIndex >= cl.UserInfoTable.GetNumStrings()) {
+			playerInfo = new();
+			return false;
+		}
+
+		Span<byte> pi = cl.UserInfoTable.GetStringUserData(playerIndex);
+		playerInfo = new();
+		return true; // todo: the rest of this
+	}
 }

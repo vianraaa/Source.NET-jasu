@@ -1,4 +1,6 @@
-﻿using Source.Common.Mathematics;
+﻿using CommunityToolkit.HighPerformance;
+
+using Source.Common.Mathematics;
 
 using System.Diagnostics;
 using System.Numerics;
@@ -554,33 +556,37 @@ public unsafe class bf_read : BitBuffer
 		str = ReadString(maxLen, bLine);
 		return !Overflowed;
 	}
-	public string? ReadString(int maxLen, bool bLine = false) {
-		Debug.Assert(maxLen != 0);
-
-		StringBuilder sb = new StringBuilder(maxLen);
-
-		bool bTooSmall = false;
-		int iChar = 0;
-		while (true) {
+	public void ReadString(Span<char> target, bool bLine = false) {
+		Assert(target.Length != 0);
+		while (target.Length > 0 && !Overflowed) {
 			byte val = ReadByte();
 			if (val == 0)
 				break;
 			else if (bLine && val == '\n')
 				break;
 
-			if (iChar < maxLen - 1) {
-				sb.Append(Encoding.ASCII.GetString([val]));
-				++iChar;
-			}
-			else {
-				bTooSmall = true;
-			}
+			Encoding.ASCII.GetChars(new ReadOnlySpan<byte>(ref val), target[0..1]);
+			target = target[1..];
+		}
+	}
+	public string? ReadString(int maxLen, bool bLine = false) {
+		Assert(maxLen != 0);
+
+		Span<byte> writeTarget = stackalloc byte[maxLen];
+
+		int iChar = 0;
+		while (iChar < writeTarget.Length && !Overflowed) {
+			byte val = ReadByte();
+
+			if (val == 0)
+				break;
+			else if (bLine && val == '\n')
+				break;
+
+			writeTarget[iChar++] = val;
 		}
 
-		// Make sure it's null-terminated.
-		Debug.Assert(iChar < maxLen);
-
-		return !Overflowed && !bTooSmall ? sb.ToString() : null;
+		return Encoding.ASCII.GetString(writeTarget);
 	}
 
 	public void ExciseBits(int startbit, int bitstoremove) {

@@ -45,7 +45,7 @@ public class GameServer : BaseServer
 		throw new NotImplementedException();
 	}
 
-	public override bool GetPlayerInfo(int clientIndex, out EnginePlayerInfo pinfo) {
+	public override bool GetPlayerInfo(int clientIndex, out PlayerInfo pinfo) {
 		throw new NotImplementedException();
 	}
 
