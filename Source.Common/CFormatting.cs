@@ -106,7 +106,7 @@ public ref struct CFormatReader
 		this.format = format;
 	}
 
-	public bool Overflowed() => formatReader >= format.Length;
+	public bool Overflowed() => formatReader >= format.Length || format[formatReader] == '\0';
 
 	/// <summary>
 	/// Reads one literal into a read target buffer.

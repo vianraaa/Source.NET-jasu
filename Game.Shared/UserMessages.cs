@@ -92,7 +92,7 @@ public partial class UserMessages
 		}
 
 		if (entry.ClientHooks.Count == 0) {
-			Warning($"UserMessages.DispatchUserMessage: missing client hook for {entry.Name}\n");
+			Warning($"UserMessages.DispatchUserMessage: missing client hook for {entry.Name.String()}\n");
 			return false;
 		}
 
