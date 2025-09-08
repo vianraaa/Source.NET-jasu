@@ -787,4 +787,23 @@ public class Host(
 		CL.DumpStringTables();
 #endif
 	}
+
+	bool inerror;
+
+	public void Error(ReadOnlySpan<char> error) {
+		if (inerror)
+			Sys.Error("Host_Error: recursively entered");
+		inerror = true;
+
+		if (sv.IsDedicated()) {
+			Sys.Error($"Host_Error: {error}\n");
+			return;
+		}
+#if !SWDS
+		Scr.EndLoadingPlaque();
+#endif
+		ConMsg($"\nHost_Error: {error}\n\n");
+		Disconnect(true, new(error));
+		inerror = false;
+	}
 }

@@ -323,6 +323,15 @@ public class ClientState : BaseClientState
 		if (SignOnState != SignOnState.New)
 			return;
 
+		if (!MarkedCRCsUnverified) {
+			MarkedCRCsUnverified = true;
+			fileSystem.MarkAllCRCsUnverified();
+		}
+
+		if (!CL.CheckCRCs(LevelFileName)) {
+			Host.Error("Unable to verify map");
+		}
+
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SendClientInfo);
 
 		if (NetChannel == null)

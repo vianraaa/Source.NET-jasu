@@ -119,6 +119,7 @@ public interface IFileSystem : IBaseFileSystem
 	bool IsDirectory(ReadOnlySpan<char> fileName) => IsDirectory(fileName, null);
 	void GetLocalCopy(ReadOnlySpan<char> path);
 	ReadOnlySpan<char> RelativePathToFullPath(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID, Span<char> dest, PathTypeFilter filter = PathTypeFilter.None);
+	void MarkAllCRCsUnverified();
 }
 
 public enum PathTypeFilter {

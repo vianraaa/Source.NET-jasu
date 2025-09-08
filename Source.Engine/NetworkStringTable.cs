@@ -12,7 +12,6 @@ using System.Diagnostics;
 using static Source.Common.Engine.IEngine;
 using static Source.Dbg;
 
-// ToDo: We need to implement Host_Error and replace all Error calls with Host_Error
 
 public class NetworkStringTableItem
 {
@@ -179,6 +178,8 @@ public class NetworkStringTable : INetworkStringTable
 	private const int SUBSTRING_BITS = 5;
 	private const int MAX_ENTRY_LENGTH = 1024;
 
+	readonly Host Host = Singleton<Host>();
+
 	public NetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames) {
 		AllowClientSideAddString = false;
 		TableID = tableID;
@@ -189,21 +190,14 @@ public class NetworkStringTable : INetworkStringTable
 		UserDataSize = userdatafixedsize;
 		UserDataSizeBits = userdatanetworkbits;
 
-		if (UserDataSizeBits > NetworkStringTableItem.MAX_USERDATA_BITS) {
-			Error("String tables user data bits restricted to %i bits, requested %i is too large\n",
-				NetworkStringTableItem.MAX_USERDATA_BITS,
-				UserDataSizeBits);
-		}
+		if (UserDataSizeBits > NetworkStringTableItem.MAX_USERDATA_BITS)
+			Host.Error($"String tables user data bits restricted to {NetworkStringTableItem.MAX_USERDATA_SIZE} bits, requested {UserDataSizeBits} is too large\n");
 
-		if (UserDataSize > NetworkStringTableItem.MAX_USERDATA_SIZE) {
-			Error("String tables user data size restricted to %i bytes, requested %i is too large\n",
-				NetworkStringTableItem.MAX_USERDATA_SIZE,
-				UserDataSize);
-		}
+		if (UserDataSize > NetworkStringTableItem.MAX_USERDATA_SIZE)
+			Host.Error("String tables user data size restricted to {NetworkStringTableItem.MAX_USERDATA_SIZE} bytes, requested {UserDataSizeBits} is too large\n");
 
-		if ((1 << EntryBits) != maxEntries) {
-			Error("String tables must be powers of two in size!, %i is not a power of 2\n", maxEntries);
-		}
+		if ((1 << EntryBits) != maxEntries)
+			Host.Error($"String tables must be powers of two in size!, {maxEntries} is not a power of 2\n");
 
 		if (bIsFilenames) {
 			IsFilenames = true;
@@ -424,7 +418,7 @@ public class NetworkStringTable : INetworkStringTable
 	public void Dump() {
 		ConMsg($"Table %s\n", GetTableName());
 		ConMsg($"  {GetNumStrings()}/{GetMaxStrings()} items\n");
-		for (int i = 0; i < GetNumStrings(); i++) 
+		for (int i = 0; i < GetNumStrings(); i++)
 			ConMsg($"  {i} : {GetString(i)}\n");
 
 		if (ItemsClientSide != null)
@@ -457,7 +451,7 @@ public class NetworkStringTable : INetworkStringTable
 
 			lastEntry = entryIndex;
 			if (entryIndex < 0 || entryIndex >= GetMaxStrings()) {
-				Error($"Server sent bogus string index {entryIndex} for table {GetTableName()}\n");
+				Host.Error($"Server sent bogus string index {entryIndex} for table {GetTableName()}\n");
 				continue;
 			}
 
@@ -469,7 +463,7 @@ public class NetworkStringTable : INetworkStringTable
 					uint index = buf.ReadUBitLong(5);
 					uint bytesToCopy = buf.ReadUBitLong(SUBSTRING_BITS);
 					if (index >= history.Count) {
-						Error($"Server sent bogus substring index {entryIndex} for table {GetTableName()}\n");
+						Host.Error($"Server sent bogus substring index {entryIndex} for table {GetTableName()}\n");
 						continue;
 					}
 
@@ -495,7 +489,7 @@ public class NetworkStringTable : INetworkStringTable
 				else {
 					nBytes = (int)buf.ReadUBitLong(NetworkStringTableItem.MAX_USERDATA_BITS);
 					if (nBytes > NetworkStringTableItem.MAX_USERDATA_SIZE) {
-						Error($"NetworkStringTableClient.ParseUpdate: message too large ({nBytes} bytes).");
+						Host.Error($"NetworkStringTableClient.ParseUpdate: message too large ({nBytes} bytes).");
 						continue;
 					}
 
@@ -545,20 +539,22 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 		return CreateStringTableEx(tableName, maxEntries, userDataFixedSize, userDataNetworkBits, false);
 	}
 
+	readonly Host Host = Singleton<Host>();
+
 	public INetworkStringTable? CreateStringTableEx(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits, bool isFilenames) {
 		if (!AllowCreation) {
-			Error("Tried to create string table '%s' at wrong time\n", tableName);
+			Host.Error($"Tried to create string table '{tableName}' at wrong time\n");
 			return null;
 		}
 
 		NetworkStringTable? pTable = (NetworkStringTable?)FindTable(tableName);
 		if (pTable != null) {
-			Error("Tried to create string table '%s' twice\n", tableName);
+			Host.Error($"Tried to create string table '{tableName}' twice\n");
 			return null;
 		}
 
 		if (Tables.Count() >= INetworkStringTable.MAX_TABLES) {
-			Error("Only %i string tables allowed, can't create'%s'", INetworkStringTable.MAX_TABLES, tableName);
+			Host.Error($"Only {INetworkStringTable.MAX_TABLES} string tables allowed, can't create '{tableName}'");
 			return null;
 		}
 
