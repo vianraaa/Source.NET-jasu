@@ -141,6 +141,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<EngineParms>();
 		this.AddSingleton<ClientDLL>();
 		this.AddSingleton<IVideoMode, VideoMode_MaterialSystem>();
+		this.AddSingleton<IRenderView, RenderView>();
 		this.AddSingleton<IMod, BaseMod>();
 		this.AddSingleton<IGame, Game>();
 		this.AddSingleton<ModInfo>(); // This may not be valid for a while! At least until gameinfo is readable!
