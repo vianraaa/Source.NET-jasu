@@ -12,6 +12,19 @@ using Source.GUI.Controls;
 
 namespace Game.UI;
 
+public class OptionsDialog : PropertyDialog
+{
+	readonly ModInfo ModInfo = Singleton<ModInfo>();
+	public OptionsDialog(Panel? parent, string? name) : base(parent, name) {
+		SetDeleteSelfOnClose(true);
+		SetBounds(0, 0, 512, 406);
+		SetSizeable(false);
+
+		SetTitle("#GameUI_Options", true);
+		// TODO
+	}
+}
+
 public class GameMenuItem : MenuItem
 {
 	public GameMenuItem(Panel panel, string name, string text) : base(panel, name, text) {
@@ -239,6 +252,8 @@ public class BasePanel : Panel
 
 	TextureID BackgroundImageID = TextureID.INVALID;
 
+	OptionsDialog OptionsDialog;
+
 
 	public override void OnCommand(ReadOnlySpan<char> command) {
 		RunMenuCommand(command);
@@ -253,7 +268,7 @@ public class BasePanel : Panel
 			case "OpenLoadGameDialog": break;
 			case "OpenSaveGameDialog": break;
 			case "OpenBonusMapsDialog": break;
-			case "OpenOptionsDialog": break;
+			case "OpenOptionsDialog": OnOpenOptionsDialog(); break;
 			case "OpenControllerDialog": break;
 			case "OpenBenchmarkDialog": break;
 			case "OpenServerBrowser": break;
@@ -292,6 +307,25 @@ public class BasePanel : Panel
 				base.OnCommand(command);
 				break;
 		}
+	}
+
+	private void OnOpenOptionsDialog() {
+		if (OptionsDialog != null) {
+			OptionsDialog = new OptionsDialog(this);
+
+			PositionDialog(OptionsDialog);
+		}
+
+		OptionsDialog.Activate();
+	}
+
+	public void PositionDialog(Panel? dialog) {
+		if (dialog == null)
+			return;
+
+		Surface.GetWorkspaceBounds(out int x, out int y, out int ww, out int wt);
+		dialog.GetSize(out int wide, out int tall);
+		dialog.SetPos(x + ((ww - wide) / 2), y + ((wt - tall) / 2));
 	}
 
 	public void OnOpenQuitConfirmationDialog() {
