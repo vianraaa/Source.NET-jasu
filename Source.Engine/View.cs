@@ -1,7 +1,9 @@
 ﻿
+using Source.Common;
 using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 using Source.Engine.Client;
 
 using System.Drawing;
@@ -41,6 +43,17 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 }
 
 
-public class RenderView : IRenderView {
+public class RenderView : IRenderView
+{
+	public void PopView(Frustum frustumPlanes) {
+		throw new NotImplementedException();
+	}
 
+	public void Push2DView(ViewSetup view, int flags, ITexture? renderTarget, Frustum frustumPlanes) {
+		throw new NotImplementedException();
+	}
+
+	public void VGui_Paint(PaintMode mode) {
+		throw new NotImplementedException();
+	}
 }

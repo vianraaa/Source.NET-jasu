@@ -45,11 +45,11 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services) : 
 		throw new NotImplementedException();
 	}
 
-	public ref VPlane GetFrustum() {
+	public Frustum GetFrustum() {
 		throw new NotImplementedException();
 	}
 
-	public ViewSetup GetPlayerViewSetup() {
+	public ref ViewSetup GetPlayerViewSetup() {
 		throw new NotImplementedException();
 	}
 
@@ -61,7 +61,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services) : 
 		throw new NotImplementedException();
 	}
 
-	public ViewSetup GetViewSetup() {
+	public ref ViewSetup GetViewSetup() {
 		throw new NotImplementedException();
 	}
 
@@ -93,11 +93,11 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services) : 
 		throw new NotImplementedException();
 	}
 
-	public void QueueOverlayRenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw) {
+	public void QueueOverlayRenderView(in ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw) {
 		throw new NotImplementedException();
 	}
 
-	readonly ViewSetup view2D = new();
+	ViewSetup view2D = new();
 
 	public void Render(ViewRects rect) {
 		using MatRenderContextPtr renderContext = new(materials);
@@ -113,7 +113,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services) : 
 		render.PopView(GetFrustum());
 	}
 
-	public void RenderView(ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
+	public void RenderView(in ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
 
 	}
 
@@ -145,7 +145,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services) : 
 		throw new NotImplementedException();
 	}
 
-	public bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, ViewSetup shadowView) {
+	public bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, in ViewSetup shadowView) {
 		throw new NotImplementedException();
 	}
 

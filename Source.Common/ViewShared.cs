@@ -22,7 +22,7 @@ public enum StereoEye
 	Max = 3,
 }
 
-public class ViewSetup
+public struct ViewSetup
 {
 	public int X;
 	public int UnscaledX;

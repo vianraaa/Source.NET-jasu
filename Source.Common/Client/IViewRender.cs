@@ -48,14 +48,14 @@ public interface IViewRender
 	void Shutdown();
 	void OnRenderStart();
 	void Render(ViewRects rect);
-	void RenderView(ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw);
+	void RenderView(in ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw);
 	DrawFlags GetDrawFlags();
 	void StartPitchDrift();
 	void StopPitchDrift();
-	ref VPlane GetFrustum();
+	Frustum GetFrustum();
 	bool ShouldDrawBrushModels();
-	ViewSetup GetPlayerViewSetup();
-	ViewSetup GetViewSetup();
+	ref ViewSetup GetPlayerViewSetup();
+	ref ViewSetup GetViewSetup();
 	void DisableVis();
 	int BuildWorldListsNumber();
 	void SetCheapWaterStartDistance(float cheapWaterStartDistance);
@@ -66,12 +66,12 @@ public interface IViewRender
 	IMaterial? GetScreenOverlayMaterial();
 	void WriteSaveGameScreenshot(ReadOnlySpan<char> pFilename);
 	void WriteSaveGameScreenshotOfSize(ReadOnlySpan<char> pFilename, int width, int height, bool bCreatePowerOf2Padded = false, bool bWriteVTF = false);
-	void QueueOverlayRenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw);
+	void QueueOverlayRenderView(in ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw);
 	float GetZNear();
 	float GetZFar();
 	void GetScreenFadeDistances(out float min, out float max);
 	// C_BaseEntity? GetCurrentlyDrawingEntity();
 	// void SetCurrentlyDrawingEntity(C_BaseEntity ent);
-	bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, ViewSetup shadowView);
+	bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, in ViewSetup shadowView);
 	void FreezeFrame(float flFreezeTime);
 }
