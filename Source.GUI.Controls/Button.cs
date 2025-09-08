@@ -395,4 +395,8 @@ public class Button : Label
 		GetContentSize(out int wide, out int tall);
 		SetSize(wide + Label.Content, tall + Label.Content);
 	}
+	bool Paint;
+	public void SetShouldPaint(bool paint) {
+		Paint = paint;
+	}
 }

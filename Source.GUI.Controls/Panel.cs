@@ -338,6 +338,11 @@ public class Panel : IPanel
 	Color FgColor;
 
 	PaintBackgroundType PaintBackgroundType;
+	public int BgTextureId1;
+	public int BgTextureId2;
+	public int BgTextureId3;
+	public int BgTextureId4;
+
 	public PaintBackgroundType GetPaintBackgroundType() => PaintBackgroundType;
 	public void SetPaintBackgroundType(PaintBackgroundType type) => PaintBackgroundType = type;
 
@@ -1173,7 +1178,7 @@ public class Panel : IPanel
 		*/
 	}
 
-
+	public bool IsLayoutInvalid() => (Flags & PanelFlags.NeedsLayout) != 0;
 	public void InvalidateLayout(bool layoutNow = false, bool reloadScheme = false) {
 		Flags |= PanelFlags.NeedsLayout;
 
@@ -1299,7 +1304,7 @@ public class Panel : IPanel
 		Surface.SwapBuffers(this);
 
 		if (bPushedViewport) {
-			// surface()->PopFullscreenViewport();
+			// Surface.PopFullscreenViewport();
 			// ^^ todo: later
 		}
 	}
@@ -1363,8 +1368,56 @@ public class Panel : IPanel
 		}
 	}
 
-	private void DrawBox(int v1, int v2, int wide, int tall, Color col, float v3) {
-		throw new NotImplementedException();
+	public bool ShouldDrawTopLeftCornerRounded() => (RoundedCorners & RoundedCorners.TopLeft) != 0;
+	public bool ShouldDrawTopRightCornerRounded() => (RoundedCorners & RoundedCorners.TopRight) != 0;
+	public bool ShouldDrawBottomLeftCornerRounded() => (RoundedCorners & RoundedCorners.BottomLeft) != 0;
+	public bool ShouldDrawBottomRightCornerRounded() => (RoundedCorners & RoundedCorners.BottomRight) != 0;
+
+	protected void DrawBox(int x, int y, int wide, int tall, Color color, float normalizedAlpha, bool hollow = false) {
+		if (BgTextureId1 == -1 || BgTextureId2 == -1 || BgTextureId3 == -1 || BgTextureId4 == -1) 
+			return;
+
+		color[3] = (byte)(color[3] * normalizedAlpha);
+		GetCornerTextureSize(out int cornerWide, out int cornerTall);
+
+		Surface.DrawSetColor(color);
+		Surface.DrawFilledRect(x + cornerWide, y, x + wide - cornerWide, y + cornerTall);
+		if (!hollow) {
+			Surface.DrawFilledRect(x, y + cornerTall, x + wide, y + tall - cornerTall);
+		}
+		else {
+			Surface.DrawFilledRect(x, y + cornerTall, x + cornerWide, y + tall - cornerTall);
+			Surface.DrawFilledRect(x + wide - cornerWide, y + cornerTall, x + wide, y + tall - cornerTall);
+		}
+		Surface.DrawFilledRect(x + cornerWide, y + tall - cornerTall, x + wide - cornerWide, y + tall);
+
+		if (ShouldDrawTopLeftCornerRounded()) {
+			Surface.DrawSetTexture(BgTextureId1);
+			Surface.DrawTexturedRect(x, y, x + cornerWide, y + cornerTall);
+		}
+		else 
+			Surface.DrawFilledRect(x, y, x + cornerWide, y + cornerTall);
+		
+		if (ShouldDrawTopRightCornerRounded()) {
+			Surface.DrawSetTexture(BgTextureId2);
+			Surface.DrawTexturedRect(x + wide - cornerWide, y, x + wide, y + cornerTall);
+		}
+		else 
+			Surface.DrawFilledRect(x + wide - cornerWide, y, x + wide, y + cornerTall);
+		
+		if (ShouldDrawBottomLeftCornerRounded()) {
+			Surface.DrawSetTexture(BgTextureId4);
+			Surface.DrawTexturedRect(x + 0, y + tall - cornerTall, x + cornerWide, y + tall);
+		}
+		else 
+			Surface.DrawFilledRect(x + 0, y + tall - cornerTall, x + cornerWide, y + tall);
+		
+		if (ShouldDrawBottomRightCornerRounded()) {
+			Surface.DrawSetTexture(BgTextureId3);
+			Surface.DrawTexturedRect(x + wide - cornerWide, y + tall - cornerTall, x + wide, y + tall);
+		}
+		else 
+			Surface.DrawFilledRect(x + wide - cornerWide, y + tall - cornerTall, x + wide, y + tall);
 	}
 
 	private void DrawBoxFade(int v1, int v2, int wide, int tall, Color col, float v3, int v4, int v5, bool v6) {
