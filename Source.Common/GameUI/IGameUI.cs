@@ -41,4 +41,5 @@ public interface IGameUI
 	void SetLoadingBackgroundDialog(IPanel? panel);
 	void PreventEngineHideGameUI();
 	void AllowEngineHideGameUI();
+	void HideGameUI();
 }

@@ -461,7 +461,9 @@ public abstract class BaseClientState(
 
 		DeltaTick = -1;
 
-		// todo: Host_DefaultMapFileName
+		Span<char> levelFileName = stackalloc char[MAX_PATH];
+		Host.DefaultMapFileName(msg.MapName, levelFileName);
+		LevelFileName = new(levelFileName.SliceNullTerminatedString());
 
 		return true;
 	}

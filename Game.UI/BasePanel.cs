@@ -232,7 +232,7 @@ public class BasePanel : Panel
 	GameMenu GameMenu;
 
 	readonly public IFileSystem FileSystem = Singleton<IFileSystem>();
-	readonly public IGameUI GameUI = Singleton<IGameUI>();
+	readonly public GameUI GameUI;
 	readonly public IEngineClient engine = Singleton<IEngineClient>();
 	readonly public ModInfo ModInfo = Singleton<ModInfo>();
 #pragma warning restore CS8618
@@ -276,7 +276,7 @@ public class BasePanel : Panel
 				engine.ClientCmd_Unrestricted("quit\n");
 				break;
 			case "QuitRestartNoConfirm": break;
-			case "ResumeGame": break;
+			case "ResumeGame": GameUI.HideGameUI(); break;
 			case "Disconnect": break;
 			case "DisconnectNoConfirm": break;
 			case "ReleaseModalWindow": Surface.RestrictPaintToSinglePanel(null); break;
@@ -320,7 +320,8 @@ public class BasePanel : Panel
 		return button;
 	}
 
-	public BasePanel() : base(null, "BaseGameUIPanel") {
+	public BasePanel(GameUI gameUI) : base(null, "BaseGameUIPanel") {
+		GameUI = gameUI;
 		CreateGameMenu();
 		CreateGameLogo();
 
@@ -335,7 +336,9 @@ public class BasePanel : Panel
 	IFont? FontTest;
 
 	public override void PaintBackground() {
-		DrawBackgroundImage();
+		if(!GameUI.IsInLevel() || GameUI.LoadingDialog != null || ExitingFrameCount > 0)
+			DrawBackgroundImage();
+
 		if (BackgroundFillAlpha > 0) {
 			Surface.DrawSetColor(0, 0, 0, (int)BackgroundFillAlpha);
 			Surface.GetScreenSize(out int wide, out int tall);

@@ -68,7 +68,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 		staticPanel.OnLevelLoadingFinished();
 	}
 
-	private void HideGameUI() {
+	public void HideGameUI() {
 		engine.ExecuteClientCmd("gameui_hide");
 	}
 
@@ -98,7 +98,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 		// I have no idea why this one defines needed resource strings...
 		localize.AddFile("Resource/itemtest_%language%.txt", "GAME", true);
 
-		staticPanel = new BasePanel();
+		staticPanel = new BasePanel(this);
 		staticPanel.SetBounds(0, 0, 400, 300);
 		staticPanel.SetPaintBorderEnabled(false);
 		staticPanel.SetPaintBackgroundEnabled(true);
@@ -165,7 +165,7 @@ public class GameUI(IEngineClient engine) : IGameUI
 		return true;
 	}
 
-	LoadingDialog? LoadingDialog;
+	public LoadingDialog? LoadingDialog;
 	string? PreviousStatusText;
 
 	public void StartProgressBar() {
