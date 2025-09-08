@@ -196,9 +196,9 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 	void alias(in TokenizedCommand args) {
 		int argc = args.ArgC();
 		if (argc == 1) {
-			Dbg.ConMsg("Current alias commands:\n");
+			ConMsg("Current alias commands:\n");
 			foreach (var alias in aliases) {
-				Dbg.ConMsg($"  {alias.Key} : {alias.Value}\n");
+				ConMsg($"  {alias.Key} : {alias.Value}\n");
 			}
 			return;
 		}
@@ -211,13 +211,13 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 	[ConCommand(helpText: "Echos text to console.")]
 	void echo(in TokenizedCommand args) {
 		for (int i = 1, argc = args.ArgC(); i < argc; i++)
-			Dbg.ConMsg($"{args[i]} ");
-		Dbg.ConMsg("\n");
+			ConMsg($"{args[i]} ");
+		ConMsg("\n");
 	}
 	[ConCommand(helpText: "Parses and stuffs command line + commands to command buffer.")]
 	void stuffcmds(in TokenizedCommand args) {
 		if (args.ArgC() != 1) {
-			Dbg.ConMsg("stuffcmds: execute command line parameters\n");
+			ConMsg("stuffcmds: execute command line parameters\n");
 			return;
 		}
 
