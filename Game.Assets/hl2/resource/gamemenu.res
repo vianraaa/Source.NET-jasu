@@ -66,6 +66,12 @@
 	}
 	"11"
 	{
+		"label" "#GameUI_GameMenu_Disconnect"
+		"command" "Disconnect"
+		"OnlyInGame" "1"
+	}
+	"12"
+	{
 		"label" "#GameUI_GameMenu_Quit"
 		"command" "Quit"
 		"InGameOrder" "80"

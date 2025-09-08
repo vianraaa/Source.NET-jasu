@@ -277,7 +277,7 @@ public class BasePanel : Panel
 				break;
 			case "QuitRestartNoConfirm": break;
 			case "ResumeGame": GameUI.HideGameUI(); break;
-			case "Disconnect": break;
+			case "Disconnect": engine.ClientCmd_Unrestricted("disconnect"); break;
 			case "DisconnectNoConfirm": break;
 			case "ReleaseModalWindow": Surface.RestrictPaintToSinglePanel(null); break;
 			case "ShowSigninUI": break;
