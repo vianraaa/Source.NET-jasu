@@ -228,7 +228,7 @@ public class CL(IServiceProvider services, Net Net,
 	public void DumpStringTables() => cl.StringTableContainer?.Dump();
 
 	internal bool CheckCRCs(ReadOnlySpan<char> levelFileName) {
-		throw new NotImplementedException();
+		return true;
 	}
 }
 
