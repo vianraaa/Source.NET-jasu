@@ -310,7 +310,7 @@ public class BasePanel : Panel
 	}
 
 	private void OnOpenOptionsDialog() {
-		if (OptionsDialog != null) {
+		if (OptionsDialog == null) {
 			OptionsDialog = new OptionsDialog(this);
 
 			PositionDialog(OptionsDialog);
