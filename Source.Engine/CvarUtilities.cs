@@ -1,4 +1,5 @@
-﻿using Source.Common.Commands;
+﻿using Source.Common;
+using Source.Common.Commands;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
@@ -51,7 +52,7 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 		}
 
 		if (v.IsFlagSet(FCvar.Replicated)) {
-			if(!sv.IsActive() && !sv.IsLoading() && (cmd.Source == CommandSource.Command) && cl.IsConnected()) {
+			if (!sv.IsActive() && !sv.IsLoading() && (cmd.Source == CommandSource.Command) && cl.IsConnected()) {
 				Dbg.ConMsg($"Can't change replicated ConVar {v.GetName()} from console of client, only server operator can change its value\n");
 				return true;
 			}
@@ -62,7 +63,7 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 		const int LEN_REMAINING = 1024;
 		char* remaining = stackalloc char[LEN_REMAINING];
 		ReadOnlySpan<char> argS = args.ArgS();
-		fixed (char* pArgS = argS) { 
+		fixed (char* pArgS = argS) {
 			nint len = argS.Length;
 			bool isQuoted = argS[0] == '\"';
 
@@ -75,13 +76,13 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 			}
 
 			char* p = remaining + len - 1;
-			while(p >= remaining) {
+			while (p >= remaining) {
 				if (*p > ' ')
 					break;
 				*p-- = '\0';
 			}
 
-			if(isQuoted && p >= remaining) {
+			if (isQuoted && p >= remaining) {
 				if (*p == '\"')
 					*p = '\0';
 			}
@@ -91,29 +92,31 @@ public class CvarUtilities(ICvar cvar, ClientState cl, GameServer sv, Host Host,
 		}
 	}
 
+#if !SWDS
+	readonly ILocalize Localize = Singleton<ILocalize>();
+#endif
+
 	private void SetDirect(ConVar var, Span<char> value) {
 		// RaphaelIT7: Let's remove everything after the first NULL terminator
 		//     This is because from the Command buffer we now have a 1024 char array and
 		//     we really don't want all that to be stored inside the ConVar
-		string strValue = new(value);
-		int nullIndex = strValue.IndexOf('\0');
-		if (nullIndex >= 0)
-		{
-			strValue = strValue.Substring(0, nullIndex);
-		}
+		// March: Do this with ReadOnlySpan's instead
+		ReadOnlySpan<char> strValue = value.SliceNullTerminatedString();
 
 		if (var.IsFlagSet(FCvar.UserInfo)) {
 			if (sv.IsDedicated()) return;
 		}
 
 		if (var.IsFlagSet(FCvar.PrintableOnly)) {
-			// todo
-			throw new NotImplementedException();
+			if (!sv.IsDedicated()) {
+				ReadOnlySpan<char> localized = Localize.Find(strValue);
+				if (localized != null && localized.Length > 0)
+					strValue = localized;
+			}
 		}
 
-		if (var.IsFlagSet(FCvar.NeverAsString)) {
+		if (var.IsFlagSet(FCvar.NeverAsString))
 			var.SetValue(double.TryParse(strValue, out double n) ? n : 0);
-		}
 		else
 			var.SetValue(strValue);
 	}
