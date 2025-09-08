@@ -5,6 +5,9 @@ namespace Source.Common.Mathematics;
 
 public static class MathLib
 {
+	static MathLib() {
+
+	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Lerp(float f1, float f2, float i1, float i2, float x) {
 		return f1 + (f2 - f1) * (x - i1) / (i2 - i1);
@@ -61,5 +64,20 @@ public static class MathLib
 			0, 0, m33, 0,
 			m41, m42, m43, 1
 		);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float RAD2DEG(float x) => x * (180f / MathF.PI);
+	public static double RAD2DEG(double x) => x * (180 / Math.PI);
+	public static float DEG2RAD(float x) => x * (MathF.PI / 180);
+	public static double DEG2RAD(double x) => x * (Math.PI / 180);
+
+	public static float CalcFovX(float fovY, float aspect)
+		=> RAD2DEG(MathF.Atan(MathF.Tan(DEG2RAD(fovY) * 0.5f) * aspect)) * 2.0f;
+	public static float CalcFovY(float fovX, float aspect) {
+		if (fovX < 0 || fovX > 179)
+			fovX = 90;
+
+		return RAD2DEG(MathF.Atan(MathF.Tan(DEG2RAD(fovX) * 0.5f) / aspect)) * 2.0f;
 	}
 }

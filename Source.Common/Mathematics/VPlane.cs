@@ -13,13 +13,32 @@ public enum FrustumPlane
 	NumPlanes = 6
 }
 
-public struct Frustum {
+public struct Frustum
+{
 	public VPlane Right;
 	public VPlane Left;
 	public VPlane Top;
 	public VPlane Bottom;
 	public VPlane NearZ;
 	public VPlane FarZ;
+	public readonly VPlane this[int index] => index switch {
+		0 => Right,
+		1 => Left,
+		2 => Top,
+		3 => Bottom,
+		4 => NearZ,
+		5 => FarZ,
+		_ => throw new ArgumentOutOfRangeException()
+	};
+	public readonly VPlane this[FrustumPlane index] => index switch {
+		FrustumPlane.Right => Right,
+		FrustumPlane.Left => Left,
+		FrustumPlane.Top => Top,
+		FrustumPlane.Bottom => Bottom,
+		FrustumPlane.NearZ => NearZ,
+		FrustumPlane.FarZ => FarZ,
+		_ => throw new ArgumentOutOfRangeException()
+	};
 }
 
 public struct VPlane

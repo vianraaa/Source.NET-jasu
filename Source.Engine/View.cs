@@ -50,7 +50,7 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	}
 
 	public virtual void PopView(Frustum frustumPlanes) {
-		throw new NotImplementedException();
+		engineRenderer.PopView(frustumPlanes);
 	}
 
 
