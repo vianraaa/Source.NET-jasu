@@ -1293,7 +1293,7 @@ public class TextEntry : Panel
 				buf.Add(TextStream[i]);
 			}
 			buf.Add('\0');
-			System.SetClipboardText(buf.AsSpan(), buf.Count);
+			System.SetClipboardText(buf.AsSpan());
 		}
 
 		RequestFocus();
@@ -1327,7 +1327,7 @@ public class TextEntry : Panel
 				if (TextStream.Count == MaxCharCount) {
 					RequestFocusNext();
 					Span<char> remainingText = buf.AsSpan()[i..];
-					System.SetClipboardText(remainingText, len - i - 1);
+					System.SetClipboardText(remainingText[..(len - i - 1)]);
 					if (GetParent() != null && GetCurrentKeyFocus() != this) {
 						haveMovedFocusAwayFromCurrentEntry = true;
 						GetCurrentKeyFocus()?.SendMessage(new KeyValues("DoPaste"), this);
@@ -1340,7 +1340,7 @@ public class TextEntry : Panel
 		}
 
 		if (AutoProgressOnHittingCharLimit)
-			System.SetClipboardText(buf.AsSpan(), bufferSize);
+			System.SetClipboardText(buf.AsSpan()[..bufferSize]);
 
 		DataChanged = true;
 		FireActionSignal();

@@ -367,6 +367,8 @@ public class BasePanel : Panel
 		}
 
 		GameMenu.SetPos(GameMenuPos.X, idealMenuY);
+
+		UpdateGameMenus();
 	}
 
 	List<Coord> GameTitlePos = [];

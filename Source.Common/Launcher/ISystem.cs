@@ -13,7 +13,7 @@ public interface ISystem
 	double GetCurrentTime();
 	long GetTimeMillis();
 	nuint GetClipboardTextCount();
-	void SetClipboardText(ReadOnlySpan<char> text, int textLen);
+	void SetClipboardText(ReadOnlySpan<char> text);
 	nuint GetClipboardText(nint offset, Span<char> buf);
 	bool SetRegistryString(ReadOnlySpan<char> key, ReadOnlySpan<char> value);
 	bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value);

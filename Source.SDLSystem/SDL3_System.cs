@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using Source.Common.Commands;
 using SDL;
 using System.Runtime.InteropServices;
+using System.Text;
+
 
 
 
@@ -40,12 +42,11 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 
 		byte* clipboard = SDL3.Unsafe_SDL_GetClipboardText();
 		nuint len = SDL3.SDL_strlen(clipboard);
-		fixed (char* buffer = buf) {
-			byte* target = (byte*)buffer;
-			for (nuint i = (nuint)offset; i < len; i++)
-				target[i - (nuint)offset] = clipboard[i];
-		}
-
+		nuint clipboardSize = (nuint)Encoding.UTF8.GetCharCount(clipboard, (int)len) * sizeof(char);
+		char* clipboardCast = (char*)NativeMemory.Alloc(clipboardSize);
+		Encoding.UTF8.GetChars(clipboard, (int)len, clipboardCast, (int)clipboardSize);
+		new Span<char>(clipboardCast, (int)clipboardSize)[..Math.Min(buf.Length, (int)clipboardSize)].CopyTo(buf);
+		NativeMemory.Free(clipboardCast);
 		return len;
 	}
 
@@ -146,9 +147,18 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		throw new NotImplementedException();
 	}
 
-	public unsafe void SetClipboardText(ReadOnlySpan<char> text, int textLen) {
-		fixed (char* ptr = text)
-			SDL3.SDL_SetClipboardText((byte*)ptr);
+	public unsafe void SetClipboardText(ReadOnlySpan<char> text) {
+		if (text == null)
+			SDL3.SDL_SetClipboardText("");
+
+		if (text.Length == 0)
+			SDL3.SDL_SetClipboardText("");
+
+		nuint bytes = (nuint)Encoding.UTF8.GetByteCount(text);
+		byte* rawData = (byte*)NativeMemory.Alloc(bytes);
+		Encoding.UTF8.GetBytes(text, new Span<byte>(rawData, (int)bytes));
+		SDL3.SDL_SetClipboardText(rawData);
+		NativeMemory.Free(rawData);
 	}
 
 	public bool SetRegistryInteger(ReadOnlySpan<char> key, int value) {
