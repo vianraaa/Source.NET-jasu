@@ -15,7 +15,7 @@ namespace Game.UI;
 public class OptionsDialog : PropertyDialog
 {
 	readonly ModInfo ModInfo = Singleton<ModInfo>();
-	public OptionsDialog(Panel? parent, string? name) : base(parent, name) {
+	public OptionsDialog(Panel? parent) : base(parent, "OptionsDialog") {
 		SetDeleteSelfOnClose(true);
 		SetBounds(0, 0, 512, 406);
 		SetSizeable(false);
