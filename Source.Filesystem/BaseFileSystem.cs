@@ -287,4 +287,7 @@ public class BaseFileSystem : IFileSystem
 
 	}
 
+	public void MarkAllCRCsUnverified() {
+		// Todo
+	}
 }
