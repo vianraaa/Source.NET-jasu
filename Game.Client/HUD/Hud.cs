@@ -15,6 +15,8 @@ public class Hud(HudElementHelper HudElementHelper)
 
 	public void Init() {
 		HudElementHelper.CreateAllElements(this);
+		foreach (var element in HudList)
+			element.Init();
 	}
 
 	internal void AddHudElement(IHudElement element) {

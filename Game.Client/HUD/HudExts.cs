@@ -16,18 +16,3 @@ public class DeclareHudElementAttribute : Attribute
 	/// </summary>
 	public string? Name { get; set; }
 }
-
-/// <summary>
-/// Declares that this method shall receive <see cref="UserMessage"/> events with the name provided by <see cref="Message"/>.
-/// <br/>
-/// This method must be a delegate match to <see cref="UserMessageHook"/> (<see cref="void"/> return, <see cref="bf_read"/> as the only argument)
-/// or you will get a runtime exception.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-public class DeclareHudMessageAttribute : Attribute
-{
-	/// <summary>
-	/// The message to hook.
-	/// </summary>
-	public required string Message { get; set; }
-}

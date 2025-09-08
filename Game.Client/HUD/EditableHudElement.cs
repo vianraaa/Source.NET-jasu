@@ -12,4 +12,6 @@ public class EditableHudElement : EditablePanel, IHudElement {
 	public EditableHudElement(string? panelName, string? elementName) : base(null, panelName) {
 		ElementName = elementName;
 	}
+
+	public virtual void Init() { }
 }
