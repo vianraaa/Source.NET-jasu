@@ -1,4 +1,5 @@
-﻿using Game.Shared;
+﻿using Game.Client.HUD;
+using Game.Shared;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,11 +9,13 @@ using Source.Common.Engine;
 
 namespace Game.Client;
 
-public class HLClient(ViewRender view, IInput input, UserMessages usermessages) : IBaseClientDLL
+public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
 {
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
 		services.AddSingleton<ViewRender>();
+		services.AddSingleton<Hud>();
+		services.AddSingleton<HudElementHelper>();
 		services.AddSingleton<IViewRender>(x => x.GetRequiredService<ViewRender>());
 	}
 
@@ -42,6 +45,7 @@ public class HLClient(ViewRender view, IInput input, UserMessages usermessages) 
 	}
 
 	public bool Init() {
+		HUD.Init();
 		view.Init();
 		input.Init();
 		return true;

@@ -134,6 +134,7 @@ public class PanelAnimationVarAttribute : Attribute
 				il.Emit(OpCodes.Ldfld, field);
 				if (field.FieldType.IsValueType)
 					il.Emit(OpCodes.Box, field.FieldType);
+
 				il.Emit(OpCodes.Ret);
 			}
 			get = methodBuilder.CreateDelegate<PanelGetFunc>();
@@ -145,9 +146,14 @@ public class PanelAnimationVarAttribute : Attribute
 			{
 				il.Emit(OpCodes.Ldarg_0);
 				il.Emit(OpCodes.Ldarg_1);
-				if (field.FieldType.IsValueType) il.Emit(OpCodes.Unbox_Any, field.FieldType);
-				else il.Emit(OpCodes.Castclass, field.FieldType);
+
+				if (field.FieldType.IsValueType)
+					il.Emit(OpCodes.Unbox_Any, field.FieldType);
+				else
+					il.Emit(OpCodes.Castclass, field.FieldType);
+
 				il.Emit(OpCodes.Stfld, field);
+
 				il.Emit(OpCodes.Ret);
 			}
 			set = methodBuilder.CreateDelegate<PanelSetFunc>();
@@ -589,7 +595,7 @@ public class Panel : IPanel
 					buildFlags |= BuildModeFlags.SaveWideProportionalTall;
 					wide = ComputeTall(panel, ref buildFlags, resourceData, parentWide, parentTall, true);
 
-					if (panel.IsProportional())
+					if (panel.IsProportional()) 
 						wide = panel.SchemeManager.GetProportionalNormalizedValue(wide);
 				}
 				else if (str[0] == 'p' || str[0] == 'P') {
@@ -603,9 +609,9 @@ public class Panel : IPanel
 			}
 
 			float flWide = float.TryParse(str, out float __r) ? __r : 0;
-			if (!buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall))
+			if (!buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) 
 				wide = int.TryParse(str, out int __r2) ? __r2 : 0;
-
+			
 
 			if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) {
 				wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
@@ -649,7 +655,7 @@ public class Panel : IPanel
 
 					buildFlags |= BuildModeFlags.SaveTallProportionalWide;
 					tall = ComputeWide(panel, ref buildFlags, resourceData, parentWide, parentTall, true);
-					if (panel.IsProportional())
+					if (panel.IsProportional()) 
 						tall = panel.SchemeManager.GetProportionalNormalizedValue(tall);
 				}
 				else if (str[0] == 'p' || str[0] == 'P') {
@@ -663,9 +669,9 @@ public class Panel : IPanel
 			}
 
 			float flTall = float.TryParse(str, out float __r) ? __r : 0;
-			if (!buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide))
+			if (!buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) 
 				tall = int.TryParse(str, out int __r2) ? __r2 : 0;
-
+			
 			if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) {
 				tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
 				tall = (int)(tall * flTall);
@@ -679,10 +685,10 @@ public class Panel : IPanel
 				tall = (int)(panel.GetTall() * flTall);
 			}
 			else {
-				if (panel.IsProportional())
+				if (panel.IsProportional()) 
 					tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
-
-				if (buildFlags.HasFlag(BuildModeFlags.SaveTallFull))
+			
+				if (buildFlags.HasFlag(BuildModeFlags.SaveTallFull) )
 					tall = parentTall - tall;
 			}
 		}
@@ -1368,7 +1374,7 @@ public class Panel : IPanel
 	public bool ShouldDrawBottomRightCornerRounded() => (RoundedCorners & RoundedCorners.BottomRight) != 0;
 
 	protected void DrawBox(int x, int y, int wide, int tall, Color color, float normalizedAlpha, bool hollow = false) {
-		if (BgTextureId1 == -1 || BgTextureId2 == -1 || BgTextureId3 == -1 || BgTextureId4 == -1)
+		if (BgTextureId1 == -1 || BgTextureId2 == -1 || BgTextureId3 == -1 || BgTextureId4 == -1) 
 			return;
 
 		color[3] = (byte)(color[3] * normalizedAlpha);
@@ -1389,28 +1395,28 @@ public class Panel : IPanel
 			Surface.DrawSetTexture(BgTextureId1);
 			Surface.DrawTexturedRect(x, y, x + cornerWide, y + cornerTall);
 		}
-		else
+		else 
 			Surface.DrawFilledRect(x, y, x + cornerWide, y + cornerTall);
-
+		
 		if (ShouldDrawTopRightCornerRounded()) {
 			Surface.DrawSetTexture(BgTextureId2);
 			Surface.DrawTexturedRect(x + wide - cornerWide, y, x + wide, y + cornerTall);
 		}
-		else
+		else 
 			Surface.DrawFilledRect(x + wide - cornerWide, y, x + wide, y + cornerTall);
-
+		
 		if (ShouldDrawBottomLeftCornerRounded()) {
 			Surface.DrawSetTexture(BgTextureId4);
 			Surface.DrawTexturedRect(x + 0, y + tall - cornerTall, x + cornerWide, y + tall);
 		}
-		else
+		else 
 			Surface.DrawFilledRect(x + 0, y + tall - cornerTall, x + cornerWide, y + tall);
-
+		
 		if (ShouldDrawBottomRightCornerRounded()) {
 			Surface.DrawSetTexture(BgTextureId3);
 			Surface.DrawTexturedRect(x + wide - cornerWide, y + tall - cornerTall, x + wide, y + tall);
 		}
-		else
+		else 
 			Surface.DrawFilledRect(x + wide - cornerWide, y + tall - cornerTall, x + wide, y + tall);
 	}
 
