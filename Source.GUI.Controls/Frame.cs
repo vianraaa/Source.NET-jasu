@@ -124,10 +124,12 @@ public class GripPanel : Panel
 		Frame.GetMinimumSize(out int minWide, out int minTall);
 
 		newWide += (dx * DragMultX);
-		if (DragMultX == -1)
+		if (DragMultX == -1) {
 			if (newWide < minWide)
 				dx = DragOrgSize[0] - minWide;
 
+			newX += dx;
+		}
 
 		newTall += (dy * DragMultY);
 		if (DragMultY == -1) {
