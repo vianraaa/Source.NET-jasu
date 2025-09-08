@@ -462,7 +462,10 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawOutlinedRect(int x0, int y0, int x1, int y1) {
-		throw new NotImplementedException();
+		DrawFilledRect(x0, y0, x1, y0 + 1); 
+		DrawFilledRect(x0, y1 - 1, x1, y1);  
+		DrawFilledRect(x0, y0 + 1, x0 + 1, y1 - 1); 
+		DrawFilledRect(x1 - 1, y0 + 1, x1, y1 - 1); 
 	}
 
 	public void DrawPolyLine(Span<Point> points) {

@@ -478,12 +478,15 @@ public class EngineVGui(
 		indentBuff = indentBuff[..i];
 
 		ConMsg($"    {indentBuff}{name}    -     ");
-		ConMsg($"      {(panel.IsPopup() ? "popup" : "")}");
+		panel.GetClipRect(out int x0, out int y0, out int x1, out int y1);
+		ConMsg($" cliprect [{x0}, {y0}, {x1}, {y1}]");
+		ConMsg($" {(panel.IsPopup() ? "popup" : "")}");
 		ConMsg($" {(panel.IsKeyboardInputEnabled() ? "kb" : "")}");
 		ConMsg($" {(panel.IsMouseInputEnabled() ? "mouse" : "")}");
 		ConMsg($" {(panel.IsEnabled() ? "enabled" : "")}");
 		ConMsg($" {(panel.IsVisible() ? "visible" : "")}");
 		ConMsg($" {(panel.IsFullyVisible() ? "fullvis" : "")}");
+
 		ConMsg("\n");
 
 		int children = panel.GetChildCount();

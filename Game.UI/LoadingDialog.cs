@@ -136,6 +136,9 @@ public class LoadingDialog : Frame
 		CancelButton.GetPos(out int buttonX, out int buttonY);
 		CancelButton.SetPos(buttonX, tall + y + 6);
 		CancelButton.RequestFocus();
+
+		InfoLabel.InvalidateLayout();
+		SetSizeable(true);
 	}
 
 	private void SetupControlSettingsForErrorDisplay(ReadOnlySpan<char> settingsFile) {

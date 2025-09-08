@@ -1242,6 +1242,13 @@ public class Panel : IPanel
 		}
 
 		if (repaint) {
+			// Simple bounds painting. Should be a convar but requires vgui_drawtree impl
+			// Surface.PushMakeCurrent(this, false);
+			// GetSize(out int w, out int h);
+			// Surface.DrawSetColor(255, 255, 255, 255);
+			// Surface.DrawOutlinedRect(0, 0, w, h);
+			// Surface.PopMakeCurrent(this);
+
 			if (Flags.HasFlag(PanelFlags.PaintBackgroundEnabled)) {
 				Surface.PushMakeCurrent(this, false);
 				PaintBackground();
@@ -1285,6 +1292,7 @@ public class Panel : IPanel
 				Surface.PopMakeCurrent(this);
 			}
 		}
+
 
 		Surface.DrawSetAlphaMultiplier(oldAlphaMultiplier);
 
@@ -1656,7 +1664,7 @@ public class Panel : IPanel
 			}
 
 			if (ClipRectH > pclipH) {
-				ClipRectH = (short)(pclipH - pclipH);
+				ClipRectH = (short)(pclipH - pinsetH);
 			}
 
 			if (ClipRectX > ClipRectW) {
