@@ -36,15 +36,15 @@ public class FrameSystemButton : MenuButton
 public class GripPanel : Panel
 {
 	public const int DEFAULT_SNAP_RANGE = 10;
-	Frame Frame;
-	bool Dragging;
-	int DragMultX;
-	int DragMultY;
-	readonly int[] DragOrgPos = new int[2];
-	readonly int[] DragOrgSize = new int[2];
-	readonly int[] DragStart = new int[2];
-	IFont? MarlettFont;
-	int SnapRange;
+	protected Frame Frame;
+	protected bool Dragging;
+	protected int DragMultX;
+	protected int DragMultY;
+	protected readonly int[] DragOrgPos = new int[2];
+	protected readonly int[] DragOrgSize = new int[2];
+	protected readonly int[] DragStart = new int[2];
+	protected IFont? MarlettFont;
+	protected int SnapRange;
 
 	public GripPanel(Frame dragFrame, ReadOnlySpan<char> name, int xdir, int ydir) : base(dragFrame, new(name)) {
 		Frame = dragFrame;
@@ -89,12 +89,12 @@ public class GripPanel : Panel
 			Input.SetMouseCapture(this);
 
 			IPanel? focus = Input.GetFocus();
-			if (focus == null || !focus.HasParent(Frame)) 
+			if (focus == null || !focus.HasParent(Frame))
 				Frame.RequestFocus();
-			
+
 			Frame.Repaint();
 		}
-		else 
+		else
 			GetParent()!.OnMousePressed(code);
 	}
 	public override void OnMouseCaptureLost() {
@@ -124,16 +124,16 @@ public class GripPanel : Panel
 		Frame.GetMinimumSize(out int minWide, out int minTall);
 
 		newWide += (dx * DragMultX);
-		if (DragMultX == -1) 
-			if (newWide < minWide) 
+		if (DragMultX == -1)
+			if (newWide < minWide)
 				dx = DragOrgSize[0] - minWide;
-		
+
 
 		newTall += (dy * DragMultY);
 		if (DragMultY == -1) {
-			if (newTall < minTall) 
+			if (newTall < minTall)
 				dy = DragOrgSize[1] - minTall;
-			
+
 			newY += dy;
 		}
 
@@ -145,7 +145,7 @@ public class GripPanel : Panel
 
 			Surface.GetScreenSize(out int sx, out int sy);
 
-			Frame.GetSize(out int w,  out int h);
+			Frame.GetSize(out int w, out int h);
 			if (newX + w > sx) {
 				newX = sx - w;
 			}
@@ -168,7 +168,7 @@ public class GripPanel : Panel
 		SetBgColor(GetSchemeColor("FrameGrip.Color2", scheme));
 
 		ReadOnlySpan<char> snapRange = scheme.GetResourceString("Frame.AutoSnapRange");
-		if (snapRange != null && snapRange.Length > 0) 
+		if (snapRange != null && snapRange.Length > 0)
 			SnapRange = int.TryParse(snapRange, out int r) ? r : 0;
 	}
 }
@@ -177,9 +177,149 @@ public class CaptionGripPanel : GripPanel
 {
 	public const int CAPTION_TITLE_BORDER = 7;
 	public const int CAPTION_TITLE_BORDER_SMALL = 0;
-
+	
 	public CaptionGripPanel(Frame dragFrame, ReadOnlySpan<char> name) : base(dragFrame, name, 0, 0) {
+		Frame = dragFrame;
+	}
 
+	protected override void Moved(int dx, int dy) {
+		if (!Frame.IsMoveable())
+			return;
+
+		int newX = DragOrgPos[0] + dx;
+		int newY = DragOrgPos[1] + dy;
+
+		if (SnapRange != 0) {
+			Surface.GetWorkspaceBounds(out int wx, out int wy, out int ww, out int wt);
+			GetInsideSnapPosition(wx, wy, ww, wt, ref newX, ref newY);
+
+			IPanel root = Surface.GetEmbeddedPanel();
+			for (int i = 0; i < root.GetChildCount(); ++i) {
+				IPanel child = root.GetChild(i);
+				TryToDock(child, ref newX, ref newY);
+			}
+		}
+
+		if (Frame.GetClipToParent()) {
+			if (newX < 0)
+				newX = 0;
+			if (newY < 0)
+				newY = 0;
+
+			Surface.GetScreenSize(out int sx, out int sy);
+
+			((IPanel)Frame).GetSize(out int w, out int h);
+			if (newX + w > sx) {
+				newX = sx - w;
+			}
+			if (newY + h > sy) {
+				newY = sy - h;
+			}
+		}
+
+		((IPanel)Frame).SetPos(newX, newY);
+
+	}
+
+	void TryToDock(IPanel window, ref int newX, ref int newY) {
+		if (window == Frame)
+			return;
+
+		if (window.IsVisible() && window.IsPopup()) {
+			window.GetAbsPos(out int cx, out int cy);
+			window.GetSize(out int cw, out int ct);
+			bool snapped = GetOutsideSnapPosition(cx, cy, cw, ct, ref newX, ref newY);
+			if (snapped)
+				return;
+		}
+
+		for (int i = 0; i < window.GetChildCount(); ++i) {
+			IPanel child = window.GetChild(i);
+			TryToDock(child, ref newX, ref newY);
+		}
+
+	}
+	bool GetInsideSnapPosition(int boundX, int boundY, int boundWide, int boundTall, ref int snapToX, ref int snapToY) {
+		Frame.GetSize(out int wide, out int tall);
+		Assert(wide > 0);
+		Assert(tall > 0);
+
+		bool snapped = false;
+		if (Math.Abs(snapToX - boundX) < SnapRange) {
+			snapToX = boundX;
+			snapped = true;
+		}
+		else if (Math.Abs((snapToX + wide) - (boundX + boundWide)) < SnapRange) {
+			snapToX = boundX + boundWide - wide;
+			snapped = true;
+		}
+
+		if (Math.Abs(snapToY - boundY) < SnapRange) {
+			snapToY = boundY;
+			snapped = true;
+		}
+		else if (Math.Abs((snapToY + tall) - (boundY + boundTall)) < SnapRange) {
+			snapToY = boundY + boundTall - tall;
+			snapped = true;
+		}
+		return snapped;
+
+	}
+	bool GetOutsideSnapPosition(int left, int top, int boundWide, int boundTall, ref int snapToX, ref int snapToY) {
+		Assert(boundWide >= 0);
+		Assert(boundTall >= 0);
+
+		bool snapped = false;
+
+		int right = left + boundWide;
+		int bottom = top + boundTall;
+
+		Frame.GetSize(out int wide, out int tall);
+		Assert(wide > 0);
+		Assert(tall > 0);
+
+		bool horizSnappable = ((snapToY > top) && (snapToY < bottom)) 
+						   || ((snapToY + tall > top) && (snapToY + tall < bottom)) 
+						   || ((snapToY < top) && (snapToY + tall > bottom));
+
+
+		bool vertSnappable = ((snapToX > left) && (snapToX < right)) 
+						  || ((snapToX + wide > left) && (snapToX + wide < right)) 
+						  || ((snapToX < left) && (snapToX + wide > right));
+
+		if (!(horizSnappable || vertSnappable))
+			return false;
+
+		if ((snapToX <= (right + SnapRange)) &&
+			(snapToX >= (right - SnapRange))) {
+			if (horizSnappable) {
+				snapped = true;
+				snapToX = right;
+			}
+		}
+		else if ((snapToX + wide) >= (left - SnapRange) &&
+			(snapToX + wide) <= (left + SnapRange)) {
+			if (horizSnappable) {
+				snapped = true;
+				snapToX = left - wide;
+			}
+		}
+
+		if ((snapToY <= (bottom + SnapRange)) &&
+			(snapToY >= (bottom - SnapRange))) {
+			if (vertSnappable) {
+				snapped = true;
+				snapToY = bottom;
+			}
+		}
+		else if ((snapToY + tall) <= (top + SnapRange) &&
+			(snapToY + tall) >= (top - SnapRange)) {
+			if (vertSnappable) {
+				snapped = true;
+				snapToY = top - tall;
+			}
+		}
+		return snapped;
 	}
 }
 
