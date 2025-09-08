@@ -586,7 +586,7 @@ public unsafe class bf_read : BitBuffer
 			writeTarget[iChar++] = val;
 		}
 
-		return Encoding.ASCII.GetString(writeTarget);
+		return Encoding.ASCII.GetString(writeTarget[..iChar]);
 	}
 
 	public void ExciseBits(int startbit, int bitstoremove) {

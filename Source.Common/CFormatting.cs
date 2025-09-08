@@ -242,7 +242,7 @@ public static class CFormatting
 	/// <br/>
 	/// 1. Determines the null terminator of <paramref name="str"/>
 	/// <br/>
-	/// 2. Determines the maximum length (<paramref name="target"/>.Length - 1, <paramref name="str"/>.Length)
+	/// 2. Determines the maximum length (<paramref name="target"/>.Length, <paramref name="str"/>.Length)
 	/// <br/>
 	/// 3. Copies str[..maxLen] to target fully
 	/// <br/>
@@ -255,9 +255,10 @@ public static class CFormatting
 	/// <returns></returns>
 	public static int strcpy(Span<char> target, ReadOnlySpan<char> str) {
 		str = str.SliceNullTerminatedString();
-		int len = Math.Min(target.Length - 1, str.Length);
+		int len = Math.Min(target.Length, str.Length);
 		str[..len].CopyTo(target);
-		target[len] = '\0';
+		if (target.Length < len)
+			target[len] = '\0';
 		return len;
 	}
 	public static unsafe int sprintf(Span<char> target, ReadOnlySpan<char> format, params object?[] args) {
