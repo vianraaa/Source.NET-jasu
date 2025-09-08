@@ -812,7 +812,46 @@ public class RichText : Panel
 	}
 
 	private void LayoutVerticalScrollBarSlider() {
+		InvalidateVerticalScrollbarSlider = false;
 
+		int previousValue = VertScrollBar.GetValue();
+		bool bCurrentlyAtEnd = false;
+		VertScrollBar.GetRange(out int rmin, out int rmax);
+		if (rmax != 0 && (previousValue + rmin + VertScrollBar.GetRangeWindow() == rmax))
+			bCurrentlyAtEnd = true;
+		
+		GetSize(out int wide, out int tall);
+
+		VertScrollBar.SetPos(wide - VertScrollBar.GetWide(), 0);
+		VertScrollBar.SetSize(VertScrollBar.GetWide(), tall);
+
+		int displayLines = tall / (GetLineHeight() + DrawOffsetY);
+		int numLines = LineBreaks.Count;
+
+		if (numLines <= displayLines) {
+			VertScrollBar.SetEnabled(false);
+			VertScrollBar.SetRange(0, numLines);
+			VertScrollBar.SetRangeWindow(numLines);
+			VertScrollBar.SetValue(0);
+
+			if (UnusedScrollbarInvis) 
+				SetVerticalScrollbar(false);
+		}
+		else {
+			if (UnusedScrollbarInvis) 
+				SetVerticalScrollbar(true);
+
+			VertScrollBar.SetRange(0, numLines);
+			VertScrollBar.SetRangeWindow(displayLines);
+			VertScrollBar.SetEnabled(true);
+
+			VertScrollBar.SetButtonPressedScrollValue(1);
+			if (bCurrentlyAtEnd) 
+				VertScrollBar.SetValue(numLines - displayLines);
+			
+			VertScrollBar.InvalidateLayout();
+			VertScrollBar.Repaint();
+		}
 	}
 
 	internal void InsertString(ReadOnlySpan<char> text) {

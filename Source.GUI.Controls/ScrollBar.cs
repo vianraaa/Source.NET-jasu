@@ -238,9 +238,9 @@ public class ScrollBar : Panel
 		}
 	}
 
-	private bool IsVertical() => Slider!.IsVertical();
-	private ScrollBarSlider? GetSlider() => Slider;
-	private int GetRangeWindow() => Slider!.GetRangeWindow();
+	public bool IsVertical() => Slider!.IsVertical();
+	public ScrollBarSlider? GetSlider() => Slider;
+	public int GetRangeWindow() => Slider!.GetRangeWindow();
 
 	private void Validate() {
 		if (Slider != null) {
@@ -264,13 +264,13 @@ public class ScrollBar : Panel
 		}
 	}
 
-	private void SetButtonPressedScrollValue(int value) => ButtonPressedScrollValue = value;
+	public void SetButtonPressedScrollValue(int value) => ButtonPressedScrollValue = value;
 
 	public int GetValue() => Slider!.GetValue();
 	public void SetValue(int val) => Slider!.SetValue(val);
 	public void SetRange(int min, int max) => Slider!.SetRange(min, max);
 
-	internal void GetRange(out int min, out int max) {
-		min = max = 0; // todo
-	}
+	public void GetRange(out int min, out int max) => Slider!.GetRange(out min, out max);
+
+	public void SetRangeWindow(int range) => Slider!.SetRangeWindow(range);
 }

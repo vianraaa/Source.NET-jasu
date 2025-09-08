@@ -84,4 +84,11 @@ public class ScrollBarSlider : Panel
 		Range[0] = min;
 		Range[1] = max;
 	}
+
+	public void GetRange(out int min, out int max) {
+		min = Range[0];
+		max = Range[1];
+	}
+
+	public void SetRangeWindow(int range) => RangeWindow = range;
 }
