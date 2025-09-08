@@ -24,6 +24,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	Frustum Frustum;
 
 	IRenderView render;
+	Base3dView? ActiveRenderer;
 
 	public int BuildWorldListsNumber() {
 		throw new NotImplementedException();
@@ -45,9 +46,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		throw new NotImplementedException();
 	}
 
-	public Frustum GetFrustum() {
-		throw new NotImplementedException();
-	}
+	public Frustum GetFrustum() => ActiveRenderer?.GetFrustrum() ?? Frustum;
 
 	public ref ViewSetup GetPlayerViewSetup() {
 		throw new NotImplementedException();

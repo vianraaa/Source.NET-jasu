@@ -22,6 +22,13 @@ public enum StereoEye
 	Max = 3,
 }
 
+public class Base3dView {
+	protected ViewSetup setup;
+	public Frustum GetFrustrum() {
+		throw new NotImplementedException();
+	}
+}
+
 public struct ViewSetup
 {
 	public int X;
