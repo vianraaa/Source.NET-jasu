@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Game.Client;
 
-public class ViewRender(IMaterialSystem materials, IServiceProvider services) : IViewRender
+public class ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) : IViewRender
 {
 	public ViewSetup? CurrentView;
 	bool ForceNoVis;

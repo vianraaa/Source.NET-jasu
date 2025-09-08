@@ -208,6 +208,7 @@ public interface IMatRenderContext
 	void Ortho(double left, double top, double right, double bottom, double near, double far);
 	void PushRenderTargetAndViewport(ITexture? thisTexture);
 	void PopRenderTargetAndViewport();
+	void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -253,4 +254,7 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public void Ortho(double left, double top, double right, double bottom, double near, double far) => ctx.Ortho(left, top, right, bottom, near, far);
 	public void PushRenderTargetAndViewport(ITexture? thisTexture) => ctx.PushRenderTargetAndViewport(thisTexture);
 	public void PopRenderTargetAndViewport() => ctx.PopRenderTargetAndViewport();
+
+	public void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height)
+		=> ctx.PushRenderTargetAndViewport(renderTarget, x, y, width, height);
 }

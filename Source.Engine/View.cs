@@ -43,17 +43,18 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 }
 
 
-public class RenderView : IRenderView
+public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderView
 {
-	public void PopView(Frustum frustumPlanes) {
+	public virtual void Push2DView(ViewSetup view, ClearFlags flags, ITexture? renderTarget, Frustum frustumPlanes) {
+		engineRenderer.Push2DView(in view, flags, renderTarget, frustumPlanes);
+	}
+
+	public virtual void PopView(Frustum frustumPlanes) {
 		throw new NotImplementedException();
 	}
 
-	public void Push2DView(ViewSetup view, int flags, ITexture? renderTarget, Frustum frustumPlanes) {
-		throw new NotImplementedException();
-	}
 
-	public void VGui_Paint(PaintMode mode) {
-		throw new NotImplementedException();
+	public virtual void VGui_Paint(PaintMode mode) {
+		EngineVGui.Paint(mode);
 	}
 }

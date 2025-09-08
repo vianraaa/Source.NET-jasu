@@ -360,6 +360,11 @@ public class MatRenderContext : IMatRenderContextInternal
 		}
 	}
 
+	public void PushRenderTargetAndViewport(ITexture? thisTexture, int x, int y, int w, int h) {
+		RenderTargetStackElement element = new(thisTexture, x, y, w, h);
+		RenderTargetStack.Push(element);
+		CommitRenderTargetAndViewport();
+	}
 	public void PushRenderTargetAndViewport(ITexture? thisTexture) {
 		RenderTargetStackElement element = new(thisTexture, 0, 0, -1, -1);
 		RenderTargetStack.Push(element);
