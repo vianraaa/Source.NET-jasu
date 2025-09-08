@@ -41,7 +41,7 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : I
 
 	public bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo) {
 		playerIndex--;
-		if (playerIndex >= cl.MaxClients || playerIndex <= 0) {
+		if (playerIndex >= cl.MaxClients || playerIndex < 0) {
 			playerInfo = new();
 			return false;
 		}
