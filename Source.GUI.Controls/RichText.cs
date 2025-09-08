@@ -4,6 +4,7 @@ using CommunityToolkit.HighPerformance;
 using Source.Common.Engine;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.Common.Utilities;
 
 using System.Collections.Generic;
 
@@ -854,11 +855,11 @@ public class RichText : Panel
 		}
 	}
 
-	internal void InsertString(ReadOnlySpan<char> text) {
-		if (text.Length > 0 && text[0] == '#') {
+	internal void InsertString(ReadOnlySpan<char> text, bool doLocalize = true) {
+		if (doLocalize && text.Length > 0 && text[0] == '#') {
 			Span<char> unicode = stackalloc char[1024];
 			ResolveLocalizedTextAndVariables(text, unicode);
-			InsertString(unicode);
+			InsertString(unicode, false); // If localizing, and we fail to resolve localized text, this will stack overflow
 			return;
 		}
 
@@ -916,10 +917,12 @@ public class RichText : Panel
 		if (lookup[0] == '#') {
 			ulong index = Localize.FindIndex(lookup[1..]);
 
-			if (index != ulong.MaxValue) {
+			if (index != UtlSymbol.UTL_INVAL_SYMBOL) {
 				ReadOnlySpan<char> localized = Localize.GetValueByIndex(index);
-				localized.CopyTo(outbuf);
-				return outbuf;
+				if (localized.Length > 0) {
+					localized.CopyTo(outbuf);
+					return outbuf;
+				}
 			}
 		}
 		lookup.CopyTo(outbuf);
