@@ -7,6 +7,13 @@ using System.Numerics;
 
 namespace Source.Common.Client;
 
+public enum RenderViewInfo
+{
+	Unspecified = 0,
+	DrawViewmodel = 1 << 0,
+	DrawHUD = 1 << 1,
+	SuppressMonitorRendering = 1 << 2
+}
 public enum DrawFlags
 {
 	RenderRefraction = 0x1,
@@ -41,7 +48,7 @@ public interface IViewRender
 	void Shutdown();
 	void OnRenderStart();
 	void Render(ViewRects rect);
-	void RenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw);
+	void RenderView(ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw);
 	DrawFlags GetDrawFlags();
 	void StartPitchDrift();
 	void StopPitchDrift();

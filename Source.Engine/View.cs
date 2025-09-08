@@ -39,3 +39,8 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 		}
 	}
 }
+
+
+public class RenderView : IRenderView {
+
+}

@@ -1,9 +1,12 @@
-﻿using Source.Common;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
+using Source.Engine;
 
 using System;
 using System.Collections.Generic;
@@ -13,12 +16,14 @@ using System.Threading.Tasks;
 
 namespace Game.Client;
 
-public class ViewRender : IViewRender
+public class ViewRender(IMaterialSystem materials, IServiceProvider services) : IViewRender
 {
 	public ViewSetup? CurrentView;
 	bool ForceNoVis;
 	DrawFlags BaseDrawFlags;
 	Frustum Frustum;
+
+	IRenderView render;
 
 	public int BuildWorldListsNumber() {
 		throw new NotImplementedException();
@@ -73,7 +78,7 @@ public class ViewRender : IViewRender
 	}
 
 	public void Init() {
-
+		render = services.GetRequiredService<IRenderView>();
 	}
 
 	public void LevelInit() {
@@ -92,12 +97,24 @@ public class ViewRender : IViewRender
 		throw new NotImplementedException();
 	}
 
+	readonly ViewSetup view2D = new();
+
 	public void Render(ViewRects rect) {
-		throw new NotImplementedException();
+		using MatRenderContextPtr renderContext = new(materials);
+
+
+		view2D.X = rect[0].X;
+		view2D.Y = rect[0].Y;
+		view2D.Width = rect[0].Width;
+		view2D.Height = rect[0].Height;
+
+		render.Push2DView(view2D, 0, null, GetFrustum());
+		render.VGui_Paint(PaintMode.UIPanels | PaintMode.Cursor);
+		render.PopView(GetFrustum());
 	}
 
-	public void RenderView(ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw) {
-		throw new NotImplementedException();
+	public void RenderView(ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
+
 	}
 
 	public void SetCheapWaterEndDistance(float cheapWaterEndDistance) {

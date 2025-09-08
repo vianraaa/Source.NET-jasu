@@ -24,7 +24,7 @@ public class VideoMode_Common(Sys Sys, IServiceProvider services, IFileSystem fi
 {
 	VMode mode = new();
 	bool Windowed;
-	bool ClientViewRectDirty;
+	bool ClientViewRectDirty = true;
 	int ModeWidth;
 	int ModeHeight;
 	int ModeBPP;
@@ -98,6 +98,7 @@ public class VideoMode_Common(Sys Sys, IServiceProvider services, IFileSystem fi
 
 		game.SetWindowSize(width, height);
 		launcherMgr.CenterWindow(windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top);
+		MarkClientViewRectDirty();
 	}
 
 	public void MarkClientViewRectDirty() => ClientViewRectDirty = true;
