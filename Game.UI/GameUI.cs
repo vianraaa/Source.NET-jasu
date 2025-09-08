@@ -201,7 +201,8 @@ public class GameUI(IEngineClient engine) : IGameUI
 	}
 
 	public bool IsInLevel() {
-		return false; // TODO...
+		ReadOnlySpan<char> levelName = engine.GetLevelName();
+		return levelName != null && levelName.Length > 0 && !engine.IsLevelMainMenuBackground();
 	}
 
 	public bool IsInReplay() {
