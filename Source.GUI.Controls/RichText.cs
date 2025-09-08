@@ -858,8 +858,8 @@ public class RichText : Panel
 	internal void InsertString(ReadOnlySpan<char> text, bool doLocalize = true) {
 		if (doLocalize && text.Length > 0 && text[0] == '#') {
 			Span<char> unicode = stackalloc char[1024];
-			ResolveLocalizedTextAndVariables(text, unicode);
-			InsertString(unicode, false); // If localizing, and we fail to resolve localized text, this will stack overflow
+			ReadOnlySpan<char> unicodeInput = ResolveLocalizedTextAndVariables(text, unicode);
+			InsertString(unicodeInput, false); // If localizing, and we fail to resolve localized text, this will stack overflow
 			return;
 		}
 
@@ -921,12 +921,13 @@ public class RichText : Panel
 				ReadOnlySpan<char> localized = Localize.GetValueByIndex(index);
 				if (localized.Length > 0) {
 					localized.CopyTo(outbuf);
-					return outbuf;
+					return outbuf[..localized.Length];
 				}
 			}
 		}
+
 		lookup.CopyTo(outbuf);
 
-		return outbuf;
+		return outbuf[..lookup.Length];
 	}
 }
