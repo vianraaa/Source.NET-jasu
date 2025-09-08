@@ -551,7 +551,30 @@ public class Frame : EditablePanel
 	}
 
 	private void SetupResizeCursors() {
-
+		if (IsSizeable()) {
+			TopGrip?.SetCursor(CursorCode.SizeNS);
+			BottomGrip?.SetCursor(CursorCode.SizeNS);
+			LeftGrip?.SetCursor(CursorCode.SizeWE);
+			RightGrip?.SetCursor(CursorCode.SizeWE);
+			TopLeftGrip?.SetCursor(CursorCode.SizeNWSE);
+			TopRightGrip?.SetCursor(CursorCode.SizeNESW);
+			BottomLeftGrip?.SetCursor(CursorCode.SizeNESW);
+			BottomRightGrip?.SetCursor(CursorCode.SizeNWSE);
+			BottomRightGrip?.SetPaintEnabled(true);
+			BottomRightGrip?.SetPaintBackgroundEnabled(true);
+		}
+		else {
+			TopGrip?.SetCursor(CursorCode.Arrow);
+			BottomGrip?.SetCursor(CursorCode.Arrow);
+			LeftGrip?.SetCursor(CursorCode.Arrow);
+			RightGrip?.SetCursor(CursorCode.Arrow);
+			TopLeftGrip?.SetCursor(CursorCode.Arrow);
+			TopRightGrip?.SetCursor(CursorCode.Arrow);
+			BottomLeftGrip?.SetCursor(CursorCode.Arrow);
+			BottomRightGrip?.SetCursor(CursorCode.Arrow);
+			BottomRightGrip?.SetPaintEnabled(false);
+			BottomRightGrip?.SetPaintBackgroundEnabled(false);
+		}
 	}
 
 	public void SetMenuButtonResponsive(bool state) => MenuButton?.SetResponsive(state);
