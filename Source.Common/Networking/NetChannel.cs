@@ -427,7 +427,7 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 		PacketFlag flags = (PacketFlag)packet.Message.ReadByte();
 
-		//Debug.Assert(!flags.HasFlag(PacketFlag.Compressed));
+		// Debug.Assert((flags & PacketFlag.Compressed) == 0);
 
 		if (ShouldChecksumPackets()) {
 			ushort checksum = (ushort)packet.Message.ReadUBitLong(16);
@@ -451,10 +451,10 @@ public class NetChannel : INetChannelInfo, INetChannel
 		int choked = 0;
 		int i, j;
 
-		if (flags.HasFlag(PacketFlag.Choked))
+		if ((flags & PacketFlag.Choked) != 0)
 			choked = packet.Message.ReadByte();
 
-		if (flags.HasFlag(PacketFlag.Challenge)) {
+		if ((flags & PacketFlag.Challenge) != 0) {
 			uint challenge = (uint)packet.Message.ReadLong();
 			if (challenge != ChallengeNumber)
 				return PacketFlag.Invalid;
@@ -620,13 +620,13 @@ public class NetChannel : INetChannelInfo, INetChannel
 			return;
 		}
 
-		Debug.Assert(!flags.HasFlag(PacketFlag.Compressed));
+		Assert((flags & PacketFlag.Compressed) == 0);
 
 		LastReceived = Net.Time;
 
 		MessageHandler.PacketStart(InSequence, OutSequenceAck);
 
-		if (flags.HasFlag(PacketFlag.Reliable)) {
+		if ((flags & PacketFlag.Reliable) != 0) {
 			int i = 0;
 			int bit = 1 << (int)msg.ReadUBitLong(3);
 

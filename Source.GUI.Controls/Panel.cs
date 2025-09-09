@@ -609,27 +609,27 @@ public class Panel : IPanel
 			}
 
 			float flWide = float.TryParse(str, out float __r) ? __r : 0;
-			if (!buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) 
+			if (0 == (buildFlags & BuildModeFlags.SaveWideProportionalTall)) 
 				wide = int.TryParse(str, out int __r2) ? __r2 : 0;
 			
 
-			if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalTall)) {
+			if (0 != (buildFlags & BuildModeFlags.SaveWideProportionalTall)) {
 				wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
 				wide = (int)(wide * flWide);
 			}
-			else if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportional)) {
+			else if (0 != (buildFlags & BuildModeFlags.SaveWideProportional)) {
 				wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
 				wide = parentWide - wide;
 				wide = (int)(wide * flWide);
 			}
-			else if (buildFlags.HasFlag(BuildModeFlags.SaveWideProportionalSelf)) {
+			else if (0 != (buildFlags & BuildModeFlags.SaveWideProportionalSelf)) {
 				wide = (int)(panel.GetWide() * flWide);
 			}
 			else {
 				if (panel.IsProportional())
 					wide = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, wide);
 
-				if (buildFlags.HasFlag(BuildModeFlags.SaveWideFull))
+				if (0 != (buildFlags & BuildModeFlags.SaveWideFull))
 					wide = parentWide - wide;
 			}
 		}
@@ -669,26 +669,26 @@ public class Panel : IPanel
 			}
 
 			float flTall = float.TryParse(str, out float __r) ? __r : 0;
-			if (!buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) 
+			if (0 == (buildFlags & BuildModeFlags.SaveTallProportionalWide)) 
 				tall = int.TryParse(str, out int __r2) ? __r2 : 0;
 			
-			if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalWide)) {
+			if (0 != (buildFlags & BuildModeFlags.SaveTallProportionalWide)) {
 				tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
 				tall = (int)(tall * flTall);
 			}
-			else if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportional)) {
+			else if (0 != (buildFlags & BuildModeFlags.SaveTallProportional)) {
 				tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
 				tall = parentTall - tall;
 				tall = (int)(tall * flTall);
 			}
-			else if (buildFlags.HasFlag(BuildModeFlags.SaveTallProportionalSelf)) {
+			else if (0 != (buildFlags & BuildModeFlags.SaveTallProportionalSelf)) {
 				tall = (int)(panel.GetTall() * flTall);
 			}
 			else {
 				if (panel.IsProportional()) 
 					tall = panel.SchemeManager.GetProportionalScaledValueEx(panel.GetScheme()!, tall);
 			
-				if (buildFlags.HasFlag(BuildModeFlags.SaveTallFull) )
+				if (0 != (buildFlags & BuildModeFlags.SaveTallFull) )
 					tall = parentTall - tall;
 			}
 		}
@@ -732,16 +732,16 @@ public class Panel : IPanel
 				flProportion = (float)newPos / nOldPos;
 			}
 
-			if (flags.HasFlag(flagProportionalSelf))
+			if (0 != (flags & flagProportionalSelf))
 				posDelta = (int)(size * flPos);
-			else if (flags.HasFlag(flagProportionalParent))
+			else if (0 != (flags & flagProportionalParent))
 				posDelta = (int)(parentSize * flPos);
 			else
 				posDelta = newPos;
 
-			if (flags.HasFlag(flagRightAlign))
+			if (0 != (flags & flagRightAlign))
 				newPos = parentSize - posDelta;
-			else if (flags.HasFlag(nFlagCenterAlign))
+			else if (0 != (flags & nFlagCenterAlign))
 				newPos = (parentSize / 2) + posDelta;
 			else
 				newPos = posDelta;
@@ -781,7 +781,7 @@ public class Panel : IPanel
 	}
 
 	public virtual void ApplySettings(KeyValues resourceData) {
-		if (Flags.HasFlag(PanelFlags.NeedsDefaultSettingsApplied))
+		if (0 != (Flags & PanelFlags.NeedsDefaultSettingsApplied))
 			InternalInitDefaultValues(GetAnimMap());
 
 		InternalApplySettings(GetAnimMap(), resourceData);
@@ -850,7 +850,7 @@ public class Panel : IPanel
 			SetZPos(resourceData.GetInt("zpos"));
 
 		if (usesTitleSafeArea) {
-			if (BuildModeFlags.HasFlag(BuildModeFlags.SaveWideFull)) {
+			if (0 != (BuildModeFlags & BuildModeFlags.SaveWideFull)) {
 				if (excludeEdgeFromTitleSafe.X == 0)
 					wide -= titleSafeWide;
 
@@ -858,7 +858,7 @@ public class Panel : IPanel
 					wide -= titleSafeWide;
 			}
 
-			if (BuildModeFlags.HasFlag(BuildModeFlags.SaveTallFull)) {
+			if (0 != (BuildModeFlags & BuildModeFlags.SaveTallFull)) {
 				if (excludeEdgeFromTitleSafe.Y == 0)
 					tall -= titleSafeTall;
 
@@ -1036,7 +1036,7 @@ public class Panel : IPanel
 	}
 
 	public void SetProportional(bool state) {
-		if (state != Flags.HasFlag(PanelFlags.IsProportional)) {
+		if (state != ((Flags & PanelFlags.IsProportional) != 0)) {
 			Flags |= PanelFlags.IsProportional;
 			for (int i = 0; i < GetChildCount(); i++) {
 				GetChild(i).SetProportional(IsProportional());
@@ -1203,7 +1203,7 @@ public class Panel : IPanel
 	}
 
 	private void InternalPerformLayout() {
-		if (Flags.HasFlag(PanelFlags.NeedsSchemeUpdate))
+		if (0 != (Flags & PanelFlags.NeedsSchemeUpdate))
 			return;
 
 		Flags |= PanelFlags.InPerformLayout;
@@ -1224,7 +1224,7 @@ public class Panel : IPanel
 		float oldAlphaMultiplier = Surface.DrawGetAlphaMultiplier();
 		float newAlphaMultiplier = oldAlphaMultiplier * Alpha * 1.0f / 255.0f;
 
-		if (!repaint && allowForce && Flags.HasFlag(PanelFlags.NeedsRepaint)) {
+		if (!repaint && allowForce && 0 != (Flags & PanelFlags.NeedsRepaint)) {
 			repaint = true;
 			Flags &= ~PanelFlags.NeedsRepaint;
 		}
@@ -1240,7 +1240,7 @@ public class Panel : IPanel
 
 		bool bBorderPaintFirst = Border != null ? Border.PaintFirst() : false;
 
-		if (bBorderPaintFirst && repaint && Flags.HasFlag(PanelFlags.PaintBorderEnabled) && (Border != null)) {
+		if (bBorderPaintFirst && repaint && (Flags &PanelFlags.PaintBorderEnabled) != 0 && (Border != null)) {
 			Surface.PushMakeCurrent(this, false);
 			PaintBorder();
 			Surface.PopMakeCurrent(this);
@@ -1254,13 +1254,13 @@ public class Panel : IPanel
 			// Surface.DrawOutlinedRect(0, 0, w, h);
 			// Surface.PopMakeCurrent(this);
 
-			if (Flags.HasFlag(PanelFlags.PaintBackgroundEnabled)) {
+			if (0 != (Flags & PanelFlags.PaintBackgroundEnabled)) {
 				Surface.PushMakeCurrent(this, false);
 				PaintBackground();
 				Surface.PopMakeCurrent(this);
 			}
 
-			if (Flags.HasFlag(PanelFlags.PaintEnabled)) {
+			if (0 != (Flags & PanelFlags.PaintEnabled)) {
 				Surface.PushMakeCurrent(this, true);
 				Paint();
 				Surface.PopMakeCurrent(this);
@@ -1285,13 +1285,13 @@ public class Panel : IPanel
 		}
 
 		if (repaint) {
-			if (!bBorderPaintFirst && Flags.HasFlag(PanelFlags.PaintBorderEnabled) && (Border != null)) {
+			if (!bBorderPaintFirst && 0 != (Flags & PanelFlags.PaintBorderEnabled) && (Border != null)) {
 				Surface.PushMakeCurrent(this, false);
 				PaintBorder();
 				Surface.PopMakeCurrent(this);
 			}
 
-			if (Flags.HasFlag(PanelFlags.PostChildPaintEnabled)) {
+			if (0 != (Flags & PanelFlags.PostChildPaintEnabled)) {
 				Surface.PushMakeCurrent(this, false);
 				PostChildPaint();
 				Surface.PopMakeCurrent(this);
@@ -1445,11 +1445,11 @@ public class Panel : IPanel
 	}
 
 	public void PerformApplySchemeSettings() {
-		if (Flags.HasFlag(PanelFlags.NeedsDefaultSettingsApplied)) {
+		if (0 != (Flags & PanelFlags.NeedsDefaultSettingsApplied)) {
 			// InternalInitDefaultValues(GetAnimMap());
 		}
 
-		if (Flags.HasFlag(PanelFlags.NeedsSchemeUpdate)) {
+		if (0 != (Flags & PanelFlags.NeedsSchemeUpdate)) {
 			IScheme? scheme = GetScheme();
 			Assert(scheme != null);
 			if (scheme != null) {
@@ -1762,9 +1762,9 @@ public class Panel : IPanel
 
 	}
 
-	public bool IsMarkedForDeletion() => Flags.HasFlag(PanelFlags.MarkedForDeletion);
+	public bool IsMarkedForDeletion() => (Flags & PanelFlags.MarkedForDeletion) != 0;
 	public void MarkForDeletion() {
-		if (Flags.HasFlag(PanelFlags.MarkedForDeletion))
+		if ((Flags & PanelFlags.MarkedForDeletion) != 0)
 			return;
 
 		Flags |= PanelFlags.MarkedForDeletion;
@@ -2200,7 +2200,7 @@ public class Panel : IPanel
 	}
 
 	public bool IsBuildModeEditable() => true;
-	public bool IsBuildModeDeletable() => BuildModeFlags.HasFlag(BuildModeFlags.Deletable);
+	public bool IsBuildModeDeletable() => 0 != (BuildModeFlags & BuildModeFlags.Deletable);
 
 	internal void SetBuildModeDeletable(bool state) {
 		if (state) BuildModeFlags |= BuildModeFlags.Deletable; else BuildModeFlags &= ~BuildModeFlags.Deletable;

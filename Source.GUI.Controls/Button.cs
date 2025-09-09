@@ -113,7 +113,7 @@ public class Button : Label
 	}
 
 	public override void PerformLayout() {
-		SetBorder(GetBorder(ButtonFlags.HasFlag(ButtonFlags.Depressed), ButtonFlags.HasFlag(ButtonFlags.Armed), ButtonFlags.HasFlag(ButtonFlags.Selected), HasFocus()));
+		SetBorder(GetBorder((ButtonFlags & ButtonFlags.Depressed) != 0, (ButtonFlags & ButtonFlags.Armed) != 0, (ButtonFlags & ButtonFlags.Selected) != 0, HasFocus()));
 
 		SetFgColor(GetButtonFgColor());
 		SetBgColor(GetButtonBgColor());
@@ -122,14 +122,14 @@ public class Button : Label
 	}
 
 	public virtual IBorder? GetBorder(bool depressed, bool armed, bool selected, bool keyfocus) {
-		if (ButtonFlags.HasFlag(ButtonFlags.ButtonBorderEnabled)) {
+		if (0 != (ButtonFlags & ButtonFlags.ButtonBorderEnabled)) {
 			if (depressed)
 				return DepressedBorder;
 
 			if (keyfocus)
 				return KeyFocusBorder;
 
-			if (IsEnabled() && ButtonFlags.HasFlag(ButtonFlags.DefaultButton))
+			if (IsEnabled() && 0 != (ButtonFlags & ButtonFlags.DefaultButton))
 				return KeyFocusBorder;
 
 			return DefaultBorder;
@@ -147,30 +147,30 @@ public class Button : Label
 
 
 	public Color GetButtonFgColor() {
-		if (!ButtonFlags.HasFlag(ButtonFlags.Blink)) {
-			if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+		if (0 == (ButtonFlags & ButtonFlags.Blink)) {
+			if (0 != (ButtonFlags & ButtonFlags.Depressed))
 				return DepressedFgColor;
-			if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+			if (0 != (ButtonFlags & ButtonFlags.Armed))
 				return ArmedFgColor;
-			if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+			if (0 != (ButtonFlags & ButtonFlags.Selected))
 				return SelectedFgColor;
 			return DefaultFgColor;
 		}
 
 		Color blended;
 
-		if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+		if (0 != (ButtonFlags & ButtonFlags.Depressed))
 			blended = DepressedFgColor;
-		else if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+		else if (0 != (ButtonFlags & ButtonFlags.Armed))
 			blended = ArmedFgColor;
-		else if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+		else if (0 != (ButtonFlags & ButtonFlags.Selected))
 			blended = SelectedFgColor;
 		else
 			blended = DefaultFgColor;
 
 		float fBlink = (MathF.Sin(System.GetTimeMillis() * 0.01f) + 1.0f) * 0.5f;
 
-		if (ButtonFlags.HasFlag(ButtonFlags.Blink)) {
+		if (0 != (ButtonFlags & ButtonFlags.Blink)) {
 			blended[0] = (byte)Math.Clamp(blended[0] * fBlink + (float)BlinkFgColor[0] * (1.0f - fBlink), 0, 255);
 			blended[1] = (byte)Math.Clamp(blended[1] * fBlink + (float)BlinkFgColor[1] * (1.0f - fBlink), 0, 255);
 			blended[2] = (byte)Math.Clamp(blended[2] * fBlink + (float)BlinkFgColor[2] * (1.0f - fBlink), 0, 255);
@@ -181,11 +181,11 @@ public class Button : Label
 	}
 
 	public Color GetButtonBgColor() {
-		if (ButtonFlags.HasFlag(ButtonFlags.Depressed))
+		if (0 != (ButtonFlags & ButtonFlags.Depressed))
 			return DepressedBgColor;
-		if (ButtonFlags.HasFlag(ButtonFlags.Armed))
+		if (0 != (ButtonFlags & ButtonFlags.Armed))
 			return ArmedBgColor;
-		if (ButtonFlags.HasFlag(ButtonFlags.Selected))
+		if (0 != (ButtonFlags & ButtonFlags.Selected))
 			return SelectedBgColor;
 		return DefaultBgColor;
 	}
@@ -232,7 +232,7 @@ public class Button : Label
 		if (!IsSelected() && ActivationType == ActivationType.OnPressedAndReleased)
 			return;
 
-		if (IsEnabled() && (this == Input.GetMouseOver() || ButtonFlags.HasFlag(ButtonFlags.ButtonKeyDown))) {
+		if (IsEnabled() && (this == Input.GetMouseOver() || (ButtonFlags & ButtonFlags.ButtonKeyDown) != 0)) {
 			DoClick();
 		}
 		else if (!StaySelectedOnClick) {
@@ -243,7 +243,7 @@ public class Button : Label
 	}
 
 	public void SetSelected(bool state) {
-		if (ButtonFlags.HasFlag(ButtonFlags.Selected) != state) {
+		if (((ButtonFlags & ButtonFlags.Selected) != 0) != state) {
 			if (state)
 				ButtonFlags |= ButtonFlags.Selected;
 			else
@@ -253,14 +253,14 @@ public class Button : Label
 			InvalidateLayout(false);
 		}
 
-		if (!StayArmedOnClick && state && ButtonFlags.HasFlag(ButtonFlags.Armed)) {
+		if (!StayArmedOnClick && state && (ButtonFlags & ButtonFlags.Armed) != 0) {
 			ButtonFlags &= ~ButtonFlags.Armed;
 			InvalidateLayout(false);
 		}
 	}
 
 	public bool IsSelected() {
-		return ButtonFlags.HasFlag(ButtonFlags.Selected);
+		return (ButtonFlags & ButtonFlags.Selected) != 0;
 	}
 
 	public bool IsMouseClickEnabled(ButtonCode code) {
@@ -289,12 +289,12 @@ public class Button : Label
 		if (!IsEnabled())
 			newState = false;
 		else {
-			if (StaySelectedOnClick && ButtonFlags.HasFlag(ButtonFlags.Selected)) {
+			if (StaySelectedOnClick && (ButtonFlags & ButtonFlags.Selected) != 0) {
 				newState = false;
 			}
 			else {
-				newState = ButtonFlags.HasFlag(ButtonFlags.Depressed)
-						 || (ButtonFlags.HasFlag(ButtonFlags.Armed) && ButtonFlags.HasFlag(ButtonFlags.Selected));
+				newState = (ButtonFlags & ButtonFlags.Depressed) != 0
+						 || (ButtonFlags&ButtonFlags.Armed) != 0 && (ButtonFlags &ButtonFlags.Selected) != 0;
 			}
 		}
 

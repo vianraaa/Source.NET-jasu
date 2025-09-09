@@ -320,9 +320,9 @@ public unsafe class bf_read : BitBuffer
 		ReadBitCoordMPFlags flags = (ReadBitCoordMPFlags)ReadUBitLong(3 - (bIntegral ? 1 : 0));
 
 		if (bIntegral) {
-			if (flags.HasFlag(ReadBitCoordMPFlags.INTVAL)) {
+			if ((flags & ReadBitCoordMPFlags.INTVAL) != 0) {
 				// Read the third bit and the integer portion together at once
-				uint tbits = ReadUBitLong(flags.HasFlag(ReadBitCoordMPFlags.INBOUNDS) ? COORD_INTEGER_BITS_MP + 1 : COORD_INTEGER_BITS + 1);
+				uint tbits = ReadUBitLong((flags & ReadBitCoordMPFlags.INBOUNDS) != 0 ? COORD_INTEGER_BITS_MP + 1 : COORD_INTEGER_BITS + 1);
 				// Remap from [0,N] to [1,N+1]
 				int intval = (int)(tbits >> 1) + 1;
 				return (tbits & 1) == 1 ? -intval : intval;
@@ -330,11 +330,11 @@ public unsafe class bf_read : BitBuffer
 			return 0f;
 		}
 
-		float multiply = ReadBitCoordMP_mul_table[(flags.HasFlag(ReadBitCoordMPFlags.SIGN) ? 1 : 0) + (bLowPrecision ? 1u : 0u) * 2];
+		float multiply = ReadBitCoordMP_mul_table[((flags & ReadBitCoordMPFlags.SIGN) != 0 ? 1 : 0) + (bLowPrecision ? 1u : 0u) * 2];
 
-		uint bits = ReadUBitLong(ReadBitCoordMP_numbits_table[(flags.HasFlag(ReadBitCoordMPFlags.INBOUNDS) || flags.HasFlag(ReadBitCoordMPFlags.INTVAL) ? 1u : 0u) + (bLowPrecision ? 1u : 0u) * 4]);
+		uint bits = ReadUBitLong(ReadBitCoordMP_numbits_table[((flags & ReadBitCoordMPFlags.INBOUNDS) != 0 || (flags & ReadBitCoordMPFlags.INTVAL) != 0 ? 1u : 0u) + (bLowPrecision ? 1u : 0u) * 4]);
 
-		if (flags.HasFlag(ReadBitCoordMPFlags.INTVAL)) {
+		if ((flags & ReadBitCoordMPFlags.INTVAL) != 0) {
 			// Shuffle the bits to remap the integer portion from [0,N] to [1,N+1]
 			// and then paste in front of the fractional parts so we only need one
 			// int-to-float conversion.
@@ -345,7 +345,7 @@ public unsafe class bf_read : BitBuffer
 			uint intmaskMP = (1 << (int)COORD_INTEGER_BITS_MP) - 1;
 			uint intmask = (1 << (int)COORD_INTEGER_BITS) - 1;
 
-			uint selectNotMP = (uint)((flags.HasFlag(ReadBitCoordMPFlags.INBOUNDS) ? 1 : 0) - 1);
+			uint selectNotMP = (uint)(((flags & ReadBitCoordMPFlags.INBOUNDS) != 0 ? 1 : 0) - 1);
 
 			fracbits -= fracbitsMP;
 			fracbits &= selectNotMP;
@@ -405,23 +405,18 @@ public unsafe class bf_read : BitBuffer
 	public uint ReadULong() => ReadUBitLong(32);
 
 	public uint ReadBitCoordMPBits(bool bIntegral, bool bLowPrecision) {
-
 		ReadBitCoordMPBitsFlags flags = (ReadBitCoordMPBitsFlags)ReadUBitLong(2);
 
 		int numbits = 0;
 
 		if (bIntegral) {
-			if (flags.HasFlag(ReadBitCoordMPBitsFlags.INTVAL)) {
-				numbits = flags.HasFlag(ReadBitCoordMPBitsFlags.INBOUNDS) ? 1 + (int)COORD_INTEGER_BITS_MP : 1 + (int)COORD_INTEGER_BITS;
-			}
-			else {
+			if ((flags & ReadBitCoordMPBitsFlags.INTVAL) != 0) 
+				numbits = (flags & ReadBitCoordMPBitsFlags.INBOUNDS) != 0 ? 1 + (int)COORD_INTEGER_BITS_MP : 1 + (int)COORD_INTEGER_BITS;
+			else 
 				return (uint)flags; // no extra bits
-			}
 		}
-		else {
-
+		else 
 			numbits = ReadBitCoordMPBits_numbits_table[(uint)flags + (bLowPrecision ? 1u : 0u) * 4];
-		}
 
 		return (uint)flags + ReadUBitLong(numbits) * 4;
 	}

@@ -59,12 +59,12 @@ public unsafe class FreeTypeFont : BaseFont
 		Tall = (short)tall;
 		Weight = (ushort)weight;
 		Flags = flags;
-		AntiAliased = flags.HasFlag(SurfaceFontFlags.Antialias);
-		Underlined = flags.HasFlag(SurfaceFontFlags.Underline);
-		DropShadowOffset = flags.HasFlag(SurfaceFontFlags.DropShadow) ? 1u : 0u;
-		OutlineSize = flags.HasFlag(SurfaceFontFlags.Outline) ? 1u : 0u;
-		Rotary = flags.HasFlag(SurfaceFontFlags.Rotary);
-		Additive = flags.HasFlag(SurfaceFontFlags.Additive);
+		AntiAliased = 0 != (flags & SurfaceFontFlags.Antialias);
+		Underlined = 0 != (flags & SurfaceFontFlags.Underline);
+		DropShadowOffset = 0 != (flags & SurfaceFontFlags.DropShadow) ? 1u : 0u;
+		OutlineSize = 0 != (flags & SurfaceFontFlags.Outline) ? 1u : 0u;
+		Rotary = 0 != (flags & SurfaceFontFlags.Rotary);
+		Additive = 0 != (flags & SurfaceFontFlags.Additive);
 		Blur = (ushort)blur;
 		ScanLines = (ushort)scanlines;
 

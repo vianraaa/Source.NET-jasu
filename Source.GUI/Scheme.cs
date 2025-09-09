@@ -346,7 +346,7 @@ public class Scheme : IScheme
 					tall = minimumFontHeight;
 				}
 
-				if (flags.HasFlag(SurfaceFontFlags.Bitmap)) {
+				if ((flags & SurfaceFontFlags.Bitmap) != 0) {
 					// add the new set
 					Surface.SetBitmapFontGlyphSet(
 						v.Font,
