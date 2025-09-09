@@ -36,6 +36,7 @@ public class PackStoreSearchPath : SearchPath
 	public PackStoreSearchPath(IBaseFileSystem filesystem, string absPath) {
 		absPath = absPath.EndsWith(".vpk") ? absPath.Substring(0, absPath.Length - ".vpk".Length) : absPath;
 		absPath = absPath.EndsWith("_dir") ? absPath.Substring(0, absPath.Length - "_dir".Length) : absPath;
+		absPath = absPath.Replace('\\', '/');
 		absPath = $"{absPath}_dir.vpk";
 		parent = filesystem;
 		vpk = new VpkArchive();

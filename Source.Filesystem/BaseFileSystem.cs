@@ -23,7 +23,7 @@ public class BaseFileSystem : IFileSystem
 
 	public BaseFileSystem() {
 		RemoveSearchPaths("EXECUTABLE_PATH");
-		AddSearchPath(System.Reflection.Assembly.GetExecutingAssembly().Location, "EXECUTABLE_PATH");
+		AddSearchPath(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "EXECUTABLE_PATH");
 		AddSearchPath(AppContext.BaseDirectory, "BASE_PATH");
 	}
 
