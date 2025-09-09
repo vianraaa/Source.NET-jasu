@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Source.Common.Launcher;
 using System.Text;
+using CommunityToolkit.HighPerformance;
 
 namespace Source.MaterialSystem.Surface;
 
@@ -49,8 +50,14 @@ public class FontAmalgam : IFont
 	}
 
 	public SurfaceFontFlags GetFlags(int i) {
-		if (Fonts.Count > 0 && Fonts[i].Font != null)
-			return Fonts[i].Font.GetFlags();
+		Span<FontRange> fonts = Fonts.AsSpan();
+		if (fonts.Length > i) {
+			ref FontRange range = ref fonts[i];
+			BaseFont? font = range.Font;
+			if (font == null) return 0;
+
+			return font.GetFlags();
+		}
 		else
 			return 0;
 	}
@@ -394,7 +401,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		if (font is not FontAmalgam amalgam)
 			return 0;
 
-		return amalgam.GetFlags(0).HasFlag(SurfaceFontFlags.Additive) ? 1 : 0;
+		return (amalgam.GetFlags(0) & SurfaceFontFlags.Additive) != 0 ? 1 : 0;
 	}
 
 	internal int GetCharacterWidth(IFont? font, char ch) {
