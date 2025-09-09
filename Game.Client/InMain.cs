@@ -24,10 +24,18 @@ using System.Threading.Tasks;
 
 namespace Game.Client;
 
+[Flags]
+public enum KeyButtonStateFlags
+{
+	None = 0,
+	Down = 1,
+	ImpulseDown = 2,
+	ImpulseUp = 4
+}
 public struct KeyButtonState
 {
 	public InlineArray2<int> Down;
-	public int State;
+	public KeyButtonStateFlags State;
 }
 
 public enum MouseParams
@@ -104,58 +112,59 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			return;
 		}
 
-		if ((button.State & 1) != 0)
+		if ((button.State & KeyButtonStateFlags.Down) != 0)
 			return;
-		button.State |= 1 + 2;
+
+		button.State |= KeyButtonStateFlags.Down | KeyButtonStateFlags.ImpulseDown;
 	}
 
-	void KeyUp(ref KeyButtonState b, ReadOnlySpan<char> c) {
+	void KeyUp(ref KeyButtonState button, ReadOnlySpan<char> c) {
 		if (c == null || c.Length <= 0) {
-			b.Down[0] = b.Down[1] = 0;
-			b.State = 4;
+			button.Down[0] = button.Down[1] = 0;
+			button.State = KeyButtonStateFlags.ImpulseUp;
 			return;
 		}
 
-		int k = int.TryParse(c, out k) ? k : 0;
+		int.TryParse(c, out int k);
 
-		if (b.Down[0] == k)
-			b.Down[0] = 0;
-		else if (b.Down[1] == k)
-			b.Down[1] = 0;
+		if (button.Down[0] == k)
+			button.Down[0] = 0;
+		else if (button.Down[1] == k)
+			button.Down[1] = 0;
 		else
 			return;
 
-		if (b.Down[0] != 0 || b.Down[1] != 0)
+		if (button.Down[0] != 0 || button.Down[1] != 0)
 			return;
 
-		if ((b.State & 1) == 0)
+		if ((button.State & KeyButtonStateFlags.Down) == 0)
 			return;
 
-		b.State &= ~1;
-		b.State |= 4;
+		button.State &= ~KeyButtonStateFlags.Down;
+		button.State |= KeyButtonStateFlags.ImpulseUp;
 	}
 	float KeyState(ref KeyButtonState key) {
 		float val = 0f;
-		int impulsedown, impulseup, down;
+		bool impulsedown, impulseup, down;
 
-		impulsedown = key.State & 2;
-		impulseup = key.State & 4;
-		down = key.State & 1;
+		impulsedown = (key.State & KeyButtonStateFlags.ImpulseDown) != 0;
+		impulseup = (key.State & KeyButtonStateFlags.ImpulseUp) != 0;
+		down = (key.State & KeyButtonStateFlags.Down) != 0;
 
-		if (impulsedown != 0 && impulseup == 0)
-			val = down != 0 ? 0.5f : 0.0f;
-		if (impulseup != 0 && impulsedown == 0)
-			val = down != 0 ? 0.0f : 0.0f;
-		if (impulsedown == 0 && impulseup == 0)
-			val = down != 0 ? 1.0f : 0.0f;
+		if (impulsedown && !impulseup)
+			val = down ? 0.5f : 0.0f;
+		if (impulseup && !impulsedown)
+			val = down ? 0.0f : 0.0f;
+		if (!impulsedown && !impulseup)
+			val = down ? 1.0f : 0.0f;
 
-		if (impulsedown != 0 && impulseup != 0)
-			if (down != 0)
+		if (impulsedown && impulseup)
+			if (down)
 				val = 0.75f;
 			else
 				val = 0.25f;
 
-		key.State &= 1;
+		key.State &= KeyButtonStateFlags.Down;
 		return val;
 	}
 	[ConCommand] void impulse(in TokenizedCommand args) => in_impulse = int.TryParse(args[1], out in_impulse) ? in_impulse : 0;
@@ -254,17 +263,17 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 				ControllerMove(inputSampleFrametime, ref cmd);
 			}
 
-			cmd.Buttons = GetButtonBits(0);
+			cmd.Buttons = GetButtonBits(1);
 
 			engine.GetViewAngles(out QAngle curViewangles);
 			cmd.ViewAngles = curViewangles;
 			cmd.Impulse = (byte)in_impulse;
 			in_impulse = 0;
-			if (cmd.ForwardMove > 0) 
+			if (cmd.ForwardMove > 0)
 				cmd.Buttons |= InButtons.Forward;
-			else if (cmd.ForwardMove < 0) 
+			else if (cmd.ForwardMove < 0)
 				cmd.Buttons |= InButtons.Back;
-			
+
 		}
 	}
 
@@ -419,7 +428,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 	private void AdjustPitch(float speed, ref QAngle viewangles) {
 		if (!cl_mouselook.GetBool()) {
-			if ((in_klook.State & 1) != 0) {
+			if ((in_klook.State & KeyButtonStateFlags.Down) != 0) {
 				view.StopPitchDrift();
 				viewangles[PITCH] -= speed * cl_pitchspeed.GetFloat() * KeyState(ref in_forward);
 				viewangles[PITCH] += speed * cl_pitchspeed.GetFloat() * KeyState(ref in_back);
@@ -438,7 +447,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	}
 
 	private void AdjustYaw(float speed, ref QAngle viewangles) {
-		if ((in_strafe.State & 1) == 0) {
+		if ((in_strafe.State & KeyButtonStateFlags.Down) == 0) {
 			viewangles[YAW] -= speed * cl_yawspeed.GetFloat() * KeyState(ref in_right);
 			viewangles[YAW] += speed * cl_yawspeed.GetFloat() * KeyState(ref in_left);
 		}
@@ -458,7 +467,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	private float DetermineKeySpeed(double frametime) {
 		float speed = (float)frametime;
 
-		if ((in_speed.State & 1) != 0)
+		if ((in_speed.State & KeyButtonStateFlags.Down) != 0)
 			speed *= cl_anglespeedkey.GetFloat();
 
 		return speed;
@@ -487,7 +496,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	}
 
 	private void ApplyMouse(ref QAngle viewangles, ref UserCmd cmd, float mouse_x, float mouse_y) {
-		if (((in_strafe.State & 1) == 0 || lookstrafe.GetInt() != 0)) {
+		if ((in_strafe.State & KeyButtonStateFlags.Down) == 0 || lookstrafe.GetInt() != 0) {
 			if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
 				if (mouse_x != 0) {
 					QAngle tempOffset = ThirdPersonManager.GetCameraOffsetAngles();
@@ -498,14 +507,14 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 					ThirdPersonManager.SetCameraOffsetAngles(tempOffset);
 				}
 			}
-			else 
+			else
 				viewangles[YAW] -= CAM_CapYaw(m_yaw.GetFloat() * mouse_x);
 		}
 		else {
 			cmd.SideMove += m_side.GetFloat() * mouse_x;
 		}
 
-		if ((in_strafe.State & 1) == 0) {
+		if ((in_strafe.State & KeyButtonStateFlags.Down) == 0) {
 			if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
 				if (mouse_y != 0) {
 					QAngle tempOffset = ThirdPersonManager.GetCameraOffsetAngles();
@@ -516,7 +525,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 					ThirdPersonManager.SetCameraOffsetAngles(tempOffset);
 				}
 			}
-			else 
+			else
 				viewangles[PITCH] += CAM_CapPitch(m_pitch.GetFloat() * mouse_y);
 
 			if (viewangles[PITCH] > cl_pitchdown.GetFloat())
@@ -658,7 +667,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 			return;
 		}
-		if ((in_klook.State & 1) == 0) {
+		if ((in_klook.State & KeyButtonStateFlags.Down) == 0) {
 			cmd.ForwardMove += cl_forwardspeed.GetFloat() * KeyState(ref in_forward);
 			cmd.ForwardMove -= cl_backspeed.GetFloat() * KeyState(ref in_back);
 		}
@@ -684,7 +693,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			return;
 		}
 
-		if ((in_strafe.State & 1) != 0) {
+		if ((in_strafe.State & KeyButtonStateFlags.Down) != 0) {
 			cmd.SideMove += cl_sidespeed.GetFloat() * KeyState(ref in_right);
 			cmd.SideMove -= cl_sidespeed.GetFloat() * KeyState(ref in_left);
 		}
@@ -739,12 +748,12 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	}
 
 	private void CalcButtonBits(ref InButtons bits, InButtons in_button, InButtons in_ignore, ref KeyButtonState button, int reset) {
-		if ((button.State & 3) != 0)
+		if ((button.State & (KeyButtonStateFlags.Down | KeyButtonStateFlags.ImpulseDown)) != 0)
 			bits |= in_button;
 
-		int clearmask = ~2;
+		KeyButtonStateFlags clearmask = ~KeyButtonStateFlags.ImpulseDown;
 		if ((in_ignore & in_button) != 0)
-			clearmask = ~3;
+			clearmask = ~(KeyButtonStateFlags.Down | KeyButtonStateFlags.ImpulseDown);
 
 		if (reset != 0)
 			button.State &= clearmask;
