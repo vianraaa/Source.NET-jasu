@@ -23,7 +23,7 @@ public class CommonHostState
 
 public class Host(
 	EngineParms host_parms, CommonHostState host_state, GameServer sv,
-	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem, Key Key
+	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem
 	)
 {
 	public int TimeToTicks(float dt) => (int)(0.5f + (float)dt / (float)host_state.IntervalPerTick);
@@ -45,6 +45,7 @@ public class Host(
 	public ClientState cl;
 	public Cmd Cmd;
 	public Con Con;
+	public Key Key;
 	public EngineVGui EngineVGui;
 	public Cvar Cvar;
 	public View View;
@@ -602,6 +603,7 @@ public class Host(
 		View = engineAPI.InitSubsystem<View>()!;
 #endif
 		Common = engineAPI.InitSubsystem<Common>()!;
+		Key = engineAPI.InitSubsystem<Key>()!;
 		//engineAPI.InitSubsystem<Filter>();
 #if !SWDS
 		//engineAPI.InitSubsystem<Key>();

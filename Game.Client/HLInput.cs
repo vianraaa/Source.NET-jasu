@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
+using Source.Common.Input;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
 using Source.Engine.Client;
@@ -13,7 +14,7 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Client;
 
-public class HLInput(IServiceProvider provider) : IInput {
+public class HLInput(IServiceProvider provider, IClientMode ClientMode) : IInput {
 	readonly Lazy<IBaseClientDLL> clientDLLLzy = new(provider.GetRequiredService<IBaseClientDLL>);
 	IBaseClientDLL clientDLL => clientDLLLzy.Value;
 
@@ -92,5 +93,18 @@ public class HLInput(IServiceProvider provider) : IInput {
 
 	public void Init() {
 		cl = Singleton<ClientState>();
+	}
+
+	bool CameraInterceptingMouse;
+
+	public int KeyEvent(int down, ButtonCode code, ReadOnlySpan<char> currentBinding) {
+		if ((code == ButtonCode.MouseLeft) || (code == ButtonCode.MouseRight)) {
+			if (CameraInterceptingMouse)
+				return 0;
+		}
+
+		ClientMode?.KeyInput(down, code, currentBinding);
+
+		return 1;
 	}
 }

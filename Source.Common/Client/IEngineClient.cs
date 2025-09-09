@@ -82,4 +82,5 @@ public interface IEngineClient
 	bool IsPaused();
 	bool IsDrawingLoadingImage();
 	bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo);
+	bool Con_IsVisible();
 }

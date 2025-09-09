@@ -1,5 +1,6 @@
 ﻿using Source.Common.Bitbuffers;
 using Source.Common.Engine;
+using Source.Common.Input;
 
 namespace Source.Common.Client;
 
@@ -23,4 +24,6 @@ public interface IBaseClientDLL
 	void IN_ActivateMouse();
 	void View_Render(ViewRects screenrect);
 	void InstallStringTableCallback(ReadOnlySpan<char> tableName);
+	int IN_KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding);
+	void IN_OnMouseWheeled(int delta);
 }

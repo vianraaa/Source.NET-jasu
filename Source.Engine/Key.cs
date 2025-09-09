@@ -2,8 +2,10 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Input;
+using Source.Engine;
 
 using System;
 
@@ -25,7 +27,7 @@ public enum KeyUpTarget
 	Client
 }
 
-public class Key(IInputSystem? inputSystem, IServiceProvider services)
+public class Key(IInputSystem? inputSystem, IServiceProvider services, IBaseClientDLL? clientDLL, Cbuf Cbuf)
 {
 	readonly KeyInfo[] KeyInfo = new KeyInfo[(int)ButtonCode.Last];
 	bool TrapMode = false;
@@ -85,7 +87,6 @@ public class Key(IInputSystem? inputSystem, IServiceProvider services)
 #if SWDS
 		return;
 #endif
-
 		bool down = ev.Type != InputEventType.IE_ButtonReleased;
 		ButtonCode code = (ButtonCode)ev.Data;
 
@@ -123,13 +124,49 @@ public class Key(IInputSystem? inputSystem, IServiceProvider services)
 	}
 
 	public bool HandleClientKey(in InputEvent ev) {
-		// TODO: Client
-		return false;
+		bool down = ev.Type != InputEventType.IE_ButtonReleased;
+		return clientDLL != null && clientDLL.IN_KeyEvent(down ? 1 : 0, (ButtonCode)ev.Data, KeyInfo[ev.Data].KeyBinding) == 0;
 	}
 
 	public bool HandleEngineKey(in InputEvent ev) {
-		// TODO: Engine
-		return false;
+		bool down = ev.Type != InputEventType.IE_ButtonReleased;
+		ButtonCode code = (ButtonCode)ev.Data;
+
+#if !SWDS
+		if (code == ButtonCode.MouseWheelUp || code == ButtonCode.MouseWheelDown)
+			clientDLL!.IN_OnMouseWheeled(code == ButtonCode.MouseWheelUp ? 1 : -1);
+#endif
+
+		ReadOnlySpan<char> kb = KeyInfo[(int)code].KeyBinding;
+		if (kb == null || kb.Length <= 0)
+			return false;
+
+		Span<char> cmd = stackalloc char[1024];
+		if (!down) {
+			if (kb[0] == '+') {
+				sprintf(cmd, $"-{kb[1..]} {code}\n");
+				Cbuf.AddText(cmd);
+				return true;
+			}
+
+			return false;
+		}
+
+		if (kb[0] == '+') {
+			sprintf(cmd, $"{kb[1..]} {code}\n");
+			Cbuf.AddText(cmd);
+			return true;
+		}
+
+		if (kb.Equals("toggleconsole", StringComparison.OrdinalIgnoreCase)) 
+			if (KeyInfo[(int)ButtonCode.KeyLAlt].KeyDown || KeyInfo[(int)ButtonCode.KeyLShift].KeyDown || KeyInfo[(int)ButtonCode.KeyLControl].KeyDown ||
+				KeyInfo[(int)ButtonCode.KeyRAlt].KeyDown || KeyInfo[(int)ButtonCode.KeyRShift].KeyDown || KeyInfo[(int)ButtonCode.KeyRControl].KeyDown)
+				return false;
+		
+		Cbuf.AddText(kb);
+		Cbuf.AddText("\n");
+
+		return true;
 	}
 
 	private bool FilterKey(in InputEvent ev, KeyUpTarget target, KeyFilterDelegate func) {

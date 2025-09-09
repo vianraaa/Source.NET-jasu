@@ -4,7 +4,7 @@ using Source.Engine.Server;
 
 namespace Source.Engine;
 
-public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con Con) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -62,4 +62,6 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : I
 		PlayerInfo.FromBytes(pi, out playerInfo);
 		return true; 
 	}
+
+	public bool Con_IsVisible() => Con.IsVisible();
 }

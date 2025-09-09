@@ -736,4 +736,8 @@ public class EngineVGui(
 	public void ClearConsole() {
 		staticGameConsole?.Clear();
 	}
+
+	public bool IsConsoleVisible() {
+		return IsGameUIVisible() && staticGameConsole != null && staticGameConsole.IsConsoleVisible();
+	}
 }

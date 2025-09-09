@@ -1,4 +1,5 @@
 ﻿using Source.Common.Bitbuffers;
+using Source.Common.Input;
 
 namespace Source.Common.Client;
 
@@ -9,4 +10,5 @@ public interface IInput
 	public void EncodeUserCmdToBuffer(bf_write buf, int slot);
 	public void DecodeUserCmdFromBuffer(bf_read buf, int slot);
 	void Init();
+	int KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding);
 }

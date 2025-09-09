@@ -23,6 +23,17 @@ public class Hud(HudElementHelper HudElementHelper)
 		HudList.Add(element);
 		element.NeedsRemove = true;
 	}
+
+	public IHudElement? FindElement(ReadOnlySpan<char> name) {
+		foreach (var hudElement in HudList) {
+			if (name.Equals(hudElement.ElementName, StringComparison.OrdinalIgnoreCase))
+				return hudElement;
+		}
+
+		DevWarning(1, $"Could not find HUD element: {name}\n");
+		Assert(false);
+		return null;
+	}
 }
 
 public class HudElementHelper

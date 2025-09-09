@@ -118,6 +118,10 @@ public class BaseHudChat : EditableHudElement {
 	protected void TextMsg(bf_read msg) {
 
 	}
+
+	internal void StartMessageMode(MessageModeType messageModeType) {
+		throw new NotImplementedException();
+	}
 }
 
 [DeclareHudElement(Name = "CHudChat")]

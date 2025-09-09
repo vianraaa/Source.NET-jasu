@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public class Con(ICvar cvar)
+public class Con(ICvar cvar, IEngineVGui EngineVGui)
 {
 	public void Init() { }
 	public void Shutdown() { }
@@ -30,4 +30,6 @@ public class Con(ICvar cvar)
 	public void ColorPrintf(in Color clr, ReadOnlySpan<char> fmt) {
 		cvar.ConsoleColorPrintf(in clr, fmt);
 	}
+
+	public bool IsVisible() => EngineVGui.IsConsoleVisible();
 }

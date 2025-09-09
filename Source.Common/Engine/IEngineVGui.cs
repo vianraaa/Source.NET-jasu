@@ -22,6 +22,7 @@ public interface IEngineVGui
 {
 	void ClearConsole();
 	public IPanel GetPanel(VGuiPanelType type);
+	bool IsConsoleVisible();
 	public bool IsGameUIVisible();
 	bool Key_Event(in InputEvent ev);
 	void UpdateButtonState(in InputEvent ev);

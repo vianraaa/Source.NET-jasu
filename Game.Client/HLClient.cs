@@ -1,4 +1,5 @@
-﻿using Game.Client.HUD;
+﻿using Game.Client.HL2;
+using Game.Client.HUD;
 using Game.Shared;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -6,16 +7,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
+using Source.Common.Input;
 
 namespace Game.Client;
 
-public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
+public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages usermessages, IClientMode clientMode) : IBaseClientDLL
 {
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
 		services.AddSingleton<ViewRender>();
 		services.AddSingleton<Hud>();
 		services.AddSingleton<HudElementHelper>();
+		services.AddSingleton<IClientMode, ClientModeHL2MPNormal>(); // TODO: Further research on switching clientmodes.
 		services.AddSingleton<IViewRender>(x => x.GetRequiredService<ViewRender>());
 	}
 
@@ -46,6 +49,7 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 
 	public bool Init() {
 		HUD.Init();
+		clientMode.Init();
 		view.Init();
 		input.Init();
 		return true;
@@ -80,5 +84,13 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 
 	public void InstallStringTableCallback(ReadOnlySpan<char> tableName) {
 		// TODO: what to do here, if anything
+	}
+
+	public int IN_KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding) {
+		return input.KeyEvent(eventcode, keynum, currentBinding);
+	}
+
+	public void IN_OnMouseWheeled(int delta) {
+
 	}
 }
