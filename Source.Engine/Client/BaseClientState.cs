@@ -729,7 +729,15 @@ public abstract class BaseClientState(
 		}
 	}
 
-	public void HookClientStringTable(string tableName) {
-		// ToDo
+	public INetworkStringTable? GetStringTable(ReadOnlySpan<char> tableName) {
+		if(StringTableContainer == null) {
+			Assert(StringTableContainer);
+			return null;
+		}
+
+		return StringTableContainer.FindTable(tableName);
+	}
+	public virtual bool HookClientStringTable(ReadOnlySpan<char> tableName) {
+		return false;
 	}
 }

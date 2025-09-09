@@ -20,6 +20,9 @@ public class UtlSymbolTable(bool caseInsensitive = false) : ISymbolTable
 {
 	readonly Dictionary<UtlSymId_t, string> Symbols = [];
 
+	public int Count => Symbols.Count;
+	public void Clear() => Symbols.Clear();
+
 	public UtlSymId_t AddString(ReadOnlySpan<char> str) {
 		UtlSymId_t hash = str.Hash(invariant: caseInsensitive);
 		if (!Symbols.ContainsKey(hash))

@@ -77,4 +77,8 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 			return;
 		view.Render(rects);
 	}
+
+	public void InstallStringTableCallback(ReadOnlySpan<char> tableName) {
+		// TODO: what to do here, if anything
+	}
 }

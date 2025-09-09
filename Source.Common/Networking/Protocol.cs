@@ -227,4 +227,9 @@ public static class Protocol
 	public const int FRAGMENT_SIZE = 1 << FRAGMENT_BITS;
 	public const int MAX_FILE_SIZE_BITS = 26;
 	public const int MAX_FILE_SIZE = (1 << MAX_FILE_SIZE_BITS) - 1;// maximum transferable size is	64MB
+
+	public const string INSTANCE_BASELINE_TABLENAME = "instancebaseline";
+	public const string LIGHT_STYLES_TABLENAME = "lightstyles";
+	public const string USER_INFO_TABLENAME = "userinfo";
+	public const string SERVER_STARTUP_DATA_TABLENAME = "server_query_info";
 }

@@ -166,6 +166,24 @@ public class ClientState : BaseClientState
 		return false;
 	}
 
+	public override bool HookClientStringTable(ReadOnlySpan<char> tableName) {
+		INetworkStringTable? table = GetStringTable(tableName);
+		if (table == null) {
+			Host.clientDLL?.InstallStringTableCallback(tableName);
+			return false;
+		}
+
+		switch (tableName) {
+			case Protocol.USER_INFO_TABLENAME:
+				UserInfoTable = table;
+				return true;
+		}
+
+		Host.clientDLL?.InstallStringTableCallback(tableName);
+		return false;
+	}
+
+
 	public override void Disconnect(string? reason, bool showMainMenu) {
 		base.Disconnect(reason, showMainMenu);
 

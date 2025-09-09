@@ -22,4 +22,5 @@ public interface IBaseClientDLL
 	void IN_DeactivateMouse();
 	void IN_ActivateMouse();
 	void View_Render(ViewRects screenrect);
+	void InstallStringTableCallback(ReadOnlySpan<char> tableName);
 }

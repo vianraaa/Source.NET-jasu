@@ -180,10 +180,10 @@ public class NetworkStringTable : INetworkStringTable
 
 	readonly Host Host = Singleton<Host>();
 
-	public NetworkStringTable(int tableID, string tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames) {
+	public NetworkStringTable(int tableID, ReadOnlySpan<char> tableName, int maxEntries, int userdatafixedsize, int userdatanetworkbits, bool bIsFilenames) {
 		AllowClientSideAddString = false;
 		TableID = tableID;
-		TableName = tableName;
+		TableName = new(tableName);
 		MaxEntries = maxEntries;
 		EntryBits = (int)Math.Log2(maxEntries);
 		UserDataFixedSize = userdatafixedsize != 0;
@@ -213,7 +213,7 @@ public class NetworkStringTable : INetworkStringTable
 		return TableID;
 	}
 
-	public string GetTableName() {
+	public ReadOnlySpan<char> GetTableName() {
 		return TableName;
 	}
 
@@ -237,18 +237,12 @@ public class NetworkStringTable : INetworkStringTable
 		return LastChangedTick > iTick;
 	}
 
-	public int AddString(bool isServer, string value, int length, ReadOnlySpan<byte> userData = default) {
-		/*if (!value)
-		{
-			ConMsg("Warning:  Can't add NULL string to table %s\n", m_pszTableName);
-			return INetworkStringTable.INVALID_STRING_INDEX;
-		}*/
+	public int AddString(bool isServer, ReadOnlySpan<char> value, int length, ReadOnlySpan<byte> userData = default) {
+		if (Locked) 
+			DevMsg($"Warning! CNetworkStringTable::AddString: adding '{value}' while locked.\n");
 
-		if (Locked) {
-			DevMsg("Warning! CNetworkStringTable::AddString: adding '%s' while locked.\n", value);
-		}
-
-		int i = Items.Find(value);
+		string tempStrValueOhMyGodThisNeedsToUseROS = new(value);
+		int i = Items.Find(tempStrValueOhMyGodThisNeedsToUseROS);
 		if (!isServer && Items.IsValidIndex(i) && ItemsClientSide == null) {
 			isServer = true;
 		}
@@ -256,14 +250,14 @@ public class NetworkStringTable : INetworkStringTable
 		bool bHasChanged = false;
 		NetworkStringTableItem? item = null;
 		if (!isServer && ItemsClientSide != null) {
-			i = ItemsClientSide.Find(value);
+			i = ItemsClientSide.Find(tempStrValueOhMyGodThisNeedsToUseROS);
 			if (!ItemsClientSide.IsValidIndex(i)) {
 				if (ItemsClientSide.Count() >= (uint)GetMaxStrings()) {
-					ConMsg("Warning:  Table %s is full, can't add %s\n", GetTableName(), value);
+					ConMsg($"Warning:  Table {GetTableName()} is full, can't add {value}\n");
 					return INetworkStringTable.INVALID_STRING_INDEX;
 				}
 
-				i = ItemsClientSide.Insert(value);
+				i = ItemsClientSide.Insert(tempStrValueOhMyGodThisNeedsToUseROS);
 				item = ItemsClientSide.Element(i);
 				item.TickChanged = TickCount;
 				item.TickCreated = TickCount;
@@ -290,15 +284,15 @@ public class NetworkStringTable : INetworkStringTable
 			i = -i;
 		}
 		else {
-			i = Items.Find(value);
+			i = Items.Find(tempStrValueOhMyGodThisNeedsToUseROS);
 
 			if (!Items.IsValidIndex(i)) {
 				if (Items.Count() >= (uint)GetMaxStrings()) {
-					ConMsg("Warning:  Table %s is full, can't add %s\n", GetTableName(), value);
+					ConMsg($"Warning:  Table {GetTableName()} is full, can't add {value}\n");
 					return INetworkStringTable.INVALID_STRING_INDEX;
 				}
 
-				i = Items.Insert(value);
+				i = Items.Insert(tempStrValueOhMyGodThisNeedsToUseROS);
 				item = Items.Element(i);
 				item.TickChanged = TickCount;
 				item.TickCreated = TickCount;
@@ -326,7 +320,7 @@ public class NetworkStringTable : INetworkStringTable
 		return i;
 	}
 
-	public string? GetString(int stringNumber) {
+	public ReadOnlySpan<char> GetString(int stringNumber) {
 		INetworkStringDict dict = Items;
 		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;
@@ -341,9 +335,8 @@ public class NetworkStringTable : INetworkStringTable
 	}
 
 	public void SetStringUserData(int stringNumber, int length, ReadOnlySpan<byte> userData) {
-		if (Locked) {
-			DevMsg("Warning! CNetworkStringTable::SetStringUserData (%s): changing entry %i while locked.\n", GetTableName(), stringNumber);
-		}
+		if (Locked) 
+			DevMsg($"Warning! CNetworkStringTable::SetStringUserData ({GetTableName()}): changing entry {stringNumber} while locked.\n");
 
 		INetworkStringDict dict = Items;
 		int saveStringNumber = stringNumber;
@@ -369,8 +362,8 @@ public class NetworkStringTable : INetworkStringTable
 		return p.GetUserData(out int length)[..length];
 	}
 
-	public int FindStringIndex(string value) {
-		int i = Items.Find(value);
+	public int FindStringIndex(ReadOnlySpan<char> value) {
+		int i = Items.Find(new(value));
 		if (Items.IsValidIndex(i))
 			return i;
 
@@ -416,7 +409,7 @@ public class NetworkStringTable : INetworkStringTable
 	}
 
 	public void Dump() {
-		ConMsg($"Table %s\n", GetTableName());
+		ConMsg($"Table {GetTableName()}\n");
 		ConMsg($"  {GetNumStrings()}/{GetMaxStrings()} items\n");
 		for (int i = 0; i < GetNumStrings(); i++)
 			ConMsg($"  {i} : {GetString(i)}\n");
@@ -507,20 +500,19 @@ public class NetworkStringTable : INetworkStringTable
 					Debug.Assert(pEntry == GetString(entryIndex));
 				}
 
-				pEntry = GetString(entryIndex);
+				pEntry = new(GetString(entryIndex));
 			}
 			else {
 				if (pEntry == null) {
-					Msg("CNetworkStringTable::ParseUpdate: NULL pEntry, table %s, index %i\n", GetTableName(), entryIndex);
+					Msg($"NetworkStringTable.ParseUpdate: NULL pEntry, table {GetTableName()}, index {entryIndex}\n");
 					pEntry = "";
 				}
 
 				AddString(true, pEntry, nBytes, pUserData);
 			}
 
-			if (history.Count > 31) {
+			if (history.Count > 31) 
 				history.RemoveAt(0);
-			}
 
 			history.Add(pEntry ?? "");
 		}
@@ -535,13 +527,13 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 	private bool EnableRollback;
 	private List<NetworkStringTable> Tables = new List<NetworkStringTable>();
 
-	public INetworkStringTable? CreateStringTable(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits) {
+	public INetworkStringTable? CreateStringTable(ReadOnlySpan<char> tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits) {
 		return CreateStringTableEx(tableName, maxEntries, userDataFixedSize, userDataNetworkBits, false);
 	}
 
 	readonly Host Host = Singleton<Host>();
 
-	public INetworkStringTable? CreateStringTableEx(string tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits, bool isFilenames) {
+	public INetworkStringTable? CreateStringTableEx(ReadOnlySpan<char> tableName, int maxEntries, int userDataFixedSize, int userDataNetworkBits, bool isFilenames) {
 		if (!AllowCreation) {
 			Host.Error($"Tried to create string table '{tableName}' at wrong time\n");
 			return null;
@@ -576,7 +568,7 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 		Tables.Clear();
 	}
 
-	public INetworkStringTable? FindTable(string tableName) {
+	public INetworkStringTable? FindTable(ReadOnlySpan<char> tableName) {
 		foreach (NetworkStringTable pTable in Tables) {
 			if (pTable.GetTableName() == tableName)
 				return pTable;
