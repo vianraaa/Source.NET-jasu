@@ -325,9 +325,9 @@ public class BaseFileSystem : IFileSystem
 
 	[ConCommand]
 	void whereis(in TokenizedCommand args) {
-		ReadOnlySpan<char> where = WhereIsFile(args.ArgS());
+		ReadOnlySpan<char> where = WhereIsFile(args.ArgS(1));
 		if (where == null)
-			ConWarning($"File '{args.ArgS(0)}' not found\n");
+			ConWarning($"File '{args.ArgS(1)}' not found\n");
 		else
 			ConMsg($"{where}\n");
 	}

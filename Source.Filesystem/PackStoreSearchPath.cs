@@ -51,13 +51,13 @@ public class PackStoreSearchPath : SearchPath
 				var ext = entry.Extension;
 
 				int strlen = 0;
-				if (path.Length > 0) {
+				if (path.Length > 0 && path[0] != ' ') {
 					path.CopyTo(buildPath[strlen..]); strlen += path.Length;
 					buildPath[strlen] = '/'; strlen += 1;
 				}
 				filename.CopyTo(buildPath[strlen..]); strlen += filename.Length;
-				buildPath[strlen] = '/'; strlen += 1;
-				ext.CopyTo(buildPath[strlen..]); strlen += filename.Length;
+				buildPath[strlen] = '.'; strlen += 1;
+				ext.CopyTo(buildPath[strlen..]); strlen += ext.Length;
 
 				ReadOnlySpan<char> finalSpan = buildPath[..strlen];
 				vpkEntryLookups[finalSpan.Hash()] = entry;
