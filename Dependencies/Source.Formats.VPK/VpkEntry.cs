@@ -12,13 +12,13 @@ namespace Source.Formats.VPK
 		public byte[] Data { get { return ReadData(); } }
 		public bool HasPreloadData { get; set; }
 
-		internal uint CRC;
-		internal ushort PreloadBytes;
-		internal uint PreloadDataOffset;
-		internal ushort ArchiveIndex;
-		internal uint EntryOffset;
-		internal uint EntryLength;
-		internal VpkArchive ParentArchive;
+		public readonly uint CRC;
+		public readonly ushort PreloadBytes;
+		public readonly uint PreloadDataOffset;
+		public readonly ushort ArchiveIndex;
+		public readonly uint EntryOffset;
+		public readonly uint EntryLength;
+		public readonly VpkArchive ParentArchive;
 
 		public override string ToString() => $"VpkEntry '{Path}/{Filename}.{Extension}' [crc {CRC}, entry<{EntryOffset}-{EntryLength}>]";
 
