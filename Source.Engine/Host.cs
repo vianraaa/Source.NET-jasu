@@ -517,7 +517,7 @@ public class Host(
 		
 		bool saveconfig = false;
 
-		if (fileSystem!.FileExists("//mod/cfg/config.cfg")) 
+		if (fileSystem!.FileExists("cfg/config.cfg", "MOD")) 
 			Cbuf.AddText("exec config.cfg\n");
 		else {
 			Cbuf.AddText("exec config_default.cfg\n");
