@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Source .VPK files. Mklink them if you want them.
+Game.Assets/hl2/*.vpk
+
 # User-specific files
 *.rsuser
 *.suo
