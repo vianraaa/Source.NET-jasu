@@ -17,6 +17,7 @@ using Source.GUI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -251,6 +252,9 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			}
 
 			cmd.Buttons = GetButtonBits(0);
+
+			engine.GetViewAngles(out QAngle curViewangles);
+			cmd.ViewAngles = curViewangles;
 		}
 	}
 
@@ -382,8 +386,8 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 		engine.GetViewAngles(out QAngle viewangles);
 
-		AdjustYaw(speed, viewangles);
-		AdjustPitch(speed, viewangles);
+		AdjustYaw(speed, ref viewangles);
+		AdjustPitch(speed, ref viewangles);
 		ClampAngles(viewangles);
 
 		engine.SetViewAngles(viewangles);
@@ -403,7 +407,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			viewangles[ROLL] = -50;
 	}
 
-	private void AdjustPitch(float speed, QAngle viewangles) {
+	private void AdjustPitch(float speed, ref QAngle viewangles) {
 		if (!cl_mouselook.GetBool()) {
 			if ((in_klook.State & 1) != 0) {
 				view.StopPitchDrift();
@@ -423,7 +427,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 		}
 	}
 
-	private void AdjustYaw(float speed, QAngle viewangles) {
+	private void AdjustYaw(float speed, ref QAngle viewangles) {
 		if ((in_strafe.State & 1) == 0) {
 			viewangles[YAW] -= speed * cl_yawspeed.GetFloat() * KeyState(ref in_right);
 			viewangles[YAW] += speed * cl_yawspeed.GetFloat() * KeyState(ref in_left);
@@ -465,15 +469,57 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			GetMouseDelta(mx, my, out float mouse_x, out float mouse_y);
 			ScaleMouse(ref mouse_x, ref mouse_y);
 			ClientMode.OverrideMouseInput(ref mouse_x, ref mouse_y);
-			ApplyMouse(viewangles, cmd, mouse_x, mouse_y);
+			ApplyMouse(ref viewangles, ref cmd, mouse_x, mouse_y);
 			ResetMouse();
 		}
 
 		engine.SetViewAngles(in viewangles);
 	}
 
-	private void ApplyMouse(QAngle viewangles, UserCmd cmd, float mouse_x, float mouse_y) {
+	private void ApplyMouse(ref QAngle viewangles, ref UserCmd cmd, float mouse_x, float mouse_y) {
+		if (((in_strafe.State & 1) == 0 || lookstrafe.GetInt() != 0)) {
+			if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
+				if (mouse_x != 0) {
+					QAngle tempOffset = ThirdPersonManager.GetCameraOffsetAngles();
 
+					tempOffset[YAW] -= m_yaw.GetFloat() * mouse_x;
+					cam_idealyaw.SetValue(tempOffset[YAW] - viewangles[YAW]);
+
+					ThirdPersonManager.SetCameraOffsetAngles(tempOffset);
+				}
+			}
+			else 
+				viewangles[YAW] -= CAM_CapYaw(m_yaw.GetFloat() * mouse_x);
+		}
+		else {
+			cmd.SideMove += m_side.GetFloat() * mouse_x;
+		}
+
+		if ((in_strafe.State & 1) == 0) {
+			if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
+				if (mouse_y != 0) {
+					QAngle tempOffset = ThirdPersonManager.GetCameraOffsetAngles();
+
+					tempOffset[PITCH] += m_pitch.GetFloat() * mouse_y;
+					cam_idealpitch.SetValue(tempOffset[PITCH] - viewangles[PITCH]);
+
+					ThirdPersonManager.SetCameraOffsetAngles(tempOffset);
+				}
+			}
+			else 
+				viewangles[PITCH] += CAM_CapPitch(m_pitch.GetFloat() * mouse_y);
+
+			if (viewangles[PITCH] > cl_pitchdown.GetFloat())
+				viewangles[PITCH] = cl_pitchdown.GetFloat();
+
+			if (viewangles[PITCH] < -cl_pitchup.GetFloat())
+				viewangles[PITCH] = -cl_pitchup.GetFloat();
+		}
+		else
+			cmd.ForwardMove -= m_forward.GetFloat() * mouse_y;
+
+		cmd.MouseDeltaX = (short)mouse_x;
+		cmd.MouseDeltaY = (short)mouse_y;
 	}
 
 	private void ScaleMouse(ref float x, ref float y) {
@@ -546,9 +592,9 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 		if (!cl_mouseenable.GetBool())
 			return;
 
-		if (!cl_mouselook.GetBool()) 
+		if (!cl_mouselook.GetBool())
 			return;
-		
+
 		engine.GetScreenSize(out int w, out int h);
 
 		if (!CameraInterceptingMouse && Surface.IsCursorLocked()) {
@@ -564,7 +610,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			int new_ox = Math.Clamp(ox, 0, w - 1);
 			int new_oy = Math.Clamp(oy, 0, h - 1);
 
-			if (ox != new_ox || oy != new_oy) 
+			if (ox != new_ox || oy != new_oy)
 				SetMousePos(new_ox, new_oy);
 		}
 	}

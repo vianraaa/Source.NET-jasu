@@ -35,4 +35,5 @@ public interface ILauncherManager
 	ICursor? GetSoftwareCursor(HCursor cursor, out float x, out float y);
 	void SetMouseCursor(ICursor? currentlySetCursor);
 	void SetMouseVisible(bool v);
+	void LockCursor(bool cursorLocked);
 }

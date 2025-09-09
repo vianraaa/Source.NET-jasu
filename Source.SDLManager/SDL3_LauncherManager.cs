@@ -224,6 +224,10 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 			SDL3.SDL_HideCursor();
 		}
 	}
+
+	public void LockCursor(bool cursorLocked) {
+		SDL3.SDL_SetWindowRelativeMouseMode(window.HardwareHandle, cursorLocked);
+	}
 }
 
 public unsafe class SDL3_Cursor : ICursor

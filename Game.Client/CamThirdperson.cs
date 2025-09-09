@@ -9,4 +9,8 @@ public class ThirdPersonManager
 	public QAngle GetCameraOffsetAngles() {
 		return new();
 	}
+
+	internal void SetCameraOffsetAngles(QAngle tempOffset) {
+
+	}
 }

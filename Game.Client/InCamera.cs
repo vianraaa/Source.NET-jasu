@@ -29,4 +29,7 @@ public partial class Input
 	ConVar c_mindistance = new("30", FCvar.Archive| FCvar.Cheat );
 	ConVar c_orthowidth = new("100", FCvar.Archive| FCvar.Cheat );
 	ConVar c_orthoheight = new("100", FCvar.Archive | FCvar.Cheat );
+
+	public float CAM_CapPitch(float val) => val;
+	public float CAM_CapYaw(float val) => val;
 }
