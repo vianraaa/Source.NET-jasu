@@ -1,4 +1,5 @@
-﻿using Source.Common.Bitbuffers;
+﻿using Source;
+using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.GUI.Controls;
 
@@ -92,8 +93,6 @@ public class BaseHudChat : EditableHudElement {
 			ChatPrintf(client, ChatFilters.None, str);
 		else 
 			Printf(ChatFilters.None, str);
-
-		Msg(str);
 	}
 
 	private void Printf(ChatFilters none, ReadOnlySpan<char> str) {
@@ -109,7 +108,7 @@ public class BaseHudChat : EditableHudElement {
 		else
 			engine.GetPlayerInfo(playerIndex, out playerInfo);
 
-
+		Msg($"{((ReadOnlySpan<char>)playerInfo.Name).SliceNullTerminatedString()}: {str}\n");
 	}
 
 	protected void SayText2(bf_read msg) {
