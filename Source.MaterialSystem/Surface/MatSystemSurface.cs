@@ -462,10 +462,10 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawOutlinedRect(int x0, int y0, int x1, int y1) {
-		DrawFilledRect(x0, y0, x1, y0 + 1); 
-		DrawFilledRect(x0, y1 - 1, x1, y1);  
-		DrawFilledRect(x0, y0 + 1, x0 + 1, y1 - 1); 
-		DrawFilledRect(x1 - 1, y0 + 1, x1, y1 - 1); 
+		DrawFilledRect(x0, y0, x1, y0 + 1);
+		DrawFilledRect(x0, y1 - 1, x1, y1);
+		DrawFilledRect(x0, y0 + 1, x0 + 1, y1 - 1);
+		DrawFilledRect(x1 - 1, y0 + 1, x1, y1 - 1);
 	}
 
 	public void DrawPolyLine(Span<Point> points) {
@@ -1165,9 +1165,9 @@ public class MatSystemSurface : IMatSystemSurface
 			case CursorCode.No:
 			case CursorCode.Hand:
 				CursorVisible = true;
-				if (!SoftwareCursorActive) 
+				if (!SoftwareCursorActive)
 					CurrentCursor = launcherMgr.GetHardwareCursor(cursor);
-				else 
+				else
 					CurrentCursor = launcherMgr.GetSoftwareCursor(cursor, out SoftwareCursorOffsetX, out SoftwareCursorOffsetY);
 
 				break;
@@ -1426,8 +1426,8 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public void InstallPlaySoundFunc(VGuiPlayFunc func) => play += func;
 
-	List<string> BitmapFontFileNames = [];
-
+	List<UtlSymbol> BitmapFontFileNames = [];
+	Dictionary<UtlSymId_t, UtlSymbol> BitmapFontFileMapping = [];
 	public bool AddBitmapFontFile(ReadOnlySpan<char> fontFileName) {
 		bool found = false;
 		found = FileSystem.FileExists(fontFileName, null);
@@ -1435,11 +1435,12 @@ public class MatSystemSurface : IMatSystemSurface
 			Msg($"Couldn't find bitmap font file '{fontFileName}'\n");
 			return false;
 		}
+		Span<char> variantPath = stackalloc char[MAX_PATH];
 		Span<char> path = stackalloc char[MAX_PATH];
-		fontFileName.CopyTo(path);
+		fontFileName.CopyTo(variantPath);
 
-		// only add if it's not already in the list
-		((ReadOnlySpan<char>)path).ToLowerInvariant(path);
+		((ReadOnlySpan<char>)variantPath[..fontFileName.Length]).ToLowerInvariant(path);
+		path = path[..fontFileName.Length];
 		ulong sym = path.Hash();
 
 		int i;
@@ -1448,8 +1449,7 @@ public class MatSystemSurface : IMatSystemSurface
 				break;
 		}
 		if (i < BitmapFontFileNames.Count) {
-			BitmapFontFileNames.Add(new string(path));
-
+			BitmapFontFileNames.Add(new(path));
 			FileSystem.GetLocalCopy(path);
 		}
 
@@ -1457,7 +1457,9 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void SetBitmapFontName(string name, ReadOnlySpan<char> fontFile) {
-		throw new NotImplementedException();
+		Span<char> fontPath = stackalloc char[MAX_PATH];
+		fontFile.ToLowerInvariant(fontPath);
+		BitmapFontFileMapping[new UtlSymbol(name)] = new(fontPath);
 	}
 
 	public float DrawGetAlphaMultiplier() {
@@ -1500,11 +1502,12 @@ public class MatSystemSurface : IMatSystemSurface
 
 	}
 
-	public bool GetBitmapFontName(ReadOnlySpan<char> name) {
-		throw new NotImplementedException();
+	public ReadOnlySpan<char> GetBitmapFontName(ReadOnlySpan<char> name) {
+		return BitmapFontFileMapping.TryGetValue(new UtlSymbol(name), out UtlSymbol fontPath)
+			? fontPath.String() : "";
 	}
 
-	public void SetBitmapFontGlyphSet(IFont font, bool v, float scalex, float scaley, SurfaceFontFlags flags) {
+	public void SetBitmapFontGlyphSet(IFont font, ReadOnlySpan<char> name, float scalex, float scaley, SurfaceFontFlags flags) {
 		throw new NotImplementedException();
 	}
 
