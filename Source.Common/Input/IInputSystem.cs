@@ -32,4 +32,6 @@ public interface IInputSystem
 
 	void StartTextInput();
 	void StopTextInput();
+	ButtonCode StringToButtonCode(ReadOnlySpan<char> bind);
+	ReadOnlySpan<char> ButtonCodeToString(ButtonCode code);
 }

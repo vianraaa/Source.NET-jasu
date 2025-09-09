@@ -105,34 +105,35 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		// We got the ICommandLine from EngineBuilder, insert it into the app system
 		this.AddSingleton(cmdLine);
 		// temp
-		Dbg.SpewActivate(Dbg.GROUP_DEVELOPER, 1);
-		Dbg.SpewActivate(Dbg.GROUP_CONSOLE, 1);
+		SpewActivate(GROUP_DEVELOPER, 1);
+		SpewActivate(GROUP_CONSOLE, 1);
 		// Internal methods. These are class instances for better restart
 		// support, and I feel like every time I try this, I end up getting
 		// "static creep" where I start to revert like a primate into using
 		// static singletons/god classes - if we're gonna use DI we might as
 		// well go all the way with it...
-		this.AddSingleton<CL>();
-		this.AddSingleton<MatSysInterface>();
-		this.AddSingleton<SV>();
-		this.AddSingleton<Sys>();
-		this.AddSingleton<Host>();
 		this.AddSingleton<Cbuf>();
+		this.AddSingleton<CL>();
 		this.AddSingleton<Cmd>();
+		this.AddSingleton<Common>();
 		this.AddSingleton<Con>();
 		this.AddSingleton<Cvar>();
-		this.AddSingleton<Common>();
-		this.AddSingleton<Sound>();
-		//this.AddSingleton<Util>();
-		this.AddSingleton<Scr>();
-		this.AddSingleton<View>();
-		this.AddSingleton<Render>();
-		this.AddSingleton<FileSystem>();
 		this.AddSingleton<CvarUtilities>();
-		this.AddSingleton<RenderUtils>();
+		this.AddSingleton<FileSystem>();
+		this.AddSingleton<Key>();
+		this.AddSingleton<Host>();
+		this.AddSingleton<MatSysInterface>();
 		this.AddSingleton<Net>();
 		this.AddKeyedSingleton<NetworkStringTableContainer>(Realm.Client);
 		this.AddKeyedSingleton<NetworkStringTableContainer>(Realm.Server);
+		this.AddSingleton<Render>();
+		this.AddSingleton<RenderUtils>();
+		this.AddSingleton<Scr>();
+		this.AddSingleton<Shader>();
+		this.AddSingleton<Sound>();
+		this.AddSingleton<SV>();
+		this.AddSingleton<Sys>();
+		this.AddSingleton<View>();
 		// Engine components that we provide.
 		this.AddSingleton<ICvar, Cvar>((services) => services.GetRequiredService<Cvar>());
 		this.AddSingleton<ICvarQuery, DefaultCvarQuery>();
@@ -149,7 +150,6 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<ClientState>();
 		this.AddSingleton<GameServer>();
 		this.AddSingleton<ClientGlobalVariables>();
-		this.AddSingleton<Shader>();
 		this.AddSingleton<ServerGlobalVariables>();
 		// Engine VGUI and how to read it later
 		this.AddSingleton<EngineVGui>();

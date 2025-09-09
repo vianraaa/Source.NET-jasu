@@ -6,11 +6,11 @@ using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.GameUI;
+using Source.Common.Input;
 using Source.Common.Networking;
 using Source.Common.Server;
 using Source.Engine.Client;
 using Source.Engine.Server;
-
 
 using static Source.Constants;
 
@@ -23,7 +23,7 @@ public class CommonHostState
 
 public class Host(
 	EngineParms host_parms, CommonHostState host_state, GameServer sv,
-	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem
+	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem, Key Key
 	)
 {
 	public int TimeToTicks(float dt) => (int)(0.5f + (float)dt / (float)host_state.IntervalPerTick);
@@ -507,13 +507,57 @@ public class Host(
 		this.clientDLL = clientDLL;
 	}
 
-	bool configCfgExecuted = false;
+	bool ConfigCfgExecuted = false;
 	public void ReadConfiguration() {
+		if (sv.IsDedicated())
+			return;
 
+		if (fileSystem == null)
+			Sys.Error("Host_ReadConfiguration:  g_pFileSystem == NULL\n");
+		
+		bool saveconfig = false;
+
+		if (fileSystem!.FileExists("//mod/cfg/config.cfg")) 
+			Cbuf.AddText("exec config.cfg\n");
+		else {
+			Cbuf.AddText("exec config_default.cfg\n");
+			saveconfig = true;
+		}
+
+		Cbuf.Execute();
+
+		int numBinds = Key.CountBindings();
+		if (numBinds == 0) 
+			UseDefaultBindings();
+		else 
+			SetupNewBindings();
+		
+		Key.SetBinding(ButtonCode.KeyEscape, "cancelselect");
+
+		if (Key.NameForBinding("toggleconsole") == null) 
+			Key.SetBinding(ButtonCode.KeyBackquote, "toggleconsole");
+
+		ConfigCfgExecuted = true;
+
+		if (saveconfig) {
+			bool saveinit = Initialized;
+			Initialized = true;
+			WriteConfiguration();
+			Initialized = saveinit;
+		}
 	}
-	public void WriteConfiguration(ReadOnlySpan<char> filename, bool allVars) {
+
+	private void SetupNewBindings() {
+		// todo
+	}
+
+	private void UseDefaultBindings() {
+		// todo
+	}
+
+	public void WriteConfiguration(ReadOnlySpan<char> filename = default, bool allVars = false) {
 		bool isUserRequested = filename != null;
-		if (filename == null)
+		if (filename == null || filename.Length == 0)
 			filename = "config.cfg";
 
 		if (!Initialized)

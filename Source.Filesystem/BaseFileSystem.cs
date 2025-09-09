@@ -224,7 +224,7 @@ public class BaseFileSystem : IFileSystem
 		else {
 			relativePath.CopyTo(scratchFileName);
 		}
-		Directory.CreateDirectory(new(scratchFileName));
+		Directory.CreateDirectory(new(scratchFileName.SliceNullTerminatedString()));
 	}
 	private SearchPath? FindWritePath(ReadOnlySpan<char> filename, ReadOnlySpan<char> pathID) {
 		ulong hash = pathID.Hash();
