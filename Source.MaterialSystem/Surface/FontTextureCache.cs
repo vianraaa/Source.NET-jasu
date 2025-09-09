@@ -18,18 +18,15 @@ public enum FontPageSize
 	Count
 }
 
-public unsafe struct CacheEntry
+public struct CacheEntry
 {
 	public IFont? Font;
 	public char Char;
 	public nint Page;
 	public CharTexCoord TexCoord;
 
-	public override bool Equals(object? obj) {
-		return obj is CacheEntry entry && entry.Font == Font && entry.Char == Char;
-	}
-	public override int GetHashCode() {
-		return HashCode.Combine(Font, Char);
+	public ulong FontCharHash() {
+		return (ulong)HashCode.Combine(Font, Char);
 	}
 }
 
@@ -118,8 +115,7 @@ public class FontTextureCache
 				CacheEntry cacheItem = new();
 				cacheItem.Font = font;
 				cacheItem.Char = chars[i];
-				LinkedListNode<CacheEntry>? entry = CharCache.Find(cacheItem);
-				if (entry == null) {
+				if (!CharCache.TryGetValue(cacheItem.FontCharHash(), out CacheEntry entry)) {
 					// All characters must come out of the same font
 					if (baseFont != FontManager.GetFontForChar(font, chars[i])) {
 						return false;
@@ -158,13 +154,12 @@ public class FontTextureCache
 					cacheItem.TexCoord.X1 = (float)((double)(drawX + fontWide) / (double)twide);
 					cacheItem.TexCoord.Y1 = (float)((double)(drawY + fontTall) / (double)ttall);
 
-					entry = new(cacheItem);
-					CharCache.AddLast(entry);
+					CharCache[cacheItem.FontCharHash()] = cacheItem;
 				}
 
-				nint charPage = entry.ValueRef.Page;
+				nint charPage = entry.Page;
 				textureID[i] = PageList[(int)charPage].TextureID[typePage];
-				texCoords[i] = entry.ValueRef.TexCoord;
+				texCoords[i] = entry.TexCoord;
 			}
 
 			// Generate texture data for all newly-encountered characters
@@ -200,9 +195,9 @@ public class FontTextureCache
 		CharCache.Clear();
 		PageList.Clear();
 
-		for (int i = 0; i < (int)FontPageSize.Count; ++i) 
+		for (int i = 0; i < (int)FontPageSize.Count; ++i)
 			CurrPage[i] = -1;
-		
+
 		FontPages.Clear();
 	}
 
@@ -271,8 +266,8 @@ public class FontTextureCache
 				newPage.Wide,
 				newPage.Tall,
 				ImageFormat.RGBA8888,
-				TextureFlags.PointSample | TextureFlags.ClampS| TextureFlags.ClampT |
-				TextureFlags.NoMip | TextureFlags.NoLOD | TextureFlags.Procedural| TextureFlags.SingleCopy
+				TextureFlags.PointSample | TextureFlags.ClampS | TextureFlags.ClampT |
+				TextureFlags.NoMip | TextureFlags.NoLOD | TextureFlags.Procedural | TextureFlags.SingleCopy
 			);
 
 			CreateFontMaterials(ref newPage, pTexture);
@@ -338,7 +333,7 @@ public class FontTextureCache
 
 		return -1;
 	}
-	LinkedList<CacheEntry> CharCache = [];
+	Dictionary<ulong, CacheEntry> CharCache = [];
 	List<Page> PageList = [];
 	nint[] CurrPage = new nint[(int)Surface.FontPageSize.Count];
 	Dictionary<IFont, Page> FontPages = [];
