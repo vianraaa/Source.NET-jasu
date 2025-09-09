@@ -121,6 +121,7 @@ public interface IFileSystem : IBaseFileSystem
 	ReadOnlySpan<char> RelativePathToFullPath(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID, Span<char> dest, PathTypeFilter filter = PathTypeFilter.None);
 	void MarkAllCRCsUnverified();
 	ReadOnlySpan<char> WhereIsFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID = default);
+	void PrintSearchPaths();
 }
 
 public enum PathTypeFilter

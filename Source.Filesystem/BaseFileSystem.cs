@@ -12,6 +12,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace Source.FileSystem;
 
@@ -29,7 +30,7 @@ public class BaseFileSystem : IFileSystem
 	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
 	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
 		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
-		
+
 		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
 			for (int i = 0, c = collection.Count; i < c; i++) {
 				var searchPath = collection[i];
@@ -259,7 +260,7 @@ public class BaseFileSystem : IFileSystem
 
 		foreach (var searchPaths in SearchPaths) {
 			foreach (var searchPath in searchPaths.Value) {
-				if (searchPath.GetPackFile() != null || searchPath.GetPackedStore() != null)
+				if (searchPath is not DiskSearchPath)
 					continue;
 
 				if (pathID == null || searchPaths.Key == hash)
@@ -323,12 +324,30 @@ public class BaseFileSystem : IFileSystem
 			? path.Concat(fileName) : null;
 	}
 
-	[ConCommand]
-	void whereis(in TokenizedCommand args) {
-		ReadOnlySpan<char> where = WhereIsFile(args.ArgS(1));
-		if (where == null)
-			ConWarning($"File '{args.ArgS(1)}' not found\n");
-		else
-			ConMsg($"{where}\n");
+	public void PrintSearchPaths() {
+		Msg("---------------\n");
+		Msg("Paths:\n");
+
+		foreach (var searchpath in SearchPaths) {
+			ReadOnlySpan<char> pathID = SearchPaths.GetName(searchpath.Key);
+			foreach (var spi in searchpath.Value) {
+				ReadOnlySpan<char> pack = "";
+				ReadOnlySpan<char> type = "";
+				if (false /* TODO: Map-based pack files */) {
+					// type = "(map)";
+				}
+				else if (spi is PackStoreSearchPath pssp) {
+					type = "(VPK)";
+					pack = pssp.DiskPath;
+				}
+
+				Msg($"\"{pack}\" \"{pathID}\" {type}\n");
+			}
+		}
+
+	}
+
+	private void Msg(object value) {
+		throw new NotImplementedException();
 	}
 }

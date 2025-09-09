@@ -4,7 +4,9 @@ namespace Source.FileSystem;
 
 public class SearchPathIDCollection : Dictionary<ulong, SearchPathCollection>
 {
-	List<ulong> pathOrder = [];
+	readonly List<ulong> pathOrder = [];
+	readonly Dictionary<ulong, string> searchPathNames = [];
+
 	/// <summary>
 	/// 
 	/// </summary>
@@ -21,13 +23,15 @@ public class SearchPathIDCollection : Dictionary<ulong, SearchPathCollection>
 		collection = new();
 		this[hashID] = collection;
 		pathOrder.Add(hashID);
+		searchPathNames[hashID] = new(pathID);
 		return true;
 	}
 
-	public new bool Remove(in ReadOnlySpan<char> pathID) {
+	public bool Remove(in ReadOnlySpan<char> pathID) {
 		ulong hashID = pathID.Hash();
 
 		base.Remove(hashID);
+		searchPathNames.Remove(hashID);
 		return pathOrder.Remove(hashID);
 	}
 
@@ -35,4 +39,6 @@ public class SearchPathIDCollection : Dictionary<ulong, SearchPathCollection>
 		base.Clear();
 		pathOrder.Clear();
 	}
+
+	public ReadOnlySpan<char> GetName(ulong key) => searchPathNames.TryGetValue(key, out string? v) ? v : "";
 }
