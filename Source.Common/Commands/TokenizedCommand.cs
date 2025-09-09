@@ -87,7 +87,7 @@ public unsafe struct TokenizedCommand
 					return false;
 				}
 
-				while (argvBuf[size - 1] == '\0')
+				while (size > 0 && argvBuf[size - 1] == '\0')
 					size--;
 
 				ppArgs[argCount++] = new(start, start + size);
