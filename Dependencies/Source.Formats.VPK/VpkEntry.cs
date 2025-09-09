@@ -20,6 +20,8 @@ namespace Source.Formats.VPK
 		internal uint EntryLength;
 		internal VpkArchive ParentArchive;
 
+		public override string ToString() => $"VpkEntry '{Path}/{Filename}.{Extension}' [crc {CRC}, entry<{EntryOffset}-{EntryLength}>]";
+
 		internal VpkEntry(VpkArchive parentArchive, uint crc, ushort preloadBytes, uint preloadDataOffset, ushort archiveIndex, uint entryOffset,
 			uint entryLength, string extension, string path, string filename) {
 			ParentArchive = parentArchive;
@@ -33,10 +35,6 @@ namespace Source.Formats.VPK
 			Path = path;
 			Filename = filename;
 			HasPreloadData = preloadBytes > 0;
-		}
-
-		public override string ToString() {
-			return string.Concat(Path, "/", Filename, ".", Extension);
 		}
 
 		private byte[] ReadPreloadData() {

@@ -28,8 +28,7 @@ public class BaseFileSystem : IFileSystem
 	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
 	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
 		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
-		AddSeparatorAndFixPath(ref newPath);
-
+		
 		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
 			for (int i = 0, c = collection.Count; i < c; i++) {
 				var searchPath = collection[i];

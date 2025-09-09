@@ -1,14 +1,21 @@
 ﻿using Source.Common.Filesystem;
 using Source.FileSystem;
+using Source.Formats.VPK;
 
 
 namespace Source.Filesystem;
 
 public class PackStoreSearchPath : SearchPath
 {
-	private IBaseFileSystem parent;
+	private readonly IBaseFileSystem parent;
+	private readonly VpkArchive vpk;
 	public PackStoreSearchPath(IBaseFileSystem filesystem, string absPath) {
+		absPath = absPath.EndsWith(".vpk") ? absPath.Substring(0, absPath.Length - ".vpk".Length) : absPath;
+		absPath = absPath.EndsWith("_dir") ? absPath.Substring(0, absPath.Length - "_dir".Length) : absPath;
+		absPath = $"{absPath}_dir.vpk";
 		parent = filesystem;
+		vpk = new VpkArchive();
+		vpk.Load(absPath);
 
 		if (!Path.IsPathFullyQualified(absPath))
 			absPath = Path.GetFullPath(absPath);

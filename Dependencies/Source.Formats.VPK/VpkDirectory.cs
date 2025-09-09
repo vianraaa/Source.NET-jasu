@@ -13,7 +13,9 @@ namespace Source.Formats.VPK
         public string Path { get; set; }
         internal VpkArchive ParentArchive { get; set; }
 
-        internal VpkDirectory(VpkArchive parentArchive, string path, List<VpkEntry> entries)
+		public override string ToString() => $"VpkDirectory '{Path}' [{Entries.Count} entries]";
+
+		internal VpkDirectory(VpkArchive parentArchive, string path, List<VpkEntry> entries)
         {
             ParentArchive = parentArchive;
             Path = path.ToLower();

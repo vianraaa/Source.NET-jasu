@@ -18,6 +18,8 @@ namespace Source.Formats.VPK
 		internal List<ArchivePart> Parts { get; set; }
 		internal string ArchivePath { get; set; }
 
+		public override string ToString() => $"VpkArchive '{ArchivePath}' [{Directories.Count} directories, {Parts.Count} parts]";
+
 		public VpkArchive() {
 			Directories = new List<VpkDirectory>();
 		}
