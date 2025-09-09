@@ -346,8 +346,4 @@ public class BaseFileSystem : IFileSystem
 		}
 
 	}
-
-	private void Msg(object value) {
-		throw new NotImplementedException();
-	}
 }
