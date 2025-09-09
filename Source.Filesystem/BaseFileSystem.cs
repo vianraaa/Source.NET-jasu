@@ -340,6 +340,9 @@ public class BaseFileSystem : IFileSystem
 					type = "(VPK)";
 					pack = pssp.DiskPath;
 				}
+				else if(spi is DiskSearchPath dsp) {
+					pack = dsp.DiskPath;
+				}
 
 				Msg($"\"{pack}\" \"{pathID}\" {type}\n");
 			}
