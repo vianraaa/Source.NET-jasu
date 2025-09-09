@@ -120,9 +120,11 @@ public interface IFileSystem : IBaseFileSystem
 	void GetLocalCopy(ReadOnlySpan<char> path);
 	ReadOnlySpan<char> RelativePathToFullPath(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID, Span<char> dest, PathTypeFilter filter = PathTypeFilter.None);
 	void MarkAllCRCsUnverified();
+	ReadOnlySpan<char> WhereIsFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID = default);
 }
 
-public enum PathTypeFilter {
+public enum PathTypeFilter
+{
 	None,
 	CullPack,
 	CullNonPack

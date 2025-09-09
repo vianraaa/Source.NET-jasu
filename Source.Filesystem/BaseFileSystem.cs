@@ -3,6 +3,7 @@
 
 using CommunityToolkit.HighPerformance;
 
+using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Utilities;
 using Source.Filesystem;
@@ -315,5 +316,19 @@ public class BaseFileSystem : IFileSystem
 
 	public void MarkAllCRCsUnverified() {
 		// Todo
+	}
+
+	public ReadOnlySpan<char> WhereIsFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID = default) {
+		return FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? path)
+			? path.Concat(fileName) : null;
+	}
+
+	[ConCommand]
+	void whereis(in TokenizedCommand args) {
+		ReadOnlySpan<char> where = WhereIsFile(args.ArgS());
+		if (where == null)
+			ConWarning($"File '{args.ArgS(0)}' not found\n");
+		else
+			ConMsg($"{where}\n");
 	}
 }
