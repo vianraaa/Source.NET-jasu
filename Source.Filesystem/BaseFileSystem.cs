@@ -4,7 +4,10 @@
 using CommunityToolkit.HighPerformance;
 
 using Source.Common.Filesystem;
+using Source.Common.Utilities;
+using Source.Filesystem;
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -23,7 +26,31 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
-	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
+	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
+		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
+		AddSeparatorAndFixPath(ref newPath);
+
+		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
+			for (int i = 0, c = collection.Count; i < c; i++) {
+				var searchPath = collection[i];
+				if (searchPath.DiskPath == newPath) {
+					if ((addType == SearchPathAdd.ToHead && i == 0) || addType == SearchPathAdd.ToTail)
+						return;
+					else {
+						collection.RemoveAt(i);
+						i--;
+						c--;
+						break;
+					}
+				}
+			}
+		}
+
+		if (addType == SearchPathAdd.ToHead)
+			collection.Insert(0, new PackStoreSearchPath(this, newPath));
+		else
+			collection.Add(new PackStoreSearchPath(this, newPath));
+	}
 	private void AddPackFiles(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) { } // TODO 
 	private void AddSeparatorAndFixPath(ref string path) { // this sucks fix it later
 		path = (path.TrimEnd('\\').TrimEnd('/') + "/").Replace("\\", "/");
