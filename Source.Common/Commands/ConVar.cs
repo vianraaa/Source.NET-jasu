@@ -95,6 +95,11 @@ public class ConVar : ConCommandBase, IConVar
 		Dbg.Assert(defaultValue != null);
 	}
 
+	/// <summary>
+	/// NOTE: This returns a downcast (ie. precision loss) of the internal double value.
+	/// </summary>
+	/// <returns></returns>
+	public float GetFloat() => (float)parent!.doubleValue;
 	public double GetDouble() => parent!.doubleValue;
 	public int GetInt() => parent!.intValue;
 	public string GetString() => parent!.value ?? "";

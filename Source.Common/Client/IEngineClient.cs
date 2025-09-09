@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using Source.Common.Mathematics;
+
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Source.Common.Client;
@@ -83,4 +85,5 @@ public interface IEngineClient
 	bool IsDrawingLoadingImage();
 	bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo);
 	bool Con_IsVisible();
+	void GetViewAngles(out QAngle viewangles);
 }

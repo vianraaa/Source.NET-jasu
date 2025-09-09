@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using Game.Shared;
+
+using Source;
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ namespace Game.Client.HUD;
 public class Hud(HudElementHelper HudElementHelper)
 {
 	public readonly List<IHudElement> HudList = [];
+	internal InButtons KeyBits;
 
 	public void Init() {
 		HudElementHelper.CreateAllElements(this);

@@ -1,4 +1,5 @@
-﻿using Source.Common.Bitbuffers;
+﻿using Source;
+using Source.Common.Bitbuffers;
 using Source.Common.Mathematics;
 
 using System;
@@ -33,14 +34,15 @@ public struct UserCmd
 
 		HasBeenPredicted = false;
 
-		if (ButtonsPressed == null) ButtonsPressed = new byte[5];
-		for (int i = 0; i < ButtonsPressed.Length; i++) ButtonsPressed[i] = 0;
+		for (int i = 0; i < MAX_BUTTONS_PRESSED; i++) 
+			ButtonsPressed[i] = 0;
+
 		ScrollWheelSpeed = 0;
 		WorldClicking = false;
 		WorldClickDirection = new(0);
 		IsTyping = false;
-		if (MotionSensorPositions == null) MotionSensorPositions = new Vector3[20];
-		for (int i = 0; i < MotionSensorPositions.Length; i++) MotionSensorPositions[i] = new(0);
+		for (int i = 0; i < MAX_MOTION_SENSOR_POSITIONS; i++) 
+			MotionSensorPositions[i] = new(0);
 		Forced = false;
 	}
 	public const int WEAPON_SUBTYPE_BITS = 6;
@@ -78,7 +80,7 @@ public struct UserCmd
 	/// <summary>
 	/// Attack button states
 	/// </summary>
-	public int Buttons;
+	public InButtons Buttons;
 
 	/// <summary>
 	/// Impulse command issued.
@@ -110,10 +112,11 @@ public struct UserCmd
 	/// </summary>
 	public bool HasBeenPredicted;
 
+	public const int MAX_BUTTONS_PRESSED = 5;
 	/// <summary>
 	/// Holds current buttons pressed, and sends to server used for PlayerButtonDown and other hooks serverside.
 	/// </summary>
-	public byte[] ButtonsPressed;
+	public InlineArray5<byte> ButtonsPressed;
 
 	/// <summary>
 	/// Scroll wheel speed.
@@ -135,10 +138,11 @@ public struct UserCmd
 	/// </summary>
 	public bool IsTyping;
 
+	public const int MAX_MOTION_SENSOR_POSITIONS = 20;
 	/// <summary>
 	/// Kinect stuff
 	/// </summary>
-	public Vector3[] MotionSensorPositions;
+	public InlineArray20<Vector3> MotionSensorPositions;
 
 	/// <summary>
 	/// Gmod wiki
@@ -149,24 +153,16 @@ public struct UserCmd
 		// TODO: implement
 	}
 
-	static bool HasChanged<T>(T[] from, T[] to) where T : IEquatable<T> {
-		if (from == null && to == null)
-			return false;
-
-		if (from == null || to == null) {
-			// which ones not null
-			T[] notNull = from ?? to ?? throw new Exception();
-			for (int i = 0; i < notNull.Length; i++) {
-				if (!notNull[i].Equals(default))
-					return true;
-			}
-
-			return false;
+	static bool HasChanged<T>(InlineArray5<T> from, InlineArray5<T> to) where T : IEquatable<T> {
+		for (int i = 0; i < 5; i++) {
+			if (!from[i].Equals(to[i]))
+				return true;
 		}
 
-		if (from.Length != to.Length) return true;
-
-		for (int i = 0; i < from.Length; i++) {
+		return false;
+	}
+	static bool HasChanged<T>(InlineArray20<T> from, InlineArray20<T> to) where T : IEquatable<T> {
+		for (int i = 0; i < 20; i++) {
 			if (!from[i].Equals(to[i]))
 				return true;
 		}
@@ -291,7 +287,7 @@ public struct UserCmd
 
 		if (HasChanged(to.ButtonsPressed, from.ButtonsPressed)) {
 			buf.WriteOneBit(1);
-			for (int i = 0; i < to.ButtonsPressed.Length; i++) {
+			for (int i = 0; i < 5; i++) {
 				buf.WriteUBitLong(to.ButtonsPressed[i], 8);
 			}
 		}
@@ -327,7 +323,7 @@ public struct UserCmd
 
 		if (HasChanged(to.MotionSensorPositions, from.MotionSensorPositions)) {
 			buf.WriteOneBit(1);
-			for (int i = 0; i < to.ButtonsPressed.Length; i++) {
+			for (int i = 0; i < MAX_MOTION_SENSOR_POSITIONS; i++) { 
 				buf.WriteBitVec3Coord(to.MotionSensorPositions[i]);
 			}
 		}

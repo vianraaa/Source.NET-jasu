@@ -11,4 +11,5 @@ public interface IInput
 	public void DecodeUserCmdFromBuffer(bf_read buf, int slot);
 	void Init();
 	int KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding);
+	void ExtraMouseSample(double frametime, bool active);
 }

@@ -1,4 +1,5 @@
 ﻿using Source.Common.Client;
+using Source.Common.Mathematics;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
@@ -64,4 +65,8 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	}
 
 	public bool Con_IsVisible() => Con.IsVisible();
+
+	public void GetViewAngles(out QAngle viewangles) {
+		viewangles = default; // todo
+	}
 }

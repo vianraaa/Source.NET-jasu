@@ -852,4 +852,9 @@ public class Host(
 		Disconnect(true, new(error));
 		inerror = false;
 	}
+
+	public bool ShouldRun() {
+		// TODO for later. Requires singlestep
+		return true;
+	}
 }

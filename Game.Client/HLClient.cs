@@ -75,6 +75,10 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 
 	}
 
+	public void ExtraMouseSample(double frametime, bool active) {
+		input.ExtraMouseSample(frametime, active);
+	}
+
 	public void View_Render(ViewRects rects) {
 		ref ViewRect rect = ref rects[0];
 		if (rect.Width == 0 || rect.Height == 0)

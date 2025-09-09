@@ -38,7 +38,13 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	public void ExtraMouseUpdate(double frameTime) {
-		
+		if (!cl.IsActive())
+			return;
+
+		if (!Host.ShouldRun())
+			return;
+
+		ClientDLL.ExtraMouseSample(frameTime, !cl.Paused);
 	}
 
 	public void Init() {
