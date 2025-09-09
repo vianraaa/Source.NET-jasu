@@ -56,6 +56,9 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	ConVar thirdperson_screenspace = new("0", 0, "Movement will be relative to the camera, eg: left means screen-left");
 	ConVar sv_noclipduringpause = new("0", FCvar.Replicated | FCvar.Cheat, "If cheats are enabled, then you can noclip with the game paused (for doing screenshots, etc.).");
 
+	int in_impulse;
+	int in_cancel;
+
 	KeyButtonState in_speed;
 	KeyButtonState in_walk;
 	KeyButtonState in_jlook;
@@ -155,7 +158,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 		key.State &= 1;
 		return val;
 	}
-
+	[ConCommand] void impulse(in TokenizedCommand args) => in_impulse = int.TryParse(args[1], out in_impulse) ? in_impulse : 0;
 	[ConCommand(name: "+moveup")] void IN_UpDown(in TokenizedCommand args) => KeyDown(ref in_up, args[1]);
 	[ConCommand(name: "+movedown")] void IN_DownDown(in TokenizedCommand args) => KeyDown(ref in_down, args[1]);
 	[ConCommand(name: "+left")] void IN_LeftDown(in TokenizedCommand args) => KeyDown(ref in_left, args[1]);
@@ -255,6 +258,13 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 			engine.GetViewAngles(out QAngle curViewangles);
 			cmd.ViewAngles = curViewangles;
+			cmd.Impulse = (byte)in_impulse;
+			in_impulse = 0;
+			if (cmd.ForwardMove > 0) 
+				cmd.Buttons |= InButtons.Forward;
+			else if (cmd.ForwardMove < 0) 
+				cmd.Buttons |= InButtons.Back;
+			
 		}
 	}
 
@@ -720,7 +730,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 		if ((Hud.KeyBits & InButtons.Weapon2) != 0)
 			bits |= InButtons.Weapon2;
 
-		bits &= ClearInputState;
+		bits &= ~ClearInputState;
 
 		if (resetState != 0)
 			ClearInputState = 0;

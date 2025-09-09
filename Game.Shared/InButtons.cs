@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Game.Shared;
 
+[Flags]
 public enum InButtons
 {
 	Attack = 1 << 0,
