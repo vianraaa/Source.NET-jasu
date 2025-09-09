@@ -80,7 +80,10 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	}
 
 	public void GetMouseDelta(out int x, out int y, bool ignoreNextMouseDelta = false) {
-		throw new NotImplementedException();
+		x = window.MouseXDelta;
+		y = window.MouseYDelta;
+		window.MouseXDelta = 0;
+		window.MouseYDelta = 0;
 	}
 
 	public void GetNativeDisplayInfo(int nDisplay, out uint width, out uint height, out uint refreshHz) {

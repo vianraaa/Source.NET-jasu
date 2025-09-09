@@ -1,4 +1,5 @@
 ﻿using Source.Common.Client;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine.Client;
@@ -79,5 +80,10 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 		// Is this even right???
 		using MatRenderContextPtr renderContext = new(materials );
 		renderContext.GetWindowSize(out w, out h);
+	}
+
+	readonly ILauncherManager launcherMgr = Singleton<ILauncherManager>();
+	public void GetMouseDelta(out int dx, out int dy) {
+		launcherMgr.GetMouseDelta(out dx, out dy);
 	}
 }

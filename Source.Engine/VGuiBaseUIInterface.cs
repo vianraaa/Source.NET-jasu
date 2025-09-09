@@ -566,12 +566,10 @@ public class EngineVGui(
 			return;
 		}
 
-		if (surface.IsCursorLocked()) {
+		if (surface.IsCursorLocked()) 
 			clientDLL.IN_ActivateMouse();
-		}
-		else {
+		else 
 			clientDLL.IN_DeactivateMouse();
-		}
 	}
 
 	readonly ConVar r_drawvgui = new("r_drawvgui", "1", FCvar.Cheat, "Enable the rendering of vgui panels");

@@ -60,8 +60,8 @@ public class ConVar : ConCommandBase, IConVar
 		doubleValue = double.TryParse(value, out var dRes) ? dRes : 0;
 		intValue = int.TryParse(value, out var iRes) ? iRes : 0;
 
-		Dbg.Assert(!hasMin || doubleValue >= minVal);
-		Dbg.Assert(!hasMax || doubleValue <= maxVal);
+		Assert(!hasMin || doubleValue >= minVal);
+		Assert(!hasMax || doubleValue <= maxVal);
 
 #pragma warning disable CS8604 // Possible null reference argument. 
 		// Note: the warning is suppressed here because null is only expected as an argument

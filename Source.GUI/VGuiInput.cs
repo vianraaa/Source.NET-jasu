@@ -257,7 +257,7 @@ public class VGuiInput : IVGuiInput
 		return vgui.IsDispatchingMessages();
 	}
 
-	public void GetCursorPosition(out int x, out int y) {
+	internal void GetCursorPosition(out int x, out int y) {
 		ref InputContext context = ref GetInputContext(Context);
 		x = context.CursorX;
 		y = context.CursorY;

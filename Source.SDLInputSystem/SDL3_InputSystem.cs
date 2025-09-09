@@ -271,7 +271,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 					case WindowEventType.AppActivate: {
 							InputEvent newEv = new();
 							newEv.Type = InputEventType.App_AppActivated;
-							newEv.Data = ev.ModifierKeyMask != 0 ? 1 : 0;
+							newEv.Data = ev.WasWindowFocused ? 1 : 0;
 
 							PostUserEvent(in newEv);
 							if (ev.ModifierKeyMask == 0) {

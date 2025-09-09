@@ -37,6 +37,10 @@ public class Hud(HudElementHelper HudElementHelper)
 		Assert(false);
 		return null;
 	}
+
+	public int GetSensitivity() {
+		return 0;
+	}
 }
 
 public class HudElementHelper

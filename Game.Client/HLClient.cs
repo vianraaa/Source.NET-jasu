@@ -68,11 +68,11 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 	}
 
 	public void IN_DeactivateMouse() {
-
+		input.DeactivateMouse();
 	}
 
 	public void IN_ActivateMouse() {
-
+		input.ActivateMouse();
 	}
 
 	public void ExtraMouseSample(double frametime, bool active) {
@@ -96,5 +96,9 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 
 	public void IN_OnMouseWheeled(int delta) {
 
+	}
+
+	public void IN_ClearStates() {
+		input.ClearStates();
 	}
 }

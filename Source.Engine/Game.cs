@@ -38,9 +38,10 @@ public class Game : IGame
 	readonly IMatSystemSurface surface;
 	readonly IEngine eng;
 	readonly Host Host;
+	readonly IBaseClientDLL? clientDLL;
 	readonly IServiceProvider services;
 	readonly Key Key;
-	public Game(Host host, ILauncherManager? launcherManager, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services, Key Key) {
+	public Game(Host host, ILauncherManager? launcherManager, IBaseClientDLL? clientDLL, Sys Sys, IFileSystem fileSystem, IInputSystem inputSystem, IMatSystemSurface surface, IEngine eng, IServiceProvider services, Key Key) {
 		Host = host;
 
 		this.launcherManager = launcherManager;
@@ -51,6 +52,7 @@ public class Game : IGame
 		this.eng = eng;
 		this.services = services;
 		this.Key = Key;
+		this.clientDLL = clientDLL;
 	}
 	GameMessageHandler[] GameMessageHandlers;
 
@@ -71,10 +73,7 @@ public class Game : IGame
 		SetCanPostActivateEvents(true);
 	}
 
-	private void ClearIOStates() {
-		throw new NotImplementedException();
-	}
-
+	private void ClearIOStates() => clientDLL?.IN_ClearStates();
 	private void SetCanPostActivateEvents(bool v) {
 
 	}

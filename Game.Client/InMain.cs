@@ -29,7 +29,8 @@ public struct KeyButtonState
 	public int State;
 }
 
-public enum MouseParams {
+public enum MouseParams
+{
 	AccelThreshold1 = 0,
 	AccelThreshold2,
 	SpeedFactor,
@@ -336,8 +337,11 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	bool CameraInThirdPerson;
 	bool CameraIsOrthographic;
 
+	float AccumulatedMouseXMovement;
+	float AccumulatedMouseYMovement;
 	float PreviousMouseXPosition;
 	float PreviousMouseYPosition;
+	double KeyboardSampleTime;
 
 	public int KeyEvent(int down, ButtonCode code, ReadOnlySpan<char> currentBinding) {
 		if ((code == ButtonCode.MouseLeft) || (code == ButtonCode.MouseRight)) {
@@ -373,7 +377,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 	private void AdjustAngles(double frametime) {
 		float speed = DetermineKeySpeed(frametime);
-		if (speed <= 0.0f) 
+		if (speed <= 0.0f)
 			return;
 
 		engine.GetViewAngles(out QAngle viewangles);
@@ -386,16 +390,16 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	}
 
 	private void ClampAngles(QAngle viewangles) {
-		if (viewangles[PITCH] > cl_pitchdown.GetFloat()) 
+		if (viewangles[PITCH] > cl_pitchdown.GetFloat())
 			viewangles[PITCH] = cl_pitchdown.GetFloat();
-		
-		if (viewangles[PITCH] < -cl_pitchup.GetFloat()) 
+
+		if (viewangles[PITCH] < -cl_pitchup.GetFloat())
 			viewangles[PITCH] = -cl_pitchup.GetFloat();
 
-		if (viewangles[ROLL] > 50) 
+		if (viewangles[ROLL] > 50)
 			viewangles[ROLL] = 50;
-		
-		if (viewangles[ROLL] < -50) 
+
+		if (viewangles[ROLL] < -50)
 			viewangles[ROLL] = -50;
 	}
 
@@ -431,8 +435,8 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 
 			if (side != 0 || forward != 0)
 				viewangles[YAW] = MathLib.RAD2DEG(MathF.Atan2(side, forward));
-			
-			if (side != 0 || forward != 0 || KeyState(ref in_right) != 0 || KeyState(ref in_left) != 0) 
+
+			if (side != 0 || forward != 0 || KeyState(ref in_right) != 0 || KeyState(ref in_left) != 0)
 				cam_idealyaw.SetValue(ThirdPersonManager.GetCameraOffsetAngles()[YAW] - viewangles[YAW]);
 		}
 	}
@@ -440,9 +444,9 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	private float DetermineKeySpeed(double frametime) {
 		float speed = (float)frametime;
 
-		if ((in_speed.State & 1) != 0) 
+		if ((in_speed.State & 1) != 0)
 			speed *= cl_anglespeedkey.GetFloat();
-		
+
 		return speed;
 	}
 
@@ -469,23 +473,100 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 	}
 
 	private void ApplyMouse(QAngle viewangles, UserCmd cmd, float mouse_x, float mouse_y) {
-		throw new NotImplementedException();
+
 	}
 
-	private void ScaleMouse(ref float mouse_x, ref float mouse_y) {
-		throw new NotImplementedException();
+	private void ScaleMouse(ref float x, ref float y) {
+		float mx = x;
+		float my = y;
+
+		float mouse_sensitivity = Hud.GetSensitivity() != 0 ? Hud.GetSensitivity() : sensitivity.GetFloat();
+
+		if (m_customaccel.GetInt() == 1 || m_customaccel.GetInt() == 2) {
+			float raw_mouse_movement_distance = MathF.Sqrt(mx * mx + my * my);
+			float acceleration_scale = m_customaccel_scale.GetFloat();
+			float accelerated_sensitivity_max = m_customaccel_max.GetFloat();
+			float accelerated_sensitivity_exponent = m_customaccel_exponent.GetFloat();
+			float accelerated_sensitivity = MathF.Pow(raw_mouse_movement_distance, accelerated_sensitivity_exponent) * acceleration_scale + mouse_sensitivity;
+
+			if (accelerated_sensitivity_max > 0.0001f &&
+				accelerated_sensitivity > accelerated_sensitivity_max) {
+				accelerated_sensitivity = accelerated_sensitivity_max;
+			}
+
+			x *= accelerated_sensitivity;
+			y *= accelerated_sensitivity;
+
+			if (m_customaccel.GetInt() == 2 || m_customaccel.GetInt() == 4) {
+				x *= m_yaw.GetFloat();
+				y *= m_pitch.GetFloat();
+			}
+		}
+		else if (m_customaccel.GetInt() == 3) {
+			float raw_mouse_movement_distance_squared = mx * mx + my * my;
+			float fExp = Math.Max(0.0f, (m_customaccel_exponent.GetFloat() - 1.0f) / 2.0f);
+			float accelerated_sensitivity = MathF.Pow(raw_mouse_movement_distance_squared, fExp) * mouse_sensitivity;
+
+			x *= accelerated_sensitivity;
+			y *= accelerated_sensitivity;
+		}
+		else {
+			x *= mouse_sensitivity;
+			y *= mouse_sensitivity;
+		}
 	}
 
-	private void GetMouseDelta(float mx, float my, out float mouse_x, out float mouse_y) {
-		throw new NotImplementedException();
+	ConVar cl_mouseenable = new("1", 0);
+
+	private void GetMouseDelta(float inmousex, float inmousey, out float outmousex, out float outmousey) {
+		if (m_filter.GetBool()) {
+			outmousex = (inmousex + PreviousMouseXPosition) * 0.5f;
+			outmousey = (inmousey + PreviousMouseYPosition) * 0.5f;
+		}
+		else {
+			outmousex = inmousex;
+			outmousey = inmousey;
+		}
+
+		PreviousMouseXPosition = inmousex;
+		PreviousMouseYPosition = inmousey;
 	}
 
 	private void GetAccumulatedMouseDeltasAndResetAccumulators(out float mx, out float my) {
-		throw new NotImplementedException();
+		mx = AccumulatedMouseXMovement;
+		my = AccumulatedMouseYMovement;
+
+		// todo: raw input?
+
+		AccumulatedMouseXMovement = 0;
+		AccumulatedMouseYMovement = 0;
 	}
 
 	private void AccumulateMouse() {
-		throw new NotImplementedException();
+		if (!cl_mouseenable.GetBool())
+			return;
+
+		if (!cl_mouselook.GetBool()) 
+			return;
+		
+		engine.GetScreenSize(out int w, out int h);
+
+		if (!CameraInterceptingMouse && Surface.IsCursorLocked()) {
+			engine.GetMouseDelta(out int dx, out int dy);
+			AccumulatedMouseXMovement += dx;
+			AccumulatedMouseYMovement += dy;
+
+			ResetMouse();
+		}
+		else if (MouseActive) {
+			GetMousePos(out int ox, out int oy);
+
+			int new_ox = Math.Clamp(ox, 0, w - 1);
+			int new_oy = Math.Clamp(oy, 0, h - 1);
+
+			if (ox != new_ox || oy != new_oy) 
+				SetMousePos(new_ox, new_oy);
+		}
 	}
 
 

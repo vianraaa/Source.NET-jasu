@@ -27,4 +27,5 @@ public interface IBaseClientDLL
 	int IN_KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding);
 	void IN_OnMouseWheeled(int delta);
 	void ExtraMouseSample(double frametime, bool active);
+	void IN_ClearStates();
 }

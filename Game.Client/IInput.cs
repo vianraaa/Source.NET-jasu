@@ -12,4 +12,7 @@ public interface IInput
 	void Init();
 	int KeyEvent(int eventcode, ButtonCode keynum, ReadOnlySpan<char> currentBinding);
 	void ExtraMouseSample(double frametime, bool active);
+	void ActivateMouse();
+	void DeactivateMouse();
+	void ClearStates();
 }

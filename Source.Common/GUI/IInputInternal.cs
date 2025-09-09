@@ -46,8 +46,6 @@ public interface IVGuiInput
 	void SetAppModalSurface(IPanel? panel);
 	void ReleaseAppModalSurface();
 
-	void GetCursorPosition(out int x, out int y);
-
 	void SetIMEWindow(nint hwnd);
 	nint GetIMEWindow();
 
