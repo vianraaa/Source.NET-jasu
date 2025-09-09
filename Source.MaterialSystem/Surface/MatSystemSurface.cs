@@ -1313,7 +1313,6 @@ public class MatSystemSurface : IMatSystemSurface
 				CurrentlySetCursor = CurrentCursor;
 				launcherMgr.SetMouseCursor(CurrentlySetCursor);
 				launcherMgr.SetMouseVisible(true);
-				launcherMgr.LockCursor(CursorLocked);
 			}
 		}
 	}

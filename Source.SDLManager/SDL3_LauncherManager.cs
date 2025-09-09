@@ -225,7 +225,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		}
 	}
 
-	public void LockCursor(bool cursorLocked) {
+	public void SetWindowRelativeMouseMode(bool cursorLocked) {
 		SDL3.SDL_SetWindowRelativeMouseMode(window.HardwareHandle, cursorLocked);
 	}
 }

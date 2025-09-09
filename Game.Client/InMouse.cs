@@ -1,6 +1,7 @@
 ﻿using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.GUI;
+using Source.Common.Launcher;
 
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,9 @@ namespace Game.Client;
 public partial class Input
 {
 	IVGuiInput? _input;
+	ILauncherManager? _launcher;
 	IVGuiInput input => _input ??= Singleton<IVGuiInput>();
+	ILauncherManager launcher => _launcher ??= Singleton<ILauncherManager>();
 
 	public void ActivateMouse() {
 		if (MouseActive)
@@ -25,6 +28,7 @@ public partial class Input
 
 			AccumulatedMouseXMovement = 0;
 			AccumulatedMouseYMovement = 0;
+			launcher.SetWindowRelativeMouseMode(true);
 		}
 	}
 
@@ -46,6 +50,7 @@ public partial class Input
 
 			AccumulatedMouseXMovement = 0;
 			AccumulatedMouseYMovement = 0;
+			launcher.SetWindowRelativeMouseMode(false);
 		}
 	}
 

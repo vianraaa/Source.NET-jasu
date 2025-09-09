@@ -133,7 +133,8 @@ public unsafe class SDL3_Window : IWindow
 
 						MouseXDelta += (int)ev.motion.xrel;
 						MouseYDelta += (int)ev.motion.yrel;
-						Msg($"MouseXDelta = {ev.motion.xrel}, MouseYDelta = {ev.motion.yrel}\n");
+						
+						// Msg($"MouseXDelta = {ev.motion.xrel}, MouseYDelta = {ev.motion.yrel}\n");
 
 						if (!RawInput && !CursorVisible && (
 							ev.motion.x < MouseTargetX - WarpDelta ||
