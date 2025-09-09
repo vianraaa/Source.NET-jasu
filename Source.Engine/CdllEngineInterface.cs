@@ -59,7 +59,7 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr) : I
 		}
 
 		Span<byte> pi = cl.UserInfoTable.GetStringUserData(playerIndex);
-		playerInfo = new();
+		PlayerInfo.FromBytes(pi, out playerInfo);
 		return true; // todo: the rest of this
 	}
 }

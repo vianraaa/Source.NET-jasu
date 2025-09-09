@@ -570,7 +570,7 @@ public class NetworkStringTableContainer : INetworkStringTableContainer
 
 	public INetworkStringTable? FindTable(ReadOnlySpan<char> tableName) {
 		foreach (NetworkStringTable pTable in Tables) {
-			if (pTable.GetTableName() == tableName)
+			if (pTable.GetTableName().Equals(tableName, StringComparison.OrdinalIgnoreCase))
 				return pTable;
 		}
 

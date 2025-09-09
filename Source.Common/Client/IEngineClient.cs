@@ -1,22 +1,54 @@
-﻿namespace Source.Common.Client;
+﻿using System.Runtime.InteropServices;
+using System.Text;
+
+namespace Source.Common.Client;
 
 /// <summary>
 /// Engine player info. (replica of player_info_s)
 /// </summary>
-public struct PlayerInfo {
-	public InlineArray256<char> Name;
+public struct PlayerInfo
+{
+	public InlineArray32<char> Name;
 	public int UserID;
-	public string GUID;
+	public InlineArray33<byte> GUID;
 	public uint FriendsID;
-	public string FriendsName;
+	public InlineArray32<char> FriendsName;
 	public bool FakePlayer;
 	public bool IsHLTV;
 	public bool IsReplay;
-	public uint[] CustomFiles;
+	public InlineArray4<CRC32_t> CustomFiles;
 	public byte FilesDownloaded;
+
+	public static void FromBytes(ReadOnlySpan<byte> bytes, out PlayerInfo info) {
+		info = new();
+
+		ReadOnlySpan<byte> asciiName = bytes[0..32];
+		int asciiNull = asciiName.IndexOf<byte>(0);
+		if (asciiNull != -1)
+			asciiName = asciiName[..asciiNull];
+		Encoding.ASCII.GetChars(asciiName, info.Name);
+
+		info.UserID = MemoryMarshal.Cast<byte, int>(bytes[32..36])[0];
+		bytes[36..69].CopyTo(info.GUID);
+		info.FriendsID = MemoryMarshal.Cast<byte, uint>(bytes[72..76])[0];
+
+		ReadOnlySpan<byte> friendsName = bytes[76..108];
+		int friendsNull = friendsName.IndexOf<byte>(0);
+		if (friendsNull != -1)
+			friendsName = friendsName[..];
+		Encoding.ASCII.GetChars(friendsName, info.FriendsName);
+
+		info.FakePlayer = bytes[108] != 0;
+		info.IsHLTV = bytes[109] != 0;
+		info.IsReplay = bytes[110] != 0;
+
+		MemoryMarshal.Cast<byte, CRC32_t>(bytes[112..(112+16)]).CopyTo(info.CustomFiles);
+		info.FilesDownloaded = bytes[128];
+	}
 }
 
-public enum SkyboxVisibility {
+public enum SkyboxVisibility
+{
 	NotVisible,
 	Skybox3D,
 	Skybox2D
