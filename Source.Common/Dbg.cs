@@ -329,7 +329,7 @@ public static class Dbg
 #if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 	[DebuggerHidden]
 #endif
-	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, string message, string file, int line, bool fatal) {
+	static void _AssertMsg([DoesNotReturnIf(false)] bool exp, ReadOnlySpan<char> message, string file, int line, bool fatal) {
 		if (exp) {
 
 		}
@@ -367,7 +367,13 @@ public static class Dbg
 		[CallerArgumentExpression(nameof(exp))] string? ____expI = null,
 		[CallerFilePath] string? ____fileP = null,
 		[CallerLineNumber] int ____lineNum = -1
-	) => _AssertMsg(exp, $"Assertion Failed: {____expI ?? "<NULL>"}", ____fileP ?? "<nofile>", ____lineNum, false);
+	) {
+		const string ASSERTION_FAILED = "Assertion Failed: ";
+		Span<char> finalMsg = stackalloc char[ASSERTION_FAILED.Length + (____expI?.Length) ?? 0];
+		ASSERTION_FAILED.CopyTo(finalMsg);
+		____expI?.CopyTo(finalMsg[ASSERTION_FAILED.Length..]);
+		_AssertMsg(exp, finalMsg, ____fileP ?? "<nofile>", ____lineNum, false);
+	}
 
 	[Conditional("DBGFLAG_ASSERT")]
 #if DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
