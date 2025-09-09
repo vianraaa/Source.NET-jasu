@@ -1047,7 +1047,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 			SetName(newName.SliceNullTerminatedString());
 		}
 
-		if (renderTargetFlags.HasFlag(CreateRenderTargetFlags.HDR))
+		if (0 != (renderTargetFlags & CreateRenderTargetFlags.HDR))
 			if (HardwareConfig.GetHDRType() == HDRType.Float)
 				format = ImageFormat.RGBA16161616F;
 

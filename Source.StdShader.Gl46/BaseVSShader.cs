@@ -124,7 +124,7 @@ public abstract class BaseVSShader : BaseShader
 	private void SetStandardShaderUniforms() {
 		for (int i = 0; i < StandardParams.Length; i++) {
 			var v = Params![i];
-			if (v.IsDefined() && !StandardParams[i].Flags.HasFlag(ShaderParamFlags.DoNotUpload))
+			if (v.IsDefined() && 0 == (StandardParams[i].Flags & ShaderParamFlags.DoNotUpload))
 				ShaderShadow!.SetShaderUniform(v);
 		}
 	}

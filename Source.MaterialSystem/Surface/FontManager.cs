@@ -66,7 +66,7 @@ public class FontAmalgam : IFont
 		if (Fonts.Count == 0)
 			return;
 
-		if (GetFlags(0).HasFlag(SurfaceFontFlags.Bitmap))
+		if (0 != (GetFlags(0) & SurfaceFontFlags.Bitmap))
 			DevWarning("Bitmap isn't supported yet\n");
 		else
 			Warning("Bitmap isn't supported yet but that's an illegal operation anyway...\n");

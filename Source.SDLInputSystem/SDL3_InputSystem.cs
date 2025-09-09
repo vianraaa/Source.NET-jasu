@@ -293,7 +293,7 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 								PostUserEvent(newEv);
 							}
 
-							if (!ev.ModifierKeyMask.HasFlag(KeyModifier.Command) && ev.VirtualKeyCode >= 0 && ev.UTF8Key > 0) {
+							if (0 == (ev.ModifierKeyMask & KeyModifier.Command) && ev.VirtualKeyCode >= 0 && ev.UTF8Key > 0) {
 								InputEvent newEv = new() {
 									Tick = GetPollTick(),
 									Type = InputEventType.Gui_KeyTyped,

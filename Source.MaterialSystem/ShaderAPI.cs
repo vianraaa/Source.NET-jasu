@@ -415,7 +415,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		Driver = deviceInfo.Driver;
 		unsafe {
-			if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL))
+			if (0 != (deviceInfo.Driver & GraphicsDriver.OpenGL))
 				GL_LoadExtensions(graphics.GL_LoadExtensionsPtr());
 		}
 

@@ -134,7 +134,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 	}
 
 	public bool PrepareContext(GraphicsDriver driver) {
-		if (driver.HasFlag(GraphicsDriver.OpenGL)) {
+		if (0 != (driver & GraphicsDriver.OpenGL)) {
 			switch ((driver & ~GraphicsDriver.OpenGL)) {
 				default:
 					Error("Cannot support this OpenGL version");
@@ -164,7 +164,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		IGraphicsContext? gfx = null;
 
 		window = window == null ? this.window : window;
-		if (deviceInfo.Driver.HasFlag(GraphicsDriver.OpenGL)) {
+		if (0 != (deviceInfo.Driver & GraphicsDriver.OpenGL)) {
 			nint handle = (nint)((SDL3_Window)window).HardwareHandle;
 			nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)handle);
 			gfx = new SDL3_OpenGL46_Context(handle, ctx);

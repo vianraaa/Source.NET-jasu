@@ -107,7 +107,7 @@ public unsafe class SDL3_Window : IWindow
 	}
 
 	public bool Visible {
-		get => SDL3.SDL_GetWindowFlags(window).HasFlag(SDL_WindowFlags.SDL_WINDOW_HIDDEN) == false;
+		get => 0 != (SDL3.SDL_GetWindowFlags(window) & SDL_WindowFlags.SDL_WINDOW_HIDDEN) == false;
 		set {
 			if (value) SDL3.SDL_ShowWindow(window);
 			else SDL3.SDL_HideWindow(window);
@@ -280,15 +280,15 @@ public unsafe class SDL3_Window : IWindow
 
 		KeyModifierMask = 0;
 
-		if (KeyModifiers.HasFlag(GranularKeyModifier.CapsLock))
+		if (0 != (KeyModifiers & GranularKeyModifier.CapsLock))
 			KeyModifierMask |= KeyModifier.CapsLock;
-		if (KeyModifiers.HasFlag(GranularKeyModifier.ShiftL) || KeyModifiers.HasFlag(GranularKeyModifier.ShiftR))
+		if (0 != (KeyModifiers & GranularKeyModifier.ShiftL) || 0 != (KeyModifiers & GranularKeyModifier.ShiftR))
 			KeyModifierMask |= KeyModifier.Shift;
-		if (KeyModifiers.HasFlag(GranularKeyModifier.ControlL) || KeyModifiers.HasFlag(GranularKeyModifier.ControlR))
+		if (0 != (KeyModifiers & GranularKeyModifier.ControlL) || 0 != (KeyModifiers & GranularKeyModifier.ControlR))
 			KeyModifierMask |= KeyModifier.Control;
-		if (KeyModifiers.HasFlag(GranularKeyModifier.AltL) || KeyModifiers.HasFlag(GranularKeyModifier.AltR))
+		if (0 != (KeyModifiers & GranularKeyModifier.AltL) || 0 != (KeyModifiers & GranularKeyModifier.AltR))
 			KeyModifierMask |= KeyModifier.Alt;
-		if (KeyModifiers.HasFlag(GranularKeyModifier.CommandL) || KeyModifiers.HasFlag(GranularKeyModifier.CommandR))
+		if (0 != (KeyModifiers & GranularKeyModifier.CommandL) || 0 != (KeyModifiers & GranularKeyModifier.CommandR))
 			KeyModifierMask |= KeyModifier.Command;
 
 		newEvent.ModifierKeyMask = KeyModifierMask;

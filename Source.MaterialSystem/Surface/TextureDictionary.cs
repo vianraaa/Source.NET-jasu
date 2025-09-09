@@ -214,9 +214,7 @@ public class MatSystemTexture(IMaterialSystem materials)
 			Regen = new FontTextureRegen((int)width, (int)height, format);
 	}
 
-	private bool IsProcedural() {
-		return Flags.HasFlag(MatSystemTextureFlags.IsProcedural);
-	}
+	private bool IsProcedural() => 0 != (Flags & MatSystemTextureFlags.IsProcedural);
 
 	public void SetProcedural(bool proc) {
 		if (proc)
