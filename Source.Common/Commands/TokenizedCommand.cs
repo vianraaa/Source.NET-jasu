@@ -78,6 +78,16 @@ public unsafe struct TokenizedCommand
 				int maxLen = COMMAND_MAX_LENGTH - argvbuffersize;
 				bufParse.EatWhiteSpace();
 				int start = bufParse.TellGet();
+				if (start == -1)
+					break;
+
+				if (bufParse.PeekChar() == '\0')
+					break;
+
+				bool quoteStart = bufParse.PeekChar() == '"';
+				if (quoteStart) 
+					start += 1;
+				
 				int size = bufParse.ParseToken(breakSet, argvBuf[..maxLen]);
 				if (size < 0)
 					break;
