@@ -86,7 +86,7 @@ public class BaseHudChat : EditableHudElement {
 		Span<char> str = stackalloc char[256];
 
 		int client = msg.ReadByte();
-		msg.ReadString(str);
+		str = str[..msg.ReadString(str)];
 		bool wantsToChat = msg.ReadByte() != 0;
 
 		if (wantsToChat) 

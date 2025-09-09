@@ -556,8 +556,9 @@ public unsafe class bf_read : BitBuffer
 		str = ReadString(maxLen, bLine);
 		return !Overflowed;
 	}
-	public void ReadString(Span<char> target, bool bLine = false) {
+	public int ReadString(Span<char> target, bool bLine = false) {
 		Assert(target.Length != 0);
+		int i = 0;
 		while (target.Length > 0 && !Overflowed) {
 			byte val = ReadByte();
 			if (val == 0)
@@ -567,7 +568,9 @@ public unsafe class bf_read : BitBuffer
 
 			Encoding.ASCII.GetChars(new ReadOnlySpan<byte>(ref val), target[0..1]);
 			target = target[1..];
+			i++;
 		}
+		return i;
 	}
 	public string? ReadString(int maxLen, bool bLine = false) {
 		Assert(maxLen != 0);
