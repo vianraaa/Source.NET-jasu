@@ -1,11 +1,12 @@
 ﻿using Source.Common.Client;
+using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
 namespace Source.Engine;
 
-public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con Con) : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con Con, IMaterialSystem materials) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -67,6 +68,16 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	public bool Con_IsVisible() => Con.IsVisible();
 
 	public void GetViewAngles(out QAngle viewangles) {
-		viewangles = default; // todo
+		viewangles = cl.ViewAngles; 
+	}
+
+	public void SetViewAngles(in QAngle viewangles) {
+		cl.ViewAngles = QAngle.Normalize(in viewangles);
+	}
+
+	public void GetScreenSize(out int w, out int h) {
+		// Is this even right???
+		using MatRenderContextPtr renderContext = new(materials );
+		renderContext.GetWindowSize(out w, out h);
 	}
 }

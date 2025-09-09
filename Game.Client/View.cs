@@ -137,11 +137,11 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	}
 
 	public void StartPitchDrift() {
-		throw new NotImplementedException();
+
 	}
 
 	public void StopPitchDrift() {
-		throw new NotImplementedException();
+
 	}
 
 	public bool UpdateShadowDepthTexture(ITexture? pRenderTarget, ITexture? pDepthTexture, in ViewSetup shadowView) {

@@ -209,6 +209,7 @@ public interface IMatRenderContext
 	void PushRenderTargetAndViewport(ITexture? thisTexture);
 	void PopRenderTargetAndViewport();
 	void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height);
+	void GetWindowSize(out int w, out int h);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -257,4 +258,6 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height)
 		=> ctx.PushRenderTargetAndViewport(renderTarget, x, y, width, height);
+
+	public void GetWindowSize(out int w, out int h) => ctx.GetWindowSize(out w, out h);
 }

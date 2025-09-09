@@ -34,4 +34,5 @@ public interface IInputSystem
 	void StopTextInput();
 	ButtonCode StringToButtonCode(ReadOnlySpan<char> bind);
 	ReadOnlySpan<char> ButtonCodeToString(ButtonCode code);
+	void GetCursorPosition(out int x, out int y);
 }

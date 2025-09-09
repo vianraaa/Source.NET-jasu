@@ -12,7 +12,6 @@ public interface ILauncherManager
 {
 	bool CreateGameWindow(string title, bool windowed, int width, int height);
 
-	void SetCursorPosition(int x, int y);
 	void SetWindowFullScreen(bool fullscreen, int width, int height);
 	bool IsWindowFullScreen();
 

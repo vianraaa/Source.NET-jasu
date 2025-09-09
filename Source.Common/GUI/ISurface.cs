@@ -194,8 +194,6 @@ public interface ISurface
 	bool NeedKBInput();
 
 	bool HasCursorPosFunctions();
-	void SurfaceGetCursorPos(out int x, out int y);
-	void SurfaceSetCursorPos(int x, int y);
 	void PaintTraverseEx(IPanel embedded, bool v);
 	void PaintSoftwareCursor();
 	bool HandleInputEvent(in InputEvent ev);

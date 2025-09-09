@@ -7,8 +7,10 @@ using Source;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Commands;
+using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Mathematics;
+using Source.Engine;
 using Source.Engine.Client;
 using Source.GUI.Controls;
 
@@ -27,7 +29,14 @@ public struct KeyButtonState
 	public int State;
 }
 
-public partial class Input(IServiceProvider provider, IClientMode ClientMode) : IInput
+public enum MouseParams {
+	AccelThreshold1 = 0,
+	AccelThreshold2,
+	SpeedFactor,
+	Num
+}
+
+public partial class Input(IServiceProvider provider, IClientMode ClientMode, ISurface Surface, IViewRender view, ThirdPersonManager ThirdPersonManager) : IInput
 {
 	ConVar cl_anglespeedkey = new("0.67", 0);
 	ConVar cl_yawspeed = new("210", FCvar.None, "Client yaw speed.", -100000, 100000);
@@ -297,10 +306,38 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode) : 
 		cl = Singleton<ClientState>();
 		engine = Singleton<IEngineClient>();
 		Hud = Singleton<Hud>();
+
+		MouseInitialized = false;
+		MouseActive = false;
+
+		Init_Mouse();
+		Init_Keyboard();
+		Init_Camera();
+	}
+
+	private void Init_Mouse() {
+		PreviousMouseXPosition = 0.0f;
+		PreviousMouseYPosition = 0.0f;
+
+		MouseInitialized = true;
+	}
+
+	private void Init_Keyboard() {
+
+	}
+
+	private void Init_Camera() {
+		CameraIsOrthographic = false;
 	}
 
 	bool CameraInterceptingMouse;
+	bool MouseActive;
+	bool MouseInitialized;
 	bool CameraInThirdPerson;
+	bool CameraIsOrthographic;
+
+	float PreviousMouseXPosition;
+	float PreviousMouseYPosition;
 
 	public int KeyEvent(int down, ButtonCode code, ReadOnlySpan<char> currentBinding) {
 		if ((code == ButtonCode.MouseLeft) || (code == ButtonCode.MouseRight)) {
@@ -335,15 +372,125 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode) : 
 	}
 
 	private void AdjustAngles(double frametime) {
+		float speed = DetermineKeySpeed(frametime);
+		if (speed <= 0.0f) 
+			return;
 
+		engine.GetViewAngles(out QAngle viewangles);
+
+		AdjustYaw(speed, viewangles);
+		AdjustPitch(speed, viewangles);
+		ClampAngles(viewangles);
+
+		engine.SetViewAngles(viewangles);
+	}
+
+	private void ClampAngles(QAngle viewangles) {
+		if (viewangles[PITCH] > cl_pitchdown.GetFloat()) 
+			viewangles[PITCH] = cl_pitchdown.GetFloat();
+		
+		if (viewangles[PITCH] < -cl_pitchup.GetFloat()) 
+			viewangles[PITCH] = -cl_pitchup.GetFloat();
+
+		if (viewangles[ROLL] > 50) 
+			viewangles[ROLL] = 50;
+		
+		if (viewangles[ROLL] < -50) 
+			viewangles[ROLL] = -50;
+	}
+
+	private void AdjustPitch(float speed, QAngle viewangles) {
+		if (!cl_mouselook.GetBool()) {
+			if ((in_klook.State & 1) != 0) {
+				view.StopPitchDrift();
+				viewangles[PITCH] -= speed * cl_pitchspeed.GetFloat() * KeyState(ref in_forward);
+				viewangles[PITCH] += speed * cl_pitchspeed.GetFloat() * KeyState(ref in_back);
+			}
+
+			float up = KeyState(ref in_lookup);
+			float down = KeyState(ref in_lookdown);
+
+			viewangles[PITCH] -= speed * cl_pitchspeed.GetFloat() * up;
+			viewangles[PITCH] += speed * cl_pitchspeed.GetFloat() * down;
+
+			if (up != 0 || down != 0) {
+				view.StopPitchDrift();
+			}
+		}
+	}
+
+	private void AdjustYaw(float speed, QAngle viewangles) {
+		if ((in_strafe.State & 1) == 0) {
+			viewangles[YAW] -= speed * cl_yawspeed.GetFloat() * KeyState(ref in_right);
+			viewangles[YAW] += speed * cl_yawspeed.GetFloat() * KeyState(ref in_left);
+		}
+
+		if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
+			float side = KeyState(ref in_moveleft) - KeyState(ref in_moveright);
+			float forward = KeyState(ref in_forward) - KeyState(ref in_back);
+
+			if (side != 0 || forward != 0)
+				viewangles[YAW] = MathLib.RAD2DEG(MathF.Atan2(side, forward));
+			
+			if (side != 0 || forward != 0 || KeyState(ref in_right) != 0 || KeyState(ref in_left) != 0) 
+				cam_idealyaw.SetValue(ThirdPersonManager.GetCameraOffsetAngles()[YAW] - viewangles[YAW]);
+		}
+	}
+
+	private float DetermineKeySpeed(double frametime) {
+		float speed = (float)frametime;
+
+		if ((in_speed.State & 1) != 0) 
+			speed *= cl_anglespeedkey.GetFloat();
+		
+		return speed;
 	}
 
 	private void ControllerMove(double frametime, ref UserCmd cmd) {
-
+		if (!CameraInterceptingMouse && MouseActive)
+			MouseMove(ref cmd);
 	}
 
-	private void ScaleMovements(ref UserCmd cmd) {
+	private void MouseMove(ref UserCmd cmd) {
+		engine.GetViewAngles(out QAngle viewangles);
+		view.StopPitchDrift();
 
+		if (!CameraInterceptingMouse && !Surface.IsCursorVisible()) {
+			AccumulateMouse();
+			GetAccumulatedMouseDeltasAndResetAccumulators(out float mx, out float my);
+			GetMouseDelta(mx, my, out float mouse_x, out float mouse_y);
+			ScaleMouse(ref mouse_x, ref mouse_y);
+			ClientMode.OverrideMouseInput(ref mouse_x, ref mouse_y);
+			ApplyMouse(viewangles, cmd, mouse_x, mouse_y);
+			ResetMouse();
+		}
+
+		engine.SetViewAngles(in viewangles);
+	}
+
+	private void ApplyMouse(QAngle viewangles, UserCmd cmd, float mouse_x, float mouse_y) {
+		throw new NotImplementedException();
+	}
+
+	private void ScaleMouse(ref float mouse_x, ref float mouse_y) {
+		throw new NotImplementedException();
+	}
+
+	private void GetMouseDelta(float mx, float my, out float mouse_x, out float mouse_y) {
+		throw new NotImplementedException();
+	}
+
+	private void GetAccumulatedMouseDeltasAndResetAccumulators(out float mx, out float my) {
+		throw new NotImplementedException();
+	}
+
+	private void AccumulateMouse() {
+		throw new NotImplementedException();
+	}
+
+
+	private void ScaleMovements(ref UserCmd cmd) {
+		return; // nothing?
 	}
 
 	public bool CAM_IsThirdPerson() => CameraInThirdPerson;
@@ -381,11 +528,37 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode) : 
 	}
 
 	private void ComputeSideMove(ref UserCmd cmd) {
+		if (CAM_IsThirdPerson() && thirdperson_platformer.GetInt() != 0) {
+			return;
+		}
 
+		if (CAM_IsThirdPerson() && thirdperson_screenspace.GetInt() != 0) {
+			float ideal_yaw = cam_idealyaw.GetFloat();
+			float ideal_sin = MathF.Sin(MathLib.DEG2RAD(ideal_yaw));
+			float ideal_cos = MathF.Cos(MathLib.DEG2RAD(ideal_yaw));
+
+			float movement = ideal_cos * KeyState(ref in_moveright)
+				+ ideal_sin * KeyState(ref in_back)
+				+ -ideal_cos * KeyState(ref in_moveleft)
+				+ -ideal_sin * KeyState(ref in_forward);
+
+			cmd.SideMove += cl_sidespeed.GetFloat() * movement;
+
+			return;
+		}
+
+		if ((in_strafe.State & 1) != 0) {
+			cmd.SideMove += cl_sidespeed.GetFloat() * KeyState(ref in_right);
+			cmd.SideMove -= cl_sidespeed.GetFloat() * KeyState(ref in_left);
+		}
+
+		cmd.SideMove += cl_sidespeed.GetFloat() * KeyState(ref in_moveright);
+		cmd.SideMove -= cl_sidespeed.GetFloat() * KeyState(ref in_moveleft);
 	}
 
 	private void ComputeUpwardMove(ref UserCmd cmd) {
-
+		cmd.UpMove += cl_upspeed.GetFloat() * KeyState(ref in_up);
+		cmd.UpMove -= cl_upspeed.GetFloat() * KeyState(ref in_down);
 	}
 
 	private InButtons GetButtonBits(int resetState) {

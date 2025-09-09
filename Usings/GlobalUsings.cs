@@ -4,6 +4,7 @@ global using static Source.PlatformMacros;
 global using static Source.Common.MemUtils;
 global using static Source.Common.ThreadUtils;
 global using static Source.Common.Engine.ImportUtils;
+global using static Source.Common.Mathematics.MathLibConsts;
 global using CRC32_t = uint;
 global using HCursor = nint;
 global using UtlSymId_t = ulong;

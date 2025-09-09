@@ -57,6 +57,7 @@ public static class ImportUtils {
 	/// <returns></returns>
 	public static T Singleton<T>() where T : notnull {
 		Assert(EngineProvider != null);
+		// Msg(typeof(T).Name + "\n");
 		return EngineProvider!.GetRequiredService<T>();
 	}
 	/// <summary>

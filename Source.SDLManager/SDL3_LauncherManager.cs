@@ -114,10 +114,6 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		throw new NotImplementedException();
 	}
 
-	public void SetCursorPosition(int x, int y) {
-		throw new NotImplementedException();
-	}
-
 	public void SetWindowFullScreen(bool fullscreen, int width, int height) {
 		throw new NotImplementedException();
 	}

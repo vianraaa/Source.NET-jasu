@@ -47,5 +47,9 @@ public class ClientModeShared(IServiceProvider services, ClientGlobalVariables g
 		ChatElement?.StartMessageMode(messageModeType);
 	}
 
+	public void OverrideMouseInput(ref float mouse_x, ref float mouse_y) {
+		// nothing yet
+	}
+
 	public BaseHudChat? ChatElement;
 }

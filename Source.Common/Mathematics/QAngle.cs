@@ -54,6 +54,19 @@ public struct QAngle
 		up = new(cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp);
 	}
 
+	public static float Normalize(float angle) {
+		angle = MathLib.Fmodf(angle, 360.0f);
+		if (angle > 180) {
+			angle -= 360;
+		}
+		if (angle < -180) {
+			angle += 360;
+		}
+		return angle;
+	}
+
+	public static QAngle Normalize(in QAngle angle) => new(Normalize(angle.X), Normalize(angle.Y), Normalize(angle.Z));
+
 	public float this[int index] {
 		get {
 			switch (index) {

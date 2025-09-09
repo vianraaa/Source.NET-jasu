@@ -2,6 +2,7 @@
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.Common.Launcher;
 
 using System;
 using System.Runtime.CompilerServices;
@@ -249,7 +250,7 @@ public class VGuiInput : IVGuiInput
 		if (IsDispatchingMessageQueue())
 			GetCursorPosition(out x, out y);
 		else
-			surface.SurfaceGetCursorPos(out x, out y);
+			inputSystem.GetCursorPosition(out x, out y);
 	}
 
 	private bool IsDispatchingMessageQueue() {
@@ -329,30 +330,8 @@ public class VGuiInput : IVGuiInput
 
 			context.LastPostedCursorX = context.LastPostedCursorY = -9999;
 
-			SurfaceSetCursorPos(context.CursorX, context.CursorY);
+			SetCursorPos(context.CursorX, context.CursorY);
 			UpdateMouseFocus(context.CursorX, context.CursorY);
-		}
-	}
-
-#if WIN32
-	[DllImport("user32.dll", EntryPoint = "SetCursorPos")]
-	[return: MarshalAs(UnmanagedType.Bool)]
-	static extern bool Win32SetCursorPos(int x, int y);
-#endif
-
-	private void SurfaceSetCursorPos(int x, int y) {
-		if (surface.HasCursorPosFunctions()) {
-			surface.SurfaceSetCursorPos(x, y);
-		}
-		else {
-			surface.GetAbsoluteWindowBounds(out int px, out int py, out _, out _);
-			x += px;
-			y += py;
-#if WIN32
-			Win32SetCursorPos(x, y);
-#else
-			AssertMsg(false, "InputSystem.SurfaceSetCursorPos not implemented!");
-#endif
 		}
 	}
 
@@ -787,9 +766,8 @@ public class VGuiInput : IVGuiInput
 	public void SetCursorOveride(CursorCode cursor) {
 		cursorOverride = cursor;
 	}
-
 	public void SetCursorPos(int x, int y) {
-		throw new NotImplementedException();
+		inputSystem.SetCursorPosition(x, y);
 	}
 
 	public void SetIMEWindow(nint hwnd) {

@@ -22,8 +22,8 @@ public struct UserCmd
 		TickCount = 0;
 		ViewAngles = new();
 		ForwardMove = 0.0f;
-		Sidemove = 0.0f;
-		Upmove = 0.0f;
+		SideMove = 0.0f;
+		UpMove = 0.0f;
 		Buttons = 0;
 		Impulse = 0;
 		WeaponSelect = 0;
@@ -71,11 +71,11 @@ public struct UserCmd
 	/// <summary>
 	///  sideways velocity.
 	/// </summary>
-	public float Sidemove;
+	public float SideMove;
 	/// <summary>
 	///  upward velocity.
 	/// </summary>
-	public float Upmove;
+	public float UpMove;
 
 	/// <summary>
 	/// Attack button states
@@ -220,17 +220,17 @@ public struct UserCmd
 			buf.WriteOneBit(0);
 		}
 
-		if (to.Sidemove != from.Sidemove) {
+		if (to.SideMove != from.SideMove) {
 			buf.WriteOneBit(1);
-			buf.WriteFloat(to.Sidemove);
+			buf.WriteFloat(to.SideMove);
 		}
 		else {
 			buf.WriteOneBit(0);
 		}
 
-		if (to.Upmove != from.Upmove) {
+		if (to.UpMove != from.UpMove) {
 			buf.WriteOneBit(1);
-			buf.WriteFloat(to.Upmove);
+			buf.WriteFloat(to.UpMove);
 		}
 		else {
 			buf.WriteOneBit(0);

@@ -422,9 +422,14 @@ public class SDL3_InputSystem(IServiceProvider services) : IInputSystem
 		throw new NotImplementedException();
 	}
 
-	public void SetCursorPosition(int x, int y) {
-		throw new NotImplementedException();
+	public unsafe void GetCursorPosition(out int x, out int y) {
+		float fx, fy;
+		SDL3.SDL_GetMouseState(&fx, &fy);
+		x = (int)fx;
+		y = (int)fy;
 	}
+
+	public unsafe void SetCursorPosition(int x, int y) => SDL3.SDL_WarpMouseInWindow((SDL_Window*)Window!.GetHandle(), x, y);
 
 	public ButtonCode VirtualKeyToButtonCode(int virtualKey) {
 		throw new NotImplementedException();

@@ -86,4 +86,6 @@ public interface IEngineClient
 	bool GetPlayerInfo(int playerIndex, out PlayerInfo playerInfo);
 	bool Con_IsVisible();
 	void GetViewAngles(out QAngle viewangles);
+	void SetViewAngles(in QAngle viewangles);
+	void GetScreenSize(out int w, out int h);
 }

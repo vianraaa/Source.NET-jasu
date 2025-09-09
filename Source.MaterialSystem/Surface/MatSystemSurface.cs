@@ -1409,13 +1409,6 @@ public class MatSystemSurface : IMatSystemSurface
 		}
 	}
 
-	public void SurfaceGetCursorPos(out int x, out int y) {
-		throw new NotImplementedException();
-	}
-
-	public void SurfaceSetCursorPos(int x, int y) {
-		throw new NotImplementedException();
-	}
 
 	public void SwapBuffers(IPanel panel) {
 

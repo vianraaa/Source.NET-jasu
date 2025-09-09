@@ -3,8 +3,14 @@ using System.Runtime.CompilerServices;
 
 namespace Source.Common.Mathematics;
 
+public static class MathLibConsts {
+	public const int PITCH = 0;
+	public const int YAW = 1;
+	public const int ROLL = 2;
+}
 public static class MathLib
 {
+	
 	static MathLib() {
 
 	}
@@ -12,11 +18,14 @@ public static class MathLib
 	public static float Lerp(float f1, float f2, float i1, float i2, float x) {
 		return f1 + (f2 - f1) * (x - i1) / (i2 - i1);
 	}
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float Fmodf(float x, float y) {
+		return x - y * (float)MathF.Truncate(x / y);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Modulo(int a, int b) {
 		return (Math.Abs(a * b) + a) % b;
 	}
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double SimpleSpline(double value) {
 		return (value * value) * (3 - 2 * value);
@@ -48,7 +57,6 @@ public static class MathLib
 		else
 			return 1 - 0.5f * Bias(2 - 2 * x, 1 - biasAmount);
 	}
-
 	public static Matrix4x4 CreateOpenGLOrthoOffCenter(float left, float right, float bottom, float top, float near, float far) {
 		float m11 = 2.0f / (right - left);
 		float m22 = -2.0f / (top - bottom);
@@ -65,12 +73,10 @@ public static class MathLib
 			m41, m42, m43, 1
 		);
 	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static float RAD2DEG(float x) => x * (180f / MathF.PI);
-	public static double RAD2DEG(double x) => x * (180 / Math.PI);
-	public static float DEG2RAD(float x) => x * (MathF.PI / 180);
-	public static double DEG2RAD(double x) => x * (Math.PI / 180);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static float RAD2DEG(float x) => x * (180f / MathF.PI);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static double RAD2DEG(double x) => x * (180 / Math.PI);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]public static float DEG2RAD(float x) => x * (MathF.PI / 180);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]public static double DEG2RAD(double x) => x * (Math.PI / 180);
 
 	public static float CalcFovX(float fovY, float aspect)
 		=> RAD2DEG(MathF.Atan(MathF.Tan(DEG2RAD(fovY) * 0.5f) * aspect)) * 2.0f;

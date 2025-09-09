@@ -382,4 +382,8 @@ public class MatRenderContext : IMatRenderContextInternal
 		RenderTargetStack.Pop();
 		CommitRenderTargetAndViewport();
 	}
+
+	public void GetWindowSize(out int w, out int h) {
+		shaderAPI.GetBackBufferDimensions(out w, out h);
+	}
 }
