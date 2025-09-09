@@ -79,10 +79,10 @@ public class CommandBuffer
 	public ref TokenizedCommand GetCommand() => ref currentCommand;
 
 	public unsafe bool AddText(ReadOnlySpan<char> text, long tickDelay = 0) {
-		int len = text.Length;
 		long tick = currentTick + tickDelay;
 
-		ReadOnlySpan<char> currentCommand = text;
+		ReadOnlySpan<char> currentCommand = text.SliceNullTerminatedString();
+		int len = currentCommand.Length;
 		int offsetToNextCommand = 0;
 		for (; len > 0; len -= offsetToNextCommand + 1, currentCommand = currentCommand[(offsetToNextCommand)..]) {
 			int commandLength;

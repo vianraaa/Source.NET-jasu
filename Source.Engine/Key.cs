@@ -144,7 +144,7 @@ public class Key(IInputSystem? inputSystem, IServiceProvider services, IBaseClie
 		Span<char> cmd = stackalloc char[1024];
 		if (!down) {
 			if (kb[0] == '+') {
-				sprintf(cmd, $"-{kb[1..]} {code}\n");
+				sprintf(cmd, $"-{kb[1..]} {(int)code}\n");
 				Cbuf.AddText(cmd);
 				return true;
 			}
@@ -153,7 +153,7 @@ public class Key(IInputSystem? inputSystem, IServiceProvider services, IBaseClie
 		}
 
 		if (kb[0] == '+') {
-			sprintf(cmd, $"{kb[1..]} {code}\n");
+			sprintf(cmd, $"{kb} {(int)code}\n");
 			Cbuf.AddText(cmd);
 			return true;
 		}
