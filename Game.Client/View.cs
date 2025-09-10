@@ -4,6 +4,7 @@ using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine;
@@ -96,24 +97,123 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		throw new NotImplementedException();
 	}
 
-	ViewSetup view2D = new();
+	ViewSetup View = new();
+	ViewSetup View2D = new();
+
+	StereoEye GetFirstEye() => StereoEye.Mono;
+	StereoEye GetLastEye() => StereoEye.Mono;
+	ref ViewSetup GetView(StereoEye eye) {
+		switch (eye) {
+			case StereoEye.Mono:
+				return ref View;
+			default:
+				Assert(false);
+				return ref View;
+		}
+	}
 
 	public void Render(ViewRects rect) {
 		using MatRenderContextPtr renderContext = new(materials);
+		ref ViewRect vr = ref rect[0];
 
+		for (StereoEye eye = GetFirstEye(); eye <= GetLastEye(); eye = eye + 1) {
+			ref ViewSetup viewEye = ref GetView(eye);
 
-		view2D.X = rect[0].X;
-		view2D.Y = rect[0].Y;
-		view2D.Width = rect[0].Width;
-		view2D.Height = rect[0].Height;
+			viewEye.UnscaledX = vr.X;
+			viewEye.UnscaledY = vr.Y;
+			viewEye.UnscaledWidth = vr.Width;
+			viewEye.UnscaledHeight = vr.Height;
 
-		render.Push2DView(view2D, 0, null, GetFrustum());
+			ClearFlags clearFlags = ClearFlags.ClearDepth | ClearFlags.ClearStencil;
+
+			bool drawViewModel = true; // todo
+
+			RenderViewInfo flags = 0;
+			if (eye == StereoEye.Mono)
+				flags = RenderViewInfo.DrawHUD;
+
+			if (drawViewModel)
+				flags |= RenderViewInfo.DrawViewmodel;
+
+			RenderView(in viewEye, clearFlags, flags);
+		}
+
+		View2D.X = rect[0].X;
+		View2D.Y = rect[0].Y;
+		View2D.Width = rect[0].Width;
+		View2D.Height = rect[0].Height;
+
+		render.Push2DView(View2D, 0, null, GetFrustum());
 		render.VGui_Paint(PaintMode.UIPanels | PaintMode.Cursor);
 		render.PopView(GetFrustum());
 	}
 
-	public void RenderView(in ViewSetup view, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
+	IEngineVGui? _enginevgui;
+	IEngineVGui enginevgui => _enginevgui ??= Singleton<IEngineVGui>();
 
+	public void RenderView(in ViewSetup viewRender, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
+		MatRenderContextPtr renderContext;
+		using (renderContext = new MatRenderContextPtr(materials)) {
+			ITexture? saveRenderTarget = renderContext.GetRenderTarget();
+		}
+
+		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {
+			int viewWidth = viewRender.UnscaledWidth;
+			int viewHeight = viewRender.UnscaledHeight;
+			int viewActualWidth = viewRender.UnscaledWidth;
+			int viewActualHeight = viewRender.UnscaledHeight;
+			int viewX = viewRender.UnscaledX;
+			int viewY = viewRender.UnscaledY;
+			int viewFramebufferX = 0;
+			int viewFramebufferY = 0;
+			int viewFramebufferWidth = viewWidth;
+			int viewFramebufferHeight = viewHeight;
+			bool clear = false;
+			bool paintMainMenu = false;
+			ITexture? pTexture = null;
+
+			using (renderContext = new MatRenderContextPtr(materials)) {
+				if (clear)
+					renderContext.ClearBuffers(false, true, true);
+
+				renderContext.PushRenderTargetAndViewport(pTexture, viewX, viewY, viewActualWidth, viewActualHeight);
+
+				// TODO
+				// if (pTexture != null) 
+				// renderContext.OverrideAlphaWriteEnable(true, true);
+
+				if (clear) {
+					renderContext.ClearColor4ub(0, 0, 0, 0);
+					renderContext.ClearBuffers(true, false);
+				}
+			}
+
+			// VGui_PreRender();
+
+			IPanel? root = enginevgui.GetPanel(VGuiPanelType.ClientDll);
+			root?.SetSize(viewWidth, viewHeight);
+
+			root = enginevgui.GetPanel(VGuiPanelType.ClientDllTools);
+			root?.SetSize(viewWidth, viewHeight);
+			
+			// AllowCurrentViewAccess(true);
+
+			render.VGui_Paint(PaintMode.InGamePanels);
+			if (paintMainMenu)
+				render.VGui_Paint(PaintMode.UIPanels | PaintMode.Cursor);
+
+			// AllowCurrentViewAccess(false);
+			// VGui_PostRender();
+			// ClientMode.PostRenderVGui();
+			using (renderContext = new MatRenderContextPtr(materials)) {
+				if (pTexture != null) {
+					// renderContext.OverrideAlphaWriteEnable(false, true);
+				}
+
+				renderContext.PopRenderTargetAndViewport();
+				renderContext.Flush();
+			}
+		}
 	}
 
 	public void SetCheapWaterEndDistance(float cheapWaterEndDistance) {

@@ -880,7 +880,6 @@ public class Panel : IPanel
 		else if (state == 1)
 			SetVisible(true);
 
-
 		SetEnabled(resourceData.GetInt("enabled", 1) != 0);
 
 		bool mouseEnabled = resourceData.GetInt("mouseinputenabled", 1) != 0;
@@ -1303,12 +1302,21 @@ public class Panel : IPanel
 			// ^^ todo: later
 		}
 	}
+
+	IFont? _dbgfont;
+	IFont dbgfont => _dbgfont ??= SchemeManager.GetDefaultScheme().GetFont("DebugFixed")!;
+	static int t = 0;
 	private void DebugVisualize() {
 #if !NOVISUALIZE
 		Surface.PushMakeCurrent(this, false);
 		GetSize(out int w, out int h);
 		Surface.DrawSetColor(255, 255, 255, 255);
 		Surface.DrawOutlinedRect(0, 0, w, h);
+
+		Surface.DrawSetTextFont(dbgfont);
+		Surface.DrawSetTextPos(4, 4);
+		Surface.DrawPrintText($"{GetType().Name} {BgColor}");
+
 		Surface.PopMakeCurrent(this);
 #endif
 	}
@@ -1876,7 +1884,40 @@ public class Panel : IPanel
 			return;
 		CallParentFunction(new KeyValues("KeyCodePressed").AddSubKey("code", (int)code));
 	}
-	public virtual void OnKeyCodeTyped(ButtonCode code) { }
+	public virtual void OnKeyCodeTyped(ButtonCode code) {
+		if (code == ButtonCode.KeyTab) {
+			bool shiftDown = Input.IsKeyDown(ButtonCode.KeyLShift) || Input.IsKeyDown(ButtonCode.KeyRShift);
+
+			if (IsConsoleStylePanel()) {
+				if (shiftDown) 
+					NavigateUp();
+				else 
+					NavigateDown();
+			}
+			else {
+				if (shiftDown) 
+					RequestFocusPrev();
+				else 
+					RequestFocusNext();
+			}
+		}
+		else {
+			if (this == Surface.GetEmbeddedPanel()) 
+				Input.OnKeyCodeUnhandled(code);
+			
+			CallParentFunction(new KeyValues("KeyCodeTyped", "code", (int)code));
+		}
+	}
+
+	public void NavigateUp() {
+		// todo
+	}
+
+	public void NavigateDown() {
+		// todo
+	}
+
+
 	public virtual void OnKeyTyped(char unichar) { }
 	public virtual void OnKeyCodeReleased(ButtonCode code) { }
 	public virtual void OnUnhandledMouseClick(ButtonCode code) { }

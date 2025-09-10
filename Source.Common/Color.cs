@@ -58,6 +58,10 @@ public struct Color
 		}
 	}
 
+	public override readonly string ToString() {
+		return $"Color({R}, {G}, {B}, {A})";
+	}
+
 	public static bool operator==(Color l, Color r) => l.GetRawColor() == r.GetRawColor();
 	public static bool operator!=(Color l, Color r) => l.GetRawColor() != r.GetRawColor();
 

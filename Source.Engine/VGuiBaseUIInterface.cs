@@ -477,7 +477,9 @@ public class EngineVGui(
 
 		indentBuff = indentBuff[..i];
 
-		ConMsg($"    {indentBuff}{name}    -     ");
+		string panelName = $"    {indentBuff}{name}         ".PadRight(64);
+
+		ConMsg(panelName);
 		panel.GetClipRect(out int x0, out int y0, out int x1, out int y1);
 		ConMsg($" cliprect [{x0}, {y0}, {x1}, {y1}]");
 		ConMsg($" {(panel.IsPopup() ? "popup" : "")}");
@@ -486,6 +488,8 @@ public class EngineVGui(
 		ConMsg($" {(panel.IsEnabled() ? "enabled" : "")}");
 		ConMsg($" {(panel.IsVisible() ? "visible" : "")}");
 		ConMsg($" {(panel.IsFullyVisible() ? "fullvis" : "")}");
+		ConMsg($" bg {panel.GetBgColor()}");
+		ConMsg($" fg {panel.GetFgColor()}");
 
 		ConMsg("\n");
 
@@ -623,7 +627,7 @@ public class EngineVGui(
 			matSystemSurface.PaintTraverseEx(staticClientDLLToolsPanel, true);
 			staticClientDLLToolsPanel.SetParent(saveParent);
 
-			embedded.SetVisible(saveVisible);
+			panel.SetVisible(saveVisible);
 		}
 
 		if ((mode & PaintMode.Cursor) == PaintMode.Cursor) {

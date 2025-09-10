@@ -210,6 +210,7 @@ public interface IMatRenderContext
 	void PopRenderTargetAndViewport();
 	void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height);
 	void GetWindowSize(out int w, out int h);
+	ITexture? GetRenderTarget();
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -232,7 +233,7 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public readonly void Dispose() => ctx.EndRender();
 	public void BeginRender() => ctx.BeginRender();
 	public void EndRender() => ctx.EndRender();
-	public void Flush(bool flushHardware) => ctx.Flush(flushHardware);
+	public void Flush(bool flushHardware = false) => ctx.Flush(flushHardware);
 	public void ClearBuffers(bool clearColor, bool clearDepth, bool clearStencil = false) => ctx.ClearBuffers(clearColor, clearDepth, clearStencil);
 	public void Viewport(int x, int y, int width, int height) => ctx.Viewport(x, y, width, height);
 	public void GetViewport(out int x, out int y, out int width, out int height) => ctx.GetViewport(out x, out y, out width, out height);
@@ -260,4 +261,6 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 		=> ctx.PushRenderTargetAndViewport(renderTarget, x, y, width, height);
 
 	public void GetWindowSize(out int w, out int h) => ctx.GetWindowSize(out w, out h);
+
+	public ITexture? GetRenderTarget() => ctx.GetRenderTarget();
 }

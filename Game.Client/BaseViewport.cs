@@ -196,6 +196,10 @@ public class BaseViewport : EditablePanel, IViewPort
 		Initialized = true;
 	}
 
+	public override void Paint() {
+		
+	}
+
 	private void CreateDefaultPanels() {
 
 	}

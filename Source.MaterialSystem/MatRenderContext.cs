@@ -386,4 +386,11 @@ public class MatRenderContext : IMatRenderContextInternal
 	public void GetWindowSize(out int w, out int h) {
 		shaderAPI.GetBackBufferDimensions(out w, out h);
 	}
+
+	public ITexture? GetRenderTarget() {
+		if (RenderTargetStack.Count > 0)
+			return RenderTargetStack.Top().RenderTarget0;
+		else
+			return null;
+	}
 }

@@ -60,7 +60,6 @@ public class HudChatHistory : RichText
 
 public class BaseHudChatInputLine : Panel
 {
-	public Label GetPrompt() => Prompt;
 	protected Label Prompt;
 	protected BaseHudChatEntry Input;
 	public BaseHudChatInputLine(Panel? parent, ReadOnlySpan<char> panelName) : base(parent, panelName) {
@@ -69,6 +68,9 @@ public class BaseHudChatInputLine : Panel
 		Input = new BaseHudChatEntry(this, "ChatInput", parent);
 		Input.SetMaximumCharCount(127);
 	}
+	public Label GetPrompt() => Prompt;
+	public Panel GetInputPanel() => Input;
+	public override IPanel? GetCurrentKeyFocus() => Input;
 
 	internal void ClearEntry() {
 		SetEntry("");
@@ -330,6 +332,10 @@ public class BaseHudChat : EditableHudElement
 		GetChatFilterPanel();
 
 		FilterFlags = cl_chatfilters.GetInt();
+	}
+
+	public override void SetVisible(bool state) {
+		base.SetVisible(state);
 	}
 
 	public void Reset() {
