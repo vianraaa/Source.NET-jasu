@@ -422,4 +422,7 @@ public class HudChat : BaseHudChat
 		IHudElement.HookMessage("SayText2", SayText2);
 		IHudElement.HookMessage("TextMsg", TextMsg);
 	}
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+	}
 }

@@ -9,6 +9,7 @@ using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Input;
+using Source.Engine;
 
 namespace Game.Client;
 
@@ -21,7 +22,10 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 		services.AddSingleton<ViewRender>();
 		services.AddSingleton<Hud>();
 		services.AddSingleton<HudElementHelper>();
+		services.AddSingleton<ViewportClientSystem>();
 		services.AddSingleton<IViewRender>(x => x.GetRequiredService<ViewRender>());
+
+		services.AddSingleton<ViewportClientSystem>();
 	}
 
 	public void IN_SetSampleTime(double frameTime) {
@@ -50,9 +54,13 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	public bool Init() {
-		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD);
+		IGameSystem.Add(Singleton<ViewportClientSystem>());
+
+		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD, Singleton<IEngineVGui>());
 		HUD.Init();
 		ClientMode.Init();
+		if (!IGameSystem.InitAllSystems())
+			return false;
 		view.Init();
 		input.Init();
 		return true;

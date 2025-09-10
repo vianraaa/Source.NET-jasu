@@ -2,11 +2,13 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Source;
 using Source.Common;
 using Source.Common.Client;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
+using Source.Engine;
 using Source.GUI.Controls;
 
 namespace Game.Client;
@@ -21,7 +23,7 @@ public enum GameActionSet {
 
 
 
-public class ClientModeShared(IServiceProvider services, ClientGlobalVariables gpGlobals, Hud Hud) : IClientMode
+public class ClientModeShared(IServiceProvider services, ClientGlobalVariables gpGlobals, Hud Hud, IEngineVGui enginevgui) : IClientMode
 {
 	IEngineClient engine;
 	public void Init() {
@@ -73,6 +75,32 @@ public class ClientModeShared(IServiceProvider services, ClientGlobalVariables g
 	public Panel GetViewport() {
 		return Viewport;
 	}
+
+	public void Layout() {
+		IPanel? root = enginevgui.GetPanel(VGuiPanelType.ClientDll);
+
+		if (root != null) {
+			root.GetSize(out int wide, out int tall);
+
+			bool changed = wide != RootSize[0] || tall != RootSize[1];
+			RootSize[0] = wide;
+			RootSize[1] = tall;
+
+			Viewport.SetBounds(0, 0, wide, tall);
+			if (changed) 
+				ReloadScheme(false);
+		}
+	}
+
+	private void ReloadScheme(bool v) {
+		//BuildGroup.ClearResFileCache(); << needs to be done later. Also the internals for buildgroup cache data is not static!!! So do that too!!!!!!!!
+
+		Viewport.ReloadScheme("resource/ClientScheme.res");
+	}
+
+	public AnimationController? GetViewportAnimationController() => Viewport.GetAnimationController();
+
+	InlineArray2<int> RootSize;
 
 	public BaseHudChat? ChatElement;
 }

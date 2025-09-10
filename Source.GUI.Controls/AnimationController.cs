@@ -89,9 +89,21 @@ public struct ActiveAnimation
 	public AnimAlign Align;
 }
 
+public struct PostedMessage {
+	public AnimCommandType CommandType;
+	public UtlSymId_t SeqName;
+	public UtlSymId_t Event;
+	public UtlSymId_t Variable;
+	public UtlSymId_t Variable2;
+	public 	double StartTime;
+	public IPanel Parent;
+	public bool CanBeCancelled;
+}
+
 public class AnimationController : Panel, IAnimationController
 {
 	List<ActiveAnimation> ActiveAnimations = [];
+	List<PostedMessage> PostedMessages = [];
 
 	ulong Position;
 	ulong Size;
@@ -101,8 +113,6 @@ public class AnimationController : Panel, IAnimationController
 	ulong YPos;
 	ulong Wide;
 	ulong Tall;
-
-	static UtlSymbolTable ScriptSymbols = new();
 
 	// Static instance
 	public AnimationController() {
@@ -156,6 +166,16 @@ public class AnimationController : Panel, IAnimationController
 
 	// Todo
 	private void UpdatePostedMessages(bool runToCompletion) {
+
+	}
+	public void CancelAllAnimations() {
+		for (int i = ActiveAnimations.Count - 1; i >= ActiveAnimations.Count; i--)
+			if (ActiveAnimations[i].CanBeCancelled)
+				ActiveAnimations.RemoveAt(i);
+
+		for (int i = PostedMessages.Count - 1; i >= PostedMessages.Count; i--)
+			if (PostedMessages[i].CanBeCancelled)
+				PostedMessages.RemoveAt(i);
 
 	}
 
@@ -415,5 +435,20 @@ public class AnimationController : Panel, IAnimationController
 				break;
 			}
 		}
+	}
+
+	static readonly UtlSymbolTable ScriptSymbols = new(true);
+	Panel? SizePanel;
+
+	public bool SetScriptFile(Panel sizingPanel, ReadOnlySpan<char> fileName, bool wipeAll = false) {
+		SizePanel = sizingPanel;
+
+		if (wipeAll) {
+			// todo
+			CancelAllAnimations();
+		}
+
+		// todo
+		return true; // just lie for now
 	}
 }

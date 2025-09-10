@@ -41,6 +41,13 @@ public class Hud(HudElementHelper HudElementHelper)
 	public int GetSensitivity() {
 		return 0;
 	}
+
+	internal void ResetHUD() {
+		HLClient.ClientMode!.GetViewportAnimationController()!.CancelAllAnimations();
+	}
+
+	internal void RefreshHudTextures() {
+	}
 }
 
 public class HudElementHelper
