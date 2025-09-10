@@ -27,6 +27,17 @@ public class BaseFileSystem : IFileSystem
 		AddSearchPath(AppContext.BaseDirectory, "BASE_PATH");
 	}
 
+	internal static ReadOnlySpan<char> Normalize(ReadOnlySpan<char> unnormalizedString, Span<char> normalizedOutput) {
+		int len = Math.Min(normalizedOutput.Length, unnormalizedString.Length);
+
+		for (int i = 0; i < len; i++) {
+			char c = unnormalizedString[i];
+			normalizedOutput[i] = c == '\\' ? '/' : c;
+		}
+
+		return normalizedOutput[..len];
+	}
+
 	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
 	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
 		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
@@ -134,9 +145,11 @@ public class BaseFileSystem : IFileSystem
 		T? loseDefault,
 		[NotNullWhen(true)] out SearchPath? winner
 	) {
+		Span<char> filenameNormalizedBuffer = stackalloc char[MAX_PATH];
+		ReadOnlySpan<char> filenameNormalized = Normalize(filename, filenameNormalizedBuffer);
 		ulong hashID = pathID.Hash();
 		foreach (var path in GetCollections(hashID)) {
-			T? ret = func(path, filename);
+			T? ret = func(path, filenameNormalized);
 			if (winCondition(ret)) {
 				winner = path;
 				return ret;
@@ -149,10 +162,9 @@ public class BaseFileSystem : IFileSystem
 		if (!FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? winner))
 			return null;
 
-		// TODO: If dest is provided, try writing to it instead of performing this concat?
-		// Also TODO: rework this to be less garbage
-		var concatted = winner.Concat(fileName);
-		return concatted;
+		Span<char> concatBuffer = stackalloc char[MAX_PATH];
+		var concatted = winner.Concat(fileName, concatBuffer);
+		return new string(concatted);
 	}
 
 	private static bool boolWin(bool inp) => inp;
@@ -320,8 +332,11 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public ReadOnlySpan<char> WhereIsFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID = default) {
-		return FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? path)
-			? path.Concat(fileName) : null;
+		if (FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out SearchPath? path)) {
+			Span<char> concatBuffer = stackalloc char[MAX_PATH];
+			return new string(path.Concat(fileName, concatBuffer));
+		}
+		return null;
 	}
 
 	public void PrintSearchPaths() {
@@ -340,7 +355,7 @@ public class BaseFileSystem : IFileSystem
 					type = "(VPK)";
 					pack = pssp.DiskPath;
 				}
-				else if(spi is DiskSearchPath dsp) {
+				else if (spi is DiskSearchPath dsp) {
 					pack = dsp.DiskPath;
 				}
 

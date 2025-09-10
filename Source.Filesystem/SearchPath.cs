@@ -30,5 +30,27 @@ public abstract class SearchPath
 	internal abstract object? GetPackFile();
 	internal abstract object? GetPackedStore();
 
-	internal virtual ReadOnlySpan<char> Concat(ReadOnlySpan<char> fileName) => Path.Combine(DiskPath!, new(fileName));
+	internal virtual ReadOnlySpan<char> Concat(ReadOnlySpan<char> fileNameUnnormalized, Span<char> target) {
+		Span<char> fileNameNormalized = stackalloc char[MAX_PATH];
+		ReadOnlySpan<char> fileName = BaseFileSystem.Normalize(fileNameUnnormalized, fileNameNormalized);
+
+		int writePtr = 0;
+		string diskpath = DiskPath ?? "";
+		diskpath.CopyTo(target[writePtr..]); writePtr += diskpath.Length;
+		if (diskpath.EndsWith('\\'))
+			target[writePtr - 1] = '/';
+
+		bool hasSlash = target[writePtr - 1] == '/';
+		if (!hasSlash) {
+			// Write a slash now
+			target[writePtr] = '/'; writePtr++;
+			hasSlash = true;
+		}
+		// Confirm we arent writing another slash
+		if ((fileName.Length > 0 && fileName[0] == '/' || fileName[0] == '\\') && hasSlash)
+			fileName = fileName[1..];
+
+		fileName.ClampedCopyTo(target[writePtr..]); writePtr+= fileName.Length;
+		return target[..writePtr];
+	}
 }

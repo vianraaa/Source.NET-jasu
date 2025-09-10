@@ -47,7 +47,7 @@ public class PackStoreSearchPath : SearchPath
 			vpkDirectoryLookups[dir.Path.Hash()] = dir;
 
 			foreach (var entry in dir.Entries) {
-				var path = entry.Path;
+				var path = entry.Path.Replace('\\', '/');
 				var filename = entry.Filename;
 				var ext = entry.Extension;
 
