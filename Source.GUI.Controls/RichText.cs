@@ -164,12 +164,17 @@ public class RichText : Panel
 		SetVerticalScrollbar(false);
 	}
 
-	private void SetVerticalScrollbar(bool state) {
+	public void SetVerticalScrollbar(bool state) {
 		if (VertScrollBar.IsVisible() != state) {
 			VertScrollBar.SetVisible(state);
 			InvalidateLineBreakStream();
 			InvalidateLayout();
 		}
+	}
+
+	public void SelectNoText() {
+		Select[0] = 0;
+		Select[1] = 1;
 	}
 
 	private void InvalidateLineBreakStream() {
@@ -560,6 +565,8 @@ public class RichText : Panel
 		if (insetX != null && insetX.Length != 0)
 			SetDrawOffsets(int.TryParse(scheme.GetResourceString("RichText.InsetX"), out int i1) ? i1 : 0, int.TryParse(scheme.GetResourceString("RichText.InsetY"), out int i2) ? i2 : 0);
 	}
+
+	public void SetMaximumCharCount(int maxChars) => MaxCharCount = maxChars;
 
 	internal void SetText(ReadOnlySpan<char> text) {
 		if (text == null)

@@ -301,8 +301,8 @@ public class Panel : IPanel
 		SetScheme(scheme);
 	}
 
-	private void SetScheme(IScheme scheme) {
-		throw new NotImplementedException();
+	public void SetScheme(IScheme scheme) {
+		Scheme = scheme;
 	}
 
 	Panel? Parent;
@@ -1246,14 +1246,9 @@ public class Panel : IPanel
 			Surface.PopMakeCurrent(this);
 		}
 
-		if (repaint) {
-			// Simple bounds painting. Should be a convar but requires vgui_drawtree impl
-			// Surface.PushMakeCurrent(this, false);
-			// GetSize(out int w, out int h);
-			// Surface.DrawSetColor(255, 255, 255, 255);
-			// Surface.DrawOutlinedRect(0, 0, w, h);
-			// Surface.PopMakeCurrent(this);
+		DebugVisualize();
 
+		if (repaint) {
 			if (0 != (Flags & PanelFlags.PaintBackgroundEnabled)) {
 				Surface.PushMakeCurrent(this, false);
 				PaintBackground();
@@ -1307,6 +1302,15 @@ public class Panel : IPanel
 			// Surface.PopFullscreenViewport();
 			// ^^ todo: later
 		}
+	}
+	private void DebugVisualize() {
+#if !NOVISUALIZE
+		Surface.PushMakeCurrent(this, false);
+		GetSize(out int w, out int h);
+		Surface.DrawSetColor(255, 255, 255, 255);
+		Surface.DrawOutlinedRect(0, 0, w, h);
+		Surface.PopMakeCurrent(this);
+#endif
 	}
 
 	public virtual void PostChildPaint() {
@@ -1587,7 +1591,7 @@ public class Panel : IPanel
 	public void SetPopup(bool enabled) {
 		Popup = enabled;
 	}
-	public void MakePopup(bool showTaskbarIcon, bool disabled = false) {
+	public void MakePopup(bool showTaskbarIcon = true, bool disabled = false) {
 		Surface.CreatePopup(this, false, showTaskbarIcon, disabled);
 	}
 
@@ -2027,8 +2031,8 @@ public class Panel : IPanel
 	}
 
 
-	public void OnTick() {
-		throw new NotImplementedException();
+	public virtual void OnTick() {
+
 	}
 
 	public void SendMessage(KeyValues parms, IPanel? from) {

@@ -4,6 +4,7 @@ using Game.Shared;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
@@ -11,14 +12,15 @@ using Source.Common.Input;
 
 namespace Game.Client;
 
-public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages usermessages, IClientMode clientMode) : IBaseClientDLL
+public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals,  ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
 {
+	public static IClientMode? ClientMode { get; private set; }
+
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
 		services.AddSingleton<ViewRender>();
 		services.AddSingleton<Hud>();
 		services.AddSingleton<HudElementHelper>();
-		services.AddSingleton<IClientMode, ClientModeHL2MPNormal>(); // TODO: Further research on switching clientmodes.
 		services.AddSingleton<IViewRender>(x => x.GetRequiredService<ViewRender>());
 	}
 
@@ -48,8 +50,9 @@ public class HLClient(ViewRender view, IInput input, Hud HUD, UserMessages userm
 	}
 
 	public bool Init() {
+		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD);
 		HUD.Init();
-		clientMode.Init();
+		ClientMode.Init();
 		view.Init();
 		input.Init();
 		return true;

@@ -46,7 +46,7 @@ public enum MouseParams
 	Num
 }
 
-public partial class Input(IServiceProvider provider, IClientMode ClientMode, ISurface Surface, IViewRender view, ThirdPersonManager ThirdPersonManager) : IInput
+public partial class Input(IServiceProvider provider, ISurface Surface, IViewRender view, ThirdPersonManager ThirdPersonManager) : IInput
 {
 	ConVar cl_anglespeedkey = new("0.67", 0);
 	ConVar cl_yawspeed = new("210", FCvar.None, "Client yaw speed.", -100000, 100000);
@@ -372,7 +372,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 				return 0;
 		}
 
-		ClientMode?.KeyInput(down, code, currentBinding);
+		HLClient.ClientMode?.KeyInput(down, code, currentBinding);
 
 		return 1;
 	}
@@ -487,7 +487,7 @@ public partial class Input(IServiceProvider provider, IClientMode ClientMode, IS
 			GetAccumulatedMouseDeltasAndResetAccumulators(out float mx, out float my);
 			GetMouseDelta(mx, my, out float mouse_x, out float mouse_y);
 			ScaleMouse(ref mouse_x, ref mouse_y);
-			ClientMode.OverrideMouseInput(ref mouse_x, ref mouse_y);
+			HLClient.ClientMode.OverrideMouseInput(ref mouse_x, ref mouse_y);
 			ApplyMouse(ref viewangles, ref cmd, mouse_x, mouse_y);
 			ResetMouse();
 		}

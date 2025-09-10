@@ -41,6 +41,46 @@ public class VGui : IVGui
 		this.engineAPI = engineAPI;
 	}
 
+	public void AddTickSignal(IPanel panel, long intervalMilliseconds = 0) {
+		ref Tick t = ref CreateNewTick(panel, intervalMilliseconds);
+	}
+	public void RemoveTickSignal(IPanel search) {
+		Span<Tick> ticks = TickSignals.AsSpan();
+		for (int i = 0; i < ticks.Length; i++) {
+			ref Tick tick = ref ticks[i];
+			if (tick.Panel.TryGetTarget(out IPanel? target) && target == search) {
+				if (CanRemoveTickSignal)
+					TickSignals.RemoveAt(i);
+				else
+					tick.MarkDeleted = true;
+
+				return;
+			}
+		}
+	}
+
+	private ref Tick CreateNewTick(IPanel panel, long intervalMilliseconds) {
+		Span<Tick> ticks = TickSignals.AsSpan();
+		for (int i = 0; i < ticks.Length; i++) {
+			ref Tick t = ref ticks[i];
+			if (t.Panel.TryGetTarget(out IPanel? target) && target == panel) {
+				t.Interval = intervalMilliseconds;
+				t.NextTick = system.GetTimeMillis() + t.Interval;
+				t.MarkDeleted = false;
+				return ref Unsafe.NullRef<Tick>();
+			}
+		}
+
+		TickSignals.Add(new());
+		ticks = TickSignals.AsSpan(); // The previous span is no longer a valid representation, re-fetch it
+		ref Tick tRet = ref ticks[ticks.Length - 1];
+		tRet.Panel = new(panel);
+		tRet.Interval = intervalMilliseconds;
+		tRet.NextTick = system.GetTimeMillis() + tRet.Interval;
+		tRet.MarkDeleted = false;
+		return ref tRet;
+	}
+
 	public void Quit() {
 
 	}
@@ -88,7 +128,8 @@ public class VGui : IVGui
 						tick.NextTick = time + tick.Interval;
 					}
 
-					tick.Panel?.OnTick();
+					if (tick.Panel.TryGetTarget(out IPanel? target))
+						target.OnTick();
 				}
 			}
 			CanRemoveTickSignal = true;
@@ -114,8 +155,8 @@ public class VGui : IVGui
 		bool usingDelayedQueue = DelayedMessageQueue.Count > 0;
 
 		int passCount = 0;
-		while(passCount < 2) {
-			while(MessageQueue.Count > 0 || SecondaryQueue.Count > 0 || usingDelayedQueue) {
+		while (passCount < 2) {
+			while (MessageQueue.Count > 0 || SecondaryQueue.Count > 0 || usingDelayedQueue) {
 				MessageItem messageItem;
 
 				bool usingSecondaryQueue = SecondaryQueue.Count > 0;
@@ -124,7 +165,7 @@ public class VGui : IVGui
 					SecondaryQueue.TryDequeue(out messageItem);
 				}
 				else if (usingDelayedQueue) {
-					if (!DelayedMessageQueue.TryDequeue(out messageItem, out _)) 
+					if (!DelayedMessageQueue.TryDequeue(out messageItem, out _))
 						usingDelayedQueue = false;
 				}
 				else {
@@ -133,7 +174,7 @@ public class VGui : IVGui
 
 				KeyValues parms = messageItem.Params;
 
-				if(messageItem.Special == MessageItemType.SetCursorPos) {
+				if (messageItem.Special == MessageItemType.SetCursorPos) {
 					int xpos = parms.GetInt("xpos", 0);
 					int ypos = parms.GetInt("ypos", 0);
 					Input.UpdateCursorPosInternal(xpos, ypos);
@@ -168,11 +209,11 @@ public class VGui : IVGui
 		messageItem.MessageID = CurrentMessageID++;
 		messageItem.Special = type;
 
-		if(delay > 0) {
+		if (delay > 0) {
 			messageItem.ArrivalTime = system.GetTimeMillis() + (delay * 1000);
 			DelayedMessageQueue.Enqueue(messageItem, messageItem.ArrivalTime);
 		}
-		else if(InDispatcher)
+		else if (InDispatcher)
 			SecondaryQueue.Enqueue(messageItem);
 		else
 			MessageQueue.Enqueue(messageItem);

@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 
 namespace Game.Client;
 
-public class HLInput(IServiceProvider provider, IClientMode ClientMode, ISurface surface, IViewRender view, ThirdPersonManager tpm) : Input(provider, ClientMode, surface, view, tpm)
+public class HLInput(IServiceProvider provider, ISurface surface, IViewRender view, ThirdPersonManager tpm) : Input(provider, surface, view, tpm)
 {
 	
 }

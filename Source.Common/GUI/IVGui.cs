@@ -23,7 +23,7 @@ public struct MessageItem
 
 public struct Tick
 {
-	public IPanel? Panel;
+	public WeakReference<IPanel> Panel;
 	public long Interval;
 	public long NextTick;
 	public bool MarkDeleted;
@@ -39,4 +39,6 @@ public interface IVGui
 	IVGuiInput GetInput();
 	void MarkPanelForDeletion(IPanel? panel);
 	IAnimationController GetAnimationController();
+	void AddTickSignal(IPanel baseHudChat, long intervalMilliseconds = 0);
+	void RemoveTickSignal(IPanel baseHudChat);
 }
