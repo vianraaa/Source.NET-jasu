@@ -1684,7 +1684,7 @@ public class TextEntry : Panel
 		SetFont(Font);
 	}
 
-	private void SetFont(IFont? font) {
+	public void SetFont(IFont? font) {
 		Font = font;
 		InvalidateLayout();
 		Repaint();

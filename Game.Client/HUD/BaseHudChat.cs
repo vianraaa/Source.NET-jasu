@@ -15,9 +15,21 @@ namespace Game.Client.HUD;
 public class BaseHudChatLine : RichText
 {
 	protected IFont? Font;
+	protected IFont? FontMarlett;
+	Color ColorText;
 
 	public BaseHudChatLine(Panel? parent, string? name) : base(parent, name) {
 
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+
+		Font = scheme.GetFont("Default");
+		SetBgColor(new(0, 0, 0, 100));
+		FontMarlett = scheme.GetFont("Marlett");
+		ColorText = scheme.GetColor("FgColor", GetFgColor());
+		SetFont(Font);
 	}
 
 	internal IFont? GetFont() {
@@ -33,6 +45,12 @@ public class HudChatHistory : RichText
 
 	internal void ResetAllFades(bool hold, bool onlyExpired = false, float newSustain = -1f) {
 
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		SetFont(scheme.GetFont("ChatFont"));
+		SetAlpha(255);
 	}
 }
 
@@ -62,6 +80,25 @@ public class BaseHudChatInputLine : Panel
 		Input.SetBounds(w + 2, 0, wide - w - 2, tall);
 	}
 
+	public override void ApplySchemeSettings(IScheme scheme) {
+		base.ApplySchemeSettings(scheme);
+		IFont? font = scheme.GetFont("ChatFont");
+
+		Prompt.SetFont(font);
+		Input.SetFont(font);
+
+		Input.SetFgColor(scheme.GetColor("Chat.TypingText", scheme.GetColor("Panel.FgColor", new(255, 255, 255, 255))));
+
+		SetPaintBackgroundEnabled(true);
+		Prompt.SetPaintBackgroundEnabled(true);
+		Prompt.SetContentAlignment(Alignment.West);
+		Prompt.SetTextInset(2, 0);
+
+		Input.SetMouseInputEnabled(true);
+
+		SetBgColor(new(0, 0, 0, 0));
+	}
+
 	internal void SetEntry(ReadOnlySpan<char> entry) {
 		Input.SetText(entry);
 	}
@@ -82,6 +119,17 @@ public class HudChatFilterPanel : EditablePanel
 {
 	public HudChatFilterPanel(Panel? parent, string? panelName) : base(parent, panelName) {
 
+	}
+
+	public override void ApplySchemeSettings(IScheme scheme) {
+		LoadControlSettings("resource/UI/ChatFilters.res");
+
+		base.ApplySchemeSettings(scheme);
+
+		Color color = scheme.GetColor("DullWhite", GetBgColor());
+		SetBgColor(color with { A = (byte)BaseHudChat.CHAT_HISTORY_ALPHA });
+
+		SetFgColor(scheme.GetColor("Blank", GetFgColor()));
 	}
 }
 
