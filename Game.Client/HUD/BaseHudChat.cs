@@ -70,6 +70,9 @@ public class BaseHudChatInputLine : Panel
 	}
 	public Label GetPrompt() => Prompt;
 	public Panel GetInputPanel() => Input;
+	public void GetMessageText(Span<char> outBuffer) {
+		Input.GetText(outBuffer);
+	}
 	public override IPanel? GetCurrentKeyFocus() => Input;
 
 	internal void ClearEntry() {
@@ -466,9 +469,25 @@ public class BaseHudChat : EditableHudElement
 		engine.ClientCmd_Unrestricted("gameui_preventescapetoshow\n");
 	}
 
+	public void Send() {
+		Span<char> text = stackalloc char[128];
+		ChatInput.GetMessageText(text);
+		if (text.Length > 0 && text[^1] == '\n')
+			text[^1] = '\0';
+
+		text = text.SliceNullTerminatedString();
+		Span<char> buf = stackalloc char[144];
+		int writePtr = 0;
+		string cmd = (MessageMode == MessageModeType.Say ? "say " : "say_team ");
+		cmd.CopyTo(buf[writePtr..]); writePtr += cmd.Length;
+		text.CopyTo(buf[writePtr..]); writePtr += text.Length;
+		engine.ClientCmd_Unrestricted(buf[..writePtr]);
+	}
+
 	public override void OnMessage(KeyValues message, IPanel? from) {
 		switch (message.Name) {
 			case "ChatEntryStopMessageMode": StopMessageMode(); break;
+			case "ChatEntrySend": Send(); break;
 			default: base.OnMessage(message, from); break;
 		}
 	}
