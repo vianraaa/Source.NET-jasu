@@ -363,7 +363,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		return true;
 	}
 
-	internal int GetFontTall(IFont? font) => ((FontAmalgam?)font)!.GetFontHeight();
+	internal int GetFontTall(IFont? font) => ((FontAmalgam?)font)?.GetFontHeight() ?? 0;
 	internal bool GetFontUnderlined(IFont font) => ((FontAmalgam?)font)!.GetUnderlined();
 
 	internal bool IsBitmapFont(IFont font) {

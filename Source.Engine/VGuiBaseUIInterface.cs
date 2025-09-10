@@ -522,6 +522,9 @@ public class EngineVGui(
 		if (staticGameUIFuncs == null)
 			return;
 
+		if (NotAllowedToShowGameUI)
+			return;
+
 		staticGameUIPanel.SetVisible(true);
 		staticGameUIPanel.MoveToFront();
 

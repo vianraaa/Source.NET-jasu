@@ -653,6 +653,28 @@ public class RichText : Panel
 			Interior?.SetBounds(0, 0, wide, tall);
 	}
 
+	public void InsertFade(float sustain, float length) {
+		Span<FormatStreamPiece> formatStream = FormatStream.AsSpan();
+		ref FormatStreamPiece prevItem = ref formatStream[formatStream.Length - 1];
+		if (prevItem.TextStreamIndex == formatStream.Length) {
+			prevItem.Fade.FadeStartTime = System.GetCurrentTime() + sustain;
+			prevItem.Fade.FadeSustain = sustain;
+			prevItem.Fade.FadeLength = length;
+			prevItem.Fade.OriginalAlpha = prevItem.Color.A;
+		}
+		else {
+			FormatStreamPiece streamItem = prevItem;
+
+			prevItem.Fade.FadeStartTime = System.GetCurrentTime() + sustain;
+			prevItem.Fade.FadeLength = length;
+			prevItem.Fade.FadeSustain = sustain;
+			prevItem.Fade.OriginalAlpha = prevItem.Color.A;
+
+			streamItem.TextStreamIndex = TextStream.Count;
+			FormatStream.Add(streamItem);
+		}
+	}
+
 	private void RecalculateLineBreaks() {
 		if (!RecalcLineBreaks)
 			return;

@@ -39,8 +39,12 @@ public class BaseHudChatLine : RichText
 
 public class HudChatHistory : RichText
 {
-	public HudChatHistory(Panel? parent, string? name) : base(parent, name) {
+	readonly IEngineVGui enginevgui = Singleton<IEngineVGui>();
+	public HudChatHistory(Panel? parent, string? name) : base(parent, "HudChatHistory") {
+		IScheme scheme = SchemeManager.LoadSchemeFromFileEx(enginevgui.GetPanel(VGuiPanelType.ClientDll), "resource/ChatScheme.res", "ChatScheme")!;
+		SetScheme(scheme);
 
+		InsertFade(-1, -1);
 	}
 
 	internal void ResetAllFades(bool hold, bool onlyExpired = false, float newSustain = -1f) {
@@ -436,6 +440,13 @@ public class BaseHudChat : EditableHudElement
 		FilterPanel.SetVisible(false);
 
 		engine.ClientCmd_Unrestricted("gameui_preventescapetoshow\n");
+	}
+
+	public override void OnMessage(KeyValues message, IPanel? from) {
+		switch (message.Name) {
+			case "ChatEntryStopMessageMode": StopMessageMode(); break;
+			default: base.OnMessage(message, from); break;
+		}
 	}
 
 	public void StopMessageMode() {
