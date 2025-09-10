@@ -9,6 +9,7 @@ namespace Source.GUI.Controls;
 
 public class EditablePanel : Panel
 {
+	public static Panel Create_EditablePanel() => new EditablePanel(null, null);
 	readonly public IFileSystem fileSystem = Singleton<IFileSystem>();
 
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {

@@ -14,6 +14,8 @@ namespace Source.GUI.Controls;
 
 public class ClickPanel : Panel // todo
 {
+
+	public static Panel Create_RichText() => new RichText(null, null);
 	public ClickPanel(RichText richText) {
 
 	}

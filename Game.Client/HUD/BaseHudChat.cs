@@ -32,7 +32,7 @@ public class HudChatHistory : RichText
 	}
 
 	internal void ResetAllFades(bool hold, bool onlyExpired = false, float newSustain = -1f) {
-		throw new NotImplementedException();
+
 	}
 }
 
@@ -43,6 +43,9 @@ public class BaseHudChatInputLine : Panel
 	protected BaseHudChatEntry Input;
 	public BaseHudChatInputLine(Panel? parent, ReadOnlySpan<char> panelName) : base(parent, panelName) {
 		SetMouseInputEnabled(false);
+		Prompt = new Label(this, "ChatInputPrompt", "Enter text:");
+		Input = new BaseHudChatEntry(this, "ChatInput", parent);
+		Input.SetMaximumCharCount(127);
 	}
 
 	internal void ClearEntry() {

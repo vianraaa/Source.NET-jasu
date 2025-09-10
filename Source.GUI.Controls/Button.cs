@@ -30,6 +30,7 @@ public enum ButtonFlags
 
 public class Button : Label
 {
+	public static Panel Create_Button() => new Button(null, null, "Button");
 	KeyValues? ActionMessage;
 	ActivationType ActivationType;
 	ButtonFlags ButtonFlags;

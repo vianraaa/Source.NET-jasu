@@ -440,6 +440,16 @@ public class TextureDictionary(IMaterialSystem materials, MatSystemSurface surfa
 		return tex.Material;
 	}
 
+	internal void GetTextureSize(TextureID id, out int wide, out int tall) {
+		if(!IsValidId(id, out MatSystemTexture? tex)) {
+			wide = tall = 0;
+			return;
+		}
+
+		wide = (int)tex.Wide;
+		tall = (int)tex.Tall;
+	}
+
 	internal void GetTextureTexCoords(in TextureID id, out float s0, out float t0, out float s1, out float t1) {
 		if (!IsValidId(id, out MatSystemTexture? tex)) {
 			s0 = t0 = 0.0f;

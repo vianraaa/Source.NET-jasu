@@ -454,7 +454,7 @@ public class MatSystemSurface : IMatSystemSurface
 	}
 
 	public void DrawGetTextureSize(in TextureID id, out int wide, out int tall) {
-		throw new NotImplementedException();
+		TextureDictionary.GetTextureSize(id, out wide, out tall);
 	}
 
 	public void DrawLine(int x0, int y0, int x1, int y1) {
