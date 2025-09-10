@@ -32,6 +32,8 @@ public class ClientModeShared(IServiceProvider services, ClientGlobalVariables g
 		Assert(ChatElement != null);
 	}
 
+	public bool IsTyping() => ChatElement!.GetMessageMode() != MessageModeType.None;
+
 	public void Enable() {
 		IPanel? root = enginevgui.GetPanel(VGuiPanelType.ClientDll);
 

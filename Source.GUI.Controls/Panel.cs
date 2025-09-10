@@ -1307,7 +1307,7 @@ public class Panel : IPanel
 	IFont dbgfont => _dbgfont ??= SchemeManager.GetDefaultScheme().GetFont("DebugFixed")!;
 	static int t = 0;
 	private void DebugVisualize() {
-#if !NOVISUALIZE
+#if NOVISUALIZE
 		Surface.PushMakeCurrent(this, false);
 		GetSize(out int w, out int h);
 		Surface.DrawSetColor(255, 255, 255, 255);

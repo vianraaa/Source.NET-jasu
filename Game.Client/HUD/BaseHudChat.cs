@@ -108,6 +108,10 @@ public class BaseHudChatInputLine : Panel
 		SetBgColor(new(0, 0, 0, 0));
 	}
 
+	public override void ApplySettings(KeyValues resourceData) {
+		base.ApplySettings(resourceData);
+	}
+
 	internal void SetEntry(ReadOnlySpan<char> entry) {
 		Input.SetText(entry);
 	}
@@ -354,6 +358,52 @@ public class BaseHudChat : EditableHudElement
 		base.OnParentChanged(oldParent, newParent);
 	}
 
+	public override void OnTick() {
+		VisibleHeight = 0;
+
+		BaseHudChatLine? line = ChatLine;
+
+		if (line != null) {
+			IFont? font = line.GetFont();
+			FontHeight = Surface.GetFontTall(font) + 2;
+			ChatInput.GetBounds(out int iInputX, out int iInputY, out int iInputW, out int iInputH);
+			GetBounds(out int iChatX, out int iChatY, out int iChatW, out int iChatH);
+			ChatInput.SetBounds(iInputX, (int)(iChatH - (FontHeight * 1.75f)), iInputW, FontHeight);
+			GetChatHistory().GetBounds(out int iChatHistoryX, out int iChatHistoryY, out int iChatHistoryW, out int iChatHistoryH);
+			iChatHistoryH = (iChatH - (FontHeight * 9 / 4)) - iChatHistoryY;
+			GetChatHistory().SetBounds(iChatHistoryX, iChatHistoryY, iChatHistoryW, iChatHistoryH);
+		}
+
+		FadeChatHistory();
+	}
+
+	private void FadeChatHistory() {
+		float frac = (float)((HistoryFadeTime - gpGlobals.CurTime) / CHAT_HISTORY_FADE_TIME);
+
+		int alpha = (int)(frac * CHAT_HISTORY_ALPHA);
+		alpha = Math.Clamp(alpha, 0, (int)CHAT_HISTORY_ALPHA);
+
+		if (alpha >= 0) {
+			if (GetChatHistory() != null) {
+				if (IsMouseInputEnabled()) {
+					SetAlpha(255);
+					GetChatHistory().SetBgColor(new(0, 0, 0, (int)(CHAT_HISTORY_ALPHA - alpha)));
+					ChatInput.GetPrompt().SetAlpha((CHAT_HISTORY_ALPHA * 2) - alpha);
+					ChatInput.GetInputPanel().SetAlpha((CHAT_HISTORY_ALPHA * 2) - alpha);
+					SetBgColor(GetBgColor() with { A = (byte)(CHAT_HISTORY_ALPHA - alpha) });
+					FiltersButton.SetAlpha((CHAT_HISTORY_ALPHA * 2) - alpha);
+				}
+				else {
+					GetChatHistory().SetBgColor(new(0, 0, 0, alpha));
+					SetBgColor(GetBgColor() with { A = (byte)alpha });
+					ChatInput.GetPrompt().SetAlpha(alpha);
+					ChatInput.GetInputPanel().SetAlpha(alpha);
+					FiltersButton.SetAlpha(alpha);
+				}
+			}
+		}
+	}
+
 	public override void Paint() {
 		if (VisibleHeight == 0)
 			return;
@@ -512,6 +562,8 @@ public class BaseHudChat : EditableHudElement
 		HistoryFadeTime = gpGlobals.CurTime + CHAT_HISTORY_FADE_TIME;
 		MessageMode = MessageModeType.None;
 	}
+
+	public MessageModeType GetMessageMode() => MessageMode;
 }
 
 [DeclareHudElement(Name = "CHudChat")]

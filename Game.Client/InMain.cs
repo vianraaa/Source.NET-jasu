@@ -261,6 +261,7 @@ public partial class Input(IServiceProvider provider, ISurface Surface, IViewRen
 				ComputeForwardMove(ref cmd);
 				ScaleMovements(ref cmd);
 				ControllerMove(inputSampleFrametime, ref cmd);
+				ApplyExtras(ref cmd);
 			}
 
 			cmd.Buttons = GetButtonBits(1);
@@ -275,6 +276,10 @@ public partial class Input(IServiceProvider provider, ISurface Surface, IViewRen
 				cmd.Buttons |= InButtons.Back;
 
 		}
+	}
+
+	private void ApplyExtras(ref UserCmd cmd) {
+		cmd.IsTyping = HLClient.ClientMode!.IsTyping();
 	}
 
 	public unsafe void ValidateUserCmd(UserCmd* f, int from) {

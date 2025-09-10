@@ -124,7 +124,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 			viewEye.UnscaledWidth = vr.Width;
 			viewEye.UnscaledHeight = vr.Height;
 
-			ClearFlags clearFlags = ClearFlags.ClearDepth | ClearFlags.ClearStencil;
+			ClearFlags clearFlags = ClearFlags.ClearColor | ClearFlags.ClearDepth | ClearFlags.ClearStencil;
 
 			bool drawViewModel = true; // todo
 
@@ -156,6 +156,8 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		using (renderContext = new MatRenderContextPtr(materials)) {
 			ITexture? saveRenderTarget = renderContext.GetRenderTarget();
 		}
+
+		SetupMain3DView(in viewRender, clearFlags);
 
 		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {
 			int viewWidth = viewRender.UnscaledWidth;
@@ -214,6 +216,13 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 				renderContext.Flush();
 			}
 		}
+	}
+
+	// Needs more work. Mostly just to clear the buffers rn
+	private void SetupMain3DView(in ViewSetup viewRender, ClearFlags clearFlags) {
+		using MatRenderContextPtr renderContext = new(materials);
+		renderContext.ClearColor4ub(0, 0, 0, 255);
+		renderContext.ClearBuffers((clearFlags & ClearFlags.ClearColor) != 0, (clearFlags & ClearFlags.ClearDepth) != 0, (clearFlags & ClearFlags.ClearStencil) != 0);
 	}
 
 	public void SetCheapWaterEndDistance(float cheapWaterEndDistance) {

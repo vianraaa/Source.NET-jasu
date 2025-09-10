@@ -19,4 +19,5 @@ public interface IClientMode
 	void StartMessageMode(MessageModeType messageModeType);
 	AnimationController? GetViewportAnimationController();
 	void Enable();
+	bool IsTyping();
 }
