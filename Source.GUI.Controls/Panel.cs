@@ -1572,16 +1572,19 @@ public class Panel : IPanel
 			this.PanelName = new(panelName);
 	}
 
-	public void SetParent(IPanel? newParent) {
+	public virtual void SetParent(IPanel? newParent) {
 		if (this == newParent)
 			return;
 
 		if (Parent == newParent)
 			return;
 
+		var oldParent = Parent;
+
 		if (Parent != null) {
 			Parent?.Children.Remove(this);
 			Parent = null;
+			OnParentChanged(Parent, null);
 		}
 
 		if (newParent != null) {
@@ -1589,6 +1592,7 @@ public class Panel : IPanel
 			Parent.Children.Add(this);
 			SetZPos(ZPos);
 			Parent.OnChildAdded(this);
+			OnParentChanged(oldParent, Parent);
 		}
 	}
 
@@ -1800,6 +1804,7 @@ public class Panel : IPanel
 		Repaint();
 	}
 	public virtual void OnThink() { }
+	public virtual void OnParentChanged(IPanel? oldParent, IPanel? newParent) { }
 	public virtual void OnChildAdded(IPanel child) { }
 	public virtual void OnSizeChanged(int newWide, int newTall) {
 		InvalidateLayout();

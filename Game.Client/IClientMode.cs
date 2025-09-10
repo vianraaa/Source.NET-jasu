@@ -18,4 +18,5 @@ public interface IClientMode
 	void OverrideMouseInput(ref float mouse_x, ref float mouse_y);
 	void StartMessageMode(MessageModeType messageModeType);
 	AnimationController? GetViewportAnimationController();
+	void Enable();
 }

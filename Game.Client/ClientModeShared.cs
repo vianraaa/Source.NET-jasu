@@ -23,13 +23,30 @@ public enum GameActionSet {
 
 
 
-public class ClientModeShared(IServiceProvider services, ClientGlobalVariables gpGlobals, Hud Hud, IEngineVGui enginevgui) : IClientMode
+public class ClientModeShared(IServiceProvider services, ClientGlobalVariables gpGlobals, Hud Hud, IEngineVGui enginevgui, ISurface Surface) : IClientMode
 {
 	IEngineClient engine;
 	public void Init() {
 		engine = services.GetRequiredService<IEngineClient>();
 		ChatElement = (BaseHudChat?)Hud.FindElement("CHudChat");
 		Assert(ChatElement != null);
+	}
+
+	public void Enable() {
+		IPanel? root = enginevgui.GetPanel(VGuiPanelType.ClientDll);
+
+		if (root != null) 
+			Viewport.SetParent(root);
+
+		Viewport.SetProportional(true);
+		Viewport.SetCursor(CursorCode.None);
+		Surface.SetCursor(CursorCode.None);
+
+		Viewport.SetVisible(true);
+		if (Viewport.IsKeyboardInputEnabled())
+			Viewport.RequestFocus();
+
+		Layout();
 	}
 	public virtual int KeyInput(int down, ButtonCode keynum, ReadOnlySpan<char> currentBinding) {
 		if (engine.Con_IsVisible())

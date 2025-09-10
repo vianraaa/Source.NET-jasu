@@ -1,6 +1,9 @@
 ﻿using Game.Shared;
 
 using Source;
+using Source.Common.Filesystem;
+using Source.Common.Formats.Keyvalues;
+using Source.GUI.Controls;
 
 using System;
 using System.Collections.Generic;
@@ -11,7 +14,7 @@ using System.Threading.Tasks;
 namespace Game.Client.HUD;
 
 [EngineComponent]
-public class Hud(HudElementHelper HudElementHelper)
+public class Hud(HudElementHelper HudElementHelper, IFileSystem filesystem)
 {
 	public readonly List<IHudElement> HudList = [];
 	internal InButtons KeyBits;
@@ -20,8 +23,29 @@ public class Hud(HudElementHelper HudElementHelper)
 		HudElementHelper.CreateAllElements(this);
 		foreach (var element in HudList)
 			element.Init();
-	}
 
+		KeyValues kv = new KeyValues("layout");
+		if (kv.LoadFromFile(filesystem, "scripts/HudLayout.res")) {
+			int numelements = HudList.Count;
+
+			for (int i = 0; i < numelements; i++) {
+				IHudElement element = HudList[i];
+
+				if (element is not Panel panel) {
+					Msg($"Non-vgui hud element {HudList[i].ElementName}\n");
+					continue;
+				}
+
+				KeyValues? key = kv.FindKey(panel.GetName(), false);
+				if (key == null) 
+					Msg($"Hud element '{element.ElementName}' doesn't have an entry '{panel.GetName()}' in scripts/HudLayout.res\n");
+				
+				if (!element.IsParentedToClientDLLRootPanel && panel.GetParent() == null) 
+					DevMsg($"Hud element '{element.ElementName}'/'{panel.GetName()}' doesn't have a parent\n");
+			}
+
+		}
+	}
 	internal void AddHudElement(IHudElement element) {
 		HudList.Add(element);
 		element.NeedsRemove = true;
@@ -56,13 +80,13 @@ public class HudElementHelper
 	public void CreateAllElements(Hud HUD) {
 		this.HUD = HUD;
 		var declaredHudElements = ReflectionUtils.GetLoadedTypesWithAttribute<DeclareHudElementAttribute>();
-		foreach(var kvp in declaredHudElements) {
+		foreach (var kvp in declaredHudElements) {
 			Type type = kvp.Key;
 			DeclareHudElementAttribute hudElement = kvp.Value;
 			string name = hudElement.Name ?? type.Name;
 
 			IHudElement? element = Activator.CreateInstance(type, [name]) as IHudElement;
-			if (element != null) 
+			if (element != null)
 				HUD.AddHudElement(element);
 		}
 	}

@@ -332,6 +332,24 @@ public class BaseHudChat : EditableHudElement
 		FilterFlags = cl_chatfilters.GetInt();
 	}
 
+	public void Reset() {
+		VisibleHeight = 0;
+		Clear();
+	}
+
+	public void Clear() {
+
+	}
+
+	public override void OnParentChanged(IPanel? oldParent, IPanel? newParent) {
+		base.OnParentChanged(oldParent, newParent);
+	}
+
+	public override void Paint() {
+		if (VisibleHeight == 0)
+			return;
+	}
+
 	private void CreateChatLines() {
 		ChatLine = new BaseHudChatLine(this, "ChatLine1");
 		ChatLine.SetVisible(false);

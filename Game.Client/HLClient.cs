@@ -8,12 +8,13 @@ using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
+using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Engine;
 
 namespace Game.Client;
 
-public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals,  ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
+public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals, ISurface surface, ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
 {
 	public static IClientMode? ClientMode { get; private set; }
 
@@ -56,11 +57,12 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	public bool Init() {
 		IGameSystem.Add(Singleton<ViewportClientSystem>());
 
-		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD, Singleton<IEngineVGui>());
+		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD, Singleton<IEngineVGui>(), surface);
 		HUD.Init();
 		ClientMode.Init();
 		if (!IGameSystem.InitAllSystems())
 			return false;
+		ClientMode.Enable();
 		view.Init();
 		input.Init();
 		return true;
