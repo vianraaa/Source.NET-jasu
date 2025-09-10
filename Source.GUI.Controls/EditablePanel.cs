@@ -15,6 +15,8 @@ public class EditablePanel : Panel
 	public EditablePanel(Panel? parent, string? panelName, bool showTaskbarIcon = true) : base(parent, panelName, showTaskbarIcon) {
 		BuildGroup = new BuildGroup(this, this);
 		NavGroup = new FocusNavGroup(this);
+
+		SetBuildGroup(GetBuildGroup());
 	}
 
 	public virtual BuildGroup? GetBuildGroup() {

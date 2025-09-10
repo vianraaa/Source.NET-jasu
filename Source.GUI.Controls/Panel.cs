@@ -1315,7 +1315,7 @@ public class Panel : IPanel
 
 		Surface.DrawSetTextFont(dbgfont);
 		Surface.DrawSetTextPos(4, 4);
-		Surface.DrawPrintText($"{GetType().Name} {BgColor}");
+		Surface.DrawPrintText($"{GetType().Name} {GetName()} {BgColor}");
 
 		Surface.PopMakeCurrent(this);
 #endif

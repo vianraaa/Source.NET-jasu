@@ -89,7 +89,6 @@ public class BuildGroup
 			shouldCacheKeys = false;
 		}
 
-
 		ResourceName = new(controlResourceName);
 
 		if (pathID != null)
