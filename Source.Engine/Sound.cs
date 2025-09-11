@@ -10,7 +10,7 @@ public class Sound {
 	}
 
 	public SfxTable PrecacheSound(ReadOnlySpan<char> fileName) {
-		throw new NotImplementedException();
+		return null;
 	}
 
 	public void MarkUISound(SfxTable sound) {
@@ -18,7 +18,7 @@ public class Sound {
 	}
 
 	internal void StartSound(in StartSoundParams parms) {
-		throw new NotImplementedException();
+
 	}
 
 	// todo: everything else here

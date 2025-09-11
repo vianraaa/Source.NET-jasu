@@ -15,12 +15,16 @@ using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
 using Source.Engine;
+using Source.Engine.Client;
 using Source.Engine.Server;
 using Source.GUI;
 using Source.GUI.Controls;
 
+using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Runtime.InteropServices;
+
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 
@@ -164,6 +168,7 @@ public class EngineVGui(
 	EnginePanel staticClientDLLToolsPanel;
 	EnginePanel staticGameUIPanel;
 	EnginePanel staticGameDLLPanel;
+	ClientState cl;
 
 	EnginePanel staticEngineToolsPanel;
 
@@ -329,8 +334,20 @@ public class EngineVGui(
 
 		SfxTable sound = Sound.PrecacheSound(fileName);
 		if (sound != null) {
+			Sound.MarkUISound(sound);
 
-			StartSoundParams
+			StartSoundParams parms = default;
+			parms.StaticSound = false;
+			parms.SoundSource = cl.ViewEntity;
+			parms.EntChannel= SoundEntityChannel.Auto;
+			parms.Sfx = sound;
+			parms.Origin = dummyOrigin;
+			parms.Pitch = 100;
+			parms.SoundLevel = SoundLevel.LvlIdle;
+			parms.Flags = 0;
+			parms.Volume = 1.0f;
+
+			Sound.StartSound(in parms);
 		}
 	}
 
@@ -346,6 +363,7 @@ public class EngineVGui(
 		clientDLL = engineAPI.GetRequiredService<IBaseClientDLL>();
 		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
 		localize = engineAPI.GetRequiredService<ILocalize>();
+		cl = engineAPI.GetRequiredService<ClientState>();
 		vguiScheme.Init();
 		// IGameConsole, but later.
 
