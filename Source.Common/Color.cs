@@ -66,7 +66,7 @@ public struct Color
 	public static bool operator!=(Color l, Color r) => l.GetRawColor() != r.GetRawColor();
 
 	public override readonly bool Equals([NotNullWhen(true)] object? obj) {
-		return obj is Color && this == (Color)obj;
+		return obj is Color color && this == color;
 	}
 
 	public override int GetHashCode() => HashCode.Combine(GetRawColor());

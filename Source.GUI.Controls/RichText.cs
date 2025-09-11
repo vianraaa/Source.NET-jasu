@@ -349,6 +349,40 @@ public class RichText : Panel
 
 		if (renderState.TextClickable)
 			FinishingURL(renderState.X, renderState.Y);
+		// DrawDebug();
+	}
+
+	private void DrawDebug() {
+		GetSize(out int w, out int h);
+		Surface.DrawSetTextFont(Font);
+
+		int y = 0;
+		for (int i = 0; i < FormatStream.Count; i++, y++) {
+			var piece = FormatStream[i];
+			Surface.DrawSetTextPos(w + 16, y * 16);
+			Surface.DrawPrintText($"Format Stream #{i}: {piece}");
+		}
+		y += 1;
+		for (int i = 0; i < LineBreaks.Count; i++, y++) {
+			var piece = LineBreaks[i];
+			Surface.DrawSetTextPos(w + 16, y * 16);
+			Surface.DrawPrintText($"Line break #{i} = {piece}");
+		}
+		y += 1;
+		int x = 0;
+		int max = 8;
+		for (int i = 0; i < TextStream.Count; i++, y = (x > max ? y + 1 : y), x = (x > max ? 0 : x + 1)) {
+			Surface.DrawSetTextPos(w + 16 + (x * 48), y * 16);
+			if (char.IsControl(TextStream[i]))
+				if (TextStream[i] == '\n')
+					Surface.DrawPrintText($"\\n");
+				else
+					Surface.DrawPrintText($"0x{(int)TextStream[i]}");
+			else if (char.IsWhiteSpace(TextStream[i]))
+				Surface.DrawPrintText("WS");
+			else
+				Surface.DrawPrintText($"{TextStream[i]}");
+		}
 	}
 
 	private int DrawString(int first, int last, ref RenderState renderState, IFont? font) {
@@ -710,8 +744,8 @@ public class RichText : Panel
 	}
 	public void InsertFade(float sustain, float length) {
 		Span<FormatStreamPiece> formatStream = FormatStream.AsSpan();
-		ref FormatStreamPiece prevItem = ref formatStream[formatStream.Length - 1];
-		if (prevItem.TextStreamIndex == formatStream.Length) {
+		ref FormatStreamPiece prevItem = ref formatStream[^1];
+		if (prevItem.TextStreamIndex == TextStream.Count) {
 			prevItem.Fade.FadeStartTime = System.GetCurrentTime() + sustain;
 			prevItem.Fade.FadeSustain = sustain;
 			prevItem.Fade.FadeLength = length;
@@ -904,7 +938,8 @@ public class RichText : Panel
 		int previousValue = VertScrollBar.GetValue();
 		bool bCurrentlyAtEnd = false;
 		VertScrollBar.GetRange(out int rmin, out int rmax);
-		if (rmax != 0 && (previousValue + rmin + VertScrollBar.GetRangeWindow() == rmax))
+		// DEVIATION: >= rmax fixes an issue in textchat.
+		if (rmax != 0 && (previousValue + rmin + VertScrollBar.GetRangeWindow() >= rmax))
 			bCurrentlyAtEnd = true;
 
 		GetSize(out int wide, out int tall);

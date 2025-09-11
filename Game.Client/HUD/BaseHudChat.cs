@@ -711,7 +711,8 @@ public class BaseHudChat : EditableHudElement
 		line.SetNameStart(nameStart);
 		line.SetNameLength(nameLength);
 		line.SetNameColor(clrNameColor);
-		line.InsertAndColorizeText(buf, playerIndex);
+		// We only need the \n for Msg
+		line.InsertAndColorizeText(buf[..(buf.Length - 1)], playerIndex);
 
 		Msg(buf);
 	}
@@ -800,7 +801,7 @@ public class BaseHudChat : EditableHudElement
 
 		if (GetChatHistory() != null) {
 			GetChatHistory().SetPaintBorderEnabled(false);
-			GetChatHistory().GotoTextStart();
+			GetChatHistory().GotoTextEnd();
 			GetChatHistory().SetMouseInputEnabled(false);
 			GetChatHistory().SetVerticalScrollbar(false);
 			GetChatHistory().ResetAllFades(false, true, CHAT_HISTORY_FADE_TIME);
