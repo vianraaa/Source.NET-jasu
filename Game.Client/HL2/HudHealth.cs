@@ -30,8 +30,6 @@ public class HudHealth : HudNumericDisplay
 	[PanelAnimationVar("HudNumbersSmall")] protected IFont SmallNumberFont;
 	[PanelAnimationVar("Default")] protected IFont TextFont;
 
-	[PanelAnimationVar("text_xpos", "8", "proportional_float")] protected float ;
-
 	public HudHealth(string? panelName) : base(null, "HudHealth") {
 		var parent = HLClient.ClientMode!.GetViewport();
 		SetParent(parent);
