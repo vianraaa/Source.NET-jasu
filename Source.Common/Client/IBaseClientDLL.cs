@@ -28,4 +28,5 @@ public interface IBaseClientDLL
 	void IN_OnMouseWheeled(int delta);
 	void ExtraMouseSample(double frametime, bool active);
 	void IN_ClearStates();
+	bool ShouldAllowConsole();
 }

@@ -86,4 +86,12 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	public void GetMouseDelta(out int dx, out int dy) {
 		launcherMgr.GetMouseDelta(out dx, out dy);
 	}
+
+	public bool IsConnected() {
+		return cl.IsConnected();
+	}
+
+	public bool IsInGame() {
+		return cl.IsActive();
+	}
 }

@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using CommunityToolkit.HighPerformance;
+
+using Source;
 using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
@@ -10,16 +12,26 @@ using Source.Engine;
 using Source.GUI;
 using Source.GUI.Controls;
 
+using System;
+
 namespace Game.Client.HUD;
 
 public class BaseHudChatLine : RichText
 {
 	protected IFont? Font;
 	protected IFont? FontMarlett;
-	Color ColorText;
+	Color TextColor;
+	double ExpireTime;
+	double StartTime;
+	string? Text;
+	int Count;
+	protected List<TextRange> TextRanges = [];
+
+	readonly ClientGlobalVariables gpGlobals = Singleton<ClientGlobalVariables>();
 
 	public BaseHudChatLine(Panel? parent, string? name) : base(parent, name) {
-
+		SetPaintBackgroundEnabled(true);
+		SetVerticalScrollbar(true);
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
@@ -28,12 +40,257 @@ public class BaseHudChatLine : RichText
 		Font = scheme.GetFont("Default");
 		SetBgColor(new(0, 0, 0, 100));
 		FontMarlett = scheme.GetFont("Marlett");
-		ColorText = scheme.GetColor("FgColor", GetFgColor());
+		TextColor = scheme.GetColor("FgColor", GetFgColor());
 		SetFont(Font);
 	}
 
 	internal IFont? GetFont() {
 		return Font;
+	}
+	public void PerformFadeout() {
+		double curtime = gpGlobals.CurTime;
+
+		int lr = TextColor[0], lg = TextColor[1], lb = TextColor[2];
+		if (curtime >= StartTime && curtime < StartTime + BaseHudChat.CHATLINE_FLASH_TIME) {
+			double frac1 = (curtime - StartTime) / BaseHudChat.CHATLINE_FLASH_TIME;
+			double frac = frac1;
+
+			frac *= BaseHudChat.CHATLINE_NUM_FLASHES;
+			frac *= 2 * Math.PI;
+
+			frac = Math.Cos(frac);
+
+			frac = Math.Clamp(frac, 0.0f, 1.0f);
+
+			frac *= (1.0f - frac1);
+
+			int r = lr, g = lg, b = lb;
+
+			r = Math.Clamp((int)(float)(r + (255 - r) * frac), 0, 255);
+			g = Math.Clamp((int)(float)(g + (255 - g) * frac), 0, 255);
+			b = Math.Clamp((int)(float)(b + (255 - b) * frac), 0, 255);
+
+			int alpha = (int)(float)Math.Clamp(63 + 192 * (1.0f - frac1), 0, 255);
+			alpha = Math.Clamp(alpha, 0, 255);
+
+			Span<char> wbuf = stackalloc char[4096];
+			GetText(0, wbuf);
+
+			SetText("");
+
+			InsertColorChange(new(r, g, b, 255));
+			InsertString(wbuf);
+		}
+		else if (curtime <= ExpireTime && curtime > ExpireTime - BaseHudChat.CHATLINE_FADE_TIME) {
+			double frac = (ExpireTime - curtime) / BaseHudChat.CHATLINE_FADE_TIME;
+
+			int alpha = Math.Clamp((int)(float)(frac * 255), 0, 255);
+
+			Span<char> wbuf = stackalloc char[4096];
+			GetText(0, wbuf);
+
+			SetText("");
+
+			InsertColorChange(new((int)(float)(lr * frac), (int)(float)(lg * frac), (int)(float)(lb * frac), alpha));
+			InsertString(wbuf);
+		}
+		else {
+			Span<char> wbuf = stackalloc char[4096];
+			GetText(0, wbuf);
+
+			SetText("");
+
+			InsertColorChange(new(lr, lg, lb, 255));
+			InsertString(wbuf);
+		}
+
+		OnThink();
+	}
+	public void SetExpireTime() {
+		StartTime = gpGlobals.CurTime;
+		ExpireTime = StartTime + BaseHudChat.hud_saytext_time.GetDouble();
+		Count = BaseHudChat.LineCounter++;
+	}
+
+	int NameStart;
+	int NameLength;
+	Color NameColor;
+
+	public int GetCount() => Count;
+	readonly IEngineClient engine = Singleton<IEngineClient>();
+	public bool IsReadyToExpire() {
+		if (!engine.IsInGame() && !engine.IsConnected())
+			return true;
+
+		return gpGlobals.CurTime >= ExpireTime;
+	}
+	public double GetStartTime() => StartTime;
+	public void Expire() {
+		SetVisible(false);
+	}
+
+	internal void SetNameStart(int nameStart) => NameStart = nameStart;
+
+	internal void SetNameLength(int nameLength) => NameLength = nameLength;
+
+	internal void SetNameColor(Color clrNameColor) => NameColor = clrNameColor;
+	internal unsafe void InsertAndColorizeText(ReadOnlySpan<char> buf, int playerIndex) {
+		Text = null;
+		TextRanges.Clear();
+
+		Text = new(buf);
+
+		BaseHudChat? chat = (BaseHudChat?)GetParent();
+
+		if (chat == null)
+			return;
+
+		// TODO: Rewrite this to be safe!!!
+		fixed (char* m_text = Text) {
+			char* txt = m_text;
+			int lineLen = Text.Length;
+			Color colCustom = default;
+			TextColor fcc = Text.Length > 0 ? (TextColor)Text[0] : 0;
+			if (fcc == HUD.TextColor.PlayerName || fcc == HUD.TextColor.Location || fcc == HUD.TextColor.Normal || fcc == HUD.TextColor.Achievement || fcc == HUD.TextColor.Custom || fcc == HUD.TextColor.HexCode || fcc == HUD.TextColor.HexCodeAlpha) {
+				while (txt != null && *txt != 0) {
+					TextRange range = default;
+					bool foundColorCode = false;
+					bool done = false;
+					int bytesIn = (int)(txt - m_text);
+
+					switch ((TextColor)(*txt)) {
+						case HUD.TextColor.Custom:
+						case HUD.TextColor.PlayerName:
+						case HUD.TextColor.Location:
+						case HUD.TextColor.Achievement:
+						case HUD.TextColor.Normal: {
+								// save this start
+								range.Start = bytesIn + 1;
+								range.Color = chat.GetTextColorForClient((TextColor)(*txt), playerIndex);
+								range.End = lineLen;
+								foundColorCode = true;
+							}
+							++txt;
+							break;
+						case HUD.TextColor.HexCode:
+						case HUD.TextColor.HexCodeAlpha: {
+								bool readAlpha = ((TextColor)(*txt) == HUD.TextColor.HexCodeAlpha);
+								int nCodeBytes = (readAlpha ? 8 : 6);
+								range.Start = bytesIn + nCodeBytes + 1;
+								range.End = lineLen;
+								range.PreserveAlpha = readAlpha;
+								++txt;
+
+								if (range.End > range.Start) {
+									int r = txt[0].Nibble() << 4 | txt[1].Nibble();
+									int g = txt[2].Nibble() << 4 | txt[3].Nibble();
+									int b = txt[4].Nibble() << 4 | txt[5].Nibble();
+									int a = readAlpha ? txt[6].Nibble() << 4 | txt[7].Nibble() : 255;									
+
+									range.Color = new(r, g, b, a);
+									foundColorCode = true;
+
+									txt += nCodeBytes;
+								}
+								else 
+									done = true;
+							}
+							break;
+						default:
+							++txt;
+							break;
+					}
+
+					if (done) 
+						break;
+					
+					if (foundColorCode) {
+						int count = TextRanges.Count;
+						if (count != 0) {
+							Span<TextRange> textRanges = TextRanges.AsSpan();
+							ref TextRange tr = ref textRanges[count - 1];
+							tr.End = bytesIn;
+						}
+						TextRanges.Add(range);
+					}
+				}
+			}
+
+			if (TextRanges.Count == 0 && NameLength > 0 && m_text[0] == (int)HUD.TextColor.UseOldColors) {
+				TextRange range = default;
+				range.Start = 0;
+				range.End = NameStart;
+				range.Color = chat.GetTextColorForClient(HUD.TextColor.Normal, playerIndex);
+				TextRanges.Add(range);
+
+				range.Start = NameStart;
+				range.End = NameStart + NameLength;
+				range.Color = chat.GetTextColorForClient(HUD.TextColor.PlayerName, playerIndex);
+				TextRanges.Add(range);
+
+				range.Start = range.End;
+				range.End = Text.Length;
+				range.Color = chat.GetTextColorForClient(HUD.TextColor.Normal, playerIndex);
+				TextRanges.Add(range);
+			}
+
+			if (TextRanges.Count == 0) {
+				TextRange range = default;
+				range.Start = 0;
+				range.End = Text.Length;
+				range.Color = chat.GetTextColorForClient(HUD.TextColor.Normal, playerIndex);
+				TextRanges.Add(range);
+			}
+
+			for (int i = 0; i < TextRanges.Count; ++i) {
+				char* start = m_text + TextRanges[i].Start;
+				if (*start > 0 && *start < (int)HUD.TextColor.Max) {
+					Assert(*start != (int)HUD.TextColor.HexCode && *start != (int)HUD.TextColor.HexCodeAlpha);
+					Span<TextRange> textRanges2 = TextRanges.AsSpan();
+					ref TextRange tr2 = ref textRanges2[i];
+					tr2.Start += 1;
+				}
+			}
+
+			Colorize();
+		}
+	}
+
+	private void Colorize(int alpha= 255) {
+		SetText("");
+
+		BaseHudChat? chat = (BaseHudChat?)GetParent();
+
+		if (chat != null && chat.GetChatHistory() != null) 
+			chat.GetChatHistory().InsertString("\n");
+
+		Span<char> text = stackalloc char[4096];
+		Color color = default;
+		for (int i = 0; i < TextRanges.Count; ++i) {
+			ReadOnlySpan<char> start = Text.AsSpan()[TextRanges[i].Start..];
+			int len = TextRanges[i].End - TextRanges[i].Start + 1;
+			if (len > 1 && len <= text.Length) {
+				start.ClampedCopyTo(text);
+				text[len - 1] = '\0';
+				color = TextRanges[i].Color;
+				if (!TextRanges[i].PreserveAlpha) 
+					color[3] = (byte)alpha;
+				
+				InsertColorChange(color);
+				InsertString(text);
+
+				if (chat != null && chat.GetChatHistory() != null) {
+					chat.GetChatHistory().InsertColorChange(color);
+					chat.GetChatHistory().InsertString(text);
+					chat.GetChatHistory().InsertFade(BaseHudChat.hud_saytext_time.GetFloat(), BaseHudChat.CHAT_HISTORY_IDLE_FADE_TIME);
+
+					if (i == TextRanges.Count - 1) 
+						chat.GetChatHistory().InsertFade(-1, -1);
+				}
+			}
+		}
+
+		InvalidateLayout(true);
 	}
 }
 
@@ -47,9 +304,6 @@ public class HudChatHistory : RichText
 		InsertFade(-1, -1);
 	}
 
-	internal void ResetAllFades(bool hold, bool onlyExpired = false, float newSustain = -1f) {
-
-	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
 		base.ApplySchemeSettings(scheme);
@@ -204,7 +458,7 @@ public struct TextRange
 {
 	public int Start;
 	public int End;
-	public ColorChange Color;
+	public Color Color;
 	public bool PreserveAlpha;
 }
 
@@ -223,11 +477,11 @@ public class BaseHudChat : EditableHudElement
 	public const float CHAT_HISTORY_IDLE_FADE_TIME = 2.5f;
 	public const float CHAT_HISTORY_ALPHA = 127;
 
-	static ConVar hud_saytext_time = new("12", 0);
-	static ConVar cl_showtextmsg = new("1", 0, "Enable/disable text messages printing on the screen.");
-	static ConVar cl_chatfilters = new("63", FCvar.ClientDLL | FCvar.Archive, "Stores the chat filter settings ");
-	static ConVar cl_chatfilter_version = new("0", FCvar.ClientDLL | FCvar.Archive | FCvar.Hidden, "Stores the chat filter version");
-	static ConVar cl_mute_all_comms = new("1", FCvar.Archive, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
+	internal static ConVar hud_saytext_time = new("12", 0);
+	internal static ConVar cl_showtextmsg = new("1", 0, "Enable/disable text messages printing on the screen.");
+	internal static ConVar cl_chatfilters = new("63", FCvar.ClientDLL | FCvar.Archive, "Stores the chat filter settings ");
+	internal static ConVar cl_chatfilter_version = new("0", FCvar.ClientDLL | FCvar.Archive | FCvar.Hidden, "Stores the chat filter version");
+	internal static ConVar cl_mute_all_comms = new("1", FCvar.Archive, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
 
 	public static readonly Color ColorBlue = new(153, 204, 255, 255);
 	public static readonly Color ColorRed = new(255, 63, 63, 255);
@@ -237,7 +491,7 @@ public class BaseHudChat : EditableHudElement
 	public static readonly Color ColorGrey = new(204, 204, 204, 255);
 
 	protected BaseHudChatLine? FindUnusedChatLine() {
-		return null;
+		return ChatLine;
 	}
 
 	protected BaseHudChatInputLine ChatInput;
@@ -247,6 +501,7 @@ public class BaseHudChat : EditableHudElement
 	protected HudChatFilterButton FiltersButton;
 	protected HudChatFilterPanel FilterPanel;
 	protected Color ColorCustom;
+	public static int LineCounter;
 
 	int ComputeBreakChar(int width, ReadOnlySpan<char> text) {
 		BaseHudChatLine line = ChatLine;
@@ -299,7 +554,7 @@ public class BaseHudChat : EditableHudElement
 	MessageModeType MessageMode;
 	int VisibleHeight;
 	IFont? ChatFont;
-	int FilterFlags;
+	ChatFilters FilterFlags;
 	bool EnteringVoice;
 	double HistoryFadeTime;
 	double HistoryIdleTime;
@@ -338,7 +593,7 @@ public class BaseHudChat : EditableHudElement
 		CreateChatInputLine();
 		GetChatFilterPanel();
 
-		FilterFlags = cl_chatfilters.GetInt();
+		FilterFlags = (ChatFilters)cl_chatfilters.GetInt();
 	}
 
 	public override void SetVisible(bool state) {
@@ -456,12 +711,21 @@ public class BaseHudChat : EditableHudElement
 
 	public HudChatHistory GetChatHistory() => ChatHistory;
 
-	private void Printf(ChatFilters none, ReadOnlySpan<char> str) {
+	private void Printf(ChatFilters filter, ReadOnlySpan<char> str) {
 
 	}
 
-	private void ChatPrintf(int playerIndex, ChatFilters none, ReadOnlySpan<char> str) {
-		Span<char> msg = stackalloc char[4096];
+	public ChatFilters GetFilterFlags() => FilterFlags;
+
+	private void ChatPrintf(int playerIndex, ChatFilters filter, ReadOnlySpan<char> str) {
+		BaseHudChatLine? line = FindUnusedChatLine();
+		if (line == null)
+			return;
+
+		if (filter != ChatFilters.None)
+			if ((filter & GetFilterFlags()) == 0) return;
+
+		line.SetText("");
 
 		PlayerInfo playerInfo = new();
 		if (playerIndex == 0)
@@ -469,7 +733,45 @@ public class BaseHudChat : EditableHudElement
 		else
 			engine.GetPlayerInfo(playerIndex, out playerInfo);
 
-		Msg($"{((ReadOnlySpan<char>)playerInfo.Name).SliceNullTerminatedString()}: {str}\n");
+		int nameStart = 0;
+		int nameLength = 0;
+
+		Color clrNameColor = GetClientColor(playerIndex);
+
+		ReadOnlySpan<char> playerName = ((ReadOnlySpan<char>)playerInfo.Name).SliceNullTerminatedString();
+		Span<char> buf = stackalloc char[playerName.Length + 2 + str.Length + 1];
+		int writePtr = 0;
+
+		playerName.CopyTo(buf[writePtr..]);
+		nameStart = writePtr;
+		nameLength = playerName.Length;
+		writePtr += playerName.Length;
+
+		": ".CopyTo(buf[writePtr..]);
+		writePtr += 2;
+
+		str.CopyTo(buf[writePtr..]);
+		writePtr += str.Length;
+
+		"\n".CopyTo(buf[writePtr..]);
+		writePtr += 1;
+
+		line.SetExpireTime();
+
+		line.SetVisible(false);
+		line.SetNameStart(nameStart);
+		line.SetNameLength(nameLength);
+		line.SetNameColor(clrNameColor);
+		line.InsertAndColorizeText(buf, playerIndex);
+
+		Msg(buf);
+	}
+
+	public virtual Color GetClientColor(int clientIndex) {
+		if (clientIndex == 0)
+			return ColorGreen;
+		else
+			return ColorYellow;
 	}
 
 	protected void SayText2(bf_read msg) {
@@ -564,6 +866,38 @@ public class BaseHudChat : EditableHudElement
 	}
 
 	public MessageModeType GetMessageMode() => MessageMode;
+
+	public Color GetTextColorForClient(TextColor tcCur, int playerIndex) {
+		Color c = default;
+		switch (tcCur) {
+			case TextColor.Custom:
+				c = ColorCustom;
+				break;
+
+			case TextColor.PlayerName:
+				c = GetClientColor(playerIndex);
+				break;
+
+			case TextColor.Location:
+				c = ColorDarkGreen;
+				break;
+
+			case TextColor.Achievement:
+				IScheme? sourceScheme = SchemeManager.GetScheme("SourceScheme");
+				c = sourceScheme?.GetColor("SteamLightGreen", GetBgColor()) ?? GetDefaultTextColor();
+				break;
+
+			default:
+				c = GetDefaultTextColor();
+				break;
+		}
+
+		return c with { A = 255 };
+	}
+
+	private Color GetDefaultTextColor() {
+		return ColorYellow;
+	}
 }
 
 [DeclareHudElement(Name = "CHudChat")]

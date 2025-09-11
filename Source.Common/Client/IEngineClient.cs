@@ -89,4 +89,6 @@ public interface IEngineClient
 	void SetViewAngles(in QAngle viewangles);
 	void GetScreenSize(out int w, out int h);
 	void GetMouseDelta(out int dx, out int dy);
+	bool IsConnected();
+	bool IsInGame();
 }

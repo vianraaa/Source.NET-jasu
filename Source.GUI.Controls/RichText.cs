@@ -6,6 +6,7 @@ using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Utilities;
 
+using System;
 using System.Collections.Generic;
 
 using static System.Net.Mime.MediaTypeNames;
@@ -221,6 +222,15 @@ public class RichText : Panel
 			return;
 
 		GetSize(out int wide, out int tall);
+
+		// var temp = TextStream.AsSpan().SliceNullTerminatedString();
+		// Span<char> tempCopy = stackalloc char[temp.Length];
+		// temp.CopyTo(tempCopy);
+		// tempCopy.Replace('\n', 'N');
+		// tempCopy.Replace('\0', 'Z');
+		// Surface.DrawSetTextPos(wide, tall);
+		// Surface.DrawSetTextColor(new(255, 255, 255));
+		// Surface.DrawPrintText(tempCopy);
 
 		int startIndex = GetStartDrawIndex(out int lineBreakIndexIndex);
 		CurrentTextClickable = false;
@@ -570,7 +580,25 @@ public class RichText : Panel
 
 	public void SetMaximumCharCount(int maxChars) => MaxCharCount = maxChars;
 
-	internal void SetText(ReadOnlySpan<char> text) {
+
+	public void GetText(Span<char> buf) => GetText(0, buf);
+	public void GetText(int offset, Span<char> buf) {
+		if (buf == null || buf.Length <= 0)
+			return;
+
+		int i;
+		for (i = offset; i < (offset + buf.Length - 1); i++) {
+			if (i >= TextStream.Count)
+				break;
+
+			buf[i - offset] = TextStream[i];
+		}
+
+		buf[i - offset] = '\0';
+		buf[^1] = '\0';
+	}
+
+	public void SetText(ReadOnlySpan<char> text) {
 		if (text == null)
 			text = "";
 
@@ -599,6 +627,7 @@ public class RichText : Panel
 			for (int i = 0; i < t.Length; i++)
 				TextStream.Add(text[i]);
 		}
+
 		GotoTextStart();
 		SelectNone();
 
@@ -613,7 +642,7 @@ public class RichText : Panel
 		Repaint();
 	}
 
-	internal void InsertColorChange(in Color clr) {
+	public void InsertColorChange(in Color clr) {
 		ref FormatStreamPiece prevItem = ref FormatStream.AsSpan()[FormatStream.Count - 1];
 		if (prevItem.Color == clr)
 			return;
@@ -652,7 +681,24 @@ public class RichText : Panel
 		else
 			Interior?.SetBounds(0, 0, wide, tall);
 	}
+	public void ResetAllFades(bool hold, bool onlyExpired = false, double newSustain = -1) {
+		ResetFades = hold;
 
+		if (ResetFades == false) {
+			Span<FormatStreamPiece> formatStream = FormatStream.AsSpan();
+			for (int i = 1; i < formatStream.Length; i++) {
+				ref FormatStreamPiece streamPiece = ref formatStream[i];
+				if (onlyExpired == true) 
+					if (streamPiece.Fade.FadeStartTime >= System.GetCurrentTime())
+						continue;
+				
+				if (newSustain == -1.0f) 
+					newSustain = streamPiece.Fade.FadeSustain;
+
+				streamPiece.Fade.FadeStartTime = System.GetCurrentTime() + newSustain;
+			}
+		}
+	}
 	public void InsertFade(float sustain, float length) {
 		Span<FormatStreamPiece> formatStream = FormatStream.AsSpan();
 		ref FormatStreamPiece prevItem = ref formatStream[formatStream.Length - 1];
@@ -886,7 +932,7 @@ public class RichText : Panel
 		}
 	}
 
-	internal void InsertString(ReadOnlySpan<char> text, bool doLocalize = true) {
+	public void InsertString(ReadOnlySpan<char> text, bool doLocalize = true) {
 		if (doLocalize && text.Length > 0 && text[0] == '#') {
 			Span<char> unicode = stackalloc char[1024];
 			ReadOnlySpan<char> unicodeInput = ResolveLocalizedTextAndVariables(text, unicode);
@@ -894,7 +940,7 @@ public class RichText : Panel
 			return;
 		}
 
-		for (int i = 0; i < text.Length; i++)
+		for (int i = 0; i < text.Length && text[i] != '\0'; i++)
 			InsertChar(text[i]);
 
 		InvalidateLayout();

@@ -84,6 +84,8 @@ public interface IEngineVGuiInternal : IEngineVGui
 	void Paint(PaintMode paintMode);
 	void ActivateGameUI();
 	bool HideGameUI();
+	void ShowConsole();
+	void HideConsole();
 }
 
 public class EnginePanel(Panel? parent, string name) : EditablePanel(parent, name)
@@ -744,5 +746,14 @@ public class EngineVGui(
 
 	public bool IsConsoleVisible() {
 		return IsGameUIVisible() && staticGameConsole != null && staticGameConsole.IsConsoleVisible();
+	}
+
+	public void ShowConsole() {
+		ActivateGameUI();
+		staticGameConsole?.Activate();
+	}
+
+	public void HideConsole() {
+		staticGameConsole?.Hide();
 	}
 }

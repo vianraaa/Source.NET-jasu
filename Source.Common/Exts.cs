@@ -210,7 +210,7 @@ public static class UnmanagedUtils
 				hash = XXH64.DigestOf(MemoryMarshal.Cast<char, byte>(lowerBuffer));
 			}
 		}
-		else 
+		else
 			hash = XXH64.DigestOf(MemoryMarshal.Cast<char, byte>(str));
 
 		return hash;
@@ -231,6 +231,18 @@ public static class UnmanagedUtils
 	}
 
 	public static unsafe ulong Hash(this string target, bool invariant = true) => Hash((ReadOnlySpan<char>)target, invariant);
+	public static char Nibble(this char c) {
+		if ((c >= '0') && (c <= '9'))
+			return (char)(c - '0');
+
+		if ((c >= 'A') && (c <= 'F'))
+			return (char)(c - 'A' + 0x0a);
+
+		if ((c >= 'a') && (c <= 'f'))
+			return (char)(c - 'a' + 0x0a);
+
+		return '0';
+	}
 
 	public static unsafe void ZeroOut<T>(this T[] array) where T : unmanaged {
 		fixed (T* ptr = array) {
@@ -561,7 +573,8 @@ public static class ReflectionUtils
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class EngineComponentAttribute : Attribute;
 
-public static class SpanExts {
+public static class SpanExts
+{
 	public static int ClampedCopyTo<T>(this ReadOnlySpan<T> source, Span<T> dest) {
 		if (dest.Length < source.Length) {
 			// We only copy as much as we can fit.

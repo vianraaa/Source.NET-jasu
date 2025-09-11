@@ -114,4 +114,6 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	public void IN_ClearStates() {
 		input.ClearStates();
 	}
+
+	public bool ShouldAllowConsole() => true;
 }
