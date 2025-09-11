@@ -47,65 +47,7 @@ public class BaseHudChatLine : RichText
 	internal IFont? GetFont() {
 		return Font;
 	}
-	public void PerformFadeout() {
-		double curtime = gpGlobals.CurTime;
 
-		int lr = TextColor[0], lg = TextColor[1], lb = TextColor[2];
-		if (curtime >= StartTime && curtime < StartTime + BaseHudChat.CHATLINE_FLASH_TIME) {
-			double frac1 = (curtime - StartTime) / BaseHudChat.CHATLINE_FLASH_TIME;
-			double frac = frac1;
-
-			frac *= BaseHudChat.CHATLINE_NUM_FLASHES;
-			frac *= 2 * Math.PI;
-
-			frac = Math.Cos(frac);
-
-			frac = Math.Clamp(frac, 0.0f, 1.0f);
-
-			frac *= (1.0f - frac1);
-
-			int r = lr, g = lg, b = lb;
-
-			r = Math.Clamp((int)(float)(r + (255 - r) * frac), 0, 255);
-			g = Math.Clamp((int)(float)(g + (255 - g) * frac), 0, 255);
-			b = Math.Clamp((int)(float)(b + (255 - b) * frac), 0, 255);
-
-			int alpha = (int)(float)Math.Clamp(63 + 192 * (1.0f - frac1), 0, 255);
-			alpha = Math.Clamp(alpha, 0, 255);
-
-			Span<char> wbuf = stackalloc char[4096];
-			GetText(0, wbuf);
-
-			SetText("");
-
-			InsertColorChange(new(r, g, b, 255));
-			InsertString(wbuf);
-		}
-		else if (curtime <= ExpireTime && curtime > ExpireTime - BaseHudChat.CHATLINE_FADE_TIME) {
-			double frac = (ExpireTime - curtime) / BaseHudChat.CHATLINE_FADE_TIME;
-
-			int alpha = Math.Clamp((int)(float)(frac * 255), 0, 255);
-
-			Span<char> wbuf = stackalloc char[4096];
-			GetText(0, wbuf);
-
-			SetText("");
-
-			InsertColorChange(new((int)(float)(lr * frac), (int)(float)(lg * frac), (int)(float)(lb * frac), alpha));
-			InsertString(wbuf);
-		}
-		else {
-			Span<char> wbuf = stackalloc char[4096];
-			GetText(0, wbuf);
-
-			SetText("");
-
-			InsertColorChange(new(lr, lg, lb, 255));
-			InsertString(wbuf);
-		}
-
-		OnThink();
-	}
 	public void SetExpireTime() {
 		StartTime = gpGlobals.CurTime;
 		ExpireTime = StartTime + BaseHudChat.hud_saytext_time.GetDouble();
@@ -185,14 +127,14 @@ public class BaseHudChatLine : RichText
 									int r = txt[0].Nibble() << 4 | txt[1].Nibble();
 									int g = txt[2].Nibble() << 4 | txt[3].Nibble();
 									int b = txt[4].Nibble() << 4 | txt[5].Nibble();
-									int a = readAlpha ? txt[6].Nibble() << 4 | txt[7].Nibble() : 255;									
+									int a = readAlpha ? txt[6].Nibble() << 4 | txt[7].Nibble() : 255;
 
 									range.Color = new(r, g, b, a);
 									foundColorCode = true;
 
 									txt += nCodeBytes;
 								}
-								else 
+								else
 									done = true;
 							}
 							break;
@@ -201,9 +143,9 @@ public class BaseHudChatLine : RichText
 							break;
 					}
 
-					if (done) 
+					if (done)
 						break;
-					
+
 					if (foundColorCode) {
 						int count = TextRanges.Count;
 						if (count != 0) {
@@ -256,12 +198,12 @@ public class BaseHudChatLine : RichText
 		}
 	}
 
-	private void Colorize(int alpha= 255) {
+	private void Colorize(int alpha = 255) {
 		SetText("");
 
 		BaseHudChat? chat = (BaseHudChat?)GetParent();
 
-		if (chat != null && chat.GetChatHistory() != null) 
+		if (chat != null && chat.GetChatHistory() != null)
 			chat.GetChatHistory().InsertString("\n");
 
 		Span<char> text = stackalloc char[4096];
@@ -273,9 +215,9 @@ public class BaseHudChatLine : RichText
 				start.ClampedCopyTo(text);
 				text[len - 1] = '\0';
 				color = TextRanges[i].Color;
-				if (!TextRanges[i].PreserveAlpha) 
+				if (!TextRanges[i].PreserveAlpha)
 					color[3] = (byte)alpha;
-				
+
 				InsertColorChange(color);
 				InsertString(text);
 
@@ -284,7 +226,7 @@ public class BaseHudChatLine : RichText
 					chat.GetChatHistory().InsertString(text);
 					chat.GetChatHistory().InsertFade(BaseHudChat.hud_saytext_time.GetFloat(), BaseHudChat.CHAT_HISTORY_IDLE_FADE_TIME);
 
-					if (i == TextRanges.Count - 1) 
+					if (i == TextRanges.Count - 1)
 						chat.GetChatHistory().InsertFade(-1, -1);
 				}
 			}
@@ -721,7 +663,7 @@ public class BaseHudChat : EditableHudElement
 		ReadOnlySpan<char> trimmed = str;
 
 		trimmed = trimmed.TrimEnd('\n');
-		while(trimmed.Length > 0 && trimmed[0] != '\0' && (trimmed[0] == '\n' || (trimmed[0] > 0 && trimmed[0] < (int)HUD.TextColor.Max))) 
+		while (trimmed.Length > 0 && trimmed[0] != '\0' && (trimmed[0] == '\n' || (trimmed[0] > 0 && trimmed[0] < (int)HUD.TextColor.Max)))
 			trimmed = trimmed[1..];
 		trimmed.TrimStart('\n');
 
@@ -811,7 +753,6 @@ public class BaseHudChat : EditableHudElement
 		MakeReadyForUse();
 		SetKeyboardInputEnabled(true);
 		SetMouseInputEnabled(true);
-
 		ChatInput.SetVisible(true);
 		Surface.CalculateMouseVisible();
 		ChatInput.RequestFocus();
@@ -859,7 +800,7 @@ public class BaseHudChat : EditableHudElement
 
 		if (GetChatHistory() != null) {
 			GetChatHistory().SetPaintBorderEnabled(false);
-			GetChatHistory().GotoTextEnd();
+			GetChatHistory().GotoTextStart();
 			GetChatHistory().SetMouseInputEnabled(false);
 			GetChatHistory().SetVerticalScrollbar(false);
 			GetChatHistory().ResetAllFades(false, true, CHAT_HISTORY_FADE_TIME);

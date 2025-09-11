@@ -53,6 +53,10 @@ public class RichText : Panel
 		public double FadeLength;
 		public double FadeSustain;
 		public int OriginalAlpha;
+
+		public override string ToString() {
+			return $"Start {FadeStartTime}, Sustain {FadeSustain}, Length {FadeLength}, Original Alpha {OriginalAlpha}";
+		}
 	}
 	struct FormatStreamPiece
 	{
@@ -62,6 +66,10 @@ public class RichText : Panel
 		public ulong ClickableTextAction;
 		public Fade Fade;
 		public int TextStreamIndex;
+
+		public override string ToString() {
+			return $"Text[{TextStreamIndex}] Color {Color}, PixelsIndent {PixelsIndent}, Fade [{Fade}]";
+		}
 	}
 	bool ResetFades;
 	bool Interactive;
@@ -623,9 +631,10 @@ public class RichText : Panel
 		TextStream.Clear();
 		if (text != null && text.Length > 0) {
 			ReadOnlySpan<char> t = text.SliceNullTerminatedString();
-			TextStream.EnsureCapacity(t.Length);
+			TextStream.EnsureCapacity(t.Length + 1);
 			for (int i = 0; i < t.Length; i++)
 				TextStream.Add(text[i]);
+			TextStream.Add('\0');
 		}
 
 		GotoTextStart();
@@ -635,7 +644,7 @@ public class RichText : Panel
 		InvalidateLayout();
 	}
 
-	private void GotoTextStart() {
+	public void GotoTextStart() {
 		CursorPos = 0;
 		InvalidateVerticalScrollbarSlider = true;
 		VertScrollBar.SetValue(0);
@@ -688,11 +697,11 @@ public class RichText : Panel
 			Span<FormatStreamPiece> formatStream = FormatStream.AsSpan();
 			for (int i = 1; i < formatStream.Length; i++) {
 				ref FormatStreamPiece streamPiece = ref formatStream[i];
-				if (onlyExpired == true) 
+				if (onlyExpired == true)
 					if (streamPiece.Fade.FadeStartTime >= System.GetCurrentTime())
 						continue;
-				
-				if (newSustain == -1.0f) 
+
+				if (newSustain == -1.0f)
 					newSustain = streamPiece.Fade.FadeSustain;
 
 				streamPiece.Fade.FadeStartTime = System.GetCurrentTime() + newSustain;
@@ -897,7 +906,7 @@ public class RichText : Panel
 		VertScrollBar.GetRange(out int rmin, out int rmax);
 		if (rmax != 0 && (previousValue + rmin + VertScrollBar.GetRangeWindow() == rmax))
 			bCurrentlyAtEnd = true;
-		
+
 		GetSize(out int wide, out int tall);
 
 		VertScrollBar.SetPos(wide - VertScrollBar.GetWide(), 0);
@@ -912,11 +921,11 @@ public class RichText : Panel
 			VertScrollBar.SetRangeWindow(numLines);
 			VertScrollBar.SetValue(0);
 
-			if (UnusedScrollbarInvis) 
+			if (UnusedScrollbarInvis)
 				SetVerticalScrollbar(false);
 		}
 		else {
-			if (UnusedScrollbarInvis) 
+			if (UnusedScrollbarInvis)
 				SetVerticalScrollbar(true);
 
 			VertScrollBar.SetRange(0, numLines);
@@ -924,9 +933,9 @@ public class RichText : Panel
 			VertScrollBar.SetEnabled(true);
 
 			VertScrollBar.SetButtonPressedScrollValue(1);
-			if (bCurrentlyAtEnd) 
+			if (bCurrentlyAtEnd)
 				VertScrollBar.SetValue(numLines - displayLines);
-			
+
 			VertScrollBar.InvalidateLayout();
 			VertScrollBar.Repaint();
 		}
