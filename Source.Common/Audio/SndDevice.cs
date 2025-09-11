@@ -36,7 +36,6 @@ public class AudioSource {
 
 public class SfxTable {
 	public AudioSource? Source;
-
 	public bool UseErrorFilename;
 	public bool IsUISound;
 	public bool IsLateLoad;
