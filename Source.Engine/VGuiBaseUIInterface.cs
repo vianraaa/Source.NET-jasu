@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
+using Source.Common.Audio;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
@@ -325,7 +326,12 @@ public class EngineVGui(
 
 	public void VGui_PlaySound(ReadOnlySpan<char> fileName) {
 		Vector3 dummyOrigin = new(0);
-		// do this later
+
+		SfxTable sound = Sound.PrecacheSound(fileName);
+		if (sound != null) {
+
+			StartSoundParams
+		}
 	}
 
 	IBaseClientDLL clientDLL;

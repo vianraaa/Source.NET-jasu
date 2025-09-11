@@ -1,4 +1,6 @@
-﻿namespace Source.Engine;
+﻿using Source.Common.Audio;
+
+namespace Source.Engine;
 
 
 
@@ -12,7 +14,11 @@ public class Sound {
 	}
 
 	public void MarkUISound(SfxTable sound) {
+		sound.IsUISound = true;
+	}
 
+	internal void StartSound(in StartSoundParams parms) {
+		throw new NotImplementedException();
 	}
 
 	// todo: everything else here

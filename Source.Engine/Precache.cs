@@ -1,7 +1,8 @@
-﻿namespace Source.Engine;
+﻿using Source.Common.Audio;
+
+namespace Source.Engine;
 
 public class Model;
-public class SfxTable;
 public class PrecacheItem
 {
 	public const string MODEL_PRECACHE_TABLENAME = "modelprecache";
