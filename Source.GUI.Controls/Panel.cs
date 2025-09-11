@@ -117,9 +117,16 @@ public class PanelAnimationVarAttribute : Attribute
 	public PanelAnimationVarAttribute(string defaultValue) {
 		DefaultValue = defaultValue;
 	}
+
 	public PanelAnimationVarAttribute(string name, string defaultValue) {
 		Name = name;
 		DefaultValue = defaultValue;
+	}
+
+	public PanelAnimationVarAttribute(string name, string defaultValue, string? type) {
+		Name = name;
+		DefaultValue = defaultValue;
+		Type = type;
 	}
 
 	public static void InitVar(Type t, PanelAnimationVarAttribute attribute, FieldInfo field) {
@@ -206,9 +213,15 @@ public class Panel : IPanel
 
 		AddPropertyConverter("float", floatConverter);
 		AddPropertyConverter("int", intConverter);
+		AddPropertyConverter("Color", colorConverter);
+		AddPropertyConverter("HFont", fontConverter);
+		AddPropertyConverter("proportional_float", p_floatConverter);
 	}
 	static readonly FloatProperty floatConverter = new();
 	static readonly IntProperty intConverter = new();
+	static readonly ColorProperty colorConverter = new();
+	static readonly FontProperty fontConverter = new();
+	static readonly ProportionalFloatProperty p_floatConverter = new();
 
 	public static void AddPropertyConverter(ReadOnlySpan<char> typeName, IPanelAnimationPropertyConverter converter) {
 		var hash = typeName.Hash();
@@ -2306,5 +2319,63 @@ class IntProperty : IPanelAnimationPropertyConverter
 
 	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
 		entry.Set(panel, int.TryParse(entry.DefaultValue, out int r) ? r : 0);
+	}
+}
+class ColorProperty : IPanelAnimationPropertyConverter
+{
+	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		object? data = entry.Get(panel);
+		if (data == null) return;
+		kv.SetColor(entry.ScriptName, (Color)data);
+	}
+
+	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		IScheme? scheme = panel.GetScheme();
+		Assert(scheme != null);
+		if (scheme != null) {
+			Color col;
+
+			ReadOnlySpan<char> colorName = kv.GetString(entry.ScriptName);
+			if (colorName == null || colorName.Length <= 0)
+				col = kv.GetColor(entry.ScriptName);
+			else
+				col = scheme.GetColor(colorName, new(0, 0, 0, 0));
+
+			entry.Set(panel, col);
+		}
+	}
+
+	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
+		entry.Set(panel, int.TryParse(entry.DefaultValue, out int r) ? r : 0);
+	}
+}
+class FontProperty : IPanelAnimationPropertyConverter
+{
+	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		object? data = entry.Get(panel);
+		if (data == null) return;
+		kv.SetString(entry.ScriptName, ""); // todo
+	}
+
+	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		entry.Set(panel, panel.GetScheme().GetFont(kv.GetString(entry.ScriptName)));
+	}
+
+	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
+		throw new NotImplementedException();
+	}
+}
+class ProportionalFloatProperty : IPanelAnimationPropertyConverter
+{
+	public void GetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		throw new NotImplementedException();
+	}
+
+	public void SetData(Panel panel, KeyValues kv, ref PanelAnimationMapEntry entry) {
+		throw new NotImplementedException();
+	}
+
+	public void InitFromDefault(Panel panel, ref PanelAnimationMapEntry entry) {
+		throw new NotImplementedException();
 	}
 }

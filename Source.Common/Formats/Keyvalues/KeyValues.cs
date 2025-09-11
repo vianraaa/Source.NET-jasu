@@ -439,6 +439,17 @@ public class KeyValues : IEnumerable<KeyValues>
 				: defaultValue;
 	}
 
+	public Color GetColor(ReadOnlySpan<char> key, Color defaultValue = default) {
+		var keyob = FindKey(key);
+
+		if (keyob == null)
+			return defaultValue;
+
+		return keyob.Value is Color c
+			? c
+			: default;
+	}
+
 	public float GetFloat(ReadOnlySpan<char> key, float defaultValue = default) {
 		var keyob = FindKey(key);
 

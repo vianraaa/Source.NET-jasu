@@ -718,6 +718,13 @@ public class BaseHudChat : EditableHudElement
 	public ChatFilters GetFilterFlags() => FilterFlags;
 
 	private void ChatPrintf(int playerIndex, ChatFilters filter, ReadOnlySpan<char> str) {
+		ReadOnlySpan<char> trimmed = str;
+
+		trimmed = trimmed.TrimEnd('\n');
+		while(trimmed.Length > 0 && trimmed[0] != '\0' && (trimmed[0] == '\n' || (trimmed[0] > 0 && trimmed[0] < (int)HUD.TextColor.Max))) 
+			trimmed = trimmed[1..];
+		trimmed.TrimStart('\n');
+
 		BaseHudChatLine? line = FindUnusedChatLine();
 		if (line == null)
 			return;
@@ -739,7 +746,7 @@ public class BaseHudChat : EditableHudElement
 		Color clrNameColor = GetClientColor(playerIndex);
 
 		ReadOnlySpan<char> playerName = ((ReadOnlySpan<char>)playerInfo.Name).SliceNullTerminatedString();
-		Span<char> buf = stackalloc char[playerName.Length + 2 + str.Length + 1];
+		Span<char> buf = stackalloc char[playerName.Length + 2 + trimmed.Length + 1];
 		int writePtr = 0;
 
 		playerName.CopyTo(buf[writePtr..]);
@@ -750,8 +757,8 @@ public class BaseHudChat : EditableHudElement
 		": ".CopyTo(buf[writePtr..]);
 		writePtr += 2;
 
-		str.CopyTo(buf[writePtr..]);
-		writePtr += str.Length;
+		trimmed.CopyTo(buf[writePtr..]);
+		writePtr += trimmed.Length;
 
 		"\n".CopyTo(buf[writePtr..]);
 		writePtr += 1;
