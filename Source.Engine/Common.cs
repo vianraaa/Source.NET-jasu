@@ -80,4 +80,14 @@ public class Common(IServiceProvider providers, ILocalize? Localize, Sys Sys)
 		Sys.DisconnectReason = new(disconnectReason);
 		Sys.ExtendedError = true;
 	}
+
+	internal static void TimestampedLog(ReadOnlySpan<char> msg) {
+		string time = DateTime.Now.ToString("d T");
+		Span<char> finalMsg = stackalloc char[msg.Length + 4 + time.Length];
+		finalMsg[0] = '[';
+		time.CopyTo(finalMsg[1..]);
+		"]: ".CopyTo(finalMsg[(1 + time.Length)..]);
+		msg.CopyTo(finalMsg[(1 + time.Length + 3)..]);
+		Msg(msg);
+	}
 }
