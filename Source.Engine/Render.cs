@@ -22,8 +22,7 @@ public struct ViewStack
 
 public class Render(
 	CommonHostState host_state,
-	IMaterialSystem materials,
-	IBaseClientDLL ClientDLL
+	IMaterialSystem materials
 	)
 {
 	int framecount = 1;
