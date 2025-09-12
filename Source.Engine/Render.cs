@@ -22,7 +22,9 @@ public struct ViewStack
 
 public class Render(
 	CommonHostState host_state,
-	IMaterialSystem materials
+	IMaterialSystem materials,
+	IModelLoader modelloader,
+	MatSysInterface MaterialSystem
 	)
 {
 	int framecount = 1;
@@ -169,7 +171,9 @@ public class Render(
 	private void DecalInit() { }
 	private void LoadSkys() { }
 	private void InitStudio() { }
-	private void LoadWorldGeometry() { }
+	private void LoadWorldGeometry() {
+		MaterialSystem.WorldStaticMeshCreate();
+	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }
 }

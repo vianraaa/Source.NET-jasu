@@ -4,7 +4,7 @@ using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
-public class MatSysInterface(IMaterialSystem materials)
+public class MatSysInterface(IMaterialSystem materials, CommonHostState host_state)
 {
 	public readonly TextureReference FullFrameFBTexture0 = new();
 	public readonly TextureReference FullFrameFBTexture1 = new();
@@ -40,5 +40,9 @@ public class MatSysInterface(IMaterialSystem materials)
 			materials.GetRenderContext().GetShaderAPI().GetBackBufferFormat(), MaterialRenderTargetDepth.Shared,
 			TextureFlags.ClampS | TextureFlags.ClampT,
 			rtFlags)!;
+	}
+
+	public void WorldStaticMeshCreate() {
+
 	}
 }

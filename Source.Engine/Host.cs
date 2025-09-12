@@ -19,6 +19,7 @@ namespace Source.Engine;
 public class CommonHostState
 {
 	public Model? WorldModel;
+	public WorldBrushData WorldBrush;
 	public double IntervalPerTick;
 	public void SetWorldModel(Model? model) {
 		WorldModel = model;

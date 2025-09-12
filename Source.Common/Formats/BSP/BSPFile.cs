@@ -587,7 +587,7 @@ public struct CompressedLightCube
 /// <summary>
 /// Analog of dleaf_t
 /// </summary>
-struct BSPLeaf
+public struct BSPLeaf
 {
 	public int Contents;
 	public short Cluster;
@@ -683,7 +683,7 @@ public struct BSPArea
 /// <summary>
 /// Analog of dleafwaterdata_t
 /// </summary>
-struct BSPLeafWaterData
+public struct BSPLeafWaterData
 {
 	public float SurfaceZ;
 	public float MinZ;

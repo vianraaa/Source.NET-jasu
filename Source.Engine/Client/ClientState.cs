@@ -290,9 +290,12 @@ public class ClientState : BaseClientState
 				break;
 			case SignOnState.ChangeLevel:
 				NetChannel!.SetTimeout(NetChannel.SIGNON_TIME_OUT);
+
 				if (MaxClients > 1)
 					EngineVGui?.EnabledProgressBarForNextLoad();
+
 				Scr.BeginLoadingPlaque();
+
 				if (MaxClients > 1)
 					EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ChangeLevel);
 				break;
