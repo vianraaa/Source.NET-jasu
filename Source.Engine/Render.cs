@@ -1,5 +1,6 @@
 ﻿
 using Source.Common;
+using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
@@ -21,7 +22,8 @@ public struct ViewStack
 
 public class Render(
 	CommonHostState host_state,
-	IMaterialSystem materials
+	IMaterialSystem materials,
+	IBaseClientDLL ClientDLL
 	)
 {
 	int framecount = 1;
@@ -146,4 +148,29 @@ public class Render(
 	private void ClearView(ViewSetup topView, ClearFlags flags, ITexture? renderTarget) {
 
 	}
+
+	public int FrameCount = 1;
+
+	public void LevelInit() {
+		ConDMsg("Initializing renderer...\n");
+
+		FrameCount = 1;
+		ResetLightStyles();
+		DecalInit();
+		LoadSkys();
+		InitStudio();
+
+		LoadWorldGeometry();
+
+		Surface_LevelInit();
+		Areaportal_LevelInit();
+	}
+
+	private void ResetLightStyles() {}
+	private void DecalInit() { }
+	private void LoadSkys() { }
+	private void InitStudio() { }
+	private void LoadWorldGeometry() { }
+	private void Surface_LevelInit() { }
+	private void Areaportal_LevelInit() { }
 }

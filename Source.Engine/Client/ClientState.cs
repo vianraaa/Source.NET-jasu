@@ -374,7 +374,11 @@ public class ClientState : BaseClientState
 		if (sv.State < ServerState.Loading)
 			modelloader.ResetModelServerCounts();
 		SetModel(1);
+
 		CL.RegisterResources();
+
+		// We can start loading the world now
+		Host.Render.LevelInit(); // Tells the rendering system that a new set of world moels exists
 
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SendClientInfo);
 

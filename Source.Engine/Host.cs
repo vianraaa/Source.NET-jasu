@@ -54,6 +54,7 @@ public class Host(
 	public EngineVGui EngineVGui;
 	public Cvar Cvar;
 	public View View;
+	public Render Render;
 	public Common Common;
 	public IEngine Engine;
 	public Scr Scr;
@@ -625,7 +626,7 @@ public class Host(
 			ClientDLL = engineAPI.InitSubsystem<ClientDLL>()!;
 			HostState = engineAPI.GetRequiredService<IHostState>();
 			Scr = engineAPI.InitSubsystem<Scr>()!;
-			// engineAPI.InitSubsystem<Render>();
+			Render = engineAPI.InitSubsystem<Render>()!;
 			// engineAPI.InitSubsystem<Decal>();
 		}
 		else {
