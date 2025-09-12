@@ -38,7 +38,10 @@ public class BaseFileSystem : IFileSystem
 		return normalizedOutput[..len];
 	}
 
-	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) => throw new NotImplementedException();
+	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
+
+	}
+
 	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
 		string newPath = Path.IsPathFullyQualified(path) ? new(path) : Path.GetFullPath(new(path));
 
