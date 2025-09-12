@@ -25,7 +25,7 @@ public enum ModelType
 public class Model
 {
 	public FileNameHandle_t FileNameHandle;
-	public string? Name;
+	public UtlSymbol StrName;
 	public ModelReferenceType LoadFlags;
 	public int ServerCount;
 	public IMaterial[]? Materials;

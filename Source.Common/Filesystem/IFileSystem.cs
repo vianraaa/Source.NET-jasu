@@ -129,6 +129,8 @@ public interface IFileSystem : IBaseFileSystem
 	/// <param name="name"></param>
 	/// <returns></returns>
 	FileNameHandle_t FindOrAddFileName(ReadOnlySpan<char> name);
+	void BeginMapAccess();
+	void EndMapAccess();
 }
 
 public enum PathTypeFilter

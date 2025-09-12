@@ -382,4 +382,12 @@ public class BaseFileSystem : IFileSystem
 		
 		return handle;
 	}
+
+	public void BeginMapAccess() {
+
+	}
+
+	public void EndMapAccess() {
+
+	}
 }

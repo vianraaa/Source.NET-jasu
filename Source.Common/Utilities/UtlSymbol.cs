@@ -68,6 +68,8 @@ public struct UtlSymbol
 				? symbol.id == 0 
 				: str.Hash() != symbol.id;
 	public static implicit operator UtlSymId_t(UtlSymbol symbol) => symbol.id;
+	public static implicit operator UtlSymbol(ReadOnlySpan<char> txt) => new(txt);
+	public static implicit operator ReadOnlySpan<char>(UtlSymbol symbol) => symbol.String();
 
 	public override readonly bool Equals(object? obj) => obj is UtlSymbol sym && sym.id == id;
 	public override readonly int GetHashCode() => id.GetHashCode();

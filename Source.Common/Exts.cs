@@ -208,6 +208,13 @@ public static class UnmanagedUtils
 		return span[..index];
 	}
 
+	public static ReadOnlySpan<char> GetFileExtension(this ReadOnlySpan<char> filepath) {
+		for (int length = filepath.Length, i = length - 1; i >= 0; i--) {
+			if (filepath[i] == '.')
+				return filepath[(i + 1)..];
+		}
+		return "";
+	}
 	public static ReadOnlySpan<char> SliceNullTerminatedString(this ReadOnlySpan<char> span) {
 		int index = span.IndexOf('\0');
 		if (index == -1)
