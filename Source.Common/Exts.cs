@@ -76,7 +76,7 @@ public static class ClassUtils
 	public static void ClearInstantiatedReferences<T>(this Span<T> array) where T : class {
 		for (int i = 0; i < array.Length; i++) {
 			ref T target = ref array[i];
-			if(target == null) 
+			if (target == null)
 				target = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
 			else {
 				int size = Unsafe.SizeOf<T>();
@@ -270,6 +270,23 @@ public static class UnmanagedUtils
 		if (target == null) return 0;
 		ReadOnlySpan<byte> data = MemoryMarshal.Cast<T, byte>(target);
 		return XXH64.DigestOf(data);
+	}
+
+	public static void FileBase(this ReadOnlySpan<char> inSpan, Span<char> outSpan) {
+		// Strip inSpan until we reach a .
+		while (inSpan.Length > 0 && inSpan[^1] != '.')
+			inSpan = inSpan[..^1];
+		// Strip the period
+		inSpan = inSpan[..^1];
+
+		// Then repeat the same process, except for a slash
+		int lenPtr = inSpan.Length - 1;
+		while (lenPtr > 0 && (inSpan[lenPtr] != '/' && inSpan[lenPtr] != '\\'))
+			lenPtr--;
+		// This should be the final span
+		inSpan = inSpan[(lenPtr + 1)..];
+		// Then copy 
+		inSpan.ClampedCopyTo(outSpan);
 	}
 
 	public static unsafe ulong Hash(this string target, bool invariant = true) => Hash((ReadOnlySpan<char>)target, invariant);
