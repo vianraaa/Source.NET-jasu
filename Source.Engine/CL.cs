@@ -236,6 +236,12 @@ public class CL(IServiceProvider services, Net Net,
 	internal bool CheckCRCs(ReadOnlySpan<char> levelFileName) {
 		return true;
 	}
+
+	internal void RegisterResources() {
+		host_state.SetWorldModel(cl.GetModel(1));
+		if (host_state.WorldModel == null)
+			Host.Error("CL.RegisterResources: host_state.WorldModel/cl.GetModel(1) == NULL\n");
+	}
 }
 
 

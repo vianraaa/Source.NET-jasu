@@ -1,8 +1,8 @@
 ﻿using Source.Common.Audio;
+using Source.Common.Engine;
 
 namespace Source.Engine;
 
-public class Model;
 public class PrecacheItem
 {
 	public const string MODEL_PRECACHE_TABLENAME = "modelprecache";

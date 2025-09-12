@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
@@ -29,6 +30,7 @@ public class ClientState : BaseClientState
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
+	readonly IModelLoader modelloader;
 	readonly Lazy<IEngineClient> engineClient_LAZY;
 	IEngineClient engineClient => engineClient_LAZY.Value;
 	readonly IServiceProvider services;
@@ -83,6 +85,9 @@ public class ClientState : BaseClientState
 	public INetworkStringTable? ServerStartupTable;
 	public INetworkStringTable? DynamicModelsTable;
 
+	GameServer? _sv;
+	GameServer sv => _sv ??= Host.sv;
+
 	PrecacheItem[] ModelPrecache = new PrecacheItem[PrecacheItem.MAX_MODELS];
 	PrecacheItem[] GenericPrecache = new PrecacheItem[PrecacheItem.MAX_GENERIC];
 	PrecacheItem[] SoundPrecache = new PrecacheItem[PrecacheItem.MAX_SOUNDS];
@@ -95,7 +100,7 @@ public class ClientState : BaseClientState
 	readonly Common Common;
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
-		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services)
+		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services, IModelLoader modelloader)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -103,6 +108,7 @@ public class ClientState : BaseClientState
 		this.host_state = host_state;
 		this.CL = CL;
 		this.Scr = Scr;
+		this.modelloader = modelloader;
 		this.ClockDriftMgr = new(this, Host, host_state);
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
@@ -346,9 +352,13 @@ public class ClientState : BaseClientState
 			fileSystem.MarkAllCRCsUnverified();
 		}
 
-		if (!CL.CheckCRCs(LevelFileName)) {
+		if (!CL.CheckCRCs(LevelFileName)) 
 			Host.Error("Unable to verify map");
-		}
+
+		if (sv.State < ServerState.Loading)
+			modelloader.ResetModelServerCounts();
+
+		CL.RegisterResources();
 
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SendClientInfo);
 
@@ -392,5 +402,12 @@ public class ClientState : BaseClientState
 	public void ClearSounds() // RaphaelIT7: This is used by Snd_Restart_f
 	{
 		Array.Clear(SoundPrecache,  0, SoundPrecache.Length);
+	}
+
+	public Model? GetModel(int v) {
+		return null;
+	}
+	public void SetModel(Model? model) {
+
 	}
 }

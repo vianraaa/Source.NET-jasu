@@ -3,14 +3,36 @@ using System.Runtime.CompilerServices;
 
 namespace Source.Common.Mathematics;
 
-public static class MathLibConsts {
+public static class MathLibConsts
+{
 	public const int PITCH = 0;
 	public const int YAW = 1;
 	public const int ROLL = 2;
 }
+
+public enum PlaneType : byte
+{
+	NormalX = 0,
+	NormalY = 4,
+	NormalZ = 8,
+	Dist = 12,
+	Type = 16,
+	SignBits = 17,
+	Pad0 = 18,
+	Pad1 = 19
+}
+
+public class CPlane
+{
+	public Vector3 Normal;
+	public float Dist;
+	public PlaneType Type;
+	public byte SignBits;
+	public InlineArray2<byte> Pad;
+}
 public static class MathLib
 {
-	
+
 	static MathLib() {
 
 	}
@@ -75,8 +97,8 @@ public static class MathLib
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static float RAD2DEG(float x) => x * (180f / MathF.PI);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static double RAD2DEG(double x) => x * (180 / Math.PI);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]public static float DEG2RAD(float x) => x * (MathF.PI / 180);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]public static double DEG2RAD(double x) => x * (Math.PI / 180);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static float DEG2RAD(float x) => x * (MathF.PI / 180);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static double DEG2RAD(double x) => x * (Math.PI / 180);
 
 	public static float CalcFovX(float fovY, float aspect)
 		=> RAD2DEG(MathF.Atan(MathF.Tan(DEG2RAD(fovY) * 0.5f) * aspect)) * 2.0f;

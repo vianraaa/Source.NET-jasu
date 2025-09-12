@@ -18,11 +18,15 @@ namespace Source.Engine;
 
 public class CommonHostState
 {
+	public Model? WorldModel;
 	public double IntervalPerTick;
+	public void SetWorldModel(Model? model) {
+		WorldModel = model;
+	}
 }
 
 public class Host(
-	EngineParms host_parms, CommonHostState host_state, GameServer sv,
+	EngineParms host_parms, CommonHostState host_state, GameServer _sv,
 	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem
 	)
 {
@@ -40,6 +44,7 @@ public class Host(
 	public CL CL;
 	public MatSysInterface MatSysInterface;
 	public SV SV;
+	public GameServer sv => _sv;
 	public ServerGlobalVariables serverGlobalVariables;
 	public Cbuf Cbuf;
 	public ClientState cl;
