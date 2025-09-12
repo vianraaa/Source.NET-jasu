@@ -200,7 +200,10 @@ public static class UnmanagedUtils
 			return;
 		span = span[..index];
 	}
-
+	public static bool ReadToStruct<T>(this Stream sr, ref T str) where T : struct {
+		Span<byte> block = MemoryMarshal.AsBytes(new Span<T>(ref str));
+		return sr.Read(block) != 0;
+	}
 	public static Span<char> SliceNullTerminatedString(this Span<char> span) {
 		int index = span.IndexOf('\0');
 		if (index == -1)

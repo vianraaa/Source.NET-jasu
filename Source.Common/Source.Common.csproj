@@ -24,8 +24,8 @@
 		<PackageReference Include="Pastel" Version="6.0.1" />
 		<PackageReference Include="Snappier" Version="1.2.0" />
 		<PackageReference Include="SevenZip" Version="19.0.0" />
+		<PackageReference Include="SharpCompress" Version="0.39.0"/>
 		<PackageReference Include="Steamworks.NET" Version="20.1.0" />
-		<PackageReference Include="SevenZip" Version="19.0.0" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Update="assertdialog.Designer.cs">

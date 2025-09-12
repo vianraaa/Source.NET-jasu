@@ -5,6 +5,7 @@ using CommunityToolkit.HighPerformance;
 
 using Source.Common.Commands;
 using Source.Common.Filesystem;
+using Source.Common.Formats.BSP;
 using Source.Common.Utilities;
 using Source.Filesystem;
 
@@ -12,6 +13,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace Source.FileSystem;
@@ -39,7 +41,50 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	private void AddMapPackFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
+		using IFileHandle? file = Open(path, FileOpenOptions.Read | FileOpenOptions.Binary, "GAME");
+		if (file == null) {
+			Warning("Couldn't open BSP for embedded pack file\n");
+			return;
+		}
 
+		BSPHeader header = default;
+		file.Stream.ReadToStruct(ref header);
+
+		BSPLump pakfile = header.GetLump(LumpIndex.PakFile);
+		if (pakfile.FileLength <= Unsafe.SizeOf<BSPLump>()) {
+			// Must be invalid
+			return;
+		}
+
+		Span<char> fullPath = stackalloc char[MAX_PATH];
+		ReadOnlySpan<char> newPath = RelativePathToFullPath(path, "GAME", fullPath);
+
+		if (!SearchPaths.OpenOrCreateCollection(pathID, out SearchPathCollection collection)) {
+			for (int i = 0, c = collection.Count; i < c; i++) {
+				var searchPath = collection[i];
+				if (searchPath.DiskPath == newPath) {
+					if ((addType == SearchPathAdd.ToHead && i == 0) || addType == SearchPathAdd.ToTail)
+						return;
+					else {
+						collection.RemoveAt(i);
+						i--;
+						c--;
+						break;
+					}
+				}
+			}
+		}
+
+		ZipPackFileSearchPath zip = new(this, new(newPath), file.Stream, pakfile.FileOffset, pakfile.FileLength);
+		if (!zip.IsValid()) {
+			Warning("ZipPackFileSearchPath not valid\n");
+			return;
+		}
+
+		if (addType == SearchPathAdd.ToHead)
+			collection.Insert(0, zip);
+		else
+			collection.Add(zip);
 	}
 
 	private void AddVPKFile(ReadOnlySpan<char> path, ReadOnlySpan<char> pathID, SearchPathAdd addType) {
@@ -380,9 +425,9 @@ public class BaseFileSystem : IFileSystem
 		}
 
 		ulong hash = newNameBuffer[..newNamePtr].Hash();
-		if (!fileNameHandles.TryGetValue(hash, out var handle)) 
+		if (!fileNameHandles.TryGetValue(hash, out var handle))
 			handle = fileNameHandles[hash] = ++currentHandle;
-		
+
 		return handle;
 	}
 

@@ -231,6 +231,8 @@ public struct BSPHeader
 	public int Version;
 	public InlineArray64<BSPLump> Lumps;
 	public int MapRevision;
+
+	public BSPLump GetLump(LumpIndex index) => Lumps[(int)index];
 }
 
 // level feature flags

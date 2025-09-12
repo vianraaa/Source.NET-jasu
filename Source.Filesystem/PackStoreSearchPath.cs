@@ -24,7 +24,6 @@ public class VpkFileHandle(IBaseFileSystem filesystem, MemoryStream data) : IFil
 	public bool IsOK() => !disposedValue && data != null;
 }
 
-
 public class PackStoreSearchPath : SearchPath
 {
 	private readonly IBaseFileSystem parent;
@@ -43,7 +42,7 @@ public class PackStoreSearchPath : SearchPath
 		vpk.Load(absPath);
 
 		Span<char> buildPath = stackalloc char[260];
-		foreach(var dir in vpk.Directories) {
+		foreach (var dir in vpk.Directories) {
 			vpkDirectoryLookups[dir.Path.Hash()] = dir;
 
 			foreach (var entry in dir.Entries) {
@@ -85,9 +84,9 @@ public class PackStoreSearchPath : SearchPath
 	}
 
 	public override IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options) {
-		if(vpkEntryLookups.TryGetValue(path.Hash(), out VpkEntry? entry))
+		if (vpkEntryLookups.TryGetValue(path.Hash(), out VpkEntry? entry))
 			return new VpkFileHandle(parent, new MemoryStream(entry.Data));
-		
+
 		return null;
 	}
 

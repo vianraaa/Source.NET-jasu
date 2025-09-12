@@ -55,7 +55,7 @@ public class DiskSearchPath : SearchPath
 		};
 
 		try {
-			return new DiskFileHandle(parent, File.Open(absPath, mode, access));
+			return new DiskFileHandle(parent, info.Open(mode, access));
 		}
 		catch {
 			return null;

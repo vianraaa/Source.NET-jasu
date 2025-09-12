@@ -77,7 +77,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host) : IModelLoa
 	}
 
 	private void Map_LoadModel(Model mod) {
-		throw new NotImplementedException();
+
 	}
 
 	private ModelType GetTypeFromName(ReadOnlySpan<char> modelName) => modelName.GetFileExtension() switch {
