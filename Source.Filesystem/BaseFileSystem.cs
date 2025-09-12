@@ -75,7 +75,7 @@ public class BaseFileSystem : IFileSystem
 			}
 		}
 
-		ZipPackFileSearchPath zip = new(this, new(newPath), file.Stream, pakfile.FileOffset, pakfile.FileLength);
+		ZipPackFileSearchPath zip = new(this, new(newPath), file.Stream, in pakfile);
 		if (!zip.IsValid()) {
 			Warning("ZipPackFileSearchPath not valid\n");
 			return;

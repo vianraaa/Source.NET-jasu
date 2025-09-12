@@ -19,7 +19,7 @@ public class MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MapLoadHelper MapLoadHelper, IMaterialSystemHardwareConfig HardwareConfig) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MapLoadHelper MapLoadHelper) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();

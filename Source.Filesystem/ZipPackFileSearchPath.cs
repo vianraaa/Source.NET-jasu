@@ -1,6 +1,7 @@
 ﻿using SharpCompress.Archives.Zip;
 
 using Source.Common.Filesystem;
+using Source.Common.Formats.BSP;
 using Source.FileSystem;
 
 namespace Source.Filesystem;
@@ -21,16 +22,13 @@ public class ZipPackFileSearchPath : SearchPath
 {
 	readonly IFileSystem filesystem;
 	readonly bool valid;
-	readonly byte[] data;
 	readonly ZipArchive archive;
 	public bool IsValid() => valid;
 	readonly Dictionary<FileNameHandle_t, ZipArchiveEntry> Entries = [];
-	public ZipPackFileSearchPath(IFileSystem filesystem, string path, Stream stream, long offset, long length) {
+	public ZipPackFileSearchPath(IFileSystem filesystem, string path, Stream stream, in BSPLump lump) {
 		this.filesystem = filesystem;
 		SetPath(path);
-		data = new byte[length];
-		stream.Seek(offset, SeekOrigin.Begin);
-		stream.Read(data);
+		byte[] data = lump.ReadBytes(stream);
 
 		// Unpack the zip
 		archive = ZipArchive.Open(new MemoryStream(data), new());
@@ -38,6 +36,7 @@ public class ZipPackFileSearchPath : SearchPath
 		foreach(var entry in archive.Entries) {
 			Entries[filesystem.FindOrAddFileName(entry.Key)] = entry;
 		}
+
 		valid = true;
 	}
 	private ZipArchiveEntry? getArchive(ReadOnlySpan<char> path) {

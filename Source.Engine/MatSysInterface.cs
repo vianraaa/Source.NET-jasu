@@ -4,7 +4,7 @@ using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
-public class MatSysInterface(IMaterialSystem materials, CommonHostState host_state)
+public class MatSysInterface(IMaterialSystem materials)
 {
 	public readonly TextureReference FullFrameFBTexture0 = new();
 	public readonly TextureReference FullFrameFBTexture1 = new();

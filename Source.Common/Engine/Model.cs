@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Source.Common.Engine;
 
-public struct WorldBrushData
+public class WorldBrushData
 {
 	public int NumSubModels;
 	public CPlane[]? Planes;

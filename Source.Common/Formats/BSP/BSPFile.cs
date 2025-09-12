@@ -107,10 +107,10 @@ public static class BSPFileCommon
 	public const int DWL_FLAGS_INAMBIENTCUBE = 0x0001;      // This says that the light was put into the per-leaf ambient cubes.;
 	public const int DWL_FLAGS_CASTENTITYSHADOWS = 0x0002;  // This says that the light will cast shadows from entities
 
-	public const int OVERLAY_BSP_FACE_COUNT  = 64;
+	public const int OVERLAY_BSP_FACE_COUNT = 64;
 	public const uint OVERLAY_RENDER_ORDER_NUM_BITS = 2;
 	public const uint OVERLAY_NUM_RENDER_ORDERS = 1u << (int)OVERLAY_RENDER_ORDER_NUM_BITS;
-	public const ushort OVERLAY_RENDER_ORDER_MASK = 0xC000; 
+	public const ushort OVERLAY_RENDER_ORDER_MASK = 0xC000;
 
 	public const int WATEROVERLAY_BSP_FACE_COUNT = 256;
 	public const uint WATEROVERLAY_RENDER_ORDER_NUM_BITS = 2;
@@ -211,6 +211,19 @@ public enum LumpVersions
 	LUMP_LEAF_AMBIENT_LIGHTING_VERSION = 1,
 }
 
+public static class LZMA
+{
+	static SevenZip.Compression.LZMA.Decoder decoder = new();
+	public static void Decompress(Stream input, Stream output, long inBytes, long outBytes) {
+		byte[] properties = new byte[5];
+		if (input.Read(properties, 0, 5) != 5)
+			throw new Exception("input .lzma is too short");
+
+		decoder.SetDecoderProperties(properties);
+		decoder.Code(input, output, inBytes, outBytes, null);
+	}
+}
+
 /// <summary>
 /// Analog of lump_t
 /// </summary>
@@ -220,6 +233,51 @@ public struct BSPLump
 	public int FileLength;
 	public int Version;
 	public int UncompressedSize;
+
+	/// <summary>
+	/// Read a lump from a stream. The stream must be the same stream that the BSPLump was parsed from.
+	/// </summary>
+	/// <param name="stream"></param>
+	/// <param name="index"></param>
+	/// <returns></returns>
+	public byte[] ReadBytes(Stream stream) {
+		stream.Seek(FileOffset, SeekOrigin.Begin);
+
+		// If uncompressed size != 0, perform LZMA decompression on the lump contents
+		if (UncompressedSize != 0) {
+			using BinaryReader br = new(stream);
+			LZMAHeader header = default;
+			header.ID = br.ReadUInt32();
+			header.ActualSize = br.ReadUInt32();
+			header.LZMASize = br.ReadUInt32();
+
+			if (header.ID == LZMAHeader.LZMA_ID) {
+				byte[] uncompressed = new byte[UncompressedSize];
+				using MemoryStream msOut = new(uncompressed);
+				LZMA.Decompress(stream, msOut, header.LZMASize, UncompressedSize);
+				return uncompressed;
+			}
+			else {
+				Warning("Invalid LZMA chunk.\n");
+				return [];
+			}
+		}
+		// Otherwise, read an uncompressed lump
+		else {
+			byte[] data = new byte[FileLength];
+			stream.Read(data);
+			return data;
+		}
+	}
+}
+public struct LZMAHeader
+{
+	public const int LZMA_ID = ('A' << 24) | ('M' << 16) | ('Z' << 8) | 'L';
+
+	public uint ID;
+	public uint ActualSize;
+	public uint LZMASize;
+	public InlineArray5<byte> Properties;
 }
 /// <summary>
 /// Analog of dheader_t
@@ -233,6 +291,18 @@ public struct BSPHeader
 	public int MapRevision;
 
 	public BSPLump GetLump(LumpIndex index) => Lumps[(int)index];
+
+	/// <summary>
+	/// Read a lump from a stream. The stream must be the same stream that the BSPHeader was parsed from.
+	/// </summary>
+	/// <param name="stream"></param>
+	/// <param name="index"></param>
+	/// <returns></returns>
+	public byte[] ReadLumpBytes(Stream stream, LumpIndex index) {
+		// Get the input stream at the start of the lump, regardless of compression
+		BSPLump lump = GetLump(index);
+		return lump.ReadBytes(stream);
+	}
 }
 
 // level feature flags
@@ -734,7 +804,8 @@ public struct BSPWorldLight
 /// <summary>
 /// Analog of dcubemapsample_t
 /// </summary>
-public struct BSPCubeMapSample {
+public struct BSPCubeMapSample
+{
 	public InlineArray3<int> Origin;
 	public byte size;
 }
@@ -754,7 +825,7 @@ public struct BSPOverlay
 	public ushort GetFaceCount() => (ushort)(FaceCountAndRenderOrder & ~BSPFileCommon.OVERLAY_RENDER_ORDER_MASK);
 	public void SetRenderOrder(ushort order) {
 		FaceCountAndRenderOrder &= unchecked((ushort)~BSPFileCommon.OVERLAY_RENDER_ORDER_MASK);
-		FaceCountAndRenderOrder |= unchecked((ushort)(order << (int)(16u - BSPFileCommon.OVERLAY_RENDER_ORDER_NUM_BITS))); 
+		FaceCountAndRenderOrder |= unchecked((ushort)(order << (int)(16u - BSPFileCommon.OVERLAY_RENDER_ORDER_NUM_BITS)));
 	}
 	public ushort GetRenderOrder() => (ushort)(FaceCountAndRenderOrder >> (int)(16u - BSPFileCommon.OVERLAY_RENDER_ORDER_NUM_BITS));
 
@@ -793,7 +864,7 @@ public struct BSPWaterOverlay
 	}
 	public void SetRenderOrder(ushort order) {
 		FaceCountAndRenderOrder &= unchecked((ushort)~BSPFileCommon.WATEROVERLAY_RENDER_ORDER_MASK);
-		FaceCountAndRenderOrder |= (ushort)(order << (int)(16u - BSPFileCommon.WATEROVERLAY_RENDER_ORDER_NUM_BITS));  
+		FaceCountAndRenderOrder |= (ushort)(order << (int)(16u - BSPFileCommon.WATEROVERLAY_RENDER_ORDER_NUM_BITS));
 	}
 	public ushort GetRenderOrder() {
 		return (ushort)(FaceCountAndRenderOrder >> (int)(16u - BSPFileCommon.WATEROVERLAY_RENDER_ORDER_NUM_BITS));
