@@ -2,11 +2,24 @@
 using Source.Common;
 using Source.Common.Filesystem;
 using Source.Common.Utilities;
+using Source.Common.Formats.BSP;
+using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
+[EngineComponent]
+public class MapLoadHelper
+{
+	internal void Init(Model mod, Span<char> loadName) {
+		throw new NotImplementedException();
+	}
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host) : IModelLoader
+	internal void Shutdown() {
+		throw new NotImplementedException();
+	}
+}
+
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MapLoadHelper MapLoadHelper, IMaterialSystemHardwareConfig HardwareConfig) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -32,6 +45,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host) : IModelLoa
 	}
 
 	InlineArray64<char> ActiveMapName;
+	InlineArray64<char> LoadName;
+
+	Model? WorldModel;
 
 	private Model? LoadModel(Model? mod, ref ModelReferenceType referenceType) {
 		mod!.LoadFlags |= referenceType;
@@ -51,6 +67,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host) : IModelLoa
 			return mod;
 
 		double st = Platform.Time;
+		mod.StrName.String().FileBase(LoadName);
 		DevMsg($"Loading: {mod.StrName.String()}\n");
 
 		mod.Type = GetTypeFromName(mod.StrName);
@@ -76,9 +93,25 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host) : IModelLoa
 		return mod;
 	}
 
-	private void Map_LoadModel(Model mod) {
+	int MapLoadCount;
 
+	private void Map_LoadModel(Model mod) {
+		MapLoadCount++;
+
+		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
+
+		SetWorldModel(mod);
+	}	
+
+	public void SetWorldModel(Model mod) {
+		WorldModel = mod;
 	}
+
+	public void ClearWorldModel() {
+		WorldModel = null;
+	}
+
+
 
 	private ModelType GetTypeFromName(ReadOnlySpan<char> modelName) => modelName.GetFileExtension() switch {
 		"spr" or "vmt" => ModelType.Sprite,
