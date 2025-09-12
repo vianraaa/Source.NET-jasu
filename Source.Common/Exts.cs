@@ -10,12 +10,14 @@ using Source.Common.Engine;
 
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -73,17 +75,45 @@ public static class ClassUtils
 	/// <param name="array"></param>
 	public static void ClearInstantiatedReferences<T>(this T[] array) where T : class => ClearInstantiatedReferences(array.AsSpan());
 	public static void ClearInstantiatedReferences<T>(this List<T> array) where T : class => ClearInstantiatedReferences(array.AsSpan());
+	private static readonly ConcurrentDictionary<Type, Action<object>> _clearers = new();
 	public static void ClearInstantiatedReferences<T>(this Span<T> array) where T : class {
-		for (int i = 0; i < array.Length; i++) {
-			ref T target = ref array[i];
-			if (target == null)
-				target = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
-			else {
-				int size = Unsafe.SizeOf<T>();
-				ref byte firstField = ref Unsafe.As<T, byte>(ref target);
-				Unsafe.InitBlock(ref firstField, 0, (uint)size);
+		Action<object> clearer = _clearers.GetOrAdd(typeof(T), CreateClearer);
+
+		foreach (ref T item in array) 
+			if (item == null) 
+				item = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+			else 
+				clearer(item);
+	}
+	private static Action<object> CreateClearer(Type type) {
+		var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		if (fields.Length == 0)
+			return _ => { }; // nothing to clear
+
+		// DynamicMethod signature: void Clear(object target)
+		var dm = new DynamicMethod("Clear_" + type.Name, null, new[] { typeof(object) }, true);
+		var il = dm.GetILGenerator();
+
+		foreach (var field in fields) {
+			il.Emit(OpCodes.Ldarg_0); // load object
+			il.Emit(OpCodes.Castclass, type); // cast to actual type
+
+			if (field.FieldType.IsValueType) {
+				var local = il.DeclareLocal(field.FieldType);
+				il.Emit(OpCodes.Ldloca_S, local);
+				il.Emit(OpCodes.Initobj, field.FieldType);
+				il.Emit(OpCodes.Ldloc, local);
 			}
+			else {
+				il.Emit(OpCodes.Ldnull);
+			}
+
+			il.Emit(OpCodes.Stfld, field);
 		}
+
+		il.Emit(OpCodes.Ret);
+
+		return (Action<object>)dm.CreateDelegate(typeof(Action<object>));
 	}
 
 	/// <summary>

@@ -417,7 +417,7 @@ public class ClientState : BaseClientState
 
 	public void ClearSounds() // RaphaelIT7: This is used by Snd_Restart_f
 	{
-		Array.Clear(SoundPrecache, 0, SoundPrecache.Length);
+		SoundPrecache.ClearInstantiatedReferences();
 	}
 
 	public Model? GetModel(int index) {
