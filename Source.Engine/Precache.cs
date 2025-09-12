@@ -3,6 +3,17 @@ using Source.Common.Engine;
 
 namespace Source.Engine;
 
+public enum Res : byte
+{
+	FatalIfMissing = 1 << 0,
+	Preload = 1 << 1
+}
+
+public struct PrecacheUserData
+{
+	public Res Flags;
+}
+
 public class PrecacheItem
 {
 	public const string MODEL_PRECACHE_TABLENAME = "modelprecache";
@@ -11,16 +22,16 @@ public class PrecacheItem
 	public const string DECAL_PRECACHE_TABLENAME = "decalprecache";
 
 	public const int MAX_MODEL_INDEX_BITS = 12;
-	public const int MAX_MODELS = (1<<MAX_MODEL_INDEX_BITS);
+	public const int MAX_MODELS = (1 << MAX_MODEL_INDEX_BITS);
 
 	public const int MAX_GENERIC_INDEX_BITS = 9;
-	public const int MAX_GENERIC = (1<<MAX_GENERIC_INDEX_BITS);
+	public const int MAX_GENERIC = (1 << MAX_GENERIC_INDEX_BITS);
 
 	public const int MAX_DECAL_INDEX_BITS = 9;
-	public const int MAX_BASE_DECAL = (1<<MAX_DECAL_INDEX_BITS);
+	public const int MAX_BASE_DECAL = (1 << MAX_DECAL_INDEX_BITS);
 
 	public const int MAX_SOUND_INDEX_BITS = 14;
-	public const int MAX_SOUNDS = (1<<MAX_SOUND_INDEX_BITS);
+	public const int MAX_SOUNDS = (1 << MAX_SOUND_INDEX_BITS);
 
 	private enum ItemType
 	{
@@ -36,8 +47,7 @@ public class PrecacheItem
 
 	private object? Item = null;
 
-	public PrecacheItem()
-	{
+	public PrecacheItem() {
 		ResetStats();
 		Type = ItemType.Unk;
 		Item = null;
@@ -53,33 +63,27 @@ public class PrecacheItem
 
 	// Mutators
 
-	public void SetModel(Model model)
-	{
+	public void SetModel(Model? model) {
 		Init(ItemType.Model, model);
 	}
 
-	public void SetGeneric(string generic)
-	{
+	public void SetGeneric(string generic) {
 		Init(ItemType.Generic, generic);
 	}
 
-	public void SetSound(SfxTable sound)
-	{
+	public void SetSound(SfxTable sound) {
 		Init(ItemType.Sound, sound);
 	}
 
-	public void SetName(string name)
-	{
+	public void SetName(string name) {
 		Init(ItemType.Generic, name); // Assuming "Name" is stored similarly to generic string
 	}
 
-	public void SetDecal(string decal)
-	{
+	public void SetDecal(string decal) {
 		Init(ItemType.Decal, decal);
 	}
 
-	public float GetFirstReference()
-	{
+	public float GetFirstReference() {
 #if DEBUG_PRECACHE
 		return _firstReference;
 #else
@@ -87,8 +91,7 @@ public class PrecacheItem
 #endif
 	}
 
-	public float GetMostRecentReference()
-	{
+	public float GetMostRecentReference() {
 #if DEBUG_PRECACHE
 		return _mostRecentReference;
 #else
@@ -100,15 +103,13 @@ public class PrecacheItem
 
 	// Private methods
 
-	private void Init(ItemType type, object item)
-	{
+	private void Init(ItemType type, object? item) {
 		Type = type;
 		Item = item;
 		ResetStats();
 	}
 
-	private void ResetStats()
-	{
+	private void ResetStats() {
 		RefCount = 0;
 #if DEBUG_PRECACHE
 		_firstReference = 0f;
@@ -116,10 +117,8 @@ public class PrecacheItem
 #endif
 	}
 
-	private void Reference()
-	{
-		if (RefCount == 0)
-		{
+	private void Reference() {
+		if (RefCount == 0) {
 #if DEBUG_PRECACHE
 			_firstReference = GetCurrentTime();
 #endif
@@ -130,8 +129,7 @@ public class PrecacheItem
 		RefCount++;
 	}
 
-	private float GetCurrentTime()
-	{
+	private float GetCurrentTime() {
 		// Implement your own time retrieval, e.g.:
 		return (float)System.Diagnostics.Stopwatch.GetTimestamp() / System.Diagnostics.Stopwatch.Frequency;
 	}

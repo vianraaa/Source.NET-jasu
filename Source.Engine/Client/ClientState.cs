@@ -12,6 +12,9 @@ using Source.Engine.Server;
 
 using Steamworks;
 
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
+
 using static Source.Constants;
 
 using GameServer = Source.Engine.Server.GameServer;
@@ -34,6 +37,7 @@ public class ClientState : BaseClientState
 	readonly Lazy<IEngineClient> engineClient_LAZY;
 	IEngineClient engineClient => engineClient_LAZY.Value;
 	readonly IServiceProvider services;
+	readonly ICommandLine CommandLine;
 	readonly Scr Scr;
 
 
@@ -100,7 +104,8 @@ public class ClientState : BaseClientState
 	readonly Common Common;
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
-		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services, IModelLoader modelloader)
+		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services, 
+		IModelLoader modelloader, ICommandLine commandLine)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -115,6 +120,7 @@ public class ClientState : BaseClientState
 		this.Common = Common;
 		this.services = services;
 		engineClient_LAZY = new(ProduceEngineClient);
+		CommandLine = commandLine;
 	}
 
 	private IEngineClient ProduceEngineClient() => services.GetRequiredService<IEngineClient>();
@@ -180,6 +186,18 @@ public class ClientState : BaseClientState
 		}
 
 		switch (tableName) {
+			case PrecacheItem.MODEL_PRECACHE_TABLENAME:
+				ModelPrecacheTable = table;
+				return true;
+			case PrecacheItem.GENERIC_PRECACHE_TABLENAME:
+				GenericPrecacheTable = table;
+				return true;
+			case PrecacheItem.SOUND_PRECACHE_TABLENAME:
+				SoundPrecacheTable = table;
+				return true;
+			case PrecacheItem.DECAL_PRECACHE_TABLENAME:
+				DecalPrecacheTable = table;
+				return true;
 			case Protocol.USER_INFO_TABLENAME:
 				UserInfoTable = table;
 				return true;
@@ -404,10 +422,64 @@ public class ClientState : BaseClientState
 		Array.Clear(SoundPrecache,  0, SoundPrecache.Length);
 	}
 
-	public Model? GetModel(int v) {
-		return null;
-	}
-	public void SetModel(Model? model) {
+	public Model? GetModel(int index) {
+		if (ModelPrecacheTable == null)
+			return null;
+		if (index <= 0)
+			return null;
+		if(index >= ModelPrecacheTable.GetNumStrings()) {
+			Assert(false);
+			return null;
+		}
 
+		PrecacheItem p = ModelPrecache[index];
+		Model? model = p.GetModel();
+		if (model != null)
+			return model;
+
+		if(index == 1) {
+			Assert(false);
+			Warning("Attempting to get world model before it was loaded\n");
+			return null;
+		}
+
+		ReadOnlySpan<char> name = ModelPrecacheTable.GetString(index);
+
+		model = modelloader.GetModelForName(name, ModelReferenceType.Client);
+		if(model == null) {
+			ref PrecacheUserData data =ref  CL.GetPrecacheUserData(ModelPrecacheTable, index);
+			if (!Unsafe.IsNullRef(ref data) && (data.Flags & Res.FatalIfMissing) != 0) {
+				Common.ExplainDisconnection(true, $"Cannot continue without model {name}, disconnecting\n");
+				Host.Disconnect(true, "Missing model");
+			}
+		}
+
+		p.SetModel(model);
+		return model;
+	}
+	public void SetModel(int tableIndex) {
+		if (ModelPrecacheTable == null) 
+			return;
+		
+		if (tableIndex < 0 || tableIndex >= ModelPrecacheTable.GetNumStrings()) 
+			return;
+		
+		ReadOnlySpan<char> name = ModelPrecacheTable.GetString(tableIndex);
+		if (tableIndex == 1) 
+			name = LevelFileName;
+
+		PrecacheItem p = ModelPrecache[tableIndex];
+		ref PrecacheUserData data = ref CL.GetPrecacheUserData(ModelPrecacheTable, tableIndex);
+
+		bool loadNow = !Unsafe.IsNullRef(ref data) && (data.Flags & Res.Preload) != 0;
+		if (CommandLine.FindParm("-nopreload") != 0 || CommandLine.FindParm("-nopreloadmodels") != 0) 
+			loadNow = false;
+		else if (CommandLine.FindParm("-preload") != 0) 
+			loadNow = true;
+
+		if (loadNow) 
+			p.SetModel(modelloader.GetModelForName(name, ModelReferenceType.Client));
+		else
+			p.SetModel(null);
 	}
 }

@@ -15,6 +15,9 @@ using Source.Common.Client;
 using Source.Common.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Source.Common.Engine;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Source.Engine;
 
@@ -241,6 +244,15 @@ public class CL(IServiceProvider services, Net Net,
 		host_state.SetWorldModel(cl.GetModel(1));
 		if (host_state.WorldModel == null)
 			Host.Error("CL.RegisterResources: host_state.WorldModel/cl.GetModel(1) == NULL\n");
+	}
+
+	public ref PrecacheUserData GetPrecacheUserData(INetworkStringTable table, int index) {
+		Span<byte> d = table.GetStringUserData(index);
+		ref PrecacheUserData data = ref MemoryMarshal.Cast<byte, PrecacheUserData>(d)[0];
+		if (!Unsafe.IsNullRef(ref data) && d.Length != Unsafe.SizeOf<PrecacheUserData>()) 
+			Error($"CL.GetPrecacheUserData({table.GetTableId()}, {index}) - length ({d.Length}) invalid.");
+
+		return ref data;
 	}
 }
 

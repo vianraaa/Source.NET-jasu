@@ -72,7 +72,7 @@ public class ModelLoader : IModelLoader
 	}
 
 	public void ResetModelServerCounts() {
-		throw new NotImplementedException();
+
 	}
 
 	public void UnreferenceAllModels(ModelReferenceType referenceType) {
