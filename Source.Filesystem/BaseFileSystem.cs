@@ -364,4 +364,22 @@ public class BaseFileSystem : IFileSystem
 		}
 
 	}
+
+	readonly Dictionary<ulong, FileNameHandle_t> fileNameHandles = [];
+	FileNameHandle_t currentHandle;
+	public FileNameHandle_t FindOrAddFileName(ReadOnlySpan<char> name) {
+		Span<char> newNameBuffer = stackalloc char[name.Length];
+		int newNamePtr = 0;
+		for (int i = 0; i < name.Length; i++) {
+			char c = char.ToLowerInvariant(name[i]);
+			if (c != '/' && c != '\\')
+				newNameBuffer[newNamePtr++] = c;
+		}
+
+		ulong hash = newNameBuffer[..newNamePtr].Hash();
+		if (!fileNameHandles.TryGetValue(hash, out var handle)) 
+			handle = fileNameHandles[hash] = ++currentHandle;
+		
+		return handle;
+	}
 }

@@ -92,10 +92,10 @@ public class ClientState : BaseClientState
 	GameServer? _sv;
 	GameServer sv => _sv ??= Host.sv;
 
-	PrecacheItem[] ModelPrecache = new PrecacheItem[PrecacheItem.MAX_MODELS];
-	PrecacheItem[] GenericPrecache = new PrecacheItem[PrecacheItem.MAX_GENERIC];
-	PrecacheItem[] SoundPrecache = new PrecacheItem[PrecacheItem.MAX_SOUNDS];
-	PrecacheItem[] DecalPrecache = new PrecacheItem[PrecacheItem.MAX_BASE_DECAL];
+	readonly PrecacheItem[] ModelPrecache = ClassUtils.BlankInstantiatedArray<PrecacheItem>(PrecacheItem.MAX_MODELS);
+	readonly PrecacheItem[] GenericPrecache = ClassUtils.BlankInstantiatedArray<PrecacheItem>(PrecacheItem.MAX_GENERIC);
+	readonly PrecacheItem[] SoundPrecache = ClassUtils.BlankInstantiatedArray<PrecacheItem>(PrecacheItem.MAX_SOUNDS);
+	readonly PrecacheItem[] DecalPrecache = ClassUtils.BlankInstantiatedArray<PrecacheItem>(PrecacheItem.MAX_BASE_DECAL);
 
 	public static ConVar cl_timeout = new("30", FCvar.Archive, "After this many seconds without receiving a packet from the server, the client will disconnect itself");
 	public static ConVar cl_allowdownload = new("1", FCvar.Archive, "Client downloads customization files");
@@ -104,7 +104,7 @@ public class ClientState : BaseClientState
 	readonly Common Common;
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
-		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services, 
+		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services,
 		IModelLoader modelloader, ICommandLine commandLine)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
@@ -124,8 +124,7 @@ public class ClientState : BaseClientState
 	}
 
 	private IEngineClient ProduceEngineClient() => services.GetRequiredService<IEngineClient>();
-	public override void Clear()
-	{
+	public override void Clear() {
 		base.Clear();
 
 		ModelPrecacheTable = null;
@@ -154,10 +153,10 @@ public class ClientState : BaseClientState
 		AddAngleTotal = 0.0f;
 		PrevAddAngleTotal = 0.0f;
 
-		Array.Clear(ModelPrecache, 0, ModelPrecache.Length);
-		Array.Clear(SoundPrecache, 0, SoundPrecache.Length);
-		Array.Clear(DecalPrecache, 0, DecalPrecache.Length);
-		Array.Clear(GenericPrecache, 0, GenericPrecache.Length);
+		ModelPrecache.ClearInstantiatedReferences();
+		SoundPrecache.ClearInstantiatedReferences();
+		DecalPrecache.ClearInstantiatedReferences();
+		GenericPrecache.ClearInstantiatedReferences();
 
 		IsHLTV = false;
 
@@ -167,9 +166,8 @@ public class ClientState : BaseClientState
 		LastCommandAck = 0;
 		CommandAck = 0;
 		SoundSequence = 0;
-		
-		if (SignOnState > SignOnState.Connected)
-		{
+
+		if (SignOnState > SignOnState.Connected) {
 			SignOnState = SignOnState.Connected;
 		}
 	}
@@ -218,7 +216,7 @@ public class ClientState : BaseClientState
 			Scr.EndLoadingPlaque();
 
 		EngineVGui!.NotifyOfServerDisconnect();
-		if (showMainMenu && !engineClient.IsDrawingLoadingImage()) 
+		if (showMainMenu && !engineClient.IsDrawingLoadingImage())
 			EngineVGui?.ActivateGameUI();
 
 		HostState.OnClientDisconnected();
@@ -240,7 +238,7 @@ public class ClientState : BaseClientState
 				Common.ExplainDisconnection(true, reason);
 			else
 				Common.ExplainDisconnection(true, $"Disconnect: {reason}.\n");
-			
+
 			Scr.EndLoadingPlaque();
 			Host.Disconnect(true, reason);
 		}
@@ -283,7 +281,7 @@ public class ClientState : BaseClientState
 				break;
 			case SignOnState.Full:
 				CL.FullyConnected();
-				if(NetChannel != null) {
+				if (NetChannel != null) {
 					NetChannel.SetTimeout(cl_timeout.GetDouble());
 					NetChannel.SetMaxBufferSize(true, Protocol.MAX_DATAGRAM_PAYLOAD);
 				}
@@ -295,7 +293,7 @@ public class ClientState : BaseClientState
 				if (MaxClients > 1)
 					EngineVGui?.EnabledProgressBarForNextLoad();
 				Scr.BeginLoadingPlaque();
-				if(MaxClients > 1)
+				if (MaxClients > 1)
 					EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ChangeLevel);
 				break;
 		}
@@ -370,12 +368,12 @@ public class ClientState : BaseClientState
 			fileSystem.MarkAllCRCsUnverified();
 		}
 
-		if (!CL.CheckCRCs(LevelFileName)) 
+		if (!CL.CheckCRCs(LevelFileName))
 			Host.Error("Unable to verify map");
 
 		if (sv.State < ServerState.Loading)
 			modelloader.ResetModelServerCounts();
-
+		SetModel(1);
 		CL.RegisterResources();
 
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.SendClientInfo);
@@ -419,7 +417,7 @@ public class ClientState : BaseClientState
 
 	public void ClearSounds() // RaphaelIT7: This is used by Snd_Restart_f
 	{
-		Array.Clear(SoundPrecache,  0, SoundPrecache.Length);
+		Array.Clear(SoundPrecache, 0, SoundPrecache.Length);
 	}
 
 	public Model? GetModel(int index) {
@@ -427,7 +425,7 @@ public class ClientState : BaseClientState
 			return null;
 		if (index <= 0)
 			return null;
-		if(index >= ModelPrecacheTable.GetNumStrings()) {
+		if (index >= ModelPrecacheTable.GetNumStrings()) {
 			Assert(false);
 			return null;
 		}
@@ -437,7 +435,7 @@ public class ClientState : BaseClientState
 		if (model != null)
 			return model;
 
-		if(index == 1) {
+		if (index == 1) {
 			Assert(false);
 			Warning("Attempting to get world model before it was loaded\n");
 			return null;
@@ -446,8 +444,8 @@ public class ClientState : BaseClientState
 		ReadOnlySpan<char> name = ModelPrecacheTable.GetString(index);
 
 		model = modelloader.GetModelForName(name, ModelReferenceType.Client);
-		if(model == null) {
-			ref PrecacheUserData data =ref  CL.GetPrecacheUserData(ModelPrecacheTable, index);
+		if (model == null) {
+			ref PrecacheUserData data = ref CL.GetPrecacheUserData(ModelPrecacheTable, index);
 			if (!Unsafe.IsNullRef(ref data) && (data.Flags & Res.FatalIfMissing) != 0) {
 				Common.ExplainDisconnection(true, $"Cannot continue without model {name}, disconnecting\n");
 				Host.Disconnect(true, "Missing model");
@@ -458,26 +456,26 @@ public class ClientState : BaseClientState
 		return model;
 	}
 	public void SetModel(int tableIndex) {
-		if (ModelPrecacheTable == null) 
+		if (ModelPrecacheTable == null)
 			return;
-		
-		if (tableIndex < 0 || tableIndex >= ModelPrecacheTable.GetNumStrings()) 
+
+		if (tableIndex < 0 || tableIndex >= ModelPrecacheTable.GetNumStrings())
 			return;
-		
+
 		ReadOnlySpan<char> name = ModelPrecacheTable.GetString(tableIndex);
-		if (tableIndex == 1) 
+		if (tableIndex == 1)
 			name = LevelFileName;
 
 		PrecacheItem p = ModelPrecache[tableIndex];
 		ref PrecacheUserData data = ref CL.GetPrecacheUserData(ModelPrecacheTable, tableIndex);
 
 		bool loadNow = !Unsafe.IsNullRef(ref data) && (data.Flags & Res.Preload) != 0;
-		if (CommandLine.FindParm("-nopreload") != 0 || CommandLine.FindParm("-nopreloadmodels") != 0) 
+		if (CommandLine.FindParm("-nopreload") != 0 || CommandLine.FindParm("-nopreloadmodels") != 0)
 			loadNow = false;
-		else if (CommandLine.FindParm("-preload") != 0) 
+		else if (CommandLine.FindParm("-preload") != 0)
 			loadNow = true;
 
-		if (loadNow) 
+		if (loadNow)
 			p.SetModel(modelloader.GetModelForName(name, ModelReferenceType.Client));
 		else
 			p.SetModel(null);

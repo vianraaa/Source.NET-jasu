@@ -24,8 +24,9 @@ public enum ModelType
 /// </summary>
 public class Model
 {
+	public FileNameHandle_t FileNameHandle;
 	public string? Name;
-	public int LoadFlags;
+	public ModelReferenceType LoadFlags;
 	public int ServerCount;
 	public IMaterial[]? Materials;
 

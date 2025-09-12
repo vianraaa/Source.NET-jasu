@@ -122,6 +122,13 @@ public interface IFileSystem : IBaseFileSystem
 	void MarkAllCRCsUnverified();
 	ReadOnlySpan<char> WhereIsFile(ReadOnlySpan<char> relativePath, ReadOnlySpan<char> pathID = default);
 	void PrintSearchPaths();
+
+	/// <summary>
+	/// FileNameHandle_t's are case-insensitive and slash-insensitive.
+	/// </summary>
+	/// <param name="name"></param>
+	/// <returns></returns>
+	FileNameHandle_t FindOrAddFileName(ReadOnlySpan<char> name);
 }
 
 public enum PathTypeFilter

@@ -9,3 +9,4 @@ global using CRC32_t = uint;
 global using HCursor = nint;
 global using UtlSymId_t = ulong;
 global using vec_t = float;
+global using FileNameHandle_t = ulong;

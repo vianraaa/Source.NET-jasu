@@ -20,6 +20,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Source;
@@ -63,6 +64,37 @@ public static class ClassUtils
 		while (list.Count < ensureTo) {
 			list.Add(new T());
 		}
+	}
+	/// <summary>
+	/// Each value in the span is null-checked. If null, a new instance is created with no constructor ran. If not null, the existing instance
+	/// has all of its fields reset. The latter behavior may break everything and needs further testing.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="array"></param>
+	public static void ClearInstantiatedReferences<T>(this T[] array) where T : class => ClearInstantiatedReferences(array.AsSpan());
+	public static void ClearInstantiatedReferences<T>(this List<T> array) where T : class => ClearInstantiatedReferences(array.AsSpan());
+	public static void ClearInstantiatedReferences<T>(this Span<T> array) where T : class {
+		for (int i = 0; i < array.Length; i++) {
+			ref T target = ref array[i];
+			if(target == null) 
+				target = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+			else {
+				int size = Unsafe.SizeOf<T>();
+				ref byte firstField = ref Unsafe.As<T, byte>(ref target);
+				Unsafe.InitBlock(ref firstField, 0, (uint)size);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Creates an array of class instances, where the class instances are not null, but also uninitialized (ie. a reference to an object exists,
+	/// but no constructor etc was ran).
+	/// </summary>
+	/// <returns></returns>
+	public static T[] BlankInstantiatedArray<T>(nuint length) where T : class {
+		T[] ret = new T[length];
+		ClearInstantiatedReferences(ret);
+		return ret;
 	}
 
 	private static bool ParametersMatch(ParameterInfo[] parameters, ImmutableArray<Type> argTypes) {
