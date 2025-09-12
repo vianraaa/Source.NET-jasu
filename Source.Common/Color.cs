@@ -9,6 +9,10 @@ using static Dbg;
 using ColorType = byte;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct ColorRGBExp32 {
+	public byte R, G, B;
+	public sbyte Exponent;
+}
 public struct Color
 {
 	public ColorType R, G, B, A;
