@@ -33,7 +33,7 @@ public class ZipPackFileSearchPath : SearchPath
 		stream.Read(data);
 
 		// Unpack the zip
-		archive = ZipArchive.Open(stream, new());
+		archive = ZipArchive.Open(new MemoryStream(data), new());
 		// Create optimized lookup
 		foreach(var entry in archive.Entries) {
 			Entries[filesystem.FindOrAddFileName(entry.Key)] = entry;
