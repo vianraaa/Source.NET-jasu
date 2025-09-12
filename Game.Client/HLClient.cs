@@ -116,4 +116,43 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	public bool ShouldAllowConsole() => true;
+	
+	public ClientFrameStage CurFrameStage;
+	
+	public void FrameStageNotify(ClientFrameStage stage) {
+		CurFrameStage = stage;
+		switch (stage) {
+			default:
+				break;
+
+			case ClientFrameStage.RenderStart:
+				OnRenderStart();
+				break;
+			case ClientFrameStage.RenderEnd:
+				OnRenderEnd();
+				break;
+		}
+	}
+
+	private void OnRenderStart() {
+		input.CAM_Think();
+		view.OnRenderStart();
+
+		SimulateEntities();
+		PhysicsSimulate();
+
+		// TODO: the rest of this
+	}
+
+	private void PhysicsSimulate() {
+
+	}
+
+	private void SimulateEntities() {
+
+	}
+
+	private void OnRenderEnd() {
+		
+	}
 }

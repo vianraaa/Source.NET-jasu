@@ -7,6 +7,7 @@ using Source.Common.Mathematics;
 using Source.Engine.Client;
 
 using System.Drawing;
+using System.Numerics;
 
 namespace Source.Engine;
 
@@ -40,6 +41,10 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 			ClientDLL.View_Render(screenrect);
 		}
 	}
+
+	public virtual void SetMainView(in Vector3 origin, in QAngle angles) {
+		EngineRenderer.SetMainView(in origin, in angles);
+	}
 }
 
 
@@ -56,5 +61,9 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 
 	public virtual void VGui_Paint(PaintMode mode) {
 		EngineVGui.Paint(mode);
+	}
+
+	public virtual void SetMainView(in Vector3 origin, in QAngle angles) {
+		engineRenderer.SetMainView(in origin, in angles);
 	}
 }

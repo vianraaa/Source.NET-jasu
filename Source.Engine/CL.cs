@@ -280,6 +280,6 @@ public class ClientDLL(IServiceProvider services, Sys Sys)
 	}
 
 	public void FrameStageNotify(ClientFrameStage stage) {
-
+		clientDLL.FrameStageNotify(stage);
 	}
 }

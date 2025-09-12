@@ -15,4 +15,5 @@ public interface IInput
 	void ActivateMouse();
 	void DeactivateMouse();
 	void ClearStates();
+	void CAM_Think();
 }

@@ -29,4 +29,5 @@ public interface IBaseClientDLL
 	void ExtraMouseSample(double frametime, bool active);
 	void IN_ClearStates();
 	bool ShouldAllowConsole();
+	void FrameStageNotify(ClientFrameStage stage);
 }

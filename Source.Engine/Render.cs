@@ -37,15 +37,15 @@ public class Render(
 	float ZNear;
 	float ZFar;
 
-	Vector3 CurrentViewOrigin = new(0, 0, 0);
-	Vector3 CurrentViewForward = new(1, 0, 0);
-	Vector3 CurrentViewRight = new(0, -1, 0);
-	Vector3 CurrentViewUp = new(0, 0, 1);
+	public Vector3 CurrentViewOrigin = new(0, 0, 0);
+	public Vector3 CurrentViewForward = new(1, 0, 0);
+	public Vector3 CurrentViewRight = new(0, -1, 0);
+	public Vector3 CurrentViewUp = new(0, 0, 1);
 
-	Vector3 MainViewOrigin = new(0, 0, 0);
-	Vector3 MainViewForward = new(1, 0, 0);
-	Vector3 MainViewRight = new(0, -1, 0);
-	Vector3 MainViewUp = new(0, 0, 1);
+	public Vector3 MainViewOrigin = new(0, 0, 0);
+	public Vector3 MainViewForward = new(1, 0, 0);
+	public Vector3 MainViewRight = new(0, -1, 0);
+	public Vector3 MainViewUp = new(0, 0, 1);
 
 	bool CanAccessCurrentView;
 
@@ -89,6 +89,11 @@ public class Render(
 		MatrixView = ViewStack.Top().MatrixView;
 		MatrixProjection = ViewStack.Top().MatrixProjection;
 		MatrixWorldToScreen = ViewStack.Top().MatrixWorldToScreen;
+	}
+
+	public void SetMainView(in Vector3 origin, in QAngle angles) {
+		MainViewOrigin = origin;
+		angles.Vectors(out MainViewForward, out MainViewRight, out MainViewUp);
 	}
 
 	private ref ViewSetup CurrentView() => ref ViewStack.Top().View;

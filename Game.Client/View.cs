@@ -90,7 +90,11 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	}
 
 	public void OnRenderStart() {
-		throw new NotImplementedException();
+		SetUpViews();
+	}
+
+	private void SetUpViews() {
+
 	}
 
 	public void QueueOverlayRenderView(in ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw) {
@@ -115,6 +119,8 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	public void Render(ViewRects rect) {
 		using MatRenderContextPtr renderContext = new(materials);
 		ref ViewRect vr = ref rect[0];
+
+		render.SetMainView(in View.Origin, in View.Angles);
 
 		for (StereoEye eye = GetFirstEye(); eye <= GetLastEye(); eye = eye + 1) {
 			ref ViewSetup viewEye = ref GetView(eye);

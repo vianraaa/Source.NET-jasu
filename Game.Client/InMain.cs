@@ -764,5 +764,9 @@ public partial class Input(IServiceProvider provider, ISurface Surface, IViewRen
 			button.State &= clearmask;
 	}
 
+	public void CAM_Think() {
+
+	}
+
 	InButtons ClearInputState;
 }
