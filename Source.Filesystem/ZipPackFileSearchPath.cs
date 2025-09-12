@@ -38,6 +38,7 @@ public class ZipPackFileSearchPath : SearchPath
 		foreach(var entry in archive.Entries) {
 			Entries[filesystem.FindOrAddFileName(entry.Key)] = entry;
 		}
+		valid = true;
 	}
 	private ZipArchiveEntry? getArchive(ReadOnlySpan<char> path) {
 		if (Entries.TryGetValue(filesystem.FindOrAddFileName(path), out ZipArchiveEntry? entry))
