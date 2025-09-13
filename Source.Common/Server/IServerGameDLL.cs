@@ -7,6 +7,8 @@
 public interface IServerGameDLL
 {
 	void GameShutdown() { }
+
+	ServerClass? GetAllServerClasses();
 	public void PostInit();
 }
 

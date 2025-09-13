@@ -56,4 +56,8 @@ public static class Constants
 	public const int NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS = 10;
 	public const int NUM_NETWORKED_EHANDLE_BITS = MAX_EDICT_BITS + NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS;
 	public const int INVALID_NETWORKED_EHANDLE_VALUE = (1 << NUM_NETWORKED_EHANDLE_BITS) - 1;
+	/// <summary>
+	/// THIS IS TEMPORARY: We need to properly sync up with a client/server state before we can remove this!!!!!
+	/// </summary>
+	public const int TEMP_TOTAL_SERVER_CLASSES = 251;
 }

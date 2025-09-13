@@ -27,7 +27,7 @@ using GameServer = Source.Engine.Server.GameServer;
 
 namespace Source.Engine.Client;
 
-public class C_ServerClassInfo {
+public struct C_ServerClassInfo {
 	public ClientClass? ClientClass;
 	public string? ClassName;
 	public string? DatatableName;
@@ -77,8 +77,8 @@ public abstract class BaseClientState(
 	
 	public InlineArray2<InlineArrayMaxEdicts<PackedEntity?>> EntityBaselines;
 
-	public C_ServerClassInfo[] ServerClasses = [];
-	public int NumServerClasses = 0;
+	public C_ServerClassInfo[] ServerClasses = new C_ServerClassInfo[Constants.TEMP_TOTAL_SERVER_CLASSES];
+	public int NumServerClasses = Constants.TEMP_TOTAL_SERVER_CLASSES;
 	public int ServerClassBits;
 	public InlineArraySteamKeysize<char> EncryptionKey;
 	public uint EncryptionKeySize;
@@ -755,7 +755,44 @@ public abstract class BaseClientState(
 		ConnectTime = Net.Time;
 	}
 
-	public virtual bool LinkClasses() => false;
+	public virtual bool LinkClasses() {
+		for (int i = 0; i < NumServerClasses; i++) {
+			ref C_ServerClassInfo serverClass = ref ServerClasses[i];
+			if (string.IsNullOrEmpty(serverClass.DatatableName))
+				continue;
+
+			serverClass.ClientClass = FindClientClass(serverClass.ClassName);
+			if (serverClass.ClientClass != null) {
+				ReadOnlySpan<char> serverName = serverClass.DatatableName;
+				ReadOnlySpan<char> clientName = serverClass.ClientClass.RecvTable!.GetName();
+
+				if (!serverName.Equals(clientName, StringComparison.OrdinalIgnoreCase)) {
+					Host.EndGame(true, $"CL.ParseClassInfo_EndClasses: server and client classes for '{serverClass.ClassName}' " +
+						$"use different datatables (server: {serverName}, client: {clientName})");
+
+					return false;
+				}
+
+				serverClass.ClientClass.ClassID = i;
+			}
+			else
+				Msg($"Client missing DT class {serverClass.ClassName}\n");
+		}
+
+		return true;
+	}
+
+	private ClientClass? FindClientClass(ReadOnlySpan<char> className) {
+		if (className == null || className.IsEmpty)
+			return null;
+
+		for (ClientClass? cur = Host.ClientDLL.GetAllClasses(); cur != null; cur = cur.Next) 
+			if (className.Equals(cur.NetworkName, StringComparison.OrdinalIgnoreCase))
+				return cur;
+
+		return null;
+	}
+
 	public virtual int GetConnectionRetryNumber() => CL_CONNECTION_RETRIES;
 
 	public ConVar cl_name = new("name", "unnamed", FCvar.Archive | FCvar.UserInfo | FCvar.PrintableOnly | FCvar.ServerCanExecute, "Current user name");

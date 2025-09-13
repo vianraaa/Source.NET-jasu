@@ -3,6 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using Source;
+using Source.Common;
 using Source.Common.Client;
 using Source.Common.Filesystem;
 using Source.Common.Server;
@@ -26,6 +27,10 @@ public class ServerGameDLL(IEngineServer engine, IFileSystem filesystem) : IServ
 {
 	public static void DLLInit(IServiceCollection services) {
 		
+	}
+
+	public ServerClass? GetAllServerClasses() {
+		return ServerClass.Head;
 	}
 
 	public void PostInit() {

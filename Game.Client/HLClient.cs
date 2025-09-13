@@ -161,4 +161,8 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	private void OnRenderEnd() {
 
 	}
+
+	public ClientClass? GetAllClasses() {
+		return ClientClass.Head;
+	}
 }

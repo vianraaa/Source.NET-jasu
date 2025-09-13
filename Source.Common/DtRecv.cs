@@ -63,5 +63,7 @@ public class RecvPropEHandle<T, BHT>(GetRefFn<T, BHT> refToField) : RecvProp whe
 
 public class RecvTable : List<RecvProp>
 {
+	public string? NetTableName;
 
+	public ReadOnlySpan<char> GetName() => NetTableName;
 }

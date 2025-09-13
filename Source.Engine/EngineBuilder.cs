@@ -152,6 +152,7 @@ public class EngineBuilder(ICommandLine cmdLine) : ServiceCollection
 		this.AddSingleton<GameServer>();
 		this.AddSingleton<ClientGlobalVariables>();
 		this.AddSingleton<ServerGlobalVariables>();
+		this.AddSingleton<DtCommonEng>();
 		// Engine VGUI and how to read it later
 		this.AddSingleton<EngineVGui>();
 		this.AddSingleton<IEngineVGuiInternal, EngineVGui>(x => x.GetRequiredService<EngineVGui>());

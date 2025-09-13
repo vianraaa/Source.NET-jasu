@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 
 namespace Game.Client;
 
-[DeclareClientClass(ManualIndexOverride = StaticClassIndices.CWorld)]
 [LinkEntityToClass(LocalName = "player")]
 public class C_World : C_BaseEntity
 {
@@ -21,5 +20,6 @@ public class C_World : C_BaseEntity
 		return ret;
 	}
 	public static readonly RecvTable DT_World = [];
-	public static readonly ClientClass ClientClass = new("CWorld", CreateObject, null, DT_World);
+	public static readonly ClientClass ClientClass = new ClientClass("World", CreateObject, null, DT_World)
+																		.WithManualClassID(StaticClassIndices.CWorld);
 }

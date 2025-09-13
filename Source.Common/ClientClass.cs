@@ -1,11 +1,13 @@
-﻿namespace Source.Common;
+﻿using System.Runtime.CompilerServices;
+
+namespace Source.Common;
 
 public delegate IClientNetworkable CreateClientClassFn(int entNum, int serialNum);
 public delegate IClientNetworkable CreateEventFn();
 
 public class ClientClass
 {
-	public static ClientClass? ClientClassHead;
+	public static ClientClass? Head;
 
 	public CreateClientClassFn? CreateFn;
 	public CreateEventFn? CreateEventFn;
@@ -14,30 +16,33 @@ public class ClientClass
 	public ClientClass? Next;
 	public int ClassID;
 
-	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn createFn, CreateEventFn? createEventFn, RecvTable recvTable) {
+	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
 		CreateFn = createFn;
 		CreateEventFn = createEventFn;
 		NetworkName = new(networkName);
 		RecvTable = recvTable;
 
-		Next = ClientClassHead;
-		ClientClassHead = this;
+		if(nameOfTable != null)
+			recvTable.NetTableName = nameOfTable;
+
+		Next = Head;
+		Head = this;
 		ClassID = -1;
 	}
 
 	public ReadOnlySpan<char> GetName() => NetworkName;
+	public ClientClass WithManualClassID(int classID) {
+		ClassID = classID;
+		return this;
+	}
 }
 
 
 /// <summary>
-/// Manually sets the class index. This is required at the moment for Garry's Mod networking compat. Ideally at some point,
-/// we can support all entity classes... and then we can just sort alphabetically.
+/// Declares a client class
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class DeclareClientClass : Attribute
-{
-	public int ManualIndexOverride = -1;
-}
+public class DeclareClientClass : Attribute;
 
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

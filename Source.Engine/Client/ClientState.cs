@@ -34,6 +34,7 @@ public class ClientState : BaseClientState
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
+	readonly DtCommonEng DtCommonEng;
 	readonly IPrediction ClientSidePrediction;
 	readonly IModelLoader modelloader;
 	readonly Lazy<IEngineClient> engineClient_LAZY;
@@ -107,7 +108,7 @@ public class ClientState : BaseClientState
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
 		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services,
-		IModelLoader modelloader, ICommandLine commandLine, IPrediction ClientSidePrediction)
+		IModelLoader modelloader, ICommandLine commandLine, IPrediction ClientSidePrediction, DtCommonEng DtCommonEng)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -119,6 +120,7 @@ public class ClientState : BaseClientState
 		this.ClockDriftMgr = new(this, Host, host_state);
 		this.EngineVGui = EngineVGui;
 		this.HostState = HostState;
+		this.DtCommonEng = DtCommonEng;
 		this.Common = Common;
 		this.services = services;
 		this.ClientSidePrediction = ClientSidePrediction;
@@ -249,7 +251,10 @@ public class ClientState : BaseClientState
 
 	public override bool ProcessClassInfo(svc_ClassInfo msg) {
 		if (msg.CreateOnClient) {
-			return true;
+			DtCommonEng.CreateClientTablesFromServerTables();
+			DtCommonEng.CreateClientClassInfosFromServerClasses(this);
+
+			LinkClasses();
 		}
 		else
 			base.ProcessClassInfo(msg);

@@ -6,7 +6,7 @@ using Source.Common.Mathematics;
 
 namespace Game.Client.HL2MP;
 
-[DeclareClientClass(ManualIndexOverride = StaticClassIndices.CHL2MP_Player)]
+[DeclareClientClass]
 [LinkEntityToClass(LocalName = "player")]
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
@@ -23,7 +23,8 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 		new RecvPropInt<C_HL2MP_Player>((instance) => ref instance.PlayerSoundType),
 		new RecvPropBool<C_HL2MP_Player>((instance) => ref instance.IsWalking),
 	];
-	public static readonly ClientClass ClientClass = new("CHL2MP_Player", CreateObject, null, DT_HL2MP_Player);
+	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", CreateObject, null, DT_HL2MP_Player)
+															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
 	public QAngle EyeAngles;
 	public EHANDLE Ragdoll = new();

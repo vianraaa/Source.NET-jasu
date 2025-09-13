@@ -30,4 +30,5 @@ public interface IBaseClientDLL
 	void IN_ClearStates();
 	bool ShouldAllowConsole();
 	void FrameStageNotify(ClientFrameStage stage);
+	ClientClass? GetAllClasses();
 }

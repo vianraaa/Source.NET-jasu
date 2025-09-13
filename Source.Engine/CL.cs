@@ -439,7 +439,7 @@ public class CL(IServiceProvider services, Net Net,
 
 		IClientNetworkable? ent = EntityList.GetClientNetworkable(u.NewEntity);
 
-		if (iClass >= cl.ServerClasses.Length) {
+		if (iClass >= cl.NumServerClasses) {
 			Host.Error($"CL.CopyNewEntity: invalid class index ({iClass}).\n");
 			return;
 		}
@@ -456,7 +456,7 @@ public class CL(IServiceProvider services, Net Net,
 		if (ent == null) {
 			ent = CreateDLLEntity(u.NewEntity, iClass, iSerialNum);
 			if (ent == null) {
-				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass]?.ClientClass?.NetworkName ?? "";
+				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass].ClientClass?.NetworkName ?? "";
 				Host.Error($"CL_ParsePacketEntities:  Error creating entity {networkName}({u.NewEntity})\n");
 				return;
 			}
@@ -624,5 +624,9 @@ public class ClientDLL(IServiceProvider services, Sys Sys)
 
 	public void FrameStageNotify(ClientFrameStage stage) {
 		clientDLL.FrameStageNotify(stage);
+	}
+
+	public ClientClass? GetAllClasses() {
+		return clientDLL != null ? clientDLL.GetAllClasses() : ClientClass.Head;
 	}
 }
