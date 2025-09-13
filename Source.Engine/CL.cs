@@ -324,9 +324,9 @@ public class CL(IServiceProvider services, Net Net,
 
 		MarkEntitiesOutOfPVS(ref newFrame.TransmitEntity);
 
-		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.LocalPlayer, readInfo.LocalPlayerBits);
-		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.OtherPlayers, readInfo.OtherPlayerBits);
-		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.Entities, -(readInfo.LocalPlayerBits + readInfo.OtherPlayerBits));
+		cl.NetChannel?.UpdateMessageStats(NetChannelGroup.LocalPlayer, readInfo.LocalPlayerBits);
+		cl.NetChannel?.UpdateMessageStats(NetChannelGroup.OtherPlayers, readInfo.OtherPlayerBits);
+		cl.NetChannel?.UpdateMessageStats(NetChannelGroup.Entities, -(readInfo.LocalPlayerBits + readInfo.OtherPlayerBits));
 
 		cl.DeleteClientFrames(entmsg.DeltaFrom);
 
@@ -339,14 +339,33 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	private void CallPostDataUpdates(EntityReadInfo u) {
+
+	}
+
+	private void MarkEntitiesOutOfPVS(ref MaxEdictsBitVec pvsFlags) {
+		int highest_index = EntityList.GetHighestEntityIndex();
+		for (int i = 0; i <= highest_index; i++) {
+			IClientNetworkable? ent = EntityList.GetClientNetworkable(i);
+			if (ent == null)
+				continue;
+
+			bool curstate = !ent.IsDormant();
+			bool newstate = pvsFlags.Get(i) != 0 ? true : false;
+
+			if (!curstate && newstate) 
+				ent.NotifyShouldTransmit(ShouldTransmiteState.Start);
+			else if (curstate && !newstate) {
+				ent.NotifyShouldTransmit(ShouldTransmiteState.End);
+				RecordLeavePVS(i);
+			}
+		}
+	}
+
+	private void RecordLeavePVS(int i) {
 		throw new NotImplementedException();
 	}
 
-	private void MarkEntitiesOutOfPVS(ref MaxEdictsBitVec transmitEntity) {
-		throw new NotImplementedException();
-	}
-
-	private void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities = false) {
+	public void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities = false) {
 		IClientNetworkable? net = EntityList.GetClientNetworkable(entIndex);
 
 		if (net != null) {
@@ -410,7 +429,6 @@ public class CL(IServiceProvider services, Net Net,
 			if (u.Buf!.ReadOneBit() != 0) 
 				u.UpdateFlags |= DeltaEncodingFlags.Delete;
 		}
-
 	}
 
 	internal void CopyNewEntity(EntityReadInfo u, int iClass, int iSerialNum) {
@@ -523,6 +541,53 @@ public class CL(IServiceProvider services, Net Net,
 
 	private void AddPostDataUpdateCall(EntityReadInfo u, int newEntity, DataUpdateType updateType) {
 		throw new NotImplementedException();
+	}
+
+	internal void CopyExistingEntity(EntityReadInfo u) {
+		int start_bit = u.Buf!.BitsRead;
+
+		IClientNetworkable? ent = EntityList.GetClientNetworkable(u.NewEntity);
+		if (ent == null) {
+			Host.Error($"CL_CopyExistingEntity: missing client entity {u.NewEntity}.\n");
+			return;
+		}
+
+		ent.PreDataUpdate(DataUpdateType.DataTableChanged);
+		RecvTable? recvTable = GetEntRecvTable(u.NewEntity);
+
+		if (recvTable == null) {
+			Host.Error($"CL_ParseDelta: invalid recv table for ent {u.NewEntity}.\n");
+			return;
+		}
+
+		RecvTable.Decode(recvTable, ent.GetDataTableBasePtr(), u.Buf, u.NewEntity);
+
+		AddPostDataUpdateCall(u, u.NewEntity, DataUpdateType.DataTableChanged);
+
+		u.To!.LastEntity = u.NewEntity;
+		u.To.TransmitEntity.Set(u.NewEntity);
+
+		int bit_count = u.Buf.BitsRead - start_bit;
+
+		//  if (cl_entityreport.GetBool())
+		//  	CL_RecordEntityBits(u.m_nNewEntity, bit_count);
+
+		if (IsPlayerIndex(u.NewEntity)) {
+			if (u.NewEntity == cl.PlayerSlot + 1) 
+				u.LocalPlayerBits += bit_count;
+			else 
+				u.OtherPlayerBits += bit_count;
+		}
+	}
+
+	internal void PreserveExistingEntity(int oldEntity) {
+		IClientNetworkable? pEnt = EntityList.GetClientNetworkable(oldEntity);
+		if (pEnt == null) {
+			Host.Error($"CL_PreserveExistingEntity: missing client entity {oldEntity}.\n");
+			return;
+		}
+
+		pEnt.OnDataUnchangedInPVS();
 	}
 }
 

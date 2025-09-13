@@ -80,6 +80,7 @@ public static class BitVecBase
 public struct MaxEdictsBitVec
 {
 	public byte bytes;
+	public int Get(int bit) => BitVecBase.IsBitSet(this, bit) ? 1 : 0;
 	public bool IsBitSet(int bit) => BitVecBase.IsBitSet(this, bit);
 	public void Set(int bit) => BitVecBase.Set(this, bit);
 	public void Clear(int bit) => BitVecBase.Clear(this, bit);

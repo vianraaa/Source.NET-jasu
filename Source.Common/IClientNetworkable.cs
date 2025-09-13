@@ -26,4 +26,5 @@ public interface IClientNetworkable {
 	Span<byte> GetDataTableBasePtr();
 	void ReceiveMessage(int classID, bf_read msg);
 	void SetDestroyedOnRecreateEntities();
+	void OnDataUnchangedInPVS();
 }

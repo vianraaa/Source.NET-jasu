@@ -9,6 +9,7 @@ using Source.Common.Hashing;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
 using Source.Engine.Server;
+using Source.GUI.Controls;
 
 using Steamworks;
 
@@ -523,8 +524,6 @@ public class ClientState : BaseClientState
 			p.SetModel(null);
 	}
 
-	readonly ClassMemoryPool<ClientFrame> ClientFramePool = new();
-
 	public ClientFrame AllocateFrame() {
 		return ClientFramePool.Alloc();
 	}
@@ -538,12 +537,78 @@ public class ClientState : BaseClientState
 		throw new NotImplementedException();
 	}
 
-	internal int AddClientFrame(ClientFrame newFrame) {
-		throw new NotImplementedException();
+	ClientFrame? Frames;
+	ClientFrame? LastFrame;
+	int NumFrames;
+	readonly ClassMemoryPool<ClientFrame> ClientFramePool = new();
+
+	internal int AddClientFrame(ClientFrame frame) {
+		Assert(frame.TickCount > 0);
+
+		if (Frames == null) {
+			Assert(LastFrame == null && NumFrames == 0);
+			Frames = frame;
+			LastFrame = frame;
+			NumFrames = 1;
+			return 1;
+		}
+
+		Assert(Frames != null && NumFrames > 0);
+		Assert(LastFrame!.Next == null);
+		LastFrame.Next = frame;
+		LastFrame = frame;
+		return ++NumFrames;
 	}
 
-	internal void DeleteClientFrames(int deltaFrom) {
-		throw new NotImplementedException();
+	internal void DeleteClientFrames(int tick) {
+		if (tick < 0) {
+			while (NumFrames > 0) {
+				RemoveOldestFrame();
+			}
+		}
+		else {
+			ClientFrame? frame = Frames;
+			LastFrame = null;
+			while (frame != null) {
+				if (frame.TickCount < tick) {
+					ClientFrame? next = frame.Next;
+					if (Frames == frame)
+						Frames = next;
+					FreeFrame(frame);
+					if (--NumFrames == 0) {
+						Assert(next == null);
+						LastFrame = Frames = null;
+						break;
+					}
+					Assert(LastFrame != frame && NumFrames > 0);
+					frame = next;
+					if (LastFrame != null)
+						LastFrame.Next = next;
+				}
+				else {
+					Assert(LastFrame == null || LastFrame.Next == frame);
+					LastFrame = frame;
+					frame = frame.Next;
+				}
+			}
+		}
+	}
+
+	private void RemoveOldestFrame() {
+		ClientFrame? frame = Frames; 
+
+		if (frame == null)
+			return; 
+
+		Assert(NumFrames > 0);
+		Frames = frame.Next; // unlink head
+								   // deleting frame will decrease global reference counter
+		FreeFrame(frame);
+
+		if (--NumFrames == 0) {
+			Assert(LastFrame == frame && Frames == null);
+			LastFrame = null;
+		}
 	}
 
 	internal void ReadPacketEntities(EntityReadInfo u) {
@@ -596,19 +661,51 @@ public class ClientState : BaseClientState
 	}
 
 	protected override void ReadDeletions(EntityReadInfo u) {
-		throw new NotImplementedException();
+		while (u.Buf!.ReadOneBit() != 0) {
+			int idx = (int)u.Buf.ReadUBitLong(MAX_EDICT_BITS);
+			CL.DeleteDLLEntity(idx, "ReadDeletions");
+		}
 	}
 
 	protected override void ReadPreserveEnt(EntityReadInfo u) {
-		throw new NotImplementedException();
+		if (!u.AsDelta) {
+			Assert(false);
+			ConMsg("WARNING: PreserveEnt on full update");
+			u.UpdateType = UpdateType.Failed;
+			return;
+		}
+
+		if (u.OldEntity >= MAX_EDICTS || u.OldEntity < 0 || u.NewEntity >= MAX_EDICTS)
+			Host.Error($"CL_ReadPreserveEnt: Entity out of bounds. Old: {u.OldEntity}, New: {u.NewEntity}");
+
+		u.To!.LastEntity = u.OldEntity;
+		u.To!.TransmitEntity.Set(u.OldEntity);
+
+		//  if (cl_entityreport.GetBool())
+		//  	CL_RecordEntityBits(u.m_nOldEntity, 0);
+
+		CL.PreserveExistingEntity(u.OldEntity);
+
+		u.NextOldEntity();
 	}
 
 	protected override void ReadDeltaEnt(EntityReadInfo u) {
-		throw new NotImplementedException();
+		CL.CopyExistingEntity(u);
+		u.NextOldEntity();
 	}
 
 	protected override void ReadLeavePVS(EntityReadInfo u) {
-		throw new NotImplementedException();
+		if (!u.AsDelta) {
+			Assert(false);
+			ConMsg("WARNING: LeavePVS on full update");
+			u.UpdateType = UpdateType.Failed;
+			return;
+		}
+
+		if ((u.UpdateFlags & DeltaEncodingFlags.Delete) != 0)
+			CL.DeleteDLLEntity(u.OldEntity, "ReadLeavePVS");
+
+		u.NextOldEntity();
 	}
 
 	protected override void ReadEnterPVS(EntityReadInfo u) {

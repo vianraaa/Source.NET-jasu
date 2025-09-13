@@ -166,5 +166,10 @@ public partial class C_BaseEntity : IClientEntity
 		return null;
 	}
 
+	public void OnDataUnchangedInPVS() {
+		// HierarchySetParent(NetworkMoveParent);
+		MarkMessageReceived();
+	}
+
 	BaseHandle? RefEHandle;
 }
