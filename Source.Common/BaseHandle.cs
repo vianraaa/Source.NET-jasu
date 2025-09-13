@@ -1,7 +1,7 @@
 ﻿namespace Source.Common;
 
 public class BaseHandle {
-	public ulong Index;
+	public uint Index;
 
 	public int GetEntryIndex() => (int)(Index & Constants.ENT_ENTRY_MASK);
 	public int GetSerialNumber() => (int)(Index >> Constants.NUM_ENT_ENTRY_BITS);

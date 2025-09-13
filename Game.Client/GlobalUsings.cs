@@ -1,0 +1,1 @@
+﻿global using EHANDLE = Game.Shared.Handle<Game.Client.C_BaseEntity>;

@@ -17,6 +17,6 @@ public static class HandleExts {
 	}
 }
 
-public class Handle : BaseHandle {
+public class Handle<T> : BaseHandle {
 
 }
