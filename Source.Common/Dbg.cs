@@ -219,7 +219,10 @@ public static class Dbg
 		=> _SpewMessage(SpewType.Error, msgFormat, args);
 
 
-
+	public static void ErrorIfNot(bool condition, ReadOnlySpan<char> msg) {
+		if (!condition)
+			Error(msg);
+	}
 
 
 	public static void DevMsg(int level, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args) {

@@ -864,4 +864,13 @@ public class Host(
 		// TODO for later. Requires singlestep
 		return true;
 	}
+
+	public void EndGame(bool showMainMenu, ReadOnlySpan<char> message) {
+		ConMsg($"Host_EndGame: {message}");
+		Disconnect(showMainMenu);
+		if (sv.IsDedicated()) {
+			Sys.Error($"Host_EndGame: {message}\n");
+			return;
+		}
+	}
 }

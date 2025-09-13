@@ -18,6 +18,7 @@ using Source.Common.Engine;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Source.Common.Bitbuffers;
 
 namespace Source.Engine;
 
@@ -27,7 +28,7 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader, ClientDLL ClientDLL)
+	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader, ClientDLL ClientDLL, EngineRecvTable RecvTable)
 {
 	public IPrediction ClientSidePrediction => ClientDLL.ClientSidePrediction;
 	public IClientEntityList EntityList => ClientDLL.EntityList;
@@ -345,7 +346,7 @@ public class CL(IServiceProvider services, Net Net,
 		throw new NotImplementedException();
 	}
 
-	private void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities) {
+	private void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities = false) {
 		IClientNetworkable? net = EntityList.GetClientNetworkable(entIndex);
 
 		if (net != null) {
@@ -410,6 +411,118 @@ public class CL(IServiceProvider services, Net Net,
 				u.UpdateFlags |= DeltaEncodingFlags.Delete;
 		}
 
+	}
+
+	internal void CopyNewEntity(EntityReadInfo u, int iClass, int iSerialNum) {
+		if (u.NewEntity < 0 || u.NewEntity >= MAX_EDICTS) {
+			Host.Error("CL.CopyNewEntity: u.m_nNewEntity < 0 || m_nNewEntity >= MAX_EDICTS");
+			return;
+		}
+
+		IClientNetworkable? ent = EntityList.GetClientNetworkable(u.NewEntity);
+
+		if (iClass >= cl.ServerClasses.Length) {
+			Host.Error($"CL.CopyNewEntity: invalid class index ({iClass}).\n");
+			return;
+		}
+
+		ClientClass? pClass = cl.ServerClasses[iClass].ClientClass;
+		bool bNew = false;
+		if (ent != null) {
+			if (ent.GetIClientUnknown()!.GetRefEHandle()!.GetSerialNumber() != iSerialNum) {
+				DeleteDLLEntity(u.NewEntity, "CopyNewEntity");
+				ent = null; 
+			}
+		}
+
+		if (ent == null) {
+			ent = CreateDLLEntity(u.NewEntity, iClass, iSerialNum);
+			if (ent == null) {
+				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass]?.ClientClass?.NetworkName ?? "";
+				Host.Error($"CL_ParsePacketEntities:  Error creating entity {networkName}({u.NewEntity})\n");
+				return;
+			}
+
+			bNew = true;
+		}
+
+		int start_bit = u.Buf!.BitsRead;
+
+		DataUpdateType updateType = bNew ? DataUpdateType.Created : DataUpdateType.DataTableChanged;
+		ent.PreDataUpdate(updateType);
+
+		byte[]? fromData;
+		int fromBits;
+
+		PackedEntity? baseline = u.AsDelta ? cl.GetEntityBaseline(u.Baseline, u.NewEntity) : null;
+		if (baseline != null && baseline.ClientClass == pClass) {
+			Assert(!baseline.IsCompressed());
+			fromData = baseline.GetData();
+			fromBits = baseline.GetNumBits();
+		}
+		else {
+			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits) != null, $"CL_CopyNewEntity: GetClassBaseline({iClass}) failed.");
+			fromBits *= 8; 
+		}
+
+		bf_read fromBuf = new("CL_CopyNewEntity->fromBuf", fromData, NetChannel.Bits2Bytes(fromBits), fromBits );
+
+		RecvTable? recvTable = GetEntRecvTable(u.NewEntity);
+
+		if (recvTable == null)
+			Host.Error($"CL_ParseDelta: invalid recv table for ent {u.NewEntity}.\n");
+
+		if (u.UpdateBaselines) {
+			byte[] packedData = ArrayPool<byte>.Shared.Rent(MAX_PACKEDENTITY_DATA);
+			bf_write writeBuf = new(packedData, packedData.Length, 0);
+
+			RecvTable.MergeDeltas(recvTable, fromBuf, u.Buf, writeBuf, -1, null, true);
+
+			cl.SetEntityBaseline((u.Baseline == 0) ? 1 : 0, pClass, u.NewEntity, packedData, writeBuf.BytesWritten);
+
+			fromBuf.StartReading(packedData, writeBuf.BytesWritten);
+
+			RecvTable.Decode(recvTable, ent.GetDataTableBasePtr(), fromBuf, u.NewEntity, false);
+			ArrayPool<byte>.Shared.Return(packedData, true);
+		}
+		else {
+			RecvTable.Decode(recvTable, ent.GetDataTableBasePtr(), fromBuf, u.NewEntity, false);
+			RecvTable.Decode(recvTable, ent.GetDataTableBasePtr(), u.Buf, u.NewEntity, true);
+		}
+
+		AddPostDataUpdateCall(u, u.NewEntity, updateType);
+
+		Assert(u.To!.LastEntity <= u.NewEntity);
+		u.To!.LastEntity = u.NewEntity;
+		u.To!.TransmitEntity.Set(u.NewEntity);
+
+		int bit_count = u.Buf.BitsRead - start_bit;
+		// if (cl_entityreport.GetBool())
+			// CL.RecordEntityBits(u.NewEntity, bit_count);
+
+		if (IsPlayerIndex(u.NewEntity)) {
+			if (u.NewEntity == cl.PlayerSlot + 1) 
+				u.LocalPlayerBits += bit_count;
+			else 
+				u.OtherPlayerBits += bit_count;
+		}
+	}
+
+	private RecvTable? GetEntRecvTable(int entityNum) {
+		IClientNetworkable? networkable = EntityList.GetClientNetworkable(entityNum);
+		return networkable?.GetClientClass().RecvTable;
+	}
+
+	private IClientNetworkable? CreateDLLEntity(int newEntity, int iClass, int iSerialNum) {
+		throw new NotImplementedException();
+	}
+
+	public bool IsPlayerIndex(int newEntity) {
+		throw new NotImplementedException();
+	}
+
+	private void AddPostDataUpdateCall(EntityReadInfo u, int newEntity, DataUpdateType updateType) {
+		throw new NotImplementedException();
 	}
 }
 

@@ -49,6 +49,7 @@ public class ClientEntityList : BaseEntityList, IClientEntityList
 		throw new NotImplementedException();
 	}
 
+
 	int NumServerEnts;
 	int MaxServerEnts;
 	int NumClientNonNetworkable;

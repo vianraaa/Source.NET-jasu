@@ -30,4 +30,6 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 
 		base.PostDataUpdate(updateType);
 	}
+
+	public Span<byte> GetDataTableBasePtr() => [];
 }

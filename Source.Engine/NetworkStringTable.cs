@@ -87,7 +87,7 @@ public class NetworkStringTableItem
 		return true;
 	}
 
-	public Span<byte> GetUserData(out int length) {
+	public byte[]? GetUserData(out int length) {
 		length = UserDataLength;
 		return UserData;
 	}
@@ -351,7 +351,7 @@ public class NetworkStringTable : INetworkStringTable
 		}
 	}
 
-	public Span<byte> GetStringUserData(int stringNumber) {
+	public byte[]? GetStringUserData(int stringNumber) {
 		INetworkStringDict dict = Items;
 		if (ItemsClientSide != null && stringNumber < -1) {
 			dict = ItemsClientSide;

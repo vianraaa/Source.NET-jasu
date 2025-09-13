@@ -348,12 +348,13 @@ public class NetChannel : INetChannelInfo, INetChannel
 			DoBufferThings(ref StreamUnreliable, ref UnreliableDataBuffer, out UnreliableDataBuffer, bytes);
 	}
 
-	static int Bits2Bytes(int b) {
+	// todo: move following 3 functions to Protocol.cs
+	public static int Bits2Bytes(int b) {
 		return b + 7 >> 3;
 	}
 
 	public static int PAD_NUMBER(int number, int boundary) => (number + (boundary - 1)) / boundary * boundary;
-	static int BYTES2FRAGMENTS(int i) => (i + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
+	public static int BYTES2FRAGMENTS(int i) => (i + FRAGMENT_SIZE - 1) / FRAGMENT_SIZE;
 
 
 	public int IncrementSplitPacketSequence() {

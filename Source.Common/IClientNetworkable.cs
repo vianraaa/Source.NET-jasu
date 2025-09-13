@@ -23,6 +23,7 @@ public interface IClientNetworkable {
 	void PostDataUpdate(DataUpdateType updateType);
 	bool IsDormant();
 	int EntIndex();
+	Span<byte> GetDataTableBasePtr();
 	void ReceiveMessage(int classID, bf_read msg);
 	void SetDestroyedOnRecreateEntities();
 }

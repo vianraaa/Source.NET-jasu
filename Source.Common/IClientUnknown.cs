@@ -1,6 +1,9 @@
-﻿namespace Source.Common;
+﻿using Source.Common.Engine;
 
-public interface IClientUnknown {
+namespace Source.Common;
+
+public interface IClientUnknown : IHandleEntity {
+	ICollideable GetCollideable();
 	IClientNetworkable GetClientNetworkable();
 	IClientRenderable GetClientRenderable();
 	IClientEntity GetIClientEntity();

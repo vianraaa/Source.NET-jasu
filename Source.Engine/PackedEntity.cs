@@ -36,6 +36,7 @@ public class PackedEntity
 	public void SetNumBits(int bits)=> Bits = bits;
 	public void SetCompressed() => Bits |= FLAG_IS_COMPRESSED;
 	public bool IsCompressed() => (Bits & FLAG_IS_COMPRESSED) != 0;
+	public int GetNumBits() => Bits & ~FLAG_IS_COMPRESSED;
 
-	public Span<byte> GetData() => Data;
+	public byte[]? GetData() => Data;
 }

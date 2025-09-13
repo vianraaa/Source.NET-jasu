@@ -5,6 +5,7 @@ using Source.Common.Engine;
 using Source.Common.Mathematics;
 
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
@@ -152,4 +153,18 @@ public partial class C_BaseEntity : IClientEntity
 	public void SetDestroyedOnRecreateEntities() {
 
 	}
+
+	public virtual ICollideable GetCollideable() => throw new NotImplementedException();
+	public virtual BaseHandle GetRefEHandle() {
+		return RefEHandle;
+	}
+	public virtual void SetRefEHandle(BaseHandle handle) {
+		RefEHandle = handle;
+	}
+
+	public Span<byte> GetDataTableBasePtr() {
+		return null;
+	}
+
+	BaseHandle? RefEHandle;
 }

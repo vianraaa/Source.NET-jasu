@@ -587,24 +587,31 @@ public class ClientState : BaseClientState
 			NextCmdTime = 0.0; 
 	}
 
-	private void ReadDeletions(EntityReadInfo u) {
+	protected override void ReadDeletions(EntityReadInfo u) {
 		throw new NotImplementedException();
 	}
 
-	private void ReadPreserveEnt(EntityReadInfo u) {
+	protected override void ReadPreserveEnt(EntityReadInfo u) {
 		throw new NotImplementedException();
 	}
 
-	private void ReadDeltaEnt(EntityReadInfo u) {
+	protected override void ReadDeltaEnt(EntityReadInfo u) {
 		throw new NotImplementedException();
 	}
 
-	private void ReadLeavePVS(EntityReadInfo u) {
+	protected override void ReadLeavePVS(EntityReadInfo u) {
 		throw new NotImplementedException();
 	}
 
-	private void ReadEnterPVS(EntityReadInfo u) {
-		throw new NotImplementedException();
+	protected override void ReadEnterPVS(EntityReadInfo u) {
+		int iClass = (int)u.Buf!.ReadUBitLong(ServerClassBits);
+
+		int iSerialNum = (int)u.Buf!.ReadUBitLong(NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS);
+
+		CL.CopyNewEntity(u, iClass, iSerialNum);
+
+		if (u.NewEntity == u.OldEntity)
+			u.NextOldEntity();
 	}
 
 	internal void CopyEntityBaseline(int from, int to) {
@@ -635,4 +642,9 @@ public class ClientState : BaseClientState
 			blto.AllocAndCopyPadded(blfrom.GetData());
 		}
 	}
+
+	internal PackedEntity? GetEntityBaseline(int baseline, int newEntity) {
+		throw new NotImplementedException();
+	}
+
 }

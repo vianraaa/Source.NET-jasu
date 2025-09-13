@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
 
+using Microsoft.Extensions.DependencyInjection;
+
+using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Commands;
@@ -23,6 +26,14 @@ using static Source.Dbg;
 using GameServer = Source.Engine.Server.GameServer;
 
 namespace Source.Engine.Client;
+
+public class C_ServerClassInfo {
+	public ClientClass? ClientClass;
+	public string? ClassName;
+	public string? DatatableName;
+	public int InstanceBaselineIndex;
+}
+
 /// <summary>
 /// Base client state, in CLIENT
 /// </summary>
@@ -66,7 +77,8 @@ public abstract class BaseClientState(
 	
 	public InlineArray2<InlineArrayMaxEdicts<PackedEntity?>> EntityBaselines;
 
-	public int ServerClasses;
+	public C_ServerClassInfo[] ServerClasses = [];
+	public int NumServerClasses = 0;
 	public int ServerClassBits;
 	public InlineArraySteamKeysize<char> EncryptionKey;
 	public uint EncryptionKeySize;
@@ -77,6 +89,60 @@ public abstract class BaseClientState(
 	public bool RestrictServerCommands;
 	public bool RestrictClientCommands;
 
+
+	protected virtual void ReadDeletions(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	protected virtual void ReadPreserveEnt(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	protected virtual void ReadDeltaEnt(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	protected virtual void ReadLeavePVS(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	protected virtual void ReadEnterPVS(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+
+	public bool GetClassBaseline(int iClass, out byte[]? fromData, out int fromBits) {
+		ErrorIfNot( iClass >= 0 && iClass < ServerClasses.Length, $"GetDynamicBaseline: invalid class index '{iClass}'");
+
+		C_ServerClassInfo pInfo = ServerClasses[iClass];
+
+		INetworkStringTable? pBaselineTable = GetStringTable(Protocol.INSTANCE_BASELINE_TABLENAME);
+
+		ErrorIfNot(pBaselineTable != null, "GetDynamicBaseline: NULL baseline table");
+
+		if (pInfo.InstanceBaselineIndex == INetworkStringTable.INVALID_STRING_INDEX) {
+			Span<char> str = stackalloc char[64];
+			sprintf(str, "%d", iClass);
+
+			pInfo.InstanceBaselineIndex = pBaselineTable.FindStringIndex(str);
+
+			if (pInfo.InstanceBaselineIndex == INetworkStringTable.INVALID_STRING_INDEX) {
+				for (int i = 0; i < pBaselineTable.GetNumStrings(); ++i) 
+					DevMsg($"{i}: {pBaselineTable.GetString(i)}\n");
+
+				Assert(false);
+			}
+			ErrorIfNot(pInfo.InstanceBaselineIndex != INetworkStringTable.INVALID_STRING_INDEX, $"GetDynamicBaseline: FindStringIndex({str}-{pInfo.ClassName}) failed.");
+		}
+		fromData = pBaselineTable.GetStringUserData(pInfo.InstanceBaselineIndex);
+		fromBits = fromData.Length;
+		return fromData != null;
+	}
+
+	public void SetEntityBaseline(int v, ClientClass? pClass, int newEntity, byte[] packedData, int bytesWritten) {
+		throw new NotImplementedException();
+	}
+
 	public virtual void Clear() {
 		ServerCount = -1;
 		DeltaTick = -1;
@@ -84,7 +150,6 @@ public abstract class BaseClientState(
 		ClockDriftMgr.Clear();
 
 		CurrentSequence = 0;
-		ServerClasses = 0;
 		ServerClassBits = 0;
 		PlayerSlot = 0;
 		LevelFileName = "";
@@ -310,11 +375,18 @@ public abstract class BaseClientState(
 		if (msg.CreateOnClient) {
 			ConMsg("Can't create class tables.\n");
 			Assert(false);
-			return true;
+			return false;
 		}
-		
-		ServerClasses = msg.Classes.Count;
 
+		Span<svc_ClassInfo.Class> classes = msg.Classes.AsSpan();
+		ServerClasses = new C_ServerClassInfo[classes.Length];
+		for (int i = 0; i < classes.Length; i++) {
+			ref svc_ClassInfo.Class svclass = ref classes[i];
+			if(svclass.ClassID >= classes.Length) {
+				Host.EndGame(true, $"ProcessClassInfo: invalid class index ({svclass.ClassID}).\n");
+				return false;
+			}
+		}
 
 		return true;
 	}
@@ -406,8 +478,8 @@ public abstract class BaseClientState(
 
 		ServerCount = msg.ServerCount;
 		MaxClients = msg.MaxClients;
-		ServerClasses = msg.MaxClasses;
-		ServerClassBits = (int)Math.Log2(ServerClasses) + 1;
+		NumServerClasses = msg.MaxClasses;
+		ServerClassBits = (int)Math.Log2(NumServerClasses) + 1;
 
 		StringTableContainer = networkStringTableContainerClient;
 
@@ -416,7 +488,7 @@ public abstract class BaseClientState(
 			return false;
 		}
 
-		if (ServerClasses < 1 || ServerClasses > Constants.MAX_SERVER_CLASSES) {
+		if (NumServerClasses < 1 || NumServerClasses > Constants.MAX_SERVER_CLASSES) {
 			ConMsg($"Bad maxclasses ({MaxClients}) from server.\n");
 			return false;
 		}
