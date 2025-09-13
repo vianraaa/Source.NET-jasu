@@ -246,20 +246,28 @@ public class ClientState : BaseClientState
 		}
 	}
 
+	public override bool ProcessClassInfo(svc_ClassInfo msg) {
+		if (msg.CreateOnClient) {
+			return true;
+		}
+		else
+			base.ProcessClassInfo(msg);
+		return true;
+	}
 	protected override bool ProcessPacketEntities(svc_PacketEntities msg) {
-		if (!msg.IsDelta) 
-				ClientSidePrediction.OnReceivedUncompressedPacket();
+		if (!msg.IsDelta)
+			ClientSidePrediction.OnReceivedUncompressedPacket();
 		else {
-			if (DeltaTick == -1) 
+			if (DeltaTick == -1)
 				return true;
-			
+
 			CL.PreprocessEntities();
 		}
 
 		if (LocalNetworkBackdoor.Global != null) {
-			if (SignOnState == SignOnState.Spawn) 
+			if (SignOnState == SignOnState.Spawn)
 				SetSignonState(SignOnState.Full, ServerCount);
-			
+
 			DeltaTick = GetServerTickCount();
 			return true;
 		}
@@ -388,7 +396,7 @@ public class ClientState : BaseClientState
 
 		NetChannel!.SendNetMsg(info);
 	}
-	 
+
 	public void FinishSignonState_New() {
 		if (SignOnState != SignOnState.New)
 			return;
@@ -545,9 +553,9 @@ public class ClientState : BaseClientState
 			u.HeaderCount--;
 
 			u.IsEntity = (u.HeaderCount >= 0) ? true : false;
-			if (u.IsEntity) 
+			if (u.IsEntity)
 				CL.ParseDeltaHeader(u);
-			
+
 			u.UpdateType = UpdateType.PreserveEnt;
 
 			while (u.UpdateType == UpdateType.PreserveEnt) {
@@ -576,15 +584,15 @@ public class ClientState : BaseClientState
 				}
 			}
 		}
-		
-		if (u.AsDelta && u.UpdateType == UpdateType.Finished) 
+
+		if (u.AsDelta && u.UpdateType == UpdateType.Finished)
 			ReadDeletions(u);
-		
-		if (u.Buf!.Overflowed) 
+
+		if (u.Buf!.Overflowed)
 			Host.Error("CL.ParsePacketEntities: buffer read overflow\n");
-		
-		if (!u.AsDelta) 
-			NextCmdTime = 0.0; 
+
+		if (!u.AsDelta)
+			NextCmdTime = 0.0;
 	}
 
 	protected override void ReadDeletions(EntityReadInfo u) {
@@ -620,9 +628,9 @@ public class ClientState : BaseClientState
 			PackedEntity? blto = EntityBaselines[to][i];
 
 			if (blfrom == null) {
-				if (blto != null) 
+				if (blto != null)
 					EntityBaselines[to][i] = null;
-				
+
 				continue;
 			}
 
