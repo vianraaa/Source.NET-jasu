@@ -65,6 +65,12 @@ public static class BitVecBase
 		else
 			b &= (byte)~ByteMask(bit);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static int FindNextSetBit(this Span<byte> bytes, int startBit) {
+		while (!IsBitSet(bytes, startBit))
+			startBit++;
+		return startBit;
+	}
 }
 
 /// <summary>
@@ -78,6 +84,7 @@ public struct MaxEdictsBitVec
 	public void Set(int bit) => BitVecBase.Set(this, bit);
 	public void Clear(int bit) => BitVecBase.Clear(this, bit);
 	public void Set(int bit, bool newVal) => BitVecBase.Set(this, bit, newVal);
+	public int FindNextSetBit(int startBit) => BitVecBase.FindNextSetBit(this, startBit);
 }
 
 public class ClassMemoryPool<T> where T : class, new()

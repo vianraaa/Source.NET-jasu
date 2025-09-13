@@ -539,6 +539,71 @@ public class ClientState : BaseClientState
 	}
 
 	internal void ReadPacketEntities(EntityReadInfo u) {
+		u.NextOldEntity();
+
+		while (u.UpdateType < UpdateType.Finished) {
+			u.HeaderCount--;
+
+			u.IsEntity = (u.HeaderCount >= 0) ? true : false;
+			if (u.IsEntity) 
+				CL.ParseDeltaHeader(u);
+			
+			u.UpdateType = UpdateType.PreserveEnt;
+
+			while (u.UpdateType == UpdateType.PreserveEnt) {
+				if (CL.DetermineUpdateType(u)) {
+					switch (u.UpdateType) {
+						case UpdateType.EnterPVS:
+							ReadEnterPVS(u);
+							break;
+
+						case UpdateType.LeavePVS:
+							ReadLeavePVS(u);
+							break;
+
+						case UpdateType.DeltaEnt:
+							ReadDeltaEnt(u);
+							break;
+
+						case UpdateType.PreserveEnt:
+							ReadPreserveEnt(u);
+							break;
+
+						default:
+							DevMsg(1, "ReadPacketEntities: unknown updatetype %i\n", u.UpdateType);
+							break;
+					}
+				}
+			}
+		}
+		
+		if (u.AsDelta && u.UpdateType == UpdateType.Finished) 
+			ReadDeletions(u);
+		
+		if (u.Buf!.Overflowed) 
+			Host.Error("CL.ParsePacketEntities: buffer read overflow\n");
+		
+		if (!u.AsDelta) 
+			NextCmdTime = 0.0; 
+	}
+
+	private void ReadDeletions(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	private void ReadPreserveEnt(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	private void ReadDeltaEnt(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	private void ReadLeavePVS(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	private void ReadEnterPVS(EntityReadInfo u) {
 		throw new NotImplementedException();
 	}
 

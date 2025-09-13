@@ -370,6 +370,47 @@ public class CL(IServiceProvider services, Net Net,
 	internal void PreprocessEntities() {
 		throw new NotImplementedException();
 	}
+
+	internal bool DetermineUpdateType(EntityReadInfo u) {
+		if (!u.IsEntity || (u.NewEntity > u.OldEntity)) {
+			if (u.From == null || (u.OldEntity > u.From.LastEntity)) {
+				Assert(!u.IsEntity);
+				u.UpdateType = UpdateType.Finished;
+				return false;
+			}
+
+			u.UpdateType = UpdateType.PreserveEnt;
+		}
+		else {
+			if ((u.UpdateFlags & DeltaEncodingFlags.EnterPVS) != 0) 
+				u.UpdateType = UpdateType.EnterPVS;
+			else if ((u.UpdateFlags & DeltaEncodingFlags.LeavePVS) != 0) 
+				u.UpdateType = UpdateType.LeavePVS;
+			else 
+				u.UpdateType = UpdateType.DeltaEnt;
+		}
+
+		return true;
+	}
+
+	public void ParseDeltaHeader(EntityReadInfo u) {
+		u.UpdateFlags = DeltaEncodingFlags.Zero;
+
+		u.NewEntity = (int)(u.HeaderBase + 1 + u.Buf!.ReadUBitVar());
+		u.HeaderBase = u.NewEntity;
+
+		if (u.Buf!.ReadOneBit() == 0) {
+			if (u.Buf!.ReadOneBit() != 0) 
+				u.UpdateFlags |= DeltaEncodingFlags.EnterPVS;
+		}
+		else {
+			u.UpdateFlags |= DeltaEncodingFlags.LeavePVS;
+
+			if (u.Buf!.ReadOneBit() != 0) 
+				u.UpdateFlags |= DeltaEncodingFlags.Delete;
+		}
+
+	}
 }
 
 /// <summary>

@@ -1,5 +1,6 @@
 ﻿using Source.Common;
 using Source.Common.Bitbuffers;
+using Source.Common.Networking;
 
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,18 @@ public class EntityInfo {
 	public int NewEntity;
 	public int HeaderBase;
 	public int HeaderCount;
+
+
+	public void NextOldEntity() {
+		if (From != null) {
+			OldEntity = From.TransmitEntity.FindNextSetBit(OldEntity + 1);
+
+			if (OldEntity < 0) 
+				OldEntity = int.MaxValue;
+		}
+		else 
+			OldEntity = int.MaxValue;
+	}
 }
 
 public struct PostDataUpdateCall {
@@ -26,7 +39,7 @@ public struct PostDataUpdateCall {
 
 public class EntityReadInfo : EntityInfo {
 	public bf_read? Buf;
-	public int UpdateFlags;
+	public DeltaEncodingFlags UpdateFlags;
 	public bool IsEntity;
 	public int Baseline;
 	public bool UpdateBaselines;
