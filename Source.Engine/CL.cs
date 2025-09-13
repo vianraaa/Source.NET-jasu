@@ -300,8 +300,6 @@ public class CL(IServiceProvider services, Net Net,
 			int updateBaseline = (entmsg.Baseline == 0) ? 1 : 0;
 			cl.CopyEntityBaseline(entmsg.Baseline, updateBaseline);
 
-			// WHEN GETTING THIS WORKING AGAIN, REMOVE THE OTHER TIME WE DO THIS AS A TEMPORARY MEASURE
-			throw new Exception("Look at the above comment");
 			var msg = new clc_BaselineAck(cl.GetServerTickCount(), entmsg.Baseline);
 			cl.NetChannel!.SendNetMsg(msg, true);
 		}
