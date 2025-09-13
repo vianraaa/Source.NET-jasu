@@ -4,6 +4,8 @@ using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Mathematics;
 
+using Steamworks;
+
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -102,6 +104,9 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public bool ShouldDraw() {
+		throw new NotImplementedException();
+	}
+	public bool Init(int entNum, int serialNum) {
 		throw new NotImplementedException();
 	}
 

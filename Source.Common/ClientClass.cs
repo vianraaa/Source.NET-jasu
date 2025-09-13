@@ -14,7 +14,7 @@ public class ClientClass
 	public ClientClass? Next;
 	public int ClassID;
 
-	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn createFn, CreateEventFn createEventFn, RecvTable recvTable) {
+	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn createFn, CreateEventFn? createEventFn, RecvTable recvTable) {
 		CreateFn = createFn;
 		CreateEventFn = createEventFn;
 		NetworkName = new(networkName);
@@ -34,9 +34,9 @@ public class ClientClass
 /// we can support all entity classes... and then we can just sort alphabetically.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class ManualClassIndexAttribute : Attribute
+public class DeclareClientClass : Attribute
 {
-	public required int Index;
+	public int ManualIndexOverride = -1;
 }
 
 
@@ -44,12 +44,6 @@ public class ManualClassIndexAttribute : Attribute
 public class ImplementClientClassAttribute : Attribute
 {
 	public required string ClientClassName;
-	public required string DataTable;
+	public required string RecvTable;
 	public required string ServerClassName;
-}
-
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class ImplementClientClassDTAttribute : ImplementClientClassAttribute
-{
-
 }
