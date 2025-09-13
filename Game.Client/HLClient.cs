@@ -21,6 +21,11 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
 		services.AddSingleton<IClientEntityList, ClientEntityList>();
+		services.AddSingleton<IPrediction, Prediction>();
+		services.AddSingleton<ICenterPrint, CenterPrint>();
+		services.AddSingleton<ClientLeafSystem>();
+		services.AddSingleton<IClientLeafSystem>(x => x.GetRequiredService<ClientLeafSystem>());
+		services.AddSingleton<IClientLeafSystemEngine>(x => x.GetRequiredService<ClientLeafSystem>());
 		services.AddSingleton<ViewRender>();
 		services.AddSingleton<Hud>();
 		services.AddSingleton<HudElementHelper>();
@@ -117,9 +122,9 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	public bool ShouldAllowConsole() => true;
-	
+
 	public ClientFrameStage CurFrameStage;
-	
+
 	public void FrameStageNotify(ClientFrameStage stage) {
 		CurFrameStage = stage;
 		switch (stage) {
@@ -154,6 +159,6 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	private void OnRenderEnd() {
-		
+
 	}
 }

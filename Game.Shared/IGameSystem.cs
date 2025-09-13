@@ -1,6 +1,18 @@
 ﻿namespace Game.Shared;
 
 
+public interface IGameSystemPerFrame : IGameSystem {
+
+#if CLIENT_DLL
+	void PreRender();
+	void Update(double frametime);
+	void PostRender();
+#else
+	void FrameUpdatePreEntityThink();
+	void FrameUpdatePostEntityThink();
+	void PreClientUpdate();
+#endif
+}
 public interface IGameSystem
 {
 	ReadOnlySpan<char> Name();
@@ -21,15 +33,6 @@ public interface IGameSystem
 
 	bool IsPerFrame();
 
-#if CLIENT_DLL
-	void PreRender();
-	void Update(double frametime);
-	void PostRender();
-#else
-	void FrameUpdatePreEntityThink();
-	void FrameUpdatePostEntityThink();
-	void PreClientUpdate();
-#endif
 
 	static string? currentMapName;
 
