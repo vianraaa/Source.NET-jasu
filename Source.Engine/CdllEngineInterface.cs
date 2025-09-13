@@ -32,6 +32,7 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 		return cl.LevelFileName;
 	}
 
+	public int GetLocalPlayer() => cl.PlayerSlot + 1;
 	public void ClientCmd_Unrestricted(ReadOnlySpan<char> cmdString) => Cbuf.AddText(cmdString);
 	public void ExecuteClientCmd(ReadOnlySpan<char> cmdString) {
 		Cbuf.AddText(cmdString);
@@ -93,5 +94,9 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 
 	public bool IsInGame() {
 		return cl.IsActive();
+	}
+
+	public double GetLastTimeStamp() {
+		return cl.LastServerTickTime;
 	}
 }

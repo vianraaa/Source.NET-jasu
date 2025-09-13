@@ -91,4 +91,6 @@ public interface IEngineClient
 	void GetMouseDelta(out int dx, out int dy);
 	bool IsConnected();
 	bool IsInGame();
+	int GetLocalPlayer();
+	double GetLastTimeStamp();
 }

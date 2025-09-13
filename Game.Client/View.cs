@@ -19,6 +19,11 @@ namespace Game.Client;
 
 public class ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) : IViewRender
 {
+	public const int VIEW_NEARZ = 3;
+
+	static ConVar r_nearz = new(VIEW_NEARZ.ToString(), FCvar.Cheat, "Override the near clipping plane." );
+	static ConVar r_farz = new("-1", FCvar.Cheat, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
+
 	public ViewSetup? CurrentView;
 	bool ForceNoVis;
 	DrawFlags BaseDrawFlags;
@@ -70,11 +75,19 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	}
 
 	public float GetZFar() {
-		throw new NotImplementedException();
+		float farZ;
+
+		if (r_farz.GetFloat() < 1) {
+			farZ = 16000; // todo
+		}
+		else 
+			farZ = r_farz.GetFloat();
+	
+		return farZ;
 	}
 
 	public float GetZNear() {
-		throw new NotImplementedException();
+		return r_nearz.GetFloat();
 	}
 
 	public void Init() {
@@ -94,7 +107,24 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	}
 
 	private void SetUpViews() {
+		float farZ = GetZFar();
+		ref ViewSetup viewEye = ref View;
 
+		viewEye.ZFar = farZ;
+		viewEye.ZFarViewmodel = farZ;
+
+		viewEye.ZNear = GetZNear();
+		viewEye.ZNearViewmodel = 1;
+		viewEye.FOV = 75; // todo
+
+		viewEye.Ortho = false;
+		viewEye.ViewToProjectionOverride = false;
+		viewEye.StereoEye = StereoEye.Mono;
+
+		C_BasePlayer? player = C_BasePlayer.GetLocalPlayer();
+		if(player != null) {
+			player.CalcView(ref viewEye.Origin, ref viewEye.Angles, ref viewEye.ZNear, ref viewEye.ZFar, ref viewEye.FOV);
+		}
 	}
 
 	public void QueueOverlayRenderView(in ViewSetup view, ClearFlags clearFlags, DrawFlags whatToDraw) {
