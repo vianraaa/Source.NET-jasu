@@ -33,6 +33,7 @@ public class ClientState : BaseClientState
 	readonly CL CL;
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
+	readonly IPrediction ClientSidePrediction;
 	readonly IModelLoader modelloader;
 	readonly Lazy<IEngineClient> engineClient_LAZY;
 	IEngineClient engineClient => engineClient_LAZY.Value;
@@ -105,7 +106,7 @@ public class ClientState : BaseClientState
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
 		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services,
-		IModelLoader modelloader, ICommandLine commandLine)
+		IModelLoader modelloader, ICommandLine commandLine, IPrediction ClientSidePrediction)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -119,6 +120,7 @@ public class ClientState : BaseClientState
 		this.HostState = HostState;
 		this.Common = Common;
 		this.services = services;
+		this.ClientSidePrediction = ClientSidePrediction;
 		engineClient_LAZY = new(ProduceEngineClient);
 		CommandLine = commandLine;
 	}
@@ -243,6 +245,31 @@ public class ClientState : BaseClientState
 			Host.Disconnect(true, reason);
 		}
 	}
+
+	protected override bool ProcessPacketEntities(svc_PacketEntities msg) {
+		if (!msg.IsDelta) 
+				ClientSidePrediction.OnReceivedUncompressedPacket();
+		else {
+			if (DeltaTick == -1) 
+				return true;
+			
+			CL.PreprocessEntities();
+		}
+
+		if (LocalNetworkBackdoor.Global != null) {
+			if (SignOnState == SignOnState.Spawn) 
+				SetSignonState(SignOnState.Full, ServerCount);
+			
+			DeltaTick = GetServerTickCount();
+			return true;
+		}
+
+		if (!CL.ProcessPacketEntities(msg))
+			return false;
+
+		return base.ProcessPacketEntities(msg);
+	}
+
 	public override bool SetSignonState(SignOnState state, int count) {
 		if (!base.SetSignonState(state, count)) {
 			CL.Retry();
@@ -361,7 +388,7 @@ public class ClientState : BaseClientState
 
 		NetChannel!.SendNetMsg(info);
 	}
-
+	 
 	public void FinishSignonState_New() {
 		if (SignOnState != SignOnState.New)
 			return;

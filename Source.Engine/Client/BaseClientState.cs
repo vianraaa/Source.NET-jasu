@@ -254,29 +254,22 @@ public abstract class BaseClientState(
 		return true;
 	}
 
-	private bool ProcessPacketEntities(svc_PacketEntities msg) {
-		// Cheating; need to better implement all of this
+	protected virtual bool ProcessPacketEntities(svc_PacketEntities msg) {
 		if (SignOnState < SignOnState.Spawn) {
-			ConWarning("Received packet entities while connecting!\n");
+			ConMsg("Received packet entities while connecting!\n");
 			return false;
 		}
 
-		if (msg.UpdateBaseline) {
-			var clcAck = new clc_BaselineAck(0, msg.Baseline);
-			NetChannel.SendNetMsg(clcAck, true);
-		}
-
 		if (SignOnState == SignOnState.Spawn) {
-			if (!msg.IsDelta) {
+			if (!msg.IsDelta) 
 				SetSignonState(SignOnState.Full, ServerCount);
-			}
 			else {
-				ConWarning("Received delta packet entities while spawning!\n");
+				ConMsg("Received delta packet entities while spawing!\n");
 				return false;
 			}
 		}
 
-		if (DeltaTick >= 0 || !msg.IsDelta)
+		if ((DeltaTick >= 0) || !msg.IsDelta) 
 			DeltaTick = GetServerTickCount();
 
 		return true;

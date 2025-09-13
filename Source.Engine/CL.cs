@@ -257,7 +257,7 @@ public class CL(IServiceProvider services, Net Net,
 
 	public int PropsDecoded;
 
-	bool ProcessPacketEntities(svc_PacketEntities entmsg) {
+	public bool ProcessPacketEntities(svc_PacketEntities entmsg) {
 		ClientFrame newFrame = cl.AllocateFrame();
 		newFrame.Init(cl.GetServerTickCount());
 		ClientFrame? oldFrame = null;
@@ -326,7 +326,7 @@ public class CL(IServiceProvider services, Net Net,
 		cl.DeleteClientFrames(entmsg.DeltaFrom);
 
 		if (ClientFrame.MAX_CLIENT_FRAMES < cl.AddClientFrame(newFrame)) 
-			DevMsg(1, "CL_ProcessPacketEntities: frame window too big (>%i)\n", ClientFrame.MAX_CLIENT_FRAMES);
+			DevMsg(1, "CL.ProcessPacketEntities: frame window too big (>%i)\n", ClientFrame.MAX_CLIENT_FRAMES);
 		
 		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdateEnd);
 
@@ -346,6 +346,10 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	private void FlushEntityPacket(ClientFrame newFrame, string v) {
+		throw new NotImplementedException();
+	}
+
+	internal void PreprocessEntities() {
 		throw new NotImplementedException();
 	}
 }
