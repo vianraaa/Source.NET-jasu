@@ -1,0 +1,15 @@
+﻿using static Source.Common.Engine.IStaticPropMgrEngine;
+
+namespace Source.Common;
+
+public interface IClientEntityList {
+	IClientNetworkable? GetClientNetworkable(int entnNum);
+	IClientNetworkable? GetClientNetworkableFromHandle(BaseHandle ent);
+	IClientUnknown? GetClientUnknownFromHandle(BaseHandle ent);
+	IClientEntity? GetClientEntity(int entNum);
+	IClientEntity? GetClientEntityFromHandle(BaseHandle ent);
+	int NumberOfEntities(bool includeNonNetworkable);
+	int GetHighestEntityIndex();
+	void SetMaxEntities(int maxEnts);
+	int GetMaxEntities();
+}

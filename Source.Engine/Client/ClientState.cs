@@ -487,4 +487,35 @@ public class ClientState : BaseClientState
 		else
 			p.SetModel(null);
 	}
+
+	readonly ClassMemoryPool<ClientFrame> ClientFramePool = new();
+
+	public ClientFrame AllocateFrame() {
+		return ClientFramePool.Alloc();
+	}
+
+	public void FreeFrame(ClientFrame frame) {
+		if (ClientFramePool.IsMemoryPoolAllocated(frame))
+			ClientFramePool.Free(frame);
+	}
+
+	internal ClientFrame? GetClientFrame(int deltaFrom) {
+		throw new NotImplementedException();
+	}
+
+	internal int AddClientFrame(ClientFrame newFrame) {
+		throw new NotImplementedException();
+	}
+
+	internal void DeleteClientFrames(int deltaFrom) {
+		throw new NotImplementedException();
+	}
+
+	internal void ReadPacketEntities(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	internal void CopyEntityBaseline(int baseline, int updateBaseline) {
+		throw new NotImplementedException();
+	}
 }

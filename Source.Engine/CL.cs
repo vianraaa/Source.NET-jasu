@@ -27,10 +27,10 @@ namespace Source.Engine;
 /// </summary>
 public class CL(IServiceProvider services, Net Net, 
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
-	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader)
+	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader, ClientDLL ClientDLL)
 {
 	public ClientState cl;
-	public IBaseClientDLL ClientDLL;
+	public IBaseClientDLL clientDLL;
 	public IEngineClient engineClient;
 	public void ApplyAddAngle() {
 
@@ -47,14 +47,14 @@ public class CL(IServiceProvider services, Net Net,
 		if (!Host.ShouldRun())
 			return;
 
-		ClientDLL.ExtraMouseSample(frameTime, !cl.Paused);
+		clientDLL.ExtraMouseSample(frameTime, !cl.Paused);
 	}
 
 	public void Init() {
 		cl = services.GetRequiredService<ClientState>();
 		cl.Clear();
 
-		ClientDLL = services.GetRequiredService<IBaseClientDLL>();
+		clientDLL = services.GetRequiredService<IBaseClientDLL>();
 		engineClient = services.GetRequiredService<IEngineClient>();
 	}
 
@@ -96,7 +96,7 @@ public class CL(IServiceProvider services, Net Net,
 			bool ok = true;
 			for (int to = nextcommandnr - numcmds + 1; to <= nextcommandnr; to++) {
 				bool isnewcmd = to >= (nextcommandnr - move.NewCommands + 1);
-				ok = ok && ClientDLL.WriteUsercmdDeltaToBuffer(move.DataOut, from, to, isnewcmd);
+				ok = ok && clientDLL.WriteUsercmdDeltaToBuffer(move.DataOut, from, to, isnewcmd);
 				from = to;
 			}
 
@@ -117,7 +117,7 @@ public class CL(IServiceProvider services, Net Net,
 
 		if (cl.IsActive()) {
 			int nextcmdnr = cl.LastOutgoingCommand + cl.ChokedCommands + 1;
-			ClientDLL.CreateMove(nextcmdnr, host_state.IntervalPerTick - accumulatedExtraSamples, !cl.IsPaused());
+			clientDLL.CreateMove(nextcmdnr, host_state.IntervalPerTick - accumulatedExtraSamples, !cl.IsPaused());
 
 			if (sendPacket)
 				SendMove();
@@ -254,8 +254,101 @@ public class CL(IServiceProvider services, Net Net,
 
 		return ref data;
 	}
-}
 
+	public int PropsDecoded;
+
+	bool ProcessPacketEntities(svc_PacketEntities entmsg) {
+		ClientFrame newFrame = cl.AllocateFrame();
+		newFrame.Init(cl.GetServerTickCount());
+		ClientFrame? oldFrame = null;
+		
+		if (entmsg.IsDelta) {
+			int nDeltaTicks = cl.GetServerTickCount() - entmsg.DeltaFrom;
+			float flDeltaSeconds = Host.TicksToTime(nDeltaTicks);
+
+			if (cl.GetServerTickCount() == entmsg.DeltaFrom) {
+				Host.Error("Update self-referencing, connection dropped.\n");
+				return false;
+			}
+
+			oldFrame = cl.GetClientFrame(entmsg.DeltaFrom);
+
+			if (oldFrame == null) {
+				FlushEntityPacket(newFrame, "Update delta not found.\n");
+				return false;
+			}
+		}
+		else {
+			for (int i = 0; i <= ClientDLL.EntityList.GetHighestEntityIndex(); i++) {
+				DeleteDLLEntity(i, "ProcessPacketEntities", true);
+			}
+		}
+
+		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdateStart);
+
+		PropsDecoded = 0;
+
+		Assert(entmsg.Baseline >= 0 && entmsg.Baseline < 2);
+
+		if (entmsg.UpdateBaseline) {
+			int updateBaseline = (entmsg.Baseline == 0) ? 1 : 0;
+			cl.CopyEntityBaseline(entmsg.Baseline, updateBaseline);
+
+			// WHEN GETTING THIS WORKING AGAIN, REMOVE THE OTHER TIME WE DO THIS AS A TEMPORARY MEASURE
+			throw new Exception("Look at the above comment");
+			var msg = new clc_BaselineAck(cl.GetServerTickCount(), entmsg.Baseline);
+			cl.NetChannel!.SendNetMsg(msg, true);
+		}
+
+		EntityReadInfo readInfo = new();
+		readInfo.Buf = entmsg.DataIn;
+		readInfo.From = oldFrame;
+		readInfo.To = newFrame;
+		readInfo.AsDelta = entmsg.IsDelta;
+		readInfo.HeaderCount = entmsg.UpdatedEntries;
+		readInfo.Baseline = entmsg.Baseline;
+		readInfo.UpdateBaselines = entmsg.UpdateBaseline;
+
+		cl.ReadPacketEntities(readInfo);
+
+		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdatePostDataUpdateStart);
+
+		CallPostDataUpdates(readInfo);
+
+		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdatePostDataUpdateEnd);
+
+		MarkEntitiesOutOfPVS(ref newFrame.TransmitEntity);
+
+		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.LocalPlayer, readInfo.LocalPlayerBits);
+		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.OtherPlayers, readInfo.OtherPlayerBits);
+		cl.NetChannel!.UpdateMessageStats(NetChannelGroup.Entities, -(readInfo.LocalPlayerBits + readInfo.OtherPlayerBits));
+
+		cl.DeleteClientFrames(entmsg.DeltaFrom);
+
+		if (ClientFrame.MAX_CLIENT_FRAMES < cl.AddClientFrame(newFrame)) 
+			DevMsg(1, "CL_ProcessPacketEntities: frame window too big (>%i)\n", ClientFrame.MAX_CLIENT_FRAMES);
+		
+		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdateEnd);
+
+		return true;
+	}
+
+	private void CallPostDataUpdates(EntityReadInfo u) {
+		throw new NotImplementedException();
+	}
+
+	private void MarkEntitiesOutOfPVS(ref MaxEdictsBitVec transmitEntity) {
+		throw new NotImplementedException();
+	}
+
+	private void DeleteDLLEntity(int i, ReadOnlySpan<char> v1, bool v2) {
+		throw new NotImplementedException();
+	}
+
+	private void FlushEntityPacket(ClientFrame newFrame, string v) {
+		throw new NotImplementedException();
+	}
+}
 
 /// <summary>
 /// Loads and shuts down the client DLL
@@ -263,12 +356,21 @@ public class CL(IServiceProvider services, Net Net,
 /// <param name="services"></param>
 public class ClientDLL(IServiceProvider services, Sys Sys)
 {
-	IBaseClientDLL clientDLL;
+	public IBaseClientDLL clientDLL;
+	public IPrediction ClientSidePrediction;
+	public IClientEntityList EntityList;
+	public ICenterPrint CenterPrint;
+	public IClientLeafSystemEngine ClientLeafSystem;
 	public void Init() {
 		clientDLL = services.GetRequiredService<IBaseClientDLL>();
 
 		if (!clientDLL.Init())
 			Sys.Error("Client.dll Init() in library client failed.");
+
+		ClientSidePrediction = services.GetRequiredService<IPrediction>();
+		EntityList = services.GetRequiredService<IClientEntityList>();
+		CenterPrint = services.GetRequiredService<ICenterPrint>();
+		ClientLeafSystem = services.GetRequiredService<IClientLeafSystemEngine>();
 	}
 
 	public void Update() {

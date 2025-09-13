@@ -20,6 +20,7 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<IInput, HLInput>();
+		services.AddSingleton<IClientEntityList, ClientEntityList>();
 		services.AddSingleton<ViewRender>();
 		services.AddSingleton<Hud>();
 		services.AddSingleton<HudElementHelper>();

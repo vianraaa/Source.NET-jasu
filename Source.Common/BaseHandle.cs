@@ -1,5 +1,5 @@
 ﻿namespace Source.Common;
 
-public class BaseHandle { 
-
+public class BaseHandle {
+	public ulong Index;
 }

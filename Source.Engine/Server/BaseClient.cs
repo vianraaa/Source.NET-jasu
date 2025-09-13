@@ -45,6 +45,6 @@ public abstract class BaseClient : IClient, IClientMessageHandler {
 	// CSmartPtr<CFrameSnapshot, CRefCountAccessorLongName>
 	// CFrameSnapshot baseline
 	int BaselineUpdateTick;
-	// CBitVec<MAX_EDICTS> BaselinesSent;
+	MaxEdictsBitVec BaselinesSent;
 	public int BaselineUsed;
 }

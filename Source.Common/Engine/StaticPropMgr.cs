@@ -1,9 +1,6 @@
 ﻿namespace Source.Common.Engine;
 public interface IStaticPropMgrEngine
 {
-	public class IHandleEntity { }
-	public class ICollideable { }
-	public struct CBaseHandle { }
 	public struct LightCacheHandle_t { }
 
 	public bool Init();
@@ -26,7 +23,7 @@ public interface IStaticPropMgrEngine
 	public LightCacheHandle_t GetLightCacheHandleForStaticProp( IHandleEntity pHandleEntity );
 
 	public bool IsStaticProp( IHandleEntity pHandleEntity );
-	public bool IsStaticProp( CBaseHandle handle );
+	public bool IsStaticProp( BaseHandle handle );
 
 	public int GetStaticPropIndex( IHandleEntity pHandleEntity );
 	public bool PropHasBakedLightingDisabled( IHandleEntity pHandleEntity);

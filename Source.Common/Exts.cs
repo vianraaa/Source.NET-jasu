@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Networking;
+using Source.Common.Utilities;
 
 using System;
 using System.Buffers;
@@ -36,6 +38,132 @@ public enum Realm
 	Server,
 	Menu
 }
+
+public static class BitVecBase
+{
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static byte ByteMask(int bit) => (byte)(1 << (bit % 8));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsBitSet(this Span<byte> bytes, int bit) {
+		byte b = bytes[bit >> 3];
+		return (b & ByteMask(bit)) != 0;
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void Set(this Span<byte> bytes, int bit) {
+		ref byte b = ref bytes[bit >> 3];
+		b |= ByteMask(bit);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void Clear(this Span<byte> bytes, int bit) {
+		ref byte b = ref bytes[bit >> 3];
+		b &= (byte)~ByteMask(bit);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void Set(this Span<byte> bytes, int bit, bool newVal) {
+		ref byte b = ref bytes[bit >> 3];
+		if (newVal)
+			b |= ByteMask(bit);
+		else
+			b &= (byte)~ByteMask(bit);
+	}
+}
+
+/// <summary>
+/// An inline bit-vector array of MAX_EDICTS >> 3 bytes.
+/// </summary>
+[InlineArray(Constants.MAX_EDICTS >> 3)]
+public struct MaxEdictsBitVec
+{
+	public byte bytes;
+	public bool IsBitSet(int bit) => BitVecBase.IsBitSet(this, bit);
+	public void Set(int bit) => BitVecBase.Set(this, bit);
+	public void Clear(int bit) => BitVecBase.Clear(this, bit);
+	public void Set(int bit, bool newVal) => BitVecBase.Set(this, bit, newVal);
+}
+
+public class ClassMemoryPool<T> where T : class, new()
+{
+	readonly ConcurrentDictionary<T, bool> valueStates = [];
+
+	public T Alloc() {
+		foreach (var kvp in valueStates) {
+			if (kvp.Value == false) { // We found something free
+				valueStates[kvp.Key] = true;
+				return kvp.Key;
+			}
+		}
+
+		// Make an new instance of the class
+		var instance = new T();
+		valueStates[instance] = true;
+		return instance;
+	}
+
+	public bool IsMemoryPoolAllocated(T value) => valueStates.TryGetValue(value, out _);
+	public void Free(T value) {
+		if (!valueStates.TryGetValue(value, out bool state))
+			AssertMsg(false, $"Passed an instance of {typeof(T).Name} to {nameof(Free)}(T value) that was not allocated by {nameof(Alloc)}()");
+		else if (state == false)
+			AssertMsg(false, $"Attempted to free {typeof(T).Name} instance twice in ClassPool<T>, please verify\n");
+		else {
+			value.ClearInstantiatedReference();
+			valueStates[value] = false;
+		}
+	}
+}
+
+public class StructMemoryPool<T> where T : struct
+{
+	readonly RefStack<T> instances = [];
+	readonly ConcurrentDictionary<int, bool> valueStates = [];
+
+	public ref T Alloc() {
+		foreach (var kvp in valueStates) {
+			ref T existing = ref instances[kvp.Key];
+			if (kvp.Value == false) {
+				valueStates[kvp.Key] = true;
+				return ref existing;
+			}
+		}
+
+		lock (instances) {
+			ref T instance = ref instances.Push();
+			valueStates[instances.Count - 1] = true;
+			return ref instance;
+		}
+	}
+
+	public unsafe bool IsMemoryPoolAllocated(ref T value) {
+		lock (instances) {
+			for (int i = 0; i < instances.Count; i++) {
+				ref T instance = ref instances[i];
+				if (Unsafe.AreSame(ref value, ref instance))
+					return true;
+			}
+		}
+
+		return false;
+	}
+
+
+	public void Free(ref T value) {
+		lock (instances) {
+			for (int i = 0; i < instances.Count; i++) {
+				ref T instance = ref instances[i];
+				if (Unsafe.AreSame(ref value, ref instance)) {
+					if (!valueStates.TryGetValue(i, out bool state))
+						AssertMsg(false, $"Passed an instance of {typeof(T).Name} to {nameof(Free)}(T value) that was not allocated by {nameof(Alloc)}()");
+					else if (state == false)
+						AssertMsg(false, $"Attempted to free {typeof(T).Name} instance twice in StructPool<T>, please verify\n");
+					else {
+						valueStates[i] = false;
+						instance = default; // Zero out the instance
+					}
+				}
+			}
+		}
+	}
+}
+
 public static class BitVecExts
 {
 	/// <summary>
@@ -79,13 +207,17 @@ public static class ClassUtils
 	public static void ClearInstantiatedReferences<T>(this Span<T> array) where T : class {
 		Action<object> clearer = _clearers.GetOrAdd(typeof(T), CreateClearer);
 
-		foreach (ref T item in array) 
-			if (item == null) 
+		foreach (ref T item in array)
+			if (item == null)
 				item = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
-			else 
+			else
 				clearer(item);
 	}
-	private static Action<object> CreateClearer(Type type) {
+	public static void ClearInstantiatedReference<T>(this T target) where T : class {
+		Action<object> clearer = _clearers.GetOrAdd(typeof(T), CreateClearer);
+		clearer(target);
+	}
+	public static Action<object> CreateClearer(Type type) {
 		var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 		if (fields.Length == 0)
 			return _ => { }; // nothing to clear
