@@ -22,6 +22,8 @@ Source:
 	GenInlineArray(8192)
 */
 
+using Source.Common.Networking;
+
 using System.Runtime.CompilerServices;
 
 namespace Source;
@@ -160,3 +162,10 @@ namespace Source;
 [InlineArray(2048)] public struct InlineArray2048<T> { public T item; }
 [InlineArray(4096)] public struct InlineArray4096<T> { public T item; }
 [InlineArray(8192)] public struct InlineArray8192<T> { public T item; }
+
+
+// Very specialized uses
+[InlineArray(Constants.MAX_EDICTS)] public struct InlineArrayMaxEdicts<T> { public T item; }
+[InlineArray(Constants.MAX_PACKEDENTITY_DATA)] public struct InlineArrayMaxPackedEntityData<T> { public T item; }
+[InlineArray(Constants.NUM_ENT_ENTRIES)] public struct InlineArrayNumEntEntries<T> { public T item; }
+[InlineArray(Protocol.STEAM_KEYSIZE)] public struct InlineArraySteamKeysize<T> { public T item; }

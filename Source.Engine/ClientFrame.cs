@@ -1,6 +1,7 @@
 ﻿
 namespace Source.Engine;
 
+
 public class ClientFrame {
 	public const int MAX_CLIENT_FRAMES = 128;
 
@@ -12,7 +13,10 @@ public class ClientFrame {
 	public MaxEdictsBitVec TransmitAlways;
 	public ClientFrame? Next;
 
-	internal void Init(int v) {
-		throw new NotImplementedException();
+	internal void Init(int tickcount) {
+		TickCount = tickcount;
+	}
+	internal void Init(FrameSnapshot snapshot) {
+		TickCount = snapshot.TickCount;
 	}
 }

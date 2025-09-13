@@ -31,6 +31,9 @@ public static class Constants
 	public const int MAX_DECAL_INDEX_BITS = 9;
 	public const int SP_MODEL_INDEX_BITS = 13;
 
+	public const int MAX_PACKEDENTITY_DATA = 16384;
+	public const int MAX_PACKEDENTITY_PROPS = 4096;
+
 	public const int ABSOLUTE_PLAYER_LIMIT = 255;
 	public const int ABSOLUTE_PLAYER_LIMIT_DW = ((ABSOLUTE_PLAYER_LIMIT / 32) + 1);
 	public const int MAX_PLAYERS = ABSOLUTE_PLAYER_LIMIT;
@@ -43,4 +46,10 @@ public static class Constants
 	public const double DEFAULT_TICK_INTERVAL = 0.015;
 	public const double MINIMUM_TICK_INTERVAL = 0.001;
 	public const double MAXIMUM_TICK_INTERVAL = 0.1;
+
+	public const int NUM_ENT_ENTRY_BITS = MAX_EDICT_BITS + 1;
+	public const int NUM_ENT_ENTRIES = 1 << NUM_ENT_ENTRY_BITS;
+	public const int ENT_ENTRY_MASK = NUM_ENT_ENTRIES - 1;
+	public const int INVALID_EHANDLE_INDEX = unchecked((int)0xFFFFFFFF);
+	public const int NUM_SERIAL_NUM_BITS = 32 - NUM_ENT_ENTRY_BITS;
 }

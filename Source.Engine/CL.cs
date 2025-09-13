@@ -29,6 +29,12 @@ public class CL(IServiceProvider services, Net Net,
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
 	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader, ClientDLL ClientDLL)
 {
+	public IPrediction ClientSidePrediction => ClientDLL.ClientSidePrediction;
+	public IClientEntityList EntityList => ClientDLL.EntityList;
+	public ICenterPrint CenterPrint => ClientDLL.CenterPrint;
+	public IClientLeafSystemEngine ClientLeafSystem => ClientDLL.ClientLeafSystem;
+
+
 	public ClientState cl;
 	public IBaseClientDLL clientDLL;
 	public IEngineClient engineClient;
@@ -341,8 +347,22 @@ public class CL(IServiceProvider services, Net Net,
 		throw new NotImplementedException();
 	}
 
-	private void DeleteDLLEntity(int i, ReadOnlySpan<char> v1, bool v2) {
-		throw new NotImplementedException();
+	private void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities) {
+		IClientNetworkable? net = EntityList.GetClientNetworkable(entIndex);
+
+		if (net != null) {
+			ClientClass clientClass = net.GetClientClass();
+
+			RecordDeleteEntity(entIndex, clientClass);
+			if (onRecreatingAllEntities) 
+				net.SetDestroyedOnRecreateEntities();
+
+			net.Release();
+		}
+	}
+
+	private void RecordDeleteEntity(int entIndex, ClientClass clientClass) {
+
 	}
 
 	private void FlushEntityPacket(ClientFrame newFrame, string v) {

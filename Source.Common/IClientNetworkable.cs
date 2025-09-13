@@ -24,4 +24,5 @@ public interface IClientNetworkable {
 	bool IsDormant();
 	int EntIndex();
 	void ReceiveMessage(int classID, bf_read msg);
+	void SetDestroyedOnRecreateEntities();
 }

@@ -148,4 +148,8 @@ public partial class C_BaseEntity : IClientEntity
 	public void ReceiveMessage(int classID, bf_read msg) {
 		throw new NotImplementedException();
 	}
+
+	public void SetDestroyedOnRecreateEntities() {
+
+	}
 }

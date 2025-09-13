@@ -63,23 +63,19 @@ public abstract class BaseClientState(
 	public string? LevelFileName;
 	public string? LevelBaseName;
 	public int MaxClients;
-	// PackedEntity entity baselines
-	// ServerClassInfo
+	
+	public InlineArray2<InlineArrayMaxEdicts<PackedEntity?>> EntityBaselines;
 
 	public int ServerClasses;
 	public int ServerClassBits;
-	public string EncryptionKey;
+	public InlineArraySteamKeysize<char> EncryptionKey;
 	public uint EncryptionKeySize;
-
-	// NetworkStringTableContainer
-
-	//NetworkStringTableContainer StringTableContainer;
-
-	public bool RestrictServerCommands;
-	public bool RestrictClientCommands;
 
 	// Source does it differently but who really cares, this works fine... I think
 	public NetworkStringTableContainer? StringTableContainer;
+
+	public bool RestrictServerCommands;
+	public bool RestrictClientCommands;
 
 	public virtual void Clear() {
 		ServerCount = -1;

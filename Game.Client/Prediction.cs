@@ -11,6 +11,21 @@ using System.Threading.Tasks;
 namespace Game.Client;
 public class Prediction : IPrediction
 {
+
+	bool InPrediction;
+	bool FirstTimePredicted;
+	bool OldCLPredictValue;
+	bool EnginePaused;
+
+	int PreviousStartFrame;
+
+	int CommandsPredicted;
+	int ServerCommandsAcknowledged;
+	int PreviousAckHadErrors;
+	int IncomingPacketNumber;
+
+	float IdealPitch;
+
 	public void GetLocalViewAngles(out QAngle ang) {
 		throw new NotImplementedException();
 	}
@@ -28,7 +43,9 @@ public class Prediction : IPrediction
 	}
 
 	public void OnReceivedUncompressedPacket() {
-		throw new NotImplementedException();
+		CommandsPredicted = 0;
+		ServerCommandsAcknowledged = 0;
+		PreviousStartFrame = -1;
 	}
 
 	public void PostEntityPacketReceived() {

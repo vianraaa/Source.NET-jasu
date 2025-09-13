@@ -542,7 +542,32 @@ public class ClientState : BaseClientState
 		throw new NotImplementedException();
 	}
 
-	internal void CopyEntityBaseline(int baseline, int updateBaseline) {
-		throw new NotImplementedException();
+	internal void CopyEntityBaseline(int from, int to) {
+		for (int i = 0; i < MAX_EDICTS; i++) {
+			PackedEntity? blfrom = EntityBaselines[from][i];
+			PackedEntity? blto = EntityBaselines[to][i];
+
+			if (blfrom == null) {
+				if (blto != null) 
+					EntityBaselines[to][i] = null;
+				
+				continue;
+			}
+
+			if (blto == null) {
+				blto = EntityBaselines[to][i] = new PackedEntity();
+				blto.ClientClass = null;
+				blto.ServerClass = null;
+				blto.ReferenceCount = 0;
+			}
+
+			Assert(blfrom.EntityIndex == i);
+			Assert(!blfrom.IsCompressed());
+
+			blto.EntityIndex = blfrom.EntityIndex;
+			blto.ClientClass = blfrom.ClientClass;
+			blto.ServerClass = blfrom.ServerClass;
+			blto.AllocAndCopyPadded(blfrom.GetData());
+		}
 	}
 }

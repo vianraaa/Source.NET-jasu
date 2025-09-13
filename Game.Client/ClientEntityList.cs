@@ -1,5 +1,6 @@
 ﻿using Game.Shared;
 
+using Source;
 using Source.Common;
 
 using System;
@@ -21,7 +22,7 @@ public class ClientEntityList : BaseEntityList, IClientEntityList
 	}
 
 	public IClientNetworkable? GetClientNetworkable(int entnNum) {
-		throw new NotImplementedException();
+		return EntityCacheInfo[entnNum].Networkable;
 	}
 
 	public IClientNetworkable? GetClientNetworkableFromHandle(BaseHandle ent) {
@@ -33,7 +34,7 @@ public class ClientEntityList : BaseEntityList, IClientEntityList
 	}
 
 	public int GetHighestEntityIndex() {
-		throw new NotImplementedException();
+		return MaxUsedServerIndex;
 	}
 
 	public int GetMaxEntities() {
@@ -47,4 +48,17 @@ public class ClientEntityList : BaseEntityList, IClientEntityList
 	public void SetMaxEntities(int maxEnts) {
 		throw new NotImplementedException();
 	}
+
+	int NumServerEnts;
+	int MaxServerEnts;
+	int NumClientNonNetworkable;
+	int MaxUsedServerIndex;
+
+	struct EntityCacheInfo_t {
+		public IClientNetworkable Networkable;
+		public LinkedListNode<C_BaseEntity> LinkedListNode;
+	}
+
+	InlineArrayNumEntEntries<EntityCacheInfo_t> EntityCacheInfo;
+	readonly LinkedList<C_BaseEntity> BaseEntities = [];
 }
