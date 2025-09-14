@@ -26,7 +26,7 @@ namespace Source.Engine;
 /// Various clientside methods. In Source, these would mostly be represented by
 /// CL_MethodName's in the static global namespace
 /// </summary>
-public class CL(IServiceProvider services, Net Net, 
+public class CL(IServiceProvider services, Net Net,
 	ClientGlobalVariables clientGlobalVariables, ServerGlobalVariables serverGlobalVariables,
 	CommonHostState host_state, Host Host, Cbuf Cbuf, IEngineVGuiInternal? EngineVGui, Scr Scr, Shader Shader, ClientDLL ClientDLL, EngineRecvTable RecvTable)
 {
@@ -84,7 +84,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	public void RunPrediction(PredictionReason reason) {
-		
+
 	}
 
 	public void SendMove() {
@@ -182,7 +182,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	public void Connect(string address, string sourceTag) {
-		if(!address.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
+		if (!address.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
 			Host.Disconnect(false);
 			Net.SetMultiplayer(true);
 			EngineVGui?.EnabledProgressBarForNextLoad();
@@ -199,10 +199,10 @@ public class CL(IServiceProvider services, Net Net,
 	[ConCommand]
 	public void connect(in TokenizedCommand cmd) {
 		var splits = cmd.ArgS().Split(' ');
-		if(splits.Length == 1) {
+		if (splits.Length == 1) {
 			Connect(splits[0], "");
 		}
-		else if(splits.Length == 2) {
+		else if (splits.Length == 2) {
 			Connect(splits[0], splits[1]);
 		}
 		else {
@@ -218,7 +218,7 @@ public class CL(IServiceProvider services, Net Net,
 	public void Retry() {
 		if (cl == null) return;
 
-		if(cl.RetryAddress == null) {
+		if (cl.RetryAddress == null) {
 			Dbg.ConMsg("Can't retry, no previous connection\n");
 			return;
 		}
@@ -256,7 +256,7 @@ public class CL(IServiceProvider services, Net Net,
 	public ref PrecacheUserData GetPrecacheUserData(INetworkStringTable table, int index) {
 		Span<byte> d = table.GetStringUserData(index);
 		ref PrecacheUserData data = ref MemoryMarshal.Cast<byte, PrecacheUserData>(d)[0];
-		if (!Unsafe.IsNullRef(ref data) && d.Length != Unsafe.SizeOf<PrecacheUserData>()) 
+		if (!Unsafe.IsNullRef(ref data) && d.Length != Unsafe.SizeOf<PrecacheUserData>())
 			Error($"CL.GetPrecacheUserData({table.GetTableId()}, {index}) - length ({d.Length}) invalid.");
 
 		return ref data;
@@ -268,7 +268,7 @@ public class CL(IServiceProvider services, Net Net,
 		ClientFrame newFrame = cl.AllocateFrame();
 		newFrame.Init(cl.GetServerTickCount());
 		ClientFrame? oldFrame = null;
-		
+
 		if (entmsg.IsDelta) {
 			int nDeltaTicks = cl.GetServerTickCount() - entmsg.DeltaFrom;
 			float flDeltaSeconds = Host.TicksToTime(nDeltaTicks);
@@ -330,9 +330,9 @@ public class CL(IServiceProvider services, Net Net,
 
 		cl.DeleteClientFrames(entmsg.DeltaFrom);
 
-		if (ClientFrame.MAX_CLIENT_FRAMES < cl.AddClientFrame(newFrame)) 
+		if (ClientFrame.MAX_CLIENT_FRAMES < cl.AddClientFrame(newFrame))
 			DevMsg(1, "CL.ProcessPacketEntities: frame window too big (>%i)\n", ClientFrame.MAX_CLIENT_FRAMES);
-		
+
 		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdateEnd);
 
 		return true;
@@ -352,7 +352,7 @@ public class CL(IServiceProvider services, Net Net,
 			bool curstate = !ent.IsDormant();
 			bool newstate = pvsFlags.Get(i) != 0 ? true : false;
 
-			if (!curstate && newstate) 
+			if (!curstate && newstate)
 				ent.NotifyShouldTransmit(ShouldTransmiteState.Start);
 			else if (curstate && !newstate) {
 				ent.NotifyShouldTransmit(ShouldTransmiteState.End);
@@ -372,7 +372,7 @@ public class CL(IServiceProvider services, Net Net,
 			ClientClass clientClass = net.GetClientClass();
 
 			RecordDeleteEntity(entIndex, clientClass);
-			if (onRecreatingAllEntities) 
+			if (onRecreatingAllEntities)
 				net.SetDestroyedOnRecreateEntities();
 
 			net.Release();
@@ -402,11 +402,11 @@ public class CL(IServiceProvider services, Net Net,
 			u.UpdateType = UpdateType.PreserveEnt;
 		}
 		else {
-			if ((u.UpdateFlags & DeltaEncodingFlags.EnterPVS) != 0) 
+			if ((u.UpdateFlags & DeltaEncodingFlags.EnterPVS) != 0)
 				u.UpdateType = UpdateType.EnterPVS;
-			else if ((u.UpdateFlags & DeltaEncodingFlags.LeavePVS) != 0) 
+			else if ((u.UpdateFlags & DeltaEncodingFlags.LeavePVS) != 0)
 				u.UpdateType = UpdateType.LeavePVS;
-			else 
+			else
 				u.UpdateType = UpdateType.DeltaEnt;
 		}
 
@@ -420,13 +420,13 @@ public class CL(IServiceProvider services, Net Net,
 		u.HeaderBase = u.NewEntity;
 
 		if (u.Buf!.ReadOneBit() == 0) {
-			if (u.Buf!.ReadOneBit() != 0) 
+			if (u.Buf!.ReadOneBit() != 0)
 				u.UpdateFlags |= DeltaEncodingFlags.EnterPVS;
 		}
 		else {
 			u.UpdateFlags |= DeltaEncodingFlags.LeavePVS;
 
-			if (u.Buf!.ReadOneBit() != 0) 
+			if (u.Buf!.ReadOneBit() != 0)
 				u.UpdateFlags |= DeltaEncodingFlags.Delete;
 		}
 	}
@@ -449,7 +449,7 @@ public class CL(IServiceProvider services, Net Net,
 		if (ent != null) {
 			if (ent.GetIClientUnknown()!.GetRefEHandle()!.GetSerialNumber() != iSerialNum) {
 				DeleteDLLEntity(u.NewEntity, "CopyNewEntity");
-				ent = null; 
+				ent = null;
 			}
 		}
 
@@ -480,10 +480,10 @@ public class CL(IServiceProvider services, Net Net,
 		}
 		else {
 			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits) != null, $"CL_CopyNewEntity: GetClassBaseline({iClass}) failed.");
-			fromBits *= 8; 
+			fromBits *= 8;
 		}
 
-		bf_read fromBuf = new("CL_CopyNewEntity->fromBuf", fromData, NetChannel.Bits2Bytes(fromBits), fromBits );
+		bf_read fromBuf = new("CL_CopyNewEntity->fromBuf", fromData, NetChannel.Bits2Bytes(fromBits), fromBits);
 
 		RecvTable? recvTable = GetEntRecvTable(u.NewEntity);
 
@@ -516,12 +516,12 @@ public class CL(IServiceProvider services, Net Net,
 
 		int bit_count = u.Buf.BitsRead - start_bit;
 		// if (cl_entityreport.GetBool())
-			// CL.RecordEntityBits(u.NewEntity, bit_count);
+		// CL.RecordEntityBits(u.NewEntity, bit_count);
 
 		if (IsPlayerIndex(u.NewEntity)) {
-			if (u.NewEntity == cl.PlayerSlot + 1) 
+			if (u.NewEntity == cl.PlayerSlot + 1)
 				u.LocalPlayerBits += bit_count;
-			else 
+			else
 				u.OtherPlayerBits += bit_count;
 		}
 	}
@@ -531,8 +531,18 @@ public class CL(IServiceProvider services, Net Net,
 		return networkable?.GetClientClass().RecvTable;
 	}
 
-	private IClientNetworkable? CreateDLLEntity(int newEntity, int iClass, int iSerialNum) {
-		throw new NotImplementedException();
+	private IClientNetworkable? CreateDLLEntity(int iEnt, int iClass, int iSerialNum) {
+		ClientClass? clientClass;
+		if ((clientClass = cl.ServerClasses[iClass].ClientClass) != null) {
+			if (!cl.IsActive()) {
+				Common.TimestampedLog($"cl:  create '{clientClass.NetworkName}'\n");
+
+				return clientClass.CreateFn(iEnt, iSerialNum);
+			}
+		}
+
+		Assert(false);
+		return null;
 	}
 
 	public bool IsPlayerIndex(int newEntity) {
@@ -573,9 +583,9 @@ public class CL(IServiceProvider services, Net Net,
 		//  	CL_RecordEntityBits(u.m_nNewEntity, bit_count);
 
 		if (IsPlayerIndex(u.NewEntity)) {
-			if (u.NewEntity == cl.PlayerSlot + 1) 
+			if (u.NewEntity == cl.PlayerSlot + 1)
 				u.LocalPlayerBits += bit_count;
-			else 
+			else
 				u.OtherPlayerBits += bit_count;
 		}
 	}

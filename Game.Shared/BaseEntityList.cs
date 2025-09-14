@@ -12,11 +12,34 @@ public class EntInfo {
 	public EntInfo? Next;
 }
 
+public class EntInfoList : LinkedList<EntInfo>;
+
 public class BaseEntityList
 {
-	public BaseHandle AddNetworkableEntity(IHandleEntity pEnt, int index, int iForcedSerialNum = -1) {
-		throw new NotImplementedException();
+	public BaseEntityList() {
+		((Span<EntInfo>)EntPtrArray).ClearInstantiatedReferences();
 	}
+	public BaseHandle AddNetworkableEntity(IHandleEntity ent, int index, int forcedSerialNum = -1) {
+		return AddEntityAtSlot(ent, index, forcedSerialNum);
+	}
+
+	private BaseHandle AddEntityAtSlot(IHandleEntity ent, int slot, int forcedSerialNum) {
+		EntInfo entSlot = EntPtrArray[slot];
+		Assert(entSlot.Entity == null);
+		entSlot.Entity = ent;
+
+		if(forcedSerialNum != -1) 
+			entSlot.SerialNumber = forcedSerialNum;
+
+		ActiveList.AddLast(entSlot);
+		BaseHandle ret = new(slot, entSlot.SerialNumber);
+
+		ent.SetRefEHandle(ret);
+		OnAddEntity(ent, ret);
+
+		return ret;
+	}
+
 	public BaseHandle AddNonNetworkableEntity(IHandleEntity pEnt) {
 		throw new NotImplementedException();
 	}
@@ -42,4 +65,6 @@ public class BaseEntityList
 	protected virtual void OnRemoveEntity(IHandleEntity? pEnt, BaseHandle handle) { }
 
 	InlineArrayNumEntEntries<EntInfo> EntPtrArray;
+	EntInfoList ActiveList = [];
+	EntInfoList FreeNonNetworkableList = [];
 }

@@ -1,7 +1,15 @@
-﻿namespace Source.Common;
+﻿
+using SharpCompress.Common;
+
+namespace Source.Common;
 
 public class BaseHandle {
 	public uint Index;
+
+	public BaseHandle() { }
+	public BaseHandle(int entry, int serial) => Init(entry, serial);
+
+	private void Init(int entry, int serial) => Index = (uint)(entry | (serial << Constants.NUM_ENT_ENTRY_BITS));
 
 	public int GetEntryIndex() => (int)(Index & Constants.ENT_ENTRY_MASK);
 	public int GetSerialNumber() => (int)(Index >> Constants.NUM_ENT_ENTRY_BITS);

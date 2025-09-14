@@ -9,7 +9,7 @@ public class ClientClass
 {
 	public static ClientClass? Head;
 
-	public CreateClientClassFn? CreateFn;
+	public CreateClientClassFn CreateFn;
 	public CreateEventFn? CreateEventFn;
 	public string? NetworkName;
 	public RecvTable? RecvTable;

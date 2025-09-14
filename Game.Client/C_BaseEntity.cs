@@ -1,4 +1,7 @@
-﻿using Source.Common;
+﻿using Game.Shared;
+
+using Source;
+using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Client;
 using Source.Common.Engine;
@@ -6,6 +9,7 @@ using Source.Common.Mathematics;
 
 using Steamworks;
 
+using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -27,9 +31,36 @@ public partial class C_BaseEntity : IClientEntity
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
 
+	EntityEffects Effects;
+	RenderMode RenderMode;
+	RenderMode OldRenderMode;
+
 	public int Health;
 	public double Speed;
 	public int TeamNum;
+
+	EHANDLE OwnerEntity = new();
+	EHANDLE EffectEntity = new();
+
+	long CreationTick;
+
+	bool OldShouldDraw;
+
+	float Friction;
+	Vector3 AbsOrigin;
+	QAngle AngAbsRotation;
+	Vector3 OldOrigin;
+	QAngle OldAngRotation;
+
+	Matrix4x4 CoordinateFrame;
+	Vector3 NetworkOrigin;
+	QAngle NetworkAngles;
+
+	Handle<C_BasePlayer> PlayerSimulationOwner = new();
+	int DataChangeEventRef;
+
+	readonly ClientEntityList cl_entitylist = Singleton<ClientEntityList>();
+	readonly ClientGlobalVariables gpGlobals = Singleton<ClientGlobalVariables>();
 
 	public void ClientThink() {
 		throw new NotImplementedException();
@@ -47,29 +78,18 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public ClientClass GetClientClass() {
+	public virtual ClientClass GetClientClass() {
 		throw new NotImplementedException();
 	}
 
-	public IClientNetworkable GetClientNetworkable() {
-		throw new NotImplementedException();
-	}
 
-	public Source.Common.IClientRenderable GetClientRenderable() {
-		throw new NotImplementedException();
-	}
+	public IClientNetworkable GetClientNetworkable() => this;
+	public Source.Common.IClientRenderable GetClientRenderable() => this;
+	public IClientThinkable GetClientThinkable() => this;
+	public IClientEntity GetIClientEntity() => this;
+	public IClientUnknown GetIClientUnknown() => this;
 
-	public IClientThinkable GetClientThinkable() {
-		throw new NotImplementedException();
-	}
 
-	public IClientEntity GetIClientEntity() {
-		throw new NotImplementedException();
-	}
-
-	public IClientUnknown GetIClientUnknown() {
-		throw new NotImplementedException();
-	}
 
 	public Model? GetModel() {
 		throw new NotImplementedException();
@@ -103,17 +123,30 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public bool ShouldDraw() {
-		throw new NotImplementedException();
+	public virtual bool ShouldDraw() {
+		if (RenderMode == RenderMode.None)
+			return false;
+
+		return Model != null && !IsEffectActive(EntityEffects.NoDraw) && Index != 0;
 	}
-	public bool Init(int entNum, int serialNum) {
-		throw new NotImplementedException();
+
+	private bool IsEffectActive(EntityEffects fx) {
+		return (Effects & fx) != 0;
+	}
+
+	public virtual bool Init(int entNum, int serialNum) {
+		cl_entitylist.AddNetworkableEntity(GetIClientUnknown(), entNum, serialNum);
+
+		CreationTick = gpGlobals.TickCount;
+
+		return true;
 	}
 
 	public virtual void Dispose() {
 		GC.SuppressFinalize(this);
 	}
 
+	double SpawnTime;
 	double LastMessageTime;
 
 	public virtual void PostDataUpdate(DataUpdateType updateType) {
@@ -139,8 +172,78 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
+	public virtual void Spawn() {
+
+	}
+
+	//PredictableId PredictionId;
+	//PredictionContext? PredictionContext;
+	object? PredictionContext;
+	bool Dormant;
+	bool Predictable;
+
+	public bool GetPredictable() => Predictable;
+	public void SetPredictable(bool state) {
+		Predictable = state;
+		// todo: interp
+	}
+
+	public bool IsClientCreated() {
+		if (PredictionContext != null) {
+			Assert(GetPredictable() == null);
+			return true;
+		}
+		return false;
+	}
+
+	public Matrix4x4 EntityToWorldTransform() {
+		CalcAbsolutePosition();
+		return CoordinateFrame;
+	}
+
+	public Vector3 GetNetworkOrigin() => NetworkOrigin;
+	public QAngle GetNetworkAngles() => NetworkAngles;
+
+	private void CalcAbsolutePosition() {
+
+	}
+
 	public void PreDataUpdate(DataUpdateType updateType) {
-		throw new NotImplementedException();
+		if (AddDataChangeEvent(this, updateType, ref DataChangeEventRef)) 
+			OnPreDataChanged(updateType);
+
+		bool newentity = (updateType == DataUpdateType.Created);
+
+		// if (!newentity) 
+			// Interp_RestoreToLastNetworked(GetVarMapping());
+
+		if (newentity && !IsClientCreated()) {
+			SpawnTime = engine.GetLastTimeStamp();
+			Spawn();
+		}
+
+		OldOrigin = GetNetworkOrigin();
+		OldAngRotation = GetNetworkAngles();
+
+		OldAnimTime = AnimTime;
+		OldSimulationTime = SimulationTime;
+
+		OldRenderMode = RenderMode;
+
+
+		OldInterpolationFrame = InterpolationFrame;
+		OldShouldDraw = ShouldDraw();
+	}
+
+	private bool AddDataChangeEvent(C_BaseEntity c_BaseEntity, DataUpdateType updateType, ref int storedEvent) {
+		if(storedEvent >= 0) {
+			// todo
+			return false;
+		}
+		else {
+			// todo
+			return true;
+		}
 	}
 
 	public bool IsDormant() {
