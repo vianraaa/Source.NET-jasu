@@ -25,7 +25,6 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 	];
 	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", CreateObject, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
-	public override ClientClass GetClientClass() => ClientClass;
 
 	public QAngle EyeAngles;
 	public EHANDLE Ragdoll = new();

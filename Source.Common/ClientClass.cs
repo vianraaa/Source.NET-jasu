@@ -1,9 +1,29 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Source.Common.Utilities;
+
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Source.Common;
 
 public delegate IClientNetworkable CreateClientClassFn(int entNum, int serialNum);
 public delegate IClientNetworkable CreateEventFn();
+
+public static class ClientClassRetriever {
+	static readonly Dictionary<Type, ClientClass> ClassList = [];
+
+	public static ClientClass GetOrError(Type t) {
+		if (ClassList.TryGetValue(t, out ClientClass? c))
+			return c;
+
+		FieldInfo? field = t.GetField(nameof(ClientClass), BindingFlags.Static | BindingFlags.Public);
+		if(field == null)
+			throw new NullReferenceException(nameof(field));
+
+		c = ClassList[t] = (ClientClass)field.GetValue(null)!;
+		return c;
+	}
+}
 
 public class ClientClass
 {

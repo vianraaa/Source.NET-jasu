@@ -78,9 +78,7 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public virtual ClientClass GetClientClass() {
-		throw new NotImplementedException();
-	}
+	public virtual ClientClass GetClientClass() => ClientClassRetriever.GetOrError(GetType());
 
 
 	public IClientNetworkable GetClientNetworkable() => this;
@@ -141,6 +139,8 @@ public partial class C_BaseEntity : IClientEntity
 
 		return true;
 	}
+
+	public virtual EntityCapabilities ObjectCaps() => 0;
 
 	public virtual void Dispose() {
 		GC.SuppressFinalize(this);
@@ -270,13 +270,17 @@ public partial class C_BaseEntity : IClientEntity
 		RefEHandle = handle;
 	}
 
-	public Span<byte> GetDataTableBasePtr() {
-		return null;
-	}
-
 	public void OnDataUnchangedInPVS() {
 		// HierarchySetParent(NetworkMoveParent);
 		MarkMessageReceived();
+	}
+
+	public virtual IPVSNotify? GetPVSNotifyInterface() {
+		return null;
+	}
+
+	public virtual object GetDataTableBasePtr() {
+		return this;
 	}
 
 	BaseHandle? RefEHandle;

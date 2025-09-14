@@ -149,18 +149,18 @@ public enum BounceSound
 
 public enum RenderMode : byte
 {
-	Normal = 0,      
-	TransColor,      
-	TransTexture,    
-	Glow,            
-	TransAlpha,      
-	TransAdd,        
-	Environmental,   
-	TransAddFrameBlend, 
+	Normal = 0,
+	TransColor,
+	TransTexture,
+	Glow,
+	TransAlpha,
+	TransAdd,
+	Environmental,
+	TransAddFrameBlend,
 	TransAlphaAdd,
-	WorldGlow,    
-	None,         
-	Count,    
+	WorldGlow,
+	None,
+	Count,
 }
 
 enum RenderFx
@@ -180,15 +180,15 @@ enum RenderFx
 	FlickerSlow,
 	FlickerFast,
 	NoDissipation,
-	Distort,       
-	Hologram,      
-	Explode,       
-	GlowShell,     
-	ClampMinScale, 
-	EnvRain,       
-	EnvSnow,       
-	Spotlight,     
-	Ragdoll,       
+	Distort,
+	Hologram,
+	Explode,
+	GlowShell,
+	ClampMinScale,
+	EnvRain,
+	EnvSnow,
+	Spotlight,
+	Ragdoll,
 	PulseFastWider,
 	Max
 }
@@ -196,25 +196,25 @@ enum RenderFx
 public enum CollisionGroup
 {
 	None = 0,
-	Debris,        
+	Debris,
 	DebrisTrigger,
 	InteractiveDebris,
-	Interactive,    
+	Interactive,
 	Player,
 	BreakableGlass,
 	Vehicle,
 	PlayerMovement,
-	NPC,            
-	InVehicle,     
-	Weapon,         
-	VehicleClip,   
-	Projectile,     
-	DoorBlocker,   
-	PassableDoor,  
-	Dissolving,     
-	Pushaway,       
-	NPCActor,      
-	NPCScripted,   
+	NPC,
+	InVehicle,
+	Weapon,
+	VehicleClip,
+	Projectile,
+	DoorBlocker,
+	PassableDoor,
+	Dissolving,
+	Pushaway,
+	NPCActor,
+	NPCScripted,
 	LastSharedCollisionGroup
 }
 
@@ -278,4 +278,7 @@ public static class Constants
 	/// THIS IS TEMPORARY: We need to properly sync up with a client/server state before we can remove this!!!!!
 	/// </summary>
 	public const int TEMP_TOTAL_SERVER_CLASSES = 251;
+
+	public const int MAX_DATATABLES = 1024;
+	public const int MAX_DATATABLE_PROPS = 4096;
 }

@@ -1,11 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Source.Common;
+
+public static class ServerClassRetriever
+{
+	static readonly Dictionary<Type, ServerClass> ClassList = [];
+
+	public static ServerClass GetOrError(Type t) {
+		if (ClassList.TryGetValue(t, out ServerClass? c))
+			return c;
+
+		FieldInfo? field = t.GetField(nameof(ServerClass), BindingFlags.Static | BindingFlags.Public);
+		if (field == null)
+			throw new NullReferenceException(nameof(field));
+
+		c = ClassList[t] = (ServerClass)field.GetValue(null)!;
+		return c;
+	}
+}
 
 public class ServerClass
 {

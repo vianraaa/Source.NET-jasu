@@ -12,6 +12,17 @@ public enum DataUpdateType {
 	DataTableChanged
 }
 
+public enum InPVS : byte
+{
+	Yes = 0x0001,
+	ThisFrame = 0x0002,
+	NeedsNotify = 0x0004
+}
+
+public interface IPVSNotify {
+	void OnPVSStatusChanged(bool inPVS);
+}
+
 public interface IClientNetworkable {
 	IClientUnknown GetIClientUnknown();
 	void Release();
@@ -23,7 +34,7 @@ public interface IClientNetworkable {
 	void PostDataUpdate(DataUpdateType updateType);
 	bool IsDormant();
 	int EntIndex();
-	Span<byte> GetDataTableBasePtr();
+	object GetDataTableBasePtr();
 	void ReceiveMessage(int classID, bf_read msg);
 	void SetDestroyedOnRecreateEntities();
 	void OnDataUnchangedInPVS();
