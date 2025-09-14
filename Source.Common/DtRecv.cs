@@ -2,10 +2,16 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-using static Source.Common.Networking.svc_ClassInfo;
-
 namespace Source.Common;
 
+/// <summary>
+/// This is the base receive property abstract class. We differentiate from Source here by using 
+/// generic-types that inherit from RecvProp for specific type access, where get/set goes through
+/// overloaded abstract/virtual methods (replicating the RecvPropFloat/whatever calls that normally
+/// get done via the implement clientclass etc. macros in Source). The way Source does it is with raw
+/// pointer access, we semi-replicate that behavior in <see cref="GetRefFn{InstanceType, ReturnType}"/>
+/// since it returns a by-reference var to the field on <c>InstanceType</c>.
+/// </summary>
 public abstract class RecvProp {
 	public string VarName;
 	public SendPropType Type;
@@ -25,6 +31,9 @@ public abstract class RecvProp {
 	public abstract void SetVector3(object instance, Vector3 value);
 	public abstract ReadOnlySpan<char> GetString(object instance);
 	public abstract void SetString(object instance, ReadOnlySpan<char> str);
+
+	// ONLY used for datatable and array types (TODO: confirm the latter.)
+	public virtual RecvTable GetRecvTable(object instance) => throw new NotImplementedException();
 }
 
 public class RecvPropFloat<T>(string varName, GetRefFn<T, float> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Float, flags) where T : class
@@ -103,6 +112,8 @@ public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToFi
 	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
+
+	public override RecvTable GetRecvTable(object instance) => refToField((T)instance);
 }
 
 public class RecvPropBool<T>(string varName, GetRefFn<T, bool> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Int, flags) where T : class
