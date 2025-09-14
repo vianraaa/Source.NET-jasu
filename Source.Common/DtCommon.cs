@@ -19,53 +19,15 @@ public enum SendPropType {
 	Max
 }
 
+[StructLayout(LayoutKind.Explicit)]
 public struct DVariant
 {
-	// Enough space to fit an int (4 bytes), a float (4 bytes), a Vector3 (12 bytes)
-	InlineArray16<byte> ValueData;
-	object? ReferenceData;
-	bool UsingReferenceData;
-
-	public float Float {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, float>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, float>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public int Int {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, int>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, int>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public Vector3 Vector {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public string? String {
-		get => UsingReferenceData ? ReferenceData is string str ? str : null : null;
-		set {
-			UsingReferenceData = true;
-			ReferenceData = value;
-		}
-	}
-	public object? Data {
-		get => UsingReferenceData ? ReferenceData : null;
-		set {
-			UsingReferenceData = true;
-			ReferenceData = value;
-		}
-	}
-
-	public SendPropType Type;
+	[FieldOffset(0)] public float Float;
+	[FieldOffset(0)] public int Int;
+	[FieldOffset(0)] public Vector3 Vector;
+	[FieldOffset(0)] public string? String;
+	[FieldOffset(0)] public object? Data;
+	[FieldOffset(1)] public SendPropType Type;
 }
 
 public struct RecvProxyData

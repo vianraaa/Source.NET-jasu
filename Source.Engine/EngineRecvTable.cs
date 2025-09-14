@@ -11,10 +11,13 @@ using System.Threading.Tasks;
 namespace Source.Engine;
 
 
-public struct DeltaBitsReader
+public struct DeltaBitsReader : IDisposable
 {
 	bf_read? Buffer;
 	int LastProp;
+
+	public readonly bf_read GetBitBuf() => Buffer!;
+
 	public DeltaBitsReader(bf_read? buf) {
 		Buffer = buf;
 		LastProp = -1;
@@ -47,16 +50,45 @@ public struct DeltaBitsReader
 		ForceFinished();
 		return ~0u;
 	}
-	public bf_read GetBitBuf() => Buffer;
+
+	public void SkipPropData(SendProp prop) => BasePropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
+	public void CopyPropData(bf_write outWrite, SendProp prop) {
+		int start = Buffer!.BitsRead;
+		BasePropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
+		int len = Buffer!.BitsRead - start;
+		Buffer!.Seek(start);
+		outWrite.WriteBitsFromBuffer(Buffer!, len);
+	}
+	public void ComparePropData(ref DeltaBitsReader inReader, SendProp prop) => BasePropTypeFns.Get(prop.Type).CompareDeltas(prop, Buffer!, inReader.Buffer!);
+
+	public void Dispose() {
+		Assert(Buffer == null);
+	}
 }
 
-public struct DeltaBitsWriter
+public struct DeltaBitsWriter : IDisposable
 {
-	bf_write buf;
+	bf_write? buf;
+	int LastProp;
 	public DeltaBitsWriter(bf_write buf) {
 		this.buf = buf;
+		LastProp = -1;
 	}
-	public bf_write GetBitBuf() => buf;
+
+	public readonly bf_write GetBitBuf() => buf!;
+
+	public void WritePropIndex(int prop) {
+		Assert(prop >= 0 && prop < Constants.MAX_DATATABLE_PROPS);
+		uint diff = (uint)(prop - LastProp);
+		LastProp = prop;
+		Assert(diff > 0 && diff <= Constants.MAX_DATATABLE_PROPS);
+		int n = ((diff < 0x11u) ? -1 : 0) + ((diff < 0x101u) ? -1 : 0);
+		buf!.WriteUBitLong((uint)(diff * 8 - 8 + 4 + n * 2 + 1), 8 + n * 4 + 4 + 2 + 1);
+	}
+
+	public readonly void Dispose() {
+		buf!.WriteOneBit(0);
+	}
 }
 
 
@@ -70,10 +102,12 @@ public class EngineRecvTable
 		return false;
 	}
 	public int MergeDeltas(RecvTable table, bf_read? oldState, bf_read newState, bf_write outState, int objectID = -1, Span<int> changedProps = default, bool updateDTI = false) {
-		DeltaBitsReader oldStateReader = new(oldState);
-		DeltaBitsReader newStateReader = new(newState);
+		using DeltaBitsReader oldStateReader = new(oldState);
+		using DeltaBitsReader newStateReader = new(newState);
 
-		DeltaBitsWriter deltaBitsWriter = new(outState);
+		using DeltaBitsWriter deltaBitsWriter = new(outState);
+
+
 
 		return 0;
 	}
