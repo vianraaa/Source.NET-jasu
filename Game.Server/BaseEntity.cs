@@ -1,10 +1,18 @@
-﻿using Source.Common;
+﻿using Game.Shared;
+
+using Source.Common;
 using Source.Common.Engine;
 
 namespace Game.Server;
 
 public partial class BaseEntity : IServerEntity
 {
+	public static SendTable DT_BaseEntity= new([
+
+	]);
+
+	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
+																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 	public Source.Common.Server.BaseEntity? GetBaseEntity() {
 		throw new NotImplementedException();
 	}

@@ -150,7 +150,6 @@ public interface IDataTableBase<PropType> where PropType : IDataTableProp
 	bool IsInitialized();
 	void SetInitialized(bool v);
 	PropType GetProp(int index);
-
 }
 
 public static class DataTableHelpers

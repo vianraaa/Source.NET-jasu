@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using SharpCompress.Common;
+
+using Source;
 using Source.Common;
 
 using System;
@@ -24,10 +26,9 @@ public abstract class RecvProp : IDataTableProp
 	public PropFlags Flags;
 	public int StringBufferSize;
 
-	public RecvProp(string varName, SendPropType type, PropFlags flags) {
+	public RecvProp(string varName, SendPropType type) {
 		VarName = varName;
 		Type = type;
-		Flags = flags;
 	}
 
 	bool InsideArray;
@@ -45,8 +46,6 @@ public abstract class RecvProp : IDataTableProp
 	public abstract void SetVector3(object instance, Vector3 value);
 	public abstract ReadOnlySpan<char> GetString(object instance);
 	public abstract void SetString(object instance, ReadOnlySpan<char> str);
-
-	// ONLY used for datatable and array types (TODO: confirm the latter.)
 	public virtual RecvTable GetRecvTable(object instance) => throw new NotImplementedException();
 
 	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType>() where Instance : class
@@ -85,7 +84,7 @@ public abstract class RecvProp : IDataTableProp
 
 public delegate void RecvVarProxyFn<Instance, FieldType>(ref RecvProxyData data, GetRefFn<Instance, FieldType> fieldFn) where Instance : class;
 
-public class RecvPropFloat<T>(string varName, GetRefFn<T, float> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Float, flags) where T : class
+public class RecvPropFloat<T>(string varName, GetRefFn<T, float> refToField) : RecvProp(varName, SendPropType.Float) where T : class
 {
 	public override float GetFloat(object instance) => refToField((T)instance);
 	public override void SetFloat(object instance, float value) {
@@ -106,8 +105,7 @@ public class RecvPropFloat<T>(string varName, GetRefFn<T, float> refToField, Pro
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-
-public class RecvPropInt<T>(string varName, GetRefFn<T, int> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Int, flags) where T : class
+public class RecvPropInt<T>(string varName, GetRefFn<T, int> refToField) : RecvProp(varName, SendPropType.Int) where T : class
 {
 	public override float GetFloat(object instance) => refToField((T)instance);
 	public override void SetFloat(object instance, float value) {
@@ -128,8 +126,7 @@ public class RecvPropInt<T>(string varName, GetRefFn<T, int> refToField, PropFla
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-
-public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Vector, flags) where T : class
+public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField) : RecvProp(varName, SendPropType.Vector) where T : class
 {
 	public override float GetFloat(object instance) => refToField((T)instance).X;
 	public override void SetFloat(object instance, float value) {
@@ -150,8 +147,7 @@ public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField, 
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-
-public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.DataTable, flags) where T : class
+public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToField) : RecvProp(varName, SendPropType.DataTable) where T : class
 {
 	public override float GetFloat(object instance) => throw new NotImplementedException();
 	public override int GetInt(object instance) => throw new NotImplementedException();
@@ -164,8 +160,7 @@ public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToFi
 
 	public override RecvTable GetRecvTable(object instance) => refToField((T)instance);
 }
-
-public class RecvPropBool<T>(string varName, GetRefFn<T, bool> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Int, flags) where T : class
+public class RecvPropBool<T>(string varName, GetRefFn<T, bool> refToField) : RecvProp(varName, SendPropType.Int) where T : class
 {
 	public override float GetFloat(object instance) => refToField((T)instance) ? 1 : 0;
 	public override void SetFloat(object instance, float value) {
@@ -186,8 +181,7 @@ public class RecvPropBool<T>(string varName, GetRefFn<T, bool> refToField, PropF
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-
-public class RecvPropEHandle<T, BHT>(string varName, GetRefFn<T, BHT> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Int, flags) where T : class where BHT : BaseHandle
+public class RecvPropEHandle<T, BHT>(string varName, GetRefFn<T, BHT> refToField) : RecvProp(varName, SendPropType.Int) where T : class where BHT : BaseHandle
 {
 	public override float GetFloat(object instance) => refToField((T)instance).Index;
 	public override void SetFloat(object instance, float value) => SetInt(instance, (int)value);
@@ -204,31 +198,30 @@ public class RecvPropEHandle<T, BHT>(string varName, GetRefFn<T, BHT> refToField
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-
-
-public class RecvPropSpan<T, ST>(string varName, GetSpanFn<T, ST> spanField, PropFlags flags = 0) : RecvProp(varName, SendPropType.String, flags) where T : class where ST : unmanaged
+public class RecvPropString<T>(string varName, GetRefFn<T, string?> refToField) : RecvProp(varName, SendPropType.Int) where T : class
 {
-	public override float GetFloat(object instance) => throw new NotSupportedException();
-	public override void SetFloat(object instance, float value) => throw new NotSupportedException();
-
-	public override int GetInt(object instance) => throw new NotSupportedException();
-	public override void SetInt(object instance, int value) => throw new NotSupportedException();
-
-	public override Vector3 GetVector3(object instance) => throw new NotSupportedException();
-	public override void SetVector3(object instance, Vector3 value) => throw new NotSupportedException();
-
-	public override ReadOnlySpan<char> GetString(object instance) {
-		Span<ST> span = spanField((T)instance);
-		return MemoryMarshal.Cast<ST, char>(span);
+	public override float GetFloat(object instance) => float.TryParse(refToField((T)instance), out var i) ? i : default;
+	public override void SetFloat(object instance, float value) {
+		ref string? fl = ref refToField((T)instance);
+		fl = value.ToString();
 	}
+
+	public override int GetInt(object instance) => int.TryParse(refToField((T)instance), out var i) ? i : default;
+	public override void SetInt(object instance, int value) {
+		ref string? fl = ref refToField((T)instance);
+		fl = value.ToString();
+	}
+
+	public override Vector3 GetVector3(object instance) => throw new NotImplementedException();
+	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
+
+	public override ReadOnlySpan<char> GetString(object instance) => refToField((T)instance);
 	public override void SetString(object instance, ReadOnlySpan<char> str) {
-		Span<ST> span = spanField((T)instance);
-		Span<char> writeTarget = MemoryMarshal.Cast<ST, char>(span);
-		str.ClampedCopyTo(writeTarget);
-		if (str.Length < writeTarget.Length)
-			writeTarget[str.Length] = '\0';
+		ref string? fl = ref refToField((T)instance);
+		fl = new(str);
 	}
 }
+
 
 
 public class RecvDecoder
@@ -277,7 +270,7 @@ public class RecvDecoder
 public class SendTablePrecalc
 {
 	public SendTablePrecalc() {
-		throw new NotImplementedException();
+
 	}
 
 	public bool SetupFlatPropertyArray() {
