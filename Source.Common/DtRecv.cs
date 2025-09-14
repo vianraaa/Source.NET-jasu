@@ -234,29 +234,14 @@ public class RecvDecoder
 	public ReadOnlySpan<char> GetName() {
 		throw new NotImplementedException();
 	}
-	public SendTable GetSendTable() {
-		throw new NotImplementedException();
-	}
-	public RecvTable GetRecvTable() {
-		throw new NotImplementedException();
-	}
+	public SendTable? GetSendTable() => Precalc.GetSendTable();
+	public RecvTable? GetRecvTable() => Table;
+	public int GetNumProps() => Props.Count;
+	public RecvProp? GetProp(int i) => (uint)i < (uint)GetNumProps() ? Props[i] : null;
+	public SendProp GetSendProp(int i) => Precalc.GetProp(i);
 
-	public int GetNumProps() {
-		throw new NotImplementedException();
-	}
-	public RecvProp GetProp(int i) {
-		throw new NotImplementedException();
-	}
-	public SendProp GetSendProp(int i) {
-		throw new NotImplementedException();
-	}
-
-	public int GetNumDatatableProps() {
-		throw new NotImplementedException();
-	}
-	public RecvProp GetDatatableProp(int i) {
-		throw new NotImplementedException();
-	}
+	public int GetNumDatatableProps() => DatatableProps.Count;
+	public RecvProp GetDatatableProp(int i) => DatatableProps[i];
 
 
 	public RecvTable Table;

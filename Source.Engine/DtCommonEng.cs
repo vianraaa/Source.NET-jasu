@@ -5,6 +5,8 @@ using Source.Common.Commands;
 using Source.Common.Server;
 using Source.Engine.Client;
 
+using System.Runtime.CompilerServices;
+
 namespace Source.Engine;
 
 public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBaseClientDLL clientDLL, ICommandLine CommandLine)
@@ -35,7 +37,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 
 		for (int i = 0; i < (table.Props?.Length ?? 0); i++) {
 			SendProp prop = table.Props![i];
-			if (prop.Type == SendPropType.DataTable) 
+			if (prop.Type == SendPropType.DataTable)
 				MaybeCreateReceiveTable_R(visited, prop.GetDataTable()!);
 		}
 	}
@@ -83,11 +85,15 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 			recvTable.SetupArrayProps_R();
 		}
 
-		table.Props = sendTable.Props;
-		table.Props = table.Props != null ? new SendProp[table.Props.Length] : null;
+		table.Props = (sendTable.Props != null && sendTable.Props.Length > 0) ? new SendProp[sendTable.Props.Length] : null;
 		clientSendTable.Props.EnsureCount(table.Props?.Length ?? 0);
 
-		for (int iProp = 0; iProp < table.Props!.Length; iProp++) {
+		for (int iProp = 0; iProp < (table.Props?.Length ?? 0); iProp++) {
+			// Fill the same types
+			table.Props![iProp] = (SendProp)RuntimeHelpers.GetUninitializedObject(sendTable.Props![iProp].GetType());
+		}
+
+		for (int iProp = 0; iProp < (table.Props?.Length ?? 0); iProp++) {
 			ClientSendProp clientProp = clientSendTable.Props[iProp];
 			SendProp prop = table!.Props![iProp];
 			SendProp sendTableProp = sendTable!.Props![iProp];

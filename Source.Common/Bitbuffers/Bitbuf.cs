@@ -138,7 +138,7 @@ public abstract unsafe class BitBuffer
 	/// </summary>
 	protected void TriggerOverflow() {
 		SetOverflowFlag();
-		Debug.Assert(false, "Overflowed!");
+		Assert(false, "Overflowed!");
 		OnOverflowed?.Invoke(this, debugName);
 	}
 
