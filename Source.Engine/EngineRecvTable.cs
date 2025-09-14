@@ -10,25 +10,56 @@ using System.Threading.Tasks;
 
 namespace Source.Engine;
 
-public struct DeltaBitsReader {
-	bf_read? buf;
+
+public struct DeltaBitsReader
+{
+	bf_read? Buffer;
+	int LastProp;
 	public DeltaBitsReader(bf_read? buf) {
-		this.buf = buf;
+		Buffer = buf;
+		LastProp = -1;
+	}
+	
+	public void ForceFinished() {
+		Buffer = null;
 	}
 
-	internal uint ReadNextPropIndex() {
-		throw new NotImplementedException();
+	public uint ReadNextPropIndex() {
+		Assert(Buffer != null);
+
+		if (Buffer.BitsLeft >= 7) {
+			uint bits = Buffer.ReadUBitLong(7);
+			if ((bits & 1) != 0) {
+				uint delta = bits >> 3;
+				if ((bits & 6) != 0)
+					delta = Buffer.ReadUBitVarInternal((int)((bits & 6) >> 1));
+
+				LastProp = (int)(LastProp + 1 + delta);
+				Assert(LastProp < Constants.MAX_DATATABLE_PROPS);
+				return (uint)LastProp;
+			}
+			Buffer.BitsRead -= 6;
+		}
+		else {
+			if (Buffer.ReadOneBit() != 0)
+				Buffer.Seek(-1);
+		}
+		ForceFinished();
+		return ~0u;
 	}
-	public bf_read GetBitBuf() => buf;
+	public bf_read GetBitBuf() => Buffer;
 }
 
-public struct DeltaBitsWriter {
+public struct DeltaBitsWriter
+{
 	bf_write buf;
 	public DeltaBitsWriter(bf_write buf) {
 		this.buf = buf;
 	}
 	public bf_write GetBitBuf() => buf;
 }
+
+
 
 [EngineComponent]
 public class EngineRecvTable

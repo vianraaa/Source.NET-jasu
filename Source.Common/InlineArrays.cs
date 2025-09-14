@@ -169,3 +169,4 @@ namespace Source;
 [InlineArray(Constants.MAX_PACKEDENTITY_DATA)] public struct InlineArrayMaxPackedEntityData<T> { public T item; }
 [InlineArray(Constants.NUM_ENT_ENTRIES)] public struct InlineArrayNumEntEntries<T> { public T item; }
 [InlineArray(Protocol.STEAM_KEYSIZE)] public struct InlineArraySteamKeysize<T> { public T item; }
+[InlineArray(Constants.DT_MAX_STRING_BUFFERSIZE)] public struct InlineArrayDtMaxStringBufferSize<T> { public T item; }

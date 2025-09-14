@@ -23,6 +23,8 @@ public abstract class RecvProp {
 		Flags = flags;
 	}
 
+	object? recvFn;
+
 	public abstract float GetFloat(object instance);
 	public abstract void SetFloat(object instance, float value);
 	public abstract int GetInt(object instance);
@@ -34,7 +36,14 @@ public abstract class RecvProp {
 
 	// ONLY used for datatable and array types (TODO: confirm the latter.)
 	public virtual RecvTable GetRecvTable(object instance) => throw new NotImplementedException();
+
+	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType() where Instance : class
+		=> recvFn is RecvVarProxyFn<Instance, FieldType> fn ? fn : throw new InvalidCastException();
+	public void SetProxyFn<Instance, FieldType(RecvVarProxyFn<Instance, FieldType> fn) where Instance : class
+		=> recvFn = fn;
 }
+
+public delegate void RecvVarProxyFn<Instance, FieldType>(ref RecvProxyData data, GetRefFn<Instance, FieldType> fieldFn) where Instance : class;
 
 public class RecvPropFloat<T>(string varName, GetRefFn<T, float> refToField, PropFlags flags = 0) : RecvProp(varName, SendPropType.Float, flags) where T : class
 {

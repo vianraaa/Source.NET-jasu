@@ -10,6 +10,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Engine", "Source.Engine\Source.Engine.csproj", "{383661AF-A866-4A97-A4EF-F0170496D679}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2b. Engine Main", "2b. Engine Main", "{9D1283AA-93A6-4DDA-8D5E-229E416F5FFA}"
+	ProjectSection(SolutionItems) = preProject
+		DtEncode.txt = DtEncode.txt
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Game Realms", "3. Game Realms", "{9D95D703-BE2E-44A7-A9B3-106E4FC16631}"
 EndProject

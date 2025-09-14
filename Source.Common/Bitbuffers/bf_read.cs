@@ -23,7 +23,10 @@ public unsafe class bf_read : BitBuffer
 	/// <summary>
 	/// How many bits have been read so far
 	/// </summary>
-	public int BitsRead => curBit;
+	public int BitsRead {
+		get => curBit;
+		set => curBit = value;
+	}
 
 	public override byte[]? BaseArray => data;
 
