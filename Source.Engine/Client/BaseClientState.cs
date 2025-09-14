@@ -139,8 +139,16 @@ public abstract class BaseClientState(
 		return fromData != null;
 	}
 
-	public void SetEntityBaseline(int v, ClientClass? pClass, int newEntity, byte[] packedData, int bytesWritten) {
-		throw new NotImplementedException();
+	public void SetEntityBaseline(int baseline, ClientClass? clientClass, int index, byte[] packedData, int bytesWritten) {
+		PackedEntity? entity = EntityBaselines[baseline][index];
+		if (entity == null)
+			entity = EntityBaselines[baseline][index] = new();
+
+		entity.ClientClass = clientClass;
+		entity.EntityIndex = index;
+		entity.ServerClass = null;
+
+		entity.AllocAndCopyPadded(packedData.AsSpan()[..bytesWritten]);
 	}
 
 	public virtual void Clear() {
