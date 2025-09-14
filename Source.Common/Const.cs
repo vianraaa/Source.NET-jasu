@@ -283,4 +283,11 @@ public static class Constants
 	public const int MAX_DATATABLE_PROPS = 4096;
 	public const int DT_MAX_STRING_BITS = 9;
 	public const int DT_MAX_STRING_BUFFERSIZE = 1 << DT_MAX_STRING_BITS;
+
+	public const int DATATABLE_PROXY_INDEX_NOPROXY = 255;
+	public const int DATATABLE_PROXY_INDEX_INVALID = 254;
+	public const int MAX_EXCLUDE_PROPS = 512;
+
+	public const int PROPINDEX_NUMBITS = 12;
+	public const int MAX_TOTAL_SENDTABLE_PROPS = (1 << PROPINDEX_NUMBITS);
 }

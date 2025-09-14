@@ -170,3 +170,4 @@ namespace Source;
 [InlineArray(Constants.NUM_ENT_ENTRIES)] public struct InlineArrayNumEntEntries<T> { public T item; }
 [InlineArray(Protocol.STEAM_KEYSIZE)] public struct InlineArraySteamKeysize<T> { public T item; }
 [InlineArray(Constants.DT_MAX_STRING_BUFFERSIZE)] public struct InlineArrayDtMaxStringBufferSize<T> { public T item; }
+[InlineArray(Constants.MAX_TOTAL_SENDTABLE_PROPS)] public struct InlineArrayMaxTotalSendTableProps<T> { public T item; }

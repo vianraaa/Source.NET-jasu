@@ -218,8 +218,8 @@ public static class Dbg
 	public static void Error([StringSyntax(StringSyntaxAttribute.CompositeFormat)] ReadOnlySpan<char> msgFormat, params object?[] args)
 		=> _SpewMessage(SpewType.Error, msgFormat, args);
 
-
-	public static void ErrorIfNot(bool condition, ReadOnlySpan<char> msg) {
+	
+	public static void ErrorIfNot([DoesNotReturnIf(false)] bool condition, ReadOnlySpan<char> msg) {
 		if (!condition)
 			Error(msg);
 	}

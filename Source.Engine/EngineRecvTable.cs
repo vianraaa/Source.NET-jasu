@@ -22,7 +22,7 @@ public struct DeltaBitsReader : IDisposable
 		Buffer = buf;
 		LastProp = -1;
 	}
-	
+
 	public void ForceFinished() {
 		Buffer = null;
 	}
@@ -107,8 +107,49 @@ public class EngineRecvTable
 
 		using DeltaBitsWriter deltaBitsWriter = new(outState);
 
+		RecvDecoder? decoder = table.Decoder;
+		ErrorIfNot(decoder != null, $"RecvTable_MergeDeltas: table '{table.GetName()}' is missing its decoder.");
 
+		int changed = 0;
 
-		return 0;
+		uint oldProp = 0u;
+		if (oldState != null)
+			oldProp = oldStateReader.ReadNextPropIndex();
+
+		int iStartBit = 0, nIndexBits = 0, iLastBit = newState.BitsRead;
+
+		uint newProp = newStateReader.ReadNextPropIndex();
+
+		while (true) {
+			while (oldProp < newProp) {
+				deltaBitsWriter.WritePropIndex((int)oldProp);
+				oldStateReader.CopyPropData(deltaBitsWriter.GetBitBuf(), decoder.GetSendProp((int)oldProp));
+				oldProp = oldStateReader.ReadNextPropIndex();
+			}
+
+			if (newProp >= Constants.MAX_DATATABLE_PROPS)
+				break;
+
+			if (oldProp == newProp) {
+				oldStateReader.SkipPropData(decoder.GetSendProp((int)oldProp));
+				oldProp = oldStateReader.ReadNextPropIndex();
+			}
+
+			deltaBitsWriter.WritePropIndex((int)newProp);
+			newStateReader.CopyPropData(deltaBitsWriter.GetBitBuf(), decoder.GetSendProp((int)newProp));
+
+			if (changedProps != null)
+				changedProps[changed] = (int)newProp;
+
+			changed++;
+
+			newProp = newStateReader.ReadNextPropIndex();
+		}
+
+		Assert(changed <= Constants.MAX_DATATABLE_PROPS);
+
+		ErrorIfNot(!(oldState != null && oldState.Overflowed) && !newState.Overflowed && !outState.Overflowed, $"RecvTable_MergeDeltas: overflowed in RecvTable '{table.GetName()}'.");
+
+		return changed;
 	}
 }

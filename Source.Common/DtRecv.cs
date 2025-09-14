@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Source;
+using Source.Common;
+
+using System;
+using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -12,7 +16,8 @@ namespace Source.Common;
 /// pointer access, we semi-replicate that behavior in <see cref="GetRefFn{InstanceType, ReturnType}"/>
 /// since it returns a by-reference var to the field on <c>InstanceType</c>.
 /// </summary>
-public abstract class RecvProp {
+public abstract class RecvProp
+{
 	public string VarName;
 	public SendPropType Type;
 	public PropFlags Flags;
@@ -185,14 +190,193 @@ public class RecvPropSpan<T, ST>(string varName, GetSpanFn<T, ST> spanField, Pro
 		Span<ST> span = spanField((T)instance);
 		Span<char> writeTarget = MemoryMarshal.Cast<ST, char>(span);
 		str.ClampedCopyTo(writeTarget);
-		if(str.Length < writeTarget.Length)
+		if (str.Length < writeTarget.Length)
 			writeTarget[str.Length] = '\0';
 	}
 }
 
 
+public class RecvDecoder
+{
+	public RecvDecoder() {
+
+	}
+
+	public ReadOnlySpan<char> GetName() {
+		throw new NotImplementedException();
+	}
+	public SendTable GetSendTable() {
+		throw new NotImplementedException();
+	}
+	public RecvTable GetRecvTable() {
+		throw new NotImplementedException();
+	}
+
+	public int GetNumProps() {
+		throw new NotImplementedException();
+	}
+	public RecvProp GetProp(int i) {
+		throw new NotImplementedException();
+	}
+	public SendProp GetSendProp(int i) {
+		throw new NotImplementedException();
+	}
+
+	public int GetNumDatatableProps() {
+		throw new NotImplementedException();
+	}
+	public RecvProp GetDatatableProp(int i) {
+		throw new NotImplementedException();
+	}
+
+
+	public RecvTable Table;
+	public ClientSendTable ClientSendTable;
+
+	public SendTablePrecalc m_Precalc;
+
+	public readonly List<RecvProp> Props = [];
+	public readonly List<RecvProp> DatatableProps = [];
+}
+
+public class SendTablePrecalc
+{
+	public SendTablePrecalc() {
+		throw new NotImplementedException();
+	}
+
+	public bool SetupFlatPropertyArray() {
+		SendTable? table = GetSendTable();
+
+		table!.SetupArrayProps();
+
+		ExcludeProp[] excludeProps = new ExcludeProp[Constants.MAX_EXCLUDE_PROPS];
+		int numExcludeProps = 0;
+		if (!SendTable.GetPropsExcluded(table!, excludeProps.AsSpan(), ref  numExcludeProps, Constants.MAX_EXCLUDE_PROPS))
+			return false;
+
+		// Now build the hierarchy.
+		BuildHierarchyStruct bhs = default;
+		bhs.ExcludeProps = excludeProps;
+		bhs.ExcludeProps = excludeProps;
+		bhs.NumProps = bhs.NumDatatableProps = 0;
+		bhs.PropProxies = 0;
+		SendTable.BuildHierarchy(GetRootNode(), table, ref bhs);
+
+		SendTable.SortByPriority(ref bhs);
+		Props.Clear(); Props.AddRange(bhs.Props);
+		DataTableProps.Clear(); DataTableProps.AddRange(bhs.DatatableProps[..bhs.NumDatatableProps]);
+		PropProxyIndices.Clear(); PropProxyIndices.AddRange(bhs.PropProxyIndices[..bhs.NumProps]);
+
+		SetNumDataTableProxies(0);
+		DataTableHelpers.SetDataTableProxyIndices_R(this, GetRootNode(), ref bhs);
+
+		int proxyIndices = 0;
+		DataTableHelpers.SetRecursiveProxyIndices_R(table, GetRootNode(), ref proxyIndices);
+
+		SendTable.GenerateProxyPaths(this, proxyIndices);
+		return true;
+	}
+
+	public int GetNumProps() => Props.Count;
+	public SendProp GetProp(int i) => Props[i];
+	public int GetNumDatatableProps() => DataTableProps.Count;
+
+	public SendProp GetDatatableProp(int i) => DataTableProps[i];
+
+	public SendTable? GetSendTable() => SendTable;
+	public SendNode GetRootNode() => Root;
+
+	public int GetNumDataTableProxies() => DataTableProxies;
+
+	public void SetNumDataTableProxies(int count) {
+		DataTableProxies = count;
+	}
+
+	public struct ProxyPathEntry
+	{
+		public ushort DataTableProp;
+		public ushort Proxy;
+	}
+
+	public struct ProxyPath
+	{
+		public ushort FirstEntry;
+		public ushort Entries;
+	}
+
+
+	public readonly List<ProxyPathEntry> ProxyPathEntries = [];
+	public readonly List<ProxyPath> ProxyPaths = [];
+	public readonly List<SendProp> Props = [];
+	public readonly List<byte> PropProxyIndices = [];
+	public readonly List<SendProp> DataTableProps = [];
+	public SendNode Root;
+	public SendTable SendTable;
+	public int DataTableProxies;
+	public readonly Dictionary<ushort, ushort> PropOffsetToIndexMap = [];
+}
+
+public class ClientSendProp
+{
+	private string? TableName;
+
+	public ReadOnlySpan<char> GetTableName() => TableName;
+	public void SetTableName(ReadOnlySpan<char> str) => TableName = new(str);
+}
+public class ClientSendTable
+{
+	public int GetNumProps() => SendTable?.Count ?? 0;
+	public ClientSendProp GetClientProp(int i) => Props[i];
+	public ReadOnlySpan<char> GetName() => SendTable == null ? null : SendTable.GetName();
+	public SendTable? GetSendTable() => SendTable;
+
+	public SendTable? SendTable;
+	public readonly List<ClientSendProp> Props = [];
+}
+public class SendNode
+{
+	public SendNode() {
+		DatatableProp = -1;
+		Table = null;
+
+		FirstRecursiveProp = RecursiveProps = 0;
+		DataTableProxyIndex = Constants.DATATABLE_PROXY_INDEX_INVALID;
+	}
+
+	public int GetNumChildren() => Children.Count;
+	public SendNode GetChild(int i) => Children[i];
+	public bool IsPropInRecursiveProps(int i) {
+		int index = i - (int)FirstRecursiveProp;
+		return index >= 0 && index < RecursiveProps;
+	}
+	public ushort GetDataTableProxyIndex() {
+		Assert(DataTableProxyIndex != Constants.DATATABLE_PROXY_INDEX_INVALID);
+		return DataTableProxyIndex;
+	}
+	public void SetDataTableProxyIndex(ushort val) {
+		DataTableProxyIndex = val;
+	}
+	public ushort GetRecursiveProxyIndex() {
+		return RecursiveProxyIndex;
+	}
+	public void SetRecursiveProxyIndex(ushort val) {
+		RecursiveProxyIndex = val;
+	}
+
+	public readonly List<SendNode> Children = [];
+	public short DatatableProp;
+
+	public SendTable? Table;
+	public ushort FirstRecursiveProp;
+	public ushort RecursiveProps;
+	public ushort DataTableProxyIndex;
+	public ushort RecursiveProxyIndex;
+}
+
 public class RecvTable : List<RecvProp>
 {
+	public RecvDecoder? Decoder;
 	public string? NetTableName;
 
 	public ReadOnlySpan<char> GetName() => NetTableName;
