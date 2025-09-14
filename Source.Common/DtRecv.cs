@@ -147,7 +147,7 @@ public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField) 
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-public class RecvPropDataTable<T> : SendProp where T : class
+public class RecvPropDataTable<T> : RecvProp where T : class
 {
 	public RecvPropDataTable(string varName, RecvTable basetable) : base(varName, SendPropType.DataTable) {
 		SetDataTable(basetable);
