@@ -2,6 +2,7 @@
 using Source.Common.Bitbuffers;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -91,12 +92,39 @@ public struct DeltaBitsWriter : IDisposable
 	}
 }
 
+public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<PropType> where TableType : IDataTableBase<PropType> where PropType : IDataTableProp
+{
+	public IEnumerator<PropType> GetEnumerator() {
+		foreach (var r in Visit(table))
+			yield return r;
+	}
+	public IEnumerable<PropType> Visit(TableType table) {
+		for (int i = 0; i < table.GetNumProps(); i++) {
+			PropType type = table.GetProp(i);
+			yield return type;
+			if (type.GetPropType() == SendPropType.DataTable)
+				foreach (var t in Visit((TableType)type.GetDataTable<PropType>()!))
+					yield return t;
+		}
+	}
 
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
 
 [EngineComponent]
-public class EngineRecvTable
+public class EngineRecvTable(DtCommonEng DtCommonEng)
 {
-	public bool Init() => false;
+	public bool Init(Span<RecvTable> tables) {
+		foreach(var table in tables) {
+			if (table.IsInMainList())
+				continue;
+
+			table.SetInMainList(true);
+			DtCommonEng.RecvTables.AddLast(table);
+		}
+
+		return true;
+	}
 
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
 		return false;

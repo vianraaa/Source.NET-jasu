@@ -44,7 +44,6 @@ public abstract class SendProp : IDataTableProp
 	public abstract void SetVector3(object instance, Vector3 value);
 	public abstract ReadOnlySpan<char> GetString(object instance);
 	public abstract void SetString(object instance, ReadOnlySpan<char> str);
-	public virtual SendTable GetSendTable(object instance) => throw new NotImplementedException();
 
 	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp {
 		throw new NotImplementedException();
@@ -169,8 +168,11 @@ public class SendPropVector<T>(string varName, GetRefFn<T, Vector3> refToField, 
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-public class SendPropDataTable<T>(string varName, GetRefFn<T, SendTable> refToField) : SendProp(varName, SendPropType.DataTable) where T : class
+public class SendPropDataTable<T> : SendProp where T : class
 {
+	public SendPropDataTable(string varName, SendTable basetable) : base(varName, SendPropType.DataTable) {
+		SetDataTable(basetable);
+	}
 	public override float GetFloat(object instance) => throw new NotImplementedException();
 	public override int GetInt(object instance) => throw new NotImplementedException();
 	public override Vector3 GetVector3(object instance) => throw new NotImplementedException();
@@ -179,8 +181,6 @@ public class SendPropDataTable<T>(string varName, GetRefFn<T, SendTable> refToFi
 	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-
-	public override SendTable GetSendTable(object instance) => refToField((T)instance);
 }
 public class SendPropBool<T>(string varName, GetRefFn<T, bool> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Int, bits, flags, lowValue, highValue) where T : class
 {

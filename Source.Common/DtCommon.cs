@@ -177,7 +177,7 @@ public static class DataTableHelpers
 				prop.SetArrayProp(arrayProp);
 			}
 			else if (prop.GetPropType() == SendPropType.DataTable)
-				SetupArrayProps_R(prop.GetDataTable<PropType>());
+				SetupArrayProps_R(prop.GetDataTable<PropType>()!);
 		}
 	}
 

@@ -147,8 +147,11 @@ public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField) 
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
 }
-public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToField) : RecvProp(varName, SendPropType.DataTable) where T : class
+public class RecvPropDataTable<T> : SendProp where T : class
 {
+	public RecvPropDataTable(string varName, SendTable basetable) : base(varName, SendPropType.DataTable) {
+		SetDataTable(basetable);
+	}
 	public override float GetFloat(object instance) => throw new NotImplementedException();
 	public override int GetInt(object instance) => throw new NotImplementedException();
 	public override Vector3 GetVector3(object instance) => throw new NotImplementedException();
@@ -157,8 +160,6 @@ public class RecvPropDataTable<T>(string varName, GetRefFn<T, RecvTable> refToFi
 	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
 	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
 	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-
-	public override RecvTable GetRecvTable(object instance) => refToField((T)instance);
 }
 public class RecvPropBool<T>(string varName, GetRefFn<T, bool> refToField) : RecvProp(varName, SendPropType.Int) where T : class
 {
@@ -421,13 +422,9 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 
 	public ReadOnlySpan<char> GetName() => NetTableName;
 
-	public int GetNumProps() {
-		throw new NotImplementedException();
-	}
+	public int GetNumProps() => Props?.Length ?? 0;
 
-	public RecvProp GetProp(int index) {
-		throw new NotImplementedException();
-	}
+	public RecvProp GetProp(int index) => Props![index];
 
 	public bool IsInitialized() => Initialized;
 
@@ -435,5 +432,12 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 
 	IEnumerator IEnumerable.GetEnumerator() {
 		return Props.GetEnumerator();
+	}
+
+	public bool IsInMainList() {
+		return InMainList;
+	}
+	public void SetInMainList(bool inList) {
+		InMainList = inList;
 	}
 }

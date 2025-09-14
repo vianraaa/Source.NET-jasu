@@ -31,7 +31,13 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 	}
 
 	private void MaybeCreateReceiveTable_R(HashSet<SendTable> visited, SendTable table) {
-		throw new NotImplementedException();
+		MaybeCreateReceiveTable(visited, table, false);
+
+		for (int i = 0; i < (table.Props?.Length ?? 0); i++) {
+			SendProp prop = table.Props![i];
+			if (prop.Type == SendPropType.DataTable) 
+				MaybeCreateReceiveTable_R(visited, prop.GetDataTable()!);
+		}
 	}
 
 	private void MaybeCreateReceiveTable(HashSet<SendTable> visited, SendTable table, bool needDecoder) {

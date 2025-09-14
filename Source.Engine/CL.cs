@@ -605,7 +605,7 @@ public class CL(IServiceProvider services, Net Net,
 /// Loads and shuts down the client DLL
 /// </summary>
 /// <param name="services"></param>
-public class ClientDLL(IServiceProvider services, Sys Sys)
+public class ClientDLL(IServiceProvider services, Sys Sys, EngineRecvTable RecvTable)
 {
 	public IBaseClientDLL clientDLL;
 	public IPrediction ClientSidePrediction;
@@ -622,6 +622,19 @@ public class ClientDLL(IServiceProvider services, Sys Sys)
 		EntityList = services.GetRequiredService<IClientEntityList>();
 		CenterPrint = services.GetRequiredService<ICenterPrint>();
 		ClientLeafSystem = services.GetRequiredService<IClientLeafSystemEngine>();
+
+		InitRecvTableMgr();
+	}
+
+	private void InitRecvTableMgr() {
+		RecvTable?[] recvTables = new RecvTable[MAX_DATATABLES];
+		int nRecvTables = 0;
+		for (ClientClass? cur = GetAllClasses(); cur != null; cur = cur.Next) {
+			ErrorIfNot(nRecvTables < MAX_DATATABLES, "ClientDLL_InitRecvTableMgr: overflowed MAX_DATATABLES");
+			recvTables[nRecvTables++] = cur.RecvTable;
+		}
+
+		RecvTable.Init(recvTables.AsSpan()[..nRecvTables]);
 	}
 
 	public void Update() {
