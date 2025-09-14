@@ -2,6 +2,18 @@
 
 
 public delegate ref ReturnType GetRefFn<InstanceType, ReturnType>(InstanceType type) where InstanceType : class;
+public delegate Span<ReturnType> GetSpanFn<InstanceType, ReturnType>(InstanceType type) where InstanceType : class;
+
+
+public enum SendPropType {
+	Int,
+	Float,
+	Vector,
+	VectorXY,
+	String,
+	Array,
+	DataTable
+}
 
 public enum PropFlags
 {
@@ -21,7 +33,7 @@ public enum PropFlags
 	CoordMP = 1 << 13,
 	CoordMPLowPrecision = 1 << 14,
 	CoordMPIntegral = 1 << 15,
-	VARINT = Normal,
+	VarInt = Normal,
 	NumFlagBitsNetworked = 16,
 	EncodedAgainstTickCount = 1 << 16,
 	NumFlagBits = 17,

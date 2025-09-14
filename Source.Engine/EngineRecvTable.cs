@@ -15,7 +15,7 @@ public class EngineRecvTable
 {
 	public bool Init() => false;
 
-	public bool Decode(RecvTable table, object instance, bf_read inREad, int objectID, bool updateDTI = true) {
+	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
 		return false;
 	}
 	public int MergeDeltas(RecvTable table, bf_read? oldState, bf_read newState, bf_write outState, int objectID = -1, Span<int> changedProps = default, bool updateDTI = false) {

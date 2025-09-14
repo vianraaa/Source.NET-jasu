@@ -16,6 +16,17 @@ using System.Runtime.InteropServices;
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
 {
+	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
+		C_BaseEntity ret = new C_BaseEntity();
+		ret.Init(entNum, serialNum);
+		return ret;
+	}
+	public static RecvTable DT_BaseEntity = [
+
+	];
+	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
+																		.WithManualClassID(StaticClassIndices.CBaseEntity);
+
 	public int Index;
 
 	private Model? Model;

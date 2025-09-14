@@ -16,12 +16,8 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 		return ret;
 	}
 	public static readonly RecvTable DT_HL2MP_Player = [
-		new RecvPropFloat<C_HL2MP_Player>((instance) => ref instance.EyeAngles.X),
-		new RecvPropFloat<C_HL2MP_Player>((instance) => ref instance.EyeAngles.Y),
-		new RecvPropEHandle<C_HL2MP_Player, EHANDLE>((instance) => ref instance.Ragdoll),
-		new RecvPropInt<C_HL2MP_Player>((instance) => ref instance.SpawnInterpCounter),
-		new RecvPropInt<C_HL2MP_Player>((instance) => ref instance.PlayerSoundType),
-		new RecvPropBool<C_HL2MP_Player>((instance) => ref instance.IsWalking),
+		// We gotta redo this later
+		// Just focusing on the world for now.
 	];
 	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", CreateObject, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
