@@ -37,9 +37,9 @@ public abstract class RecvProp {
 	// ONLY used for datatable and array types (TODO: confirm the latter.)
 	public virtual RecvTable GetRecvTable(object instance) => throw new NotImplementedException();
 
-	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType() where Instance : class
+	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType>() where Instance : class
 		=> recvFn is RecvVarProxyFn<Instance, FieldType> fn ? fn : throw new InvalidCastException();
-	public void SetProxyFn<Instance, FieldType(RecvVarProxyFn<Instance, FieldType> fn) where Instance : class
+	public void SetProxyFn<Instance, FieldType>(RecvVarProxyFn<Instance, FieldType> fn) where Instance : class
 		=> recvFn = fn;
 }
 
