@@ -1,12 +1,17 @@
 ﻿using Source.Common;
 using Source.Common.Bitbuffers;
 using Source.Common.Commands;
+using Source.Common.Mathematics;
+using Source.Engine.Server;
 
+using System;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 
@@ -18,18 +23,100 @@ public struct DecodeInfo<Instance, Return> where Instance : class
 	public bf_read In;
 }
 
+public static class PackedEntitiesManager
+{
+	public static ReadOnlySpan<char> GetObjectClassName(int objectID) => "[unknown]";
+}
 
 /// <summary>
 /// Non-generic prop type functions, this is the root of all evil
 /// </summary>
 public abstract class BasePropTypeFns
 {
+	public static void EncodeFloat(SendProp prop, float incoming, bf_write outBuffer, int objectID) {
+		var flags = prop.GetFlags();
+		if ((flags & PropFlags.Coord) != 0)
+			outBuffer.WriteBitCoord(incoming);
+		else if ((flags & (PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
+			outBuffer.WriteBitCoordMP(incoming, (((int)flags >> 15) & 1) != 0, (((int)flags >> 14) & 1) != 0);
+		else if ((flags & PropFlags.Normal) != 0)
+			outBuffer.WriteBitNormal(incoming);
+		else {
+			uint val;
+			int bits = prop.Bits;
+			if ((flags & PropFlags.NoScale) != 0) {
+				val = MemoryMarshal.Cast<float, byte>(new ReadOnlySpan<float>(ref incoming))[0];
+				bits = 32;
+			}
+			else if (incoming < prop.LowValue) {
+				val = 0;
+
+				if ((flags & PropFlags.RoundUp) == 0) 
+					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} < {prop.LowValue}) in SendPropFloat '{prop.VarName}', clamping.\n");		
+			}
+			else if (incoming > prop.HighValue) {
+				val = (uint)((1 << prop.Bits) - 1);
+
+				if ((flags & PropFlags.RoundDown) == 0)
+					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} > {prop.HighValue}) in SendPropFloat '{prop.VarName}', clamping.\n");
+			}
+			else {
+				float fRangeVal = (incoming - prop.LowValue) * prop.HighLowMul;
+				if (prop.Bits <= 22) 
+					val = (uint)MathLib.FastFloatToSmallInt(fRangeVal);
+				else 
+					val = MathLib.RoundFloatToUnsignedLong(fRangeVal);
+			}
+			outBuffer.WriteUBitLong(val, bits);
+		}
+	}
+
+
+	static float DecodeFloat(SendProp prop, bf_read inBuffer) {
+		var flags = prop.GetFlags();
+		if ((flags & PropFlags.Coord) != 0)
+			return inBuffer.ReadBitCoord();
+		else if ((flags & (PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
+			return inBuffer.ReadBitCoordMP((((int)flags >> 15) & 1) != 0, (((int)flags >> 14) & 1) != 0);
+		else if ((flags & PropFlags.NoScale) != 0)
+			return inBuffer.ReadBitFloat();
+		else if ((flags & PropFlags.Normal) != 0)
+			return inBuffer.ReadBitNormal();
+		else {
+			uint dwInterp = inBuffer.ReadUBitLong(prop.Bits);
+			float fVal = (float)dwInterp / ((1 << prop.Bits) - 1);
+			fVal = prop.LowValue + (prop.HighValue - prop.LowValue) * fVal;
+			return fVal;
+		}
+	}
+
+	static void DecodeVector(SendProp prop, bf_read inBuffer, Span<float> v) {
+		v[0] = DecodeFloat(prop, inBuffer);
+		v[1] = DecodeFloat(prop, inBuffer);
+
+		if ((prop.GetFlags() & PropFlags.Normal) == 0) 
+			v[2] = DecodeFloat(prop, inBuffer);
+		else {
+			int signbit = inBuffer.ReadOneBit();
+
+			float v0v0v1v1 = v[0] * v[0] +
+				v[1] * v[1];
+			if (v0v0v1v1 < 1.0f)
+				v[2] = MathF.Sqrt(1.0f - v0v0v1v1);
+			else
+				v[2] = 0.0f;
+
+			if (signbit != 0)
+				v[2] *= -1.0f;
+		}
+	}
+
 	/// <summary>
 	/// Indices correlate to <see cref="SendPropType"/> enum values.
 	/// </summary>
 
 	public readonly static BasePropTypeFns[] PropTypeFns = [
-		new IntPropTypeFns(),
+			new IntPropTypeFns(),
 		new FloatPropTypeFns(),
 		new VectorPropTypeFns(),
 		new VectorXYPropTypeFns(),
@@ -60,7 +147,7 @@ public abstract class PropTypeFns<Return> : BasePropTypeFns
 {
 	public abstract void Encode<Instance>(GetRefFn<Instance, Return> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) where Instance : class;
 	public abstract void Decode<Instance>(ref DecodeInfo<Instance, Return> decodeInfo) where Instance : class;
-	
+
 	public virtual void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, Return> sendField, GetRefFn<Instance, Return> recvField) where Instance : class {
 		throw new NotImplementedException("FastCopy not implemented yet, it seems to only be used in the singleplayer engine flow, which is currently not implemented.");
 		// ^^ should be a Generic_FastCopy equiv. at some point
@@ -198,8 +285,34 @@ public class FloatPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void SkipProp(SendProp prop, bf_read p) {
-		throw new NotImplementedException();
+	public override void SkipProp(SendProp prop, bf_read p) => _SkipProp(prop, p);
+
+	public static void _SkipProp(SendProp prop, bf_read inBuffer) {
+		if ((prop.GetFlags() & PropFlags.Coord) != 0) {
+			uint val = inBuffer.ReadUBitLong(2);
+			if (val != 0) {
+				int seekDist = 1;
+
+				if ((val & 1) != 0)
+					seekDist += (int)BitBuffer.COORD_INTEGER_BITS;
+				if ((val & 2) != 0)
+					seekDist += (int)BitBuffer.COORD_FRACTIONAL_BITS;
+
+				inBuffer.SeekRelative(seekDist);
+			}
+		}
+		else if ((prop.GetFlags() & PropFlags.CoordMP) != 0)
+			inBuffer.ReadBitCoordMP(false, false);
+		else if ((prop.GetFlags() & PropFlags.CoordMPLowPrecision) != 0)
+			inBuffer.ReadBitCoordMP(false, true);
+		else if ((prop.GetFlags() & PropFlags.CoordMPIntegral) != 0)
+			inBuffer.ReadBitCoordMP(true, false);
+		else if ((prop.GetFlags() & PropFlags.NoScale) != 0)
+			inBuffer.SeekRelative(32);
+		else if( (prop.GetFlags() & PropFlags.Normal) != 0 )
+			inBuffer.SeekRelative(BitBuffer.NORMAL_FRACTIONAL_BITS + 1);
+		else 
+			inBuffer.SeekRelative(prop.Bits);
 	}
 }
 
@@ -238,7 +351,12 @@ public class VectorPropTypeFns : PropTypeFns<int>
 	}
 
 	public override void SkipProp(SendProp prop, bf_read p) {
-		throw new NotImplementedException();
+		FloatPropTypeFns._SkipProp(prop, p);
+		FloatPropTypeFns._SkipProp(prop, p);
+		if ((prop.GetFlags() & PropFlags.Normal) != 0)
+			p.SeekRelative(1);
+		else
+			FloatPropTypeFns._SkipProp(prop, p);
 	}
 }
 

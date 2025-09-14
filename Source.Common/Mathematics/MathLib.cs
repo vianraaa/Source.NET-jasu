@@ -108,4 +108,15 @@ public static class MathLib
 
 		return RAD2DEG(MathF.Atan(MathF.Tan(DEG2RAD(fovX) * 0.5f) / aspect)) * 2.0f;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint RoundFloatToUnsignedLong(float f) {
+		long rounded = checked((long)MathF.Round(f, MidpointRounding.ToEven));
+		return (uint)rounded; 
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static unsafe int FastFloatToSmallInt(float f) {
+		float shifted = f + (3 << 22);
+		int* ptr = (int*)&shifted;
+		return (*ptr & ((1 << 23) - 1)) - (1 << 22);
+	}
 }

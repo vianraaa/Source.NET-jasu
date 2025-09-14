@@ -115,7 +115,7 @@ public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<Pro
 public class EngineRecvTable(DtCommonEng DtCommonEng)
 {
 	public bool Init(Span<RecvTable> tables) {
-		foreach(var table in tables) {
+		foreach (var table in tables) {
 			if (table.IsInMainList())
 				continue;
 
@@ -179,5 +179,162 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		ErrorIfNot(!(oldState != null && oldState.Overflowed) && !newState.Overflowed && !outState.Overflowed, $"RecvTable_MergeDeltas: overflowed in RecvTable '{table.GetName()}'.");
 
 		return changed;
+	}
+
+	public bool SetupClientSendTableHierarchy() {
+		foreach (ClientSendTable table in DtCommonEng.ClientSendTables) {
+			for (int i = 0; i < table.GetNumProps(); i++) {
+				ClientSendProp clientProp = table.GetClientProp(i);
+				SendProp prop = table.SendTable.Props![i];
+
+				if (prop.Type == SendPropType.DataTable) {
+					ReadOnlySpan<char> tableName = clientProp.GetTableName();
+					ErrorIfNot(tableName != null && tableName.Length > 0, $"SetupClientSendTableHierarchy: missing table name for prop '{prop.GetName()}'.");
+
+					ClientSendTable? child = FindClientSendTable(tableName);
+					if (child == null) {
+						Warning($"SetupClientSendTableHierarchy: missing SendTable '{tableName}' (referenced by '{table.GetName()}').\n");
+						return false;
+					}
+
+					prop.SetDataTable(child.SendTable);
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private ClientSendTable? FindClientSendTable(ReadOnlySpan<char> tableName) {
+		foreach (var table in DtCommonEng.ClientSendTables) {
+			if (table.GetName().Equals(tableName, StringComparison.OrdinalIgnoreCase))
+				return table;
+		}
+
+		return null;
+	}
+
+	internal bool CreateDecoders(bool allowMismatches, out bool anyMismatches) {
+		anyMismatches = false;
+		if (!SetupClientSendTableHierarchy())
+			return false;
+
+		foreach (var decoder in DtCommonEng.RecvDecoders) {
+			if (decoder.ClientSendTable == null)
+				return false;
+
+			if (!decoder.Precalc.SetupFlatPropertyArray())
+				return false;
+
+			Dictionary<SendProp, RecvProp> propLookup = [];
+			if (!MatchRecvPropsToSendProps_R(propLookup, decoder.GetSendTable()!.NetTableName, decoder.GetSendTable()!, DtCommonEng.FindRecvTable(decoder.GetSendTable()!.NetTableName)!, allowMismatches, out anyMismatches))
+				return false;
+
+			SendTablePrecalc precalc = decoder.Precalc;
+			CopySendPropsToRecvProps(propLookup, precalc.Props, decoder.Props);
+			CopySendPropsToRecvProps(propLookup, precalc.DataTableProps, decoder.DataTableProps);
+		}
+
+		return true;
+	}
+
+	private bool MatchRecvPropsToSendProps_R(Dictionary<SendProp, RecvProp> lookup, ReadOnlySpan<char> sendTableName, SendTable sendTable, RecvTable? recvTable, bool allowMismatches, out bool anyMismatches) {
+		anyMismatches = false;
+
+		for (int i = 0; i < (sendTable.Props?.Length ?? 0); i++) {
+			SendProp sendProp = sendTable.Props![i];
+			if (sendProp.IsExcludeProp() || sendProp.IsInsideArray())
+				continue;
+
+			RecvProp? recvProp = null;
+			if (recvTable != null)
+				recvProp = FindRecvProp(recvTable, sendProp.GetName());
+
+			if (recvProp != null) {
+				RecvPropMismatchReason mismatch = CompareRecvPropToSendProp(recvProp, sendProp);
+				if (mismatch != RecvPropMismatchReason.Matched) {
+					Warning($"{mismatch switch {
+						RecvPropMismatchReason.MissingRecvProp => "Missing RecvProp",
+						RecvPropMismatchReason.MissingSendProp => "Missing SendProp",
+						RecvPropMismatchReason.MismatchedPropType => "RecvProp property type doesn't match server property type",
+						RecvPropMismatchReason.MismatchedArrayType => "RecvProp array state doesn't match server array state",
+						RecvPropMismatchReason.MismatchedArrayElements => "RecvProp array elements doesn't match server array elements",
+						_ => "RecvProp type doesn't match server type",
+					}} for {sendTable.GetName()}/{sendProp.GetName()}\n");
+					return false;
+				}
+
+				lookup[sendProp] = recvProp;
+			}
+			else {
+				anyMismatches = true;
+				Warning($"Missing RecvProp for {sendTableName} - {sendTable.GetName()}/{sendProp.GetName()}\n");
+				if (!allowMismatches)
+					return false;
+			}
+
+			if (sendProp.GetPropType() == SendPropType.DataTable)
+				if (!MatchRecvPropsToSendProps_R(lookup, sendTableName, sendProp.GetDataTable()!, DtCommonEng.FindRecvTable(sendProp.GetDataTable()!.NetTableName), allowMismatches, out anyMismatches))
+					return false;
+		}
+
+		return true;
+	}
+
+	enum RecvPropMismatchReason
+	{
+		Matched,
+		MissingRecvProp,
+		MissingSendProp,
+		MismatchedPropType,
+		MismatchedArrayType,
+		MismatchedArrayElements,
+	}
+
+	private RecvPropMismatchReason CompareRecvPropToSendProp(RecvProp? recvProp, SendProp? sendProp) {
+		while (true) {
+			if (recvProp == null)
+				return RecvPropMismatchReason.MissingRecvProp;
+			if (sendProp == null)
+				return RecvPropMismatchReason.MissingSendProp;
+
+			if (recvProp.GetPropType() != sendProp.GetPropType())
+				return RecvPropMismatchReason.MismatchedPropType;
+			if (recvProp.IsInsideArray() != sendProp.IsInsideArray())
+				return RecvPropMismatchReason.MismatchedArrayType;
+
+
+			if (recvProp.GetPropType() == SendPropType.Array) {
+				if (recvProp.GetNumElements() != sendProp.GetNumElements())
+					return RecvPropMismatchReason.MismatchedArrayElements;
+
+				recvProp = recvProp.GetArrayProp<RecvProp>();
+				sendProp = sendProp.GetArrayProp<SendProp>();
+			}
+			else
+				return RecvPropMismatchReason.Matched;
+		}
+	}
+
+	private RecvProp? FindRecvProp(RecvTable table, ReadOnlySpan<char> name) {
+		for (int i = 0; i < table.GetNumProps(); i++) {
+			RecvProp prop = table.GetProp(i);
+			if (prop.GetName().Equals(name, StringComparison.OrdinalIgnoreCase))
+				return prop;
+		}
+		return null;
+	}
+
+	private void CopySendPropsToRecvProps(Dictionary<SendProp, RecvProp> lookup, List<SendProp> sendProps, List<RecvProp> recvProps) {
+		recvProps.SetSize(sendProps.Count);
+		for (int i = 0; i < sendProps.Count; i++) {
+			SendProp sendProp = sendProps[i];
+			if (sendProp == null)
+				break;
+			if (!lookup.TryGetValue(sendProp, out RecvProp? recv))
+				recvProps[i] = null!;
+			else
+				recvProps[i] = recv == null ? throw new NullReferenceException() : recv;
+		}
 	}
 }

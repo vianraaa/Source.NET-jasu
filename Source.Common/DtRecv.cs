@@ -240,8 +240,8 @@ public class RecvDecoder
 	public RecvProp? GetProp(int i) => (uint)i < (uint)GetNumProps() ? Props[i] : null;
 	public SendProp GetSendProp(int i) => Precalc.GetProp(i);
 
-	public int GetNumDatatableProps() => DatatableProps.Count;
-	public RecvProp GetDatatableProp(int i) => DatatableProps[i];
+	public int GetNumDatatableProps() => DataTableProps.Count;
+	public RecvProp GetDatatableProp(int i) => DataTableProps[i];
 
 
 	public RecvTable Table;
@@ -250,7 +250,7 @@ public class RecvDecoder
 	public readonly SendTablePrecalc Precalc = new();
 
 	public readonly List<RecvProp> Props = [];
-	public readonly List<RecvProp> DatatableProps = [];
+	public readonly List<RecvProp> DataTableProps = [];
 }
 
 public class SendTablePrecalc
@@ -273,13 +273,13 @@ public class SendTablePrecalc
 		BuildHierarchyStruct bhs = default;
 		bhs.ExcludeProps = excludeProps;
 		bhs.ExcludeProps = excludeProps;
-		bhs.NumProps = bhs.NumDatatableProps = 0;
+		bhs.NumProps = bhs.NumDataTableProps = 0;
 		bhs.PropProxies = 0;
 		SendTable.BuildHierarchy(GetRootNode(), table, ref bhs);
 
 		SendTable.SortByPriority(ref bhs);
 		Props.Clear(); Props.AddRange(bhs.Props);
-		DataTableProps.Clear(); DataTableProps.AddRange(bhs.DatatableProps[..bhs.NumDatatableProps]);
+		DataTableProps.Clear(); DataTableProps.AddRange(bhs.DataTableProps[..bhs.NumDataTableProps]);
 		PropProxyIndices.Clear(); PropProxyIndices.AddRange(bhs.PropProxyIndices[..bhs.NumProps]);
 
 		SetNumDataTableProxies(0);
@@ -325,7 +325,7 @@ public class SendTablePrecalc
 	public readonly List<SendProp> Props = [];
 	public readonly List<byte> PropProxyIndices = [];
 	public readonly List<SendProp> DataTableProps = [];
-	public SendNode Root;
+	public readonly SendNode Root = new();
 	public SendTable SendTable;
 	public int DataTableProxies;
 	public readonly Dictionary<ushort, ushort> PropOffsetToIndexMap = [];
@@ -351,7 +351,7 @@ public class ClientSendTable
 public class SendNode
 {
 	public SendNode() {
-		DatatableProp = -1;
+		DataTableProp = -1;
 		Table = null;
 
 		FirstRecursiveProp = RecursiveProps = 0;
@@ -379,7 +379,7 @@ public class SendNode
 	}
 
 	public readonly List<SendNode> Children = [];
-	public short DatatableProp;
+	public short DataTableProp;
 
 	public SendTable? Table;
 	public ushort FirstRecursiveProp;

@@ -79,13 +79,13 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 			decoder.Table = recvTable;
 
 			decoder.ClientSendTable = clientSendTable;
-			decoder.Precalc.SendTable = clientSendTable.GetSendTable();
+			decoder.Precalc.SendTable = clientSendTable.GetSendTable()!;
 			clientSendTable.GetSendTable()!.Precalc = decoder.Precalc;
 
 			recvTable.SetupArrayProps_R();
 		}
 
-		table.Props = (sendTable.Props != null && sendTable.Props.Length > 0) ? new SendProp[sendTable.Props.Length] : null;
+		table.Props = (sendTable.Props != null) ? new SendProp[sendTable.Props.Length] : null;
 		clientSendTable.Props.EnsureCount(table.Props?.Length ?? 0);
 
 		for (int iProp = 0; iProp < (table.Props?.Length ?? 0); iProp++) {

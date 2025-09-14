@@ -112,8 +112,8 @@ public struct BuildHierarchyStruct
 {
 	public ExcludeProp[]? ExcludeProps;
 
-	public InlineArrayMaxTotalSendTableProps<SendProp> DatatableProps;
-	public int NumDatatableProps;
+	public InlineArrayMaxTotalSendTableProps<SendProp> DataTableProps;
+	public int NumDataTableProps;
 
 	public InlineArrayMaxTotalSendTableProps<SendProp> Props;
 	public InlineArrayMaxTotalSendTableProps<byte> PropProxyIndices;
@@ -181,12 +181,36 @@ public static class DataTableHelpers
 		}
 	}
 
-	public static void SetDataTableProxyIndices_R(SendTablePrecalc sendTablePrecalc, SendNode sendNode, ref BuildHierarchyStruct bhs) {
-		throw new NotImplementedException();
+	public static void SetDataTableProxyIndices_R(SendTablePrecalc mainTable, SendNode curTable, ref BuildHierarchyStruct bhs) {
+		for (int i = 0; i < curTable.GetNumChildren(); i++) {
+			SendNode node = curTable.GetChild(i);
+			SendProp prop = bhs.DataTableProps[node.DataTableProp];
+
+			if ((prop.GetFlags() & PropFlags.ProxyAlwaysYes) != 0) {
+				node.SetDataTableProxyIndex(Constants.DATATABLE_PROXY_INDEX_NOPROXY);
+			}
+			else {
+				node.SetDataTableProxyIndex((ushort)mainTable.GetNumDataTableProxies());
+				mainTable.SetNumDataTableProxies(mainTable.GetNumDataTableProxies() + 1);
+			}
+
+			SetDataTableProxyIndices_R(mainTable, node, ref bhs);
+		}
 	}
 
-	public static void SetRecursiveProxyIndices_R(SendTable? table, SendNode sendNode, ref int proxyIndices) {
-		throw new NotImplementedException();
+	public static void SetRecursiveProxyIndices_R(SendTable baseTable, SendNode curTable, ref int curProxyIndex) {
+		const int MAX_PROXY_RESULTS = 256;
+
+		if (curProxyIndex >= MAX_PROXY_RESULTS)
+			Error($"Too many proxies for datatable {baseTable.GetName()}.");
+
+		curTable.SetRecursiveProxyIndex((ushort)curProxyIndex);
+		curProxyIndex++;
+
+		for (int i = 0; i < curTable.GetNumChildren(); i++) {
+			SendNode pNode = curTable.GetChild(i);
+			SetRecursiveProxyIndices_R(baseTable, pNode, ref curProxyIndex);
+		}
 	}
 }
 

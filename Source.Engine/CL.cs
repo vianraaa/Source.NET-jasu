@@ -492,7 +492,7 @@ public class CL(IServiceProvider services, Net Net,
 
 		if (u.UpdateBaselines) {
 			byte[] packedData = ArrayPool<byte>.Shared.Rent(MAX_PACKEDENTITY_DATA);
-			bf_write writeBuf = new(packedData, packedData.Length, 0);
+			bf_write writeBuf = new(packedData, packedData.Length);
 
 			RecvTable.MergeDeltas(recvTable, fromBuf, u.Buf, writeBuf, -1, null, true);
 
@@ -549,8 +549,12 @@ public class CL(IServiceProvider services, Net Net,
 		throw new NotImplementedException();
 	}
 
-	private void AddPostDataUpdateCall(EntityReadInfo u, int newEntity, DataUpdateType updateType) {
-		throw new NotImplementedException();
+	private void AddPostDataUpdateCall(EntityReadInfo u, int entIdx, DataUpdateType updateType) {
+		ErrorIfNot(u.NumPostDataUpdateCalls < MAX_EDICTS, "CL_AddPostDataUpdateCall: overflowed u.m_PostDataUpdateCalls");
+
+		u.PostDataUpdateCalls[u.NumPostDataUpdateCalls].Ent = entIdx;
+		u.PostDataUpdateCalls[u.NumPostDataUpdateCalls].UpdateType = updateType;
+		++u.NumPostDataUpdateCalls;
 	}
 
 	internal void CopyExistingEntity(EntityReadInfo u) {

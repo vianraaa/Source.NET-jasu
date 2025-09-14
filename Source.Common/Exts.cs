@@ -397,9 +397,19 @@ public static class UnmanagedUtils
 
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
 		list.EnsureCapacity(ensureTo);
-		while (list.Count < ensureTo) {
+
+		while (list.Count < ensureTo) 
 			list.Add(new T());
-		}
+	}
+
+	public static void SetSize<T>(this List<T> list, int ensureTo) {
+		list.EnsureCapacity(ensureTo);
+
+		while (list.Count > ensureTo)
+			list.RemoveAt(list.Count - 1);
+
+		while (list.Count < ensureTo) 
+			list.Add(default);
 	}
 
 	public static unsafe ulong Hash(this ReadOnlySpan<char> str, bool invariant = true) {

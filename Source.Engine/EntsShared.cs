@@ -45,6 +45,6 @@ public class EntityReadInfo : EntityInfo {
 	public bool UpdateBaselines;
 	public int LocalPlayerBits;
 	public int OtherPlayerBits;
-	public MaxEdictsBitVec PostDataUpdateCalls;
+	public InlineArrayMaxEdicts<PostDataUpdateCall> PostDataUpdateCalls;
 	public int NumPostDataUpdateCalls;
 }

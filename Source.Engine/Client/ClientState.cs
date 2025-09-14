@@ -8,6 +8,7 @@ using Source.Common.Filesystem;
 using Source.Common.Hashing;
 using Source.Common.Mathematics;
 using Source.Common.Networking;
+using Source.Common.Server;
 using Source.Engine.Server;
 using Source.GUI.Controls;
 
@@ -35,6 +36,7 @@ public class ClientState : BaseClientState
 	readonly IEngineVGuiInternal? EngineVGui;
 	readonly IHostState HostState;
 	readonly DtCommonEng DtCommonEng;
+	readonly EngineRecvTable RecvTable;
 	readonly IPrediction ClientSidePrediction;
 	readonly IModelLoader modelloader;
 	readonly Lazy<IEngineClient> engineClient_LAZY;
@@ -108,7 +110,7 @@ public class ClientState : BaseClientState
 	public ClientState(Host Host, IFileSystem fileSystem, Net Net, CommonHostState host_state, GameServer sv, Common Common,
 		Cbuf Cbuf, Cmd Cmd, ICvar cvar, CL CL, IEngineVGuiInternal? EngineVGui, IHostState HostState, Scr Scr, IEngineAPI engineAPI,
 		[FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient, IServiceProvider services,
-		IModelLoader modelloader, ICommandLine commandLine, IPrediction ClientSidePrediction, DtCommonEng DtCommonEng)
+		IModelLoader modelloader, ICommandLine commandLine, IPrediction ClientSidePrediction, DtCommonEng DtCommonEng, EngineRecvTable recvTable)
 		: base(Host, fileSystem, Net, sv, Cbuf, cvar, EngineVGui, engineAPI, networkStringTableContainerClient) {
 		this.Host = Host;
 		this.fileSystem = fileSystem;
@@ -126,6 +128,7 @@ public class ClientState : BaseClientState
 		this.ClientSidePrediction = ClientSidePrediction;
 		engineClient_LAZY = new(ProduceEngineClient);
 		CommandLine = commandLine;
+		RecvTable = recvTable;
 	}
 
 	private IEngineClient ProduceEngineClient() => services.GetRequiredService<IEngineClient>();
@@ -258,6 +261,12 @@ public class ClientState : BaseClientState
 		}
 		else
 			base.ProcessClassInfo(msg);
+
+		bool allowMismatches = false;
+		if (!RecvTable.CreateDecoders(allowMismatches, out _)) {
+			Host.EndGame(true, "CL.ProcessClassInfo: CreateDecoders failed.\n");
+			return false;
+		}
 		return true;
 	}
 	protected override bool ProcessPacketEntities(svc_PacketEntities msg) {
@@ -600,14 +609,14 @@ public class ClientState : BaseClientState
 	}
 
 	private void RemoveOldestFrame() {
-		ClientFrame? frame = Frames; 
+		ClientFrame? frame = Frames;
 
 		if (frame == null)
-			return; 
+			return;
 
 		Assert(NumFrames > 0);
 		Frames = frame.Next; // unlink head
-								   // deleting frame will decrease global reference counter
+							 // deleting frame will decrease global reference counter
 		FreeFrame(frame);
 
 		if (--NumFrames == 0) {

@@ -41,6 +41,10 @@ public unsafe class bf_write : BitBuffer
 		return copy;
 	}
 
+	public bf_write(byte[] data, int bytes) {
+		StartWriting(data, bytes, 0, -1);
+	}
+
 	public bf_write(byte[] data, int bytes, int bits) {
 		StartWriting(data, bytes, 0, bits);
 	}
