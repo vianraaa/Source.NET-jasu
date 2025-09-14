@@ -149,7 +149,7 @@ public class RecvPropVector<T>(string varName, GetRefFn<T, Vector3> refToField) 
 }
 public class RecvPropDataTable<T> : SendProp where T : class
 {
-	public RecvPropDataTable(string varName, SendTable basetable) : base(varName, SendPropType.DataTable) {
+	public RecvPropDataTable(string varName, RecvTable basetable) : base(varName, SendPropType.DataTable) {
 		SetDataTable(basetable);
 	}
 	public override float GetFloat(object instance) => throw new NotImplementedException();
