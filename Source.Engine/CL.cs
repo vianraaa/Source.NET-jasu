@@ -457,7 +457,7 @@ public class CL(IServiceProvider services, Net Net,
 			ent = CreateDLLEntity(u.NewEntity, iClass, iSerialNum);
 			if (ent == null) {
 				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass].ClientClass?.NetworkName ?? "";
-				Host.Error($"CL_ParsePacketEntities:  Error creating entity {networkName}({u.NewEntity})\n");
+				Host.Error($"CL.CopyNewEntity: Error creating entity {networkName}({u.NewEntity})\n");
 				return;
 			}
 
@@ -479,16 +479,16 @@ public class CL(IServiceProvider services, Net Net,
 			fromBits = baseline.GetNumBits();
 		}
 		else {
-			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits) != null, $"CL_CopyNewEntity: GetClassBaseline({iClass}) failed.");
+			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits) != null, $"CL.CopyNewEntity: GetClassBaseline({iClass}) failed.");
 			fromBits *= 8;
 		}
 
-		bf_read fromBuf = new("CL_CopyNewEntity->fromBuf", fromData, NetChannel.Bits2Bytes(fromBits), fromBits);
+		bf_read fromBuf = new("CL.CopyNewEntity->fromBuf", fromData, NetChannel.Bits2Bytes(fromBits), fromBits);
 
 		RecvTable? recvTable = GetEntRecvTable(u.NewEntity);
 
 		if (recvTable == null)
-			Host.Error($"CL_ParseDelta: invalid recv table for ent {u.NewEntity}.\n");
+			Host.Error($"CL.CopyNewEntity: invalid recv table for ent {u.NewEntity}.\n");
 
 		if (u.UpdateBaselines) {
 			byte[] packedData = ArrayPool<byte>.Shared.Rent(MAX_PACKEDENTITY_DATA);
@@ -558,7 +558,7 @@ public class CL(IServiceProvider services, Net Net,
 
 		IClientNetworkable? ent = EntityList.GetClientNetworkable(u.NewEntity);
 		if (ent == null) {
-			Host.Error($"CL_CopyExistingEntity: missing client entity {u.NewEntity}.\n");
+			Host.Error($"CL.CopyExistingEntity: missing client entity {u.NewEntity}.\n");
 			return;
 		}
 
@@ -566,7 +566,7 @@ public class CL(IServiceProvider services, Net Net,
 		RecvTable? recvTable = GetEntRecvTable(u.NewEntity);
 
 		if (recvTable == null) {
-			Host.Error($"CL_ParseDelta: invalid recv table for ent {u.NewEntity}.\n");
+			Host.Error($"CL.CopyExistingEntity: invalid recv table for ent {u.NewEntity}.\n");
 			return;
 		}
 
@@ -593,7 +593,7 @@ public class CL(IServiceProvider services, Net Net,
 	internal void PreserveExistingEntity(int oldEntity) {
 		IClientNetworkable? pEnt = EntityList.GetClientNetworkable(oldEntity);
 		if (pEnt == null) {
-			Host.Error($"CL_PreserveExistingEntity: missing client entity {oldEntity}.\n");
+			Host.Error($"CL.PreserveExistingEntity: missing client entity {oldEntity}.\n");
 			return;
 		}
 
