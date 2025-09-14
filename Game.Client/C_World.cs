@@ -21,7 +21,7 @@ public class C_World : C_BaseEntity
 		ret.Init(entNum, serialNum);
 		return ret;
 	}
-	public static RecvTable DT_World = [
+	public static RecvTable DT_World = new([
 		new RecvPropDataTable<C_World>("baseclass", (_) => ref DT_BaseEntity, PropFlags.Collapsible),
 		new RecvPropFloat<C_World>("m_flWaveHeight", (instance) => ref instance.WaveHeight, PropFlags.RoundUp),
 		new RecvPropVector<C_World>("m_WorldMins", (instance) => ref instance.WorldMins, PropFlags.Coord),
@@ -33,7 +33,7 @@ public class C_World : C_BaseEntity
 		new RecvPropFloat<C_World>("m_flMinPropScreenSpaceWidth", (instance) => ref instance.MinPropScreenSpaceWidth, PropFlags.NoScale),
 		new RecvPropSpan<C_World, char>("m_iszDetailSpriteMaterial", (instance) => instance.DetailSpriteMaterial),
 		new RecvPropBool<C_World>("m_bColdWorld", (instance) => ref instance.ColdWorld, PropFlags.Unsigned),
-	];
+	]);
 
 	public static readonly ClientClass ClientClass = new ClientClass("World", CreateObject, null, DT_World)
 																		.WithManualClassID(StaticClassIndices.CWorld);

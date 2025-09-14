@@ -32,12 +32,19 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		host.Initialized = false;
 		Dedicated = dedicated;
 
+		RunDataTableTest();
+
 		host.Init(Dedicated);
 		if (!host.Initialized)
 			return false;
 
 		return true;
 	}
+
+	private void RunDataTableTest() {
+		// later
+	}
+
 	public void ShutdownGame() {
 
 	}

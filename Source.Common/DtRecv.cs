@@ -2,6 +2,7 @@
 using Source.Common;
 
 using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -16,11 +17,12 @@ namespace Source.Common;
 /// pointer access, we semi-replicate that behavior in <see cref="GetRefFn{InstanceType, ReturnType}"/>
 /// since it returns a by-reference var to the field on <c>InstanceType</c>.
 /// </summary>
-public abstract class RecvProp
+public abstract class RecvProp : IDataTableProp
 {
 	public string VarName;
 	public SendPropType Type;
 	public PropFlags Flags;
+	public int StringBufferSize;
 
 	public RecvProp(string varName, SendPropType type, PropFlags flags) {
 		VarName = varName;
@@ -28,7 +30,12 @@ public abstract class RecvProp
 		Flags = flags;
 	}
 
-	object? recvFn;
+	bool InsideArray;
+	RecvProp? ArrayProp;
+	object? ProxyFn;
+	RecvTable? DataTable;
+	int Offset;
+	int Elements;
 
 	public abstract float GetFloat(object instance);
 	public abstract void SetFloat(object instance, float value);
@@ -43,9 +50,37 @@ public abstract class RecvProp
 	public virtual RecvTable GetRecvTable(object instance) => throw new NotImplementedException();
 
 	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType>() where Instance : class
-		=> recvFn is RecvVarProxyFn<Instance, FieldType> fn ? fn : throw new InvalidCastException();
+		=> ProxyFn is RecvVarProxyFn<Instance, FieldType> fn ? fn : throw new InvalidCastException();
 	public void SetProxyFn<Instance, FieldType>(RecvVarProxyFn<Instance, FieldType> fn) where Instance : class
-		=> recvFn = fn;
+		=> ProxyFn = fn;
+
+	public ReadOnlySpan<char> GetName() => VarName;
+
+	public bool IsSigned() => (Flags & PropFlags.Unsigned) == 0;
+	public bool IsExcludeProp() => (Flags & PropFlags.Exclude) != 0;
+	public bool IsInsideArray() => InsideArray;
+	public void SetInsideArray() => InsideArray = true;
+	public bool SetArrayProp<PropType>(PropType propType) where PropType : IDataTableProp => (ArrayProp = (propType is RecvProp rp) ? rp : throw new InvalidCastException()) != null;
+	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp => ArrayProp is PropType pt ? pt : throw new InvalidCastException();
+	public int GetNumElements() => Elements;
+	public int SetNumElements(int elements) => Elements = elements;
+	public SendPropType GetPropType() => Type;
+	public PropFlags GetFlags() => Flags;
+	public void SetFlags(PropFlags flags) => Flags = flags;
+
+	public IDataTableBase<PropType>? GetDataTable<PropType>() where PropType : IDataTableProp
+		=> DataTable == null ? null : DataTable is IDataTableBase<PropType> dt ? dt : throw new InvalidCastException();
+
+	public void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp
+		=> DataTable = dt == null ? null : dt is RecvTable rt ? rt : throw new InvalidCastException();
+
+	public object GetFn() {
+		return ProxyFn;
+	}
+
+	public void SetFn(object fn) {
+		ProxyFn = fn;
+	}
 }
 
 public delegate void RecvVarProxyFn<Instance, FieldType>(ref RecvProxyData data, GetRefFn<Instance, FieldType> fieldFn) where Instance : class;
@@ -233,7 +268,7 @@ public class RecvDecoder
 	public RecvTable Table;
 	public ClientSendTable ClientSendTable;
 
-	public SendTablePrecalc m_Precalc;
+	public readonly SendTablePrecalc Precalc = new();
 
 	public readonly List<RecvProp> Props = [];
 	public readonly List<RecvProp> DatatableProps = [];
@@ -248,7 +283,7 @@ public class SendTablePrecalc
 	public bool SetupFlatPropertyArray() {
 		SendTable? table = GetSendTable();
 
-		table!.SetupArrayProps();
+		table!.SetupArrayProps_R();
 
 		ExcludeProp[] excludeProps = new ExcludeProp[Constants.MAX_EXCLUDE_PROPS];
 		int numExcludeProps = 0;
@@ -326,12 +361,12 @@ public class ClientSendProp
 }
 public class ClientSendTable
 {
-	public int GetNumProps() => SendTable?.Count ?? 0;
+	public int GetNumProps() => SendTable?.Props?.Length ?? 0;
 	public ClientSendProp GetClientProp(int i) => Props[i];
 	public ReadOnlySpan<char> GetName() => SendTable == null ? null : SendTable.GetName();
 	public SendTable? GetSendTable() => SendTable;
 
-	public SendTable? SendTable;
+	public SendTable SendTable = new();
 	public readonly List<ClientSendProp> Props = [];
 }
 public class SendNode
@@ -374,10 +409,38 @@ public class SendNode
 	public ushort RecursiveProxyIndex;
 }
 
-public class RecvTable : List<RecvProp>
+public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 {
+	public RecvTable() { }
+	public RecvTable(RecvProp[] props) {
+		Props = props;
+	}
+	public RecvProp[]? Props;
 	public RecvDecoder? Decoder;
 	public string? NetTableName;
 
+	bool Initialized;
+	bool InMainList;
+
+	public IEnumerator<RecvProp> GetEnumerator() {
+		return ((IEnumerable<RecvProp>)Props).GetEnumerator();
+	}
+
 	public ReadOnlySpan<char> GetName() => NetTableName;
+
+	public int GetNumProps() {
+		throw new NotImplementedException();
+	}
+
+	public RecvProp GetProp(int index) {
+		throw new NotImplementedException();
+	}
+
+	public bool IsInitialized() => Initialized;
+
+	public void SetInitialized(bool initialized) => Initialized = initialized;
+
+	IEnumerator IEnumerable.GetEnumerator() {
+		return Props.GetEnumerator();
+	}
 }

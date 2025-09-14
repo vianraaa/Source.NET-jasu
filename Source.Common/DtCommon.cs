@@ -21,15 +21,53 @@ public enum SendPropType
 	Max
 }
 
-[StructLayout(LayoutKind.Explicit)]
 public struct DVariant
 {
-	[FieldOffset(0)] public float Float;
-	[FieldOffset(0)] public int Int;
-	[FieldOffset(0)] public Vector3 Vector;
-	[FieldOffset(0)] public string? String;
-	[FieldOffset(0)] public object? Data;
-	[FieldOffset(1)] public SendPropType Type;
+	// Enough space to fit an int (4 bytes), a float (4 bytes), a Vector3 (12 bytes)
+	InlineArray16<byte> ValueData;
+	object? ReferenceData;
+	bool UsingReferenceData;
+
+	public float Float {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, float>(ValueData)[0];
+		set {
+			MemoryMarshal.Cast<byte, float>(ValueData)[0] = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public int Int {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, int>(ValueData)[0];
+		set {
+			MemoryMarshal.Cast<byte, int>(ValueData)[0] = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public Vector3 Vector {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0];
+		set {
+			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0] = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public string? String {
+		get => UsingReferenceData ? ReferenceData is string str ? str : null : null;
+		set {
+			UsingReferenceData = true;
+			ReferenceData = value;
+		}
+	}
+	public object? Data {
+		get => UsingReferenceData ? ReferenceData : null;
+		set {
+			UsingReferenceData = true;
+			ReferenceData = value;
+		}
+	}
+
+	public SendPropType Type;
 }
 
 public struct RecvProxyData
@@ -100,6 +138,10 @@ public interface IDataTableProp
 	PropFlags GetFlags();
 	void SetFlags(PropFlags flags);
 	IDataTableBase<PropType>? GetDataTable<PropType>() where PropType : IDataTableProp;
+	void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp;
+
+	object GetFn();
+	void SetFn(object fn);
 }
 
 public interface IDataTableBase<PropType> where PropType : IDataTableProp
@@ -119,7 +161,7 @@ public static class DataTableHelpers
 	/// </summary>
 	/// <typeparam name="PropType"></typeparam>
 	/// <param name="table"></param>
-	public static void SetupArrayProps<PropType>(this IDataTableBase<PropType> table) where PropType : IDataTableProp {
+	public static void SetupArrayProps_R<PropType>(this IDataTableBase<PropType> table) where PropType : IDataTableProp {
 		if (table.IsInitialized())
 			return;
 
@@ -136,7 +178,7 @@ public static class DataTableHelpers
 				prop.SetArrayProp(arrayProp);
 			}
 			else if (prop.GetPropType() == SendPropType.DataTable)
-				SetupArrayProps(prop.GetDataTable<PropType>());
+				SetupArrayProps_R(prop.GetDataTable<PropType>());
 		}
 	}
 
@@ -146,5 +188,20 @@ public static class DataTableHelpers
 
 	public static void SetRecursiveProxyIndices_R(SendTable? table, SendNode sendNode, ref int proxyIndices) {
 		throw new NotImplementedException();
+	}
+}
+
+public class RenamedRecvTableInfo {
+	public static RenamedRecvTableInfo? Head;
+	public string OldName;
+	public string NewName;
+	public RenamedRecvTableInfo? Next;
+
+	public RenamedRecvTableInfo(string oldName, string newName) {
+		OldName = oldName;
+		NewName = newName;
+
+		Next = Head;
+		Head = this;
 	}
 }

@@ -31,4 +31,5 @@ public interface IBaseClientDLL
 	bool ShouldAllowConsole();
 	void FrameStageNotify(ClientFrameStage stage);
 	ClientClass? GetAllClasses();
+	RenamedRecvTableInfo? GetRenamedRecvTableInfos();
 }

@@ -166,4 +166,8 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	public ClientClass? GetAllClasses() {
 		return ClientClass.Head;
 	}
+
+	public RenamedRecvTableInfo? GetRenamedRecvTableInfos() {
+		return RenamedRecvTableInfo.Head;
+	}
 }

@@ -1,14 +1,141 @@
 ﻿
 using Source.Common;
+using Source.Common.Client;
+using Source.Common.Commands;
 using Source.Common.Server;
 using Source.Engine.Client;
 
 namespace Source.Engine;
 
-public class DtCommonEng(Host Host, IServerGameDLL serverGameDLL)
+public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBaseClientDLL clientDLL, ICommandLine CommandLine)
 {
-	internal void CreateClientTablesFromServerTables() {
+	public readonly LinkedList<RecvTable> RecvTables = [];
+	public readonly LinkedList<RecvDecoder> RecvDecoders = [];
+	public readonly LinkedList<ClientSendTable> ClientSendTables = [];
+	public int PropsDecoded = 0;
 
+	internal void CreateClientTablesFromServerTables() {
+		if (serverGameDLL == null)
+			Sys.Error("DataTable_CreateClientTablesFromServerTables:  No serverGameDLL loaded!");
+
+		ServerClass? classes = serverGameDLL!.GetAllServerClasses();
+		ServerClass? cur;
+
+		HashSet<SendTable> visited = [];
+
+		for (cur = classes; cur != null; cur = cur.Next)
+			MaybeCreateReceiveTable(visited, cur.Table, true);
+
+		for (cur = classes; cur != null; cur = cur.Next)
+			MaybeCreateReceiveTable_R(visited, cur.Table);
+	}
+
+	private void MaybeCreateReceiveTable_R(HashSet<SendTable> visited, SendTable table) {
+		throw new NotImplementedException();
+	}
+
+	private void MaybeCreateReceiveTable(HashSet<SendTable> visited, SendTable table, bool needDecoder) {
+		if (visited.Contains(table))
+			return;
+
+		visited.Add(table);
+
+		SetupReceiveTableFromSendTable(table, needDecoder);
+	}
+
+	public RecvTable? FindRecvTable(string? name) {
+		return RecvTables.FirstOrDefault(x => x.GetName().Equals(name, StringComparison.OrdinalIgnoreCase));
+	}
+
+	private bool SetupReceiveTableFromSendTable(SendTable sendTable, bool needsDecoder) {
+		ClientSendTable clientSendTable = new ClientSendTable();
+		SendTable table = clientSendTable.SendTable;
+		ClientSendTables.AddLast(clientSendTable);
+
+		table.NetTableName = sendTable.NetTableName;
+
+		if (needsDecoder) {
+			RecvDecoder decoder = new RecvDecoder();
+			RecvDecoders.AddLast(decoder);
+
+			RecvTable? recvTable = FindRecvTable(table.NetTableName);
+			if (recvTable == null) {
+				recvTable = FindRenamedTable(table.NetTableName);
+				if (recvTable == null) {
+					Warning($"No matching RecvTable for SendTable '{table.NetTableName}'.\n");
+					return false;
+				}
+			}
+
+			recvTable.Decoder = decoder;
+			decoder.Table = recvTable;
+
+			decoder.ClientSendTable = clientSendTable;
+			decoder.Precalc.SendTable = clientSendTable.GetSendTable();
+			clientSendTable.GetSendTable()!.Precalc = decoder.Precalc;
+
+			recvTable.SetupArrayProps_R();
+		}
+
+		table.Props = sendTable.Props;
+		table.Props = table.Props != null ? new SendProp[table.Props.Length] : null;
+		clientSendTable.Props.EnsureCount(table.Props?.Length ?? 0);
+
+		for (int iProp = 0; iProp < table.Props!.Length; iProp++) {
+			ClientSendProp clientProp = clientSendTable.Props[iProp];
+			SendProp prop = table!.Props![iProp];
+			SendProp sendTableProp = sendTable!.Props![iProp];
+
+			prop.Type = sendTableProp.Type;
+			prop.VarName = new(sendTableProp.GetName());
+			prop.SetFlags(sendTableProp.GetFlags());
+
+			if (CommandLine.FindParm("-dti") != 0 && sendTableProp.GetParentArrayPropName() != null) {
+				prop.ParentArrayPropName = new(sendTableProp.GetParentArrayPropName());
+			}
+
+			if (prop.Type == SendPropType.DataTable) {
+				ReadOnlySpan<char> dtName = sendTableProp.ExcludeDTName;
+
+				if (sendTableProp.GetDataTable() != null)
+					dtName = sendTableProp.GetDataTable()!.NetTableName;
+
+				Assert(dtName != null && !dtName.IsEmpty);
+
+				clientProp.SetTableName(dtName);
+
+				prop.SetDataTableProxyFn(sendTableProp.GetDataTableProxyFn());
+				prop.SetFn(sendTableProp.GetFn());
+			}
+			else {
+				if (prop.IsExcludeProp()) {
+					prop.ExcludeDTName = new(sendTableProp.GetExcludeDTName());
+				}
+				else if (prop.GetPropType() == SendPropType.Array) {
+					prop.SetNumElements(sendTableProp.GetNumElements());
+				}
+				else {
+					prop.LowValue = sendTableProp.LowValue;
+					prop.HighValue = sendTableProp.HighValue;
+					prop.Bits = sendTableProp.Bits;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private RecvTable? FindRenamedTable(string? oldTableName) {
+		RenamedRecvTableInfo cur = clientDLL.GetRenamedRecvTableInfos();
+
+		while (cur != null && (cur.OldName != null && cur.NewName != null)) {
+			if (cur.OldName.Equals(oldTableName, StringComparison.OrdinalIgnoreCase))
+				return FindRecvTable(cur.NewName);
+
+			cur = cur.Next;
+		}
+
+		return null;
 	}
 
 	internal void CreateClientClassInfosFromServerClasses(BaseClientState state) {
