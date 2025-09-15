@@ -3,16 +3,29 @@
 using Source.Common;
 using Source.Common.Engine;
 
+using System.Numerics;
+
 namespace Game.Server;
 
 public partial class BaseEntity : IServerEntity
 {
-	public static SendTable DT_BaseEntity= new([
+	public static SendTable DT_AnimTimeMustBeFirst = new([
+		new SendPropFloat<BaseEntity>("m_flAnimTime", (instance) => ref instance.AnimTime)
+	]);
 
+	public static SendTable DT_PredictableId = new([
+
+	]);
+
+	public static SendTable DT_BaseEntity = new([
+		new SendPropDataTable<BaseEntity>("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst)
 	]);
 
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
+
+	float AnimTime;
+
 	public Source.Common.Server.BaseEntity? GetBaseEntity() {
 		throw new NotImplementedException();
 	}
