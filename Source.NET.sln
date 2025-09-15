@@ -56,8 +56,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Usings", "0. Usings", "{
 	ProjectSection(SolutionItems) = preProject
 		Usings\GlobalUsings.cs = Usings\GlobalUsings.cs
 		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
-		readme.txt = readme.txt
 		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
+		usings_readme.txt = usings_readme.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.GUI", "Source.GUI\Source.GUI.csproj", "{F20219E0-0216-4E2B-B10F-358FA3FB57D5}"
