@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Source.Common.Bitbuffers;
+using SharpCompress.Compressors.Xz;
 
 namespace Source.Engine;
 
@@ -457,6 +458,7 @@ public class CL(IServiceProvider services, Net Net,
 			ent = CreateDLLEntity(u.NewEntity, iClass, iSerialNum);
 			if (ent == null) {
 				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass].ClientClass?.NetworkName ?? "";
+				clientDLL.ErrorCreatingEntity(u.NewEntity, iClass, iSerialNum);
 				Host.Error($"CL.CopyNewEntity: Error creating entity {networkName}({u.NewEntity})\n");
 				return;
 			}
@@ -545,8 +547,8 @@ public class CL(IServiceProvider services, Net Net,
 		return null;
 	}
 
-	public bool IsPlayerIndex(int newEntity) {
-		throw new NotImplementedException();
+	public bool IsPlayerIndex(int index) {
+		return (index >= 1 && index <= cl.MaxClients);
 	}
 
 	private void AddPostDataUpdateCall(EntityReadInfo u, int entIdx, DataUpdateType updateType) {

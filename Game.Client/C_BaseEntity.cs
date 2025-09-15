@@ -11,6 +11,7 @@ using Steamworks;
 
 using System;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Game.Client;
@@ -124,8 +125,30 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
+	public void UpdateOnRemove() {
+		// VPhysicsDestroyObject();
+
+		// Assert(GetMoveParent() == null);
+		// UnlinkFromHierarchy();
+		// SetGroundEntity(NULL);
+	}
+
+	readonly EHANDLE MoveParent = new();
+	readonly EHANDLE MoveChild = new();
+	readonly EHANDLE MovePeer = new();
+	readonly EHANDLE MovePrevPeer = new();
+
+	public void UnlinkFromHierarchy() {
+		// todo
+	}
+
 	public void Release() {
-		throw new NotImplementedException();
+		UnlinkFromHierarchy();
+
+		//  if (IsIntermediateDataAllocated()) 
+		//  	DestroyIntermediateData();
+
+		UpdateOnRemove();
 	}
 
 	public bool SetupBones(ref Matrix4x4 boneToWOrldOut, int maxBones, int boneMask, double currentTime) {
@@ -257,9 +280,11 @@ public partial class C_BaseEntity : IClientEntity
 		}
 	}
 
-	public bool IsDormant() {
-		throw new NotImplementedException();
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool IsDormant() => IsServerEntity() ? Dormant : false;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private bool IsServerEntity() => Index != -1;
 
 	public int EntIndex() {
 		throw new NotImplementedException();

@@ -32,4 +32,5 @@ public interface IBaseClientDLL
 	void FrameStageNotify(ClientFrameStage stage);
 	ClientClass? GetAllClasses();
 	RenamedRecvTableInfo? GetRenamedRecvTableInfos();
+	void ErrorCreatingEntity(int entityIdx, int classIdx, int serialNumber);
 }

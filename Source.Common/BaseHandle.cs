@@ -6,7 +6,8 @@ namespace Source.Common;
 public class BaseHandle {
 	public uint Index;
 
-	public BaseHandle() { }
+	public BaseHandle() => Index = (uint)Constants.INVALID_EHANDLE_INDEX;
+	public BaseHandle(BaseHandle handle) => Index = handle.Index;
 	public BaseHandle(int entry, int serial) => Init(entry, serial);
 
 	private void Init(int entry, int serial) => Index = (uint)(entry | (serial << Constants.NUM_ENT_ENTRY_BITS));
@@ -24,4 +25,5 @@ public class BaseHandle {
 			_ => false
 		};
 	}
+	public bool IsValid() => Index != Constants.INVALID_EHANDLE_INDEX;
 }
