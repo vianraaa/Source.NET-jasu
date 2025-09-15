@@ -13,7 +13,7 @@
 >> <sub>[Stage 6: Executables](#stage-6-executables)</sub><br>
 
 > <sub>[API Notes](#api-notes)</sub><br>
-> <sub>[#Future Plans](#future-plans)</sub><br>
+> <sub>[Future Plans](#future-plans)</sub><br>
 
 ## What is this?
 This is an open source clone of the Source Engine, based on [RaphaelIT7's Source Engine branch](https://github.com/RaphaelIT7/obsolete-source-engine), written in C#. It aims to be as compatible as possible with Source Engine's formats and protocols, more specifically targetting [Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/) compatibility. 
@@ -47,7 +47,7 @@ There are currently seven stages. The Solution is organized via Solution Folders
 Various external dependencies & components, along with various non-project-specific C# files, which allow defining global using statements for a project. For example, almost every library uses this in its .csproj file to add the various type definitions/global static methods/constants:
 ```xml
 <ItemGroup>
-	<ProjectReference Include="..\Source.Common\Source.Common.csproj" />
+	<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 </ItemGroup>
 ```
 
