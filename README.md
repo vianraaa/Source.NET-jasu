@@ -20,7 +20,6 @@ This is an open source clone of the Source Engine, based on [RaphaelIT7's Source
 
 <img width="1600" height="900" alt="Source Launcher_h58b4odIBv" src="https://github.com/user-attachments/assets/fbd1a007-7fb6-4710-ab94-67656067eef5" />
 
-
 It can currently connect to real Garry's Mod servers. Development is currently done by connecting to a local Garry's Mod SRCDS instance - if you wish to contribute, you can set one up relatively easily with [these instructions](https://wiki.facepunch.com/gmod/Downloading_a_Dedicated_Server).
 
 ## Goals
@@ -222,4 +221,4 @@ All assemblies are searched for classes with the EngineComponentAttribute. All c
 
 ## Future Plans
 
-I intend to do physics simulation with [BepuPhysics v2](https://github.com/bepu/bepuphysics2). I believe that this will serve as a viable replacement - after trying out [VPhysics-Jolt](https://github.com/misyltoad/VPhysics-Jolt) by [misyltoad](https://github.com/misyltoad) as purely a clientside module, I noticed a significant increase in clientside performance while still seeing relatively little 
+I intend to do physics simulation with [BepuPhysics v2](https://github.com/bepu/bepuphysics2). I believe that this will serve as a viable replacement - after trying out [VPhysics-Jolt](https://github.com/misyltoad/VPhysics-Jolt) by [misyltoad](https://github.com/misyltoad) as purely a clientside module, I noticed a significant increase in clientside performance while still seeing relative stability (a few things were broken, but it wasn't that bad). This makes me believe that any general physics engine could be used in place of VPhysics on the clientside. If singleplayer is ever supported, it would just be using this. The interfaces will be pretty similar to VPhysics's interfaces though.
