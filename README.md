@@ -211,7 +211,7 @@ These are all used to include their specific implementations.
 
 ---
 
-#### PublicStatic Class Named "SourceDllMain"
+#### Public Static Class Named "SourceDllMain"
 All assemblies are searched for a static class named "SourceDllMain". If this class is found, a method named "Link" is searched for, and cast to a  delegate void (IServiceCollection). This is searched for and ran after EngineBuilder.Build() inserts its own engine components. This can be helpful if an assembly has its own specific components it wishes to include.
 > [!NOTE]
 > A few components also use this as a way to perform some static actions. SDLManager for example uses this to define assert dialog logic.
