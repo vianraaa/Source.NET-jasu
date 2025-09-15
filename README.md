@@ -27,6 +27,7 @@ In an ideal world, it could serve as a playable Garry's Mod client - but that is
 
 ## Credits & Thanks
 - Valve for obvious reasons
+- [RaphaelIT7](https://github.com/RaphaelIT7) for various contributions & unintentionally getting me down the rabbit-hole of Source Engine tomfoolery in the first place
 - [maddnias](https://github.com/maddnias) for his work on SharpVPK, and [antim0118](https://github.com/antim0118) for his changes which fixed some incompatibilities
 - [Leystryku](https://github.com/Leystryku) for his work on [leysourceengineclient](https://github.com/Leystryku/leysourceengineclient) - which has served as a very good baseline for networking implementations when I was struggling
 
