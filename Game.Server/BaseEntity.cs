@@ -25,6 +25,10 @@ public partial class BaseEntity : IServerEntity
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	float AnimTime;
+	float SimulationTime;
+	Vector3 Origin;
+	byte InterpolationFrame;
+	int ModelIndex;
 
 	public Source.Common.Server.BaseEntity? GetBaseEntity() {
 		throw new NotImplementedException();
