@@ -52,12 +52,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Bitmap", "Source.Bit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.StdShader.Gl46", "Source.StdShader.Gl46\Source.StdShader.Gl46.csproj", "{DACE2A97-2C34-44CA-82F6-B77501B89E3C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Usings", "0. Usings", "{D287F29B-08EA-45EE-AD68-D46F801ECB5C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Files", "0. Files", "{D287F29B-08EA-45EE-AD68-D46F801ECB5C}"
 	ProjectSection(SolutionItems) = preProject
-		Usings\GlobalUsings.cs = Usings\GlobalUsings.cs
-		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
-		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
-		usings_readme.txt = usings_readme.txt
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.GUI", "Source.GUI\Source.GUI.csproj", "{F20219E0-0216-4E2B-B10F-358FA3FB57D5}"
@@ -65,6 +62,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.SDLSystem", "Source.SDLSystem\Source.SDLSystem.csproj", "{51A3A178-6D3B-4768-9A13-F591AFC894EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Formats.VPK", "Dependencies\Source.Formats.VPK\Source.Formats.VPK.csproj", "{36864D4D-B396-4888-BD4D-7A0F5CB3393B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Usings", "Usings", "{AFA9FA29-7639-4BF9-A5C1-84364D0A14EB}"
+	ProjectSection(SolutionItems) = preProject
+		Usings\GlobalUsings.cs = Usings\GlobalUsings.cs
+		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
+		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
+		usings_readme.txt = usings_readme.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -173,5 +178,6 @@ Global
 		{F20219E0-0216-4E2B-B10F-358FA3FB57D5} = {7717E508-10C7-4CBC-B833-4933D7D8E2F3}
 		{51A3A178-6D3B-4768-9A13-F591AFC894EF} = {4B578BC3-0E56-46A4-9316-23258535813E}
 		{36864D4D-B396-4888-BD4D-7A0F5CB3393B} = {B42FB9A3-4563-4A85-88C8-291C304FA3CE}
+		{AFA9FA29-7639-4BF9-A5C1-84364D0A14EB} = {D287F29B-08EA-45EE-AD68-D46F801ECB5C}
 	EndGlobalSection
 EndGlobal
