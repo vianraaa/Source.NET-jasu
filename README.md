@@ -1,19 +1,19 @@
 # Source.NET
 ###### Table of Contents
-> <sub>[What is this?]</sub><br>
-> <sub>[Goals]</sub><br>
-> <sub>[Credits & Thanks]</sub><br>
-> <sub>[Structure]</sub><br>
->> <sub>[Stage 0: External Dependencies + Global Usings]</sub><br>
->> <sub>[Stage 1: Engine Common + Tier Libraries]</sub><br>
->> <sub>[Stage 2: Pre-Engine Components]</sub><br>
->> <sub>[Stage 3: Engine Main]</sub><br>
->> <sub>[Stage 4: Post-Engine Components]</sub><br>
->> <sub>[Stage 5: Game Realms]</sub><br>
->> <sub>[Stage 6: Executables]</sub><br>
+> <sub>[What is this?](#what-is-this)</sub><br>
+> <sub>[Goals](#goals)</sub><br>
+> <sub>[Credits & Thanks](#credits--thanks)</sub><br>
+> <sub>[Structure](#structure)</sub><br>
+>> <sub>[Stage 0: External Dependencies + Global Usings](#stage-0-external-dependencies--global-usings)</sub><br>
+>> <sub>[Stage 1: Engine Common + Tier Libraries](#stage-1-engine-common--tier-libraries)</sub><br>
+>> <sub>[Stage 2: Pre-Engine Components](#stage-2-pre-engine-components)</sub><br>
+>> <sub>[Stage 3: Engine Main](#stage-3-engine-main)</sub><br>
+>> <sub>[Stage 4: Post-Engine Components](#stage-4-post-engine-components)</sub><br>
+>> <sub>[Stage 5: Game Realms](#stage-5-game-realms)</sub><br>
+>> <sub>[Stage 6: Executables](#stage-6-executables)</sub><br>
 
-> <sub>[API Notes]</sub><br>
-> <sub>[Future Plans]</sub><br>
+> <sub>[API Notes](#api-notes)</sub><br>
+> <sub>[#Future Plans](#future-plans)</sub><br>
 
 ## What is this?
 This is an open source clone of the Source Engine, based on [RaphaelIT7's Source Engine branch](https://github.com/RaphaelIT7/obsolete-source-engine), written in C#. It aims to be as compatible as possible with Source Engine's formats and protocols, more specifically targetting [Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/) compatibility. 
