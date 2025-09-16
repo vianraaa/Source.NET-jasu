@@ -150,7 +150,7 @@ public class PackStoreSearchPath : SearchPath
 					continue;
 			}
 			else {
-				if (wildcardDir == "*" || !entry.Path.PathStartsWith(wildcardDir))
+				if (wildcardDir != "*" && !entry.Path.PathStartsWith(wildcardDir))
 					continue;
 			}
 
@@ -159,7 +159,7 @@ public class PackStoreSearchPath : SearchPath
 					continue;
 			}
 			else {
-				if (wildcardFile == "*" || !entry.Filename.PathStartsWith(wildcardFile))
+				if (wildcardFile[0] != '*' && !entry.Filename.PathStartsWith(wildcardFile))
 					continue;
 			}
 
@@ -168,7 +168,7 @@ public class PackStoreSearchPath : SearchPath
 					continue;
 			}
 			else {
-				if (wildcardExt == null || wildcardExt == "" || wildcardExt == "*" || !entry.Extension.PathStartsWith(wildcardExt))
+				if (!wildcardExt.IsEmpty && wildcardExt[0] != '*' && !entry.Extension.PathStartsWith(wildcardExt))
 					continue;
 			}
 
