@@ -72,7 +72,10 @@ public class GripPanel : Panel
 		Surface.DrawChar('p');
 	}
 	public override void PaintBackground() {
-		base.PaintBackground();
+		Surface.DrawSetTextFont(MarlettFont);
+		Surface.DrawSetTextPos(0, 0);
+		Surface.DrawSetTextColor(GetBgColor());
+		Surface.DrawChar('o');
 	}
 	public override void OnMouseReleased(ButtonCode code) {
 		Dragging = false;
@@ -331,7 +334,14 @@ public class FrameButton : Button
 	public Color EnabledFgColor, EnabledBgColor, DisabledFgColor, DisabledBgColor;
 	public bool DisabledLook;
 	public FrameButton(Panel parent, string name, ReadOnlySpan<char> text) : base(parent, name, new(text)) {
-
+		SetSize(GetButtonSide((Frame)parent), GetButtonSide((Frame)parent));
+		BrightBorder = null;
+		DepressedBorder = null;
+		DisabledBorder = null;
+		DisabledLook = true;
+		SetContentAlignment(Alignment.Northwest);
+		SetTextInset(2, 1);
+		// SetBlockDragChaining(true);
 	}
 
 	public virtual void SetDisabledLook(bool state) {

@@ -3,6 +3,7 @@
 using FreeTypeSharp;
 using static FreeTypeSharp.FT;
 using Source.Common.Launcher;
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.MaterialSystem.Surface;
 
@@ -41,6 +42,7 @@ public unsafe class FreeTypeFont : BaseFont
 	bool AntiAliased;
 	bool Rotary;
 	bool Additive;
+	bool IsSymbol;
 	ushort[] BitmapSize = new ushort[2];
 
 	public override SurfaceFontFlags GetFlags() => Flags;
@@ -65,6 +67,7 @@ public unsafe class FreeTypeFont : BaseFont
 		OutlineSize = 0 != (flags & SurfaceFontFlags.Outline) ? 1u : 0u;
 		Rotary = 0 != (flags & SurfaceFontFlags.Rotary);
 		Additive = 0 != (flags & SurfaceFontFlags.Additive);
+		IsSymbol = 0 != (flags & SurfaceFontFlags.Symbol);
 		Blur = (ushort)blur;
 		ScanLines = (ushort)scanlines;
 
@@ -77,6 +80,9 @@ public unsafe class FreeTypeFont : BaseFont
 		fixed (FT_FaceRec_** facePtr = &face)
 			error = FT_New_Memory_Face(Library, font, length, 0, facePtr);
 		if (error != FT_Error.FT_Err_Ok) { DevMsg($"Upcoming error info: {fontName}\n"); Assert(false); Warning($"FreeType error during new face initialization: {error}\n"); return false; }
+
+		if (IsSymbol)
+			FT_Select_Charmap(face, FT_Encoding_.FT_ENCODING_MS_SYMBOL);
 
 		error = FT_Set_Pixel_Sizes(face, 0, (uint)tall);
 		if (error != FT_Error.FT_Err_Ok) { Warning($"FreeType error during pixel size set: {error}\n"); return false; }
@@ -100,9 +106,21 @@ public unsafe class FreeTypeFont : BaseFont
 	Dictionary<char, GlyphABC> Glyphs = [];
 	Dictionary<char, int> GlyphsY = [];
 
+	private void LoadChar(char ch, bool render = false) {
+		uint glyph_index = FT_Get_Char_Index(face, ch);
+
+		if (glyph_index == 0 && IsSymbol) 
+			glyph_index = FT_Get_Char_Index(face, (uint)((int)ch | 0xF000));
+
+		if (glyph_index != 0) {
+			FT_Load_Glyph(face, glyph_index,
+				FT_LOAD.FT_LOAD_DEFAULT | (render ? FT_LOAD.FT_LOAD_RENDER : 0));
+		}
+	}
+
 	public override int GetCharYOffset(char ch) {
 		if (!GlyphsY.TryGetValue(ch, out int y)) {
-			FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
+			LoadChar(ch);
 			FT_GlyphSlotRec_* g = face->glyph;
 			y = (int)(g->metrics.horiBearingY >> 6);
 			GlyphsY.Add(ch, y);
@@ -111,7 +129,7 @@ public unsafe class FreeTypeFont : BaseFont
 	}
 	public override void GetCharABCwidths(char ch, out int a, out int b, out int c) {
 		if (!Glyphs.TryGetValue(ch, out GlyphABC glyphABC)) {
-			FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_DEFAULT);
+			LoadChar(ch);
 			FT_GlyphSlotRec_* g = face->glyph;
 
 			a = (int)(g->metrics.horiBearingX >> 6);          // leading
@@ -132,7 +150,7 @@ public unsafe class FreeTypeFont : BaseFont
 	}
 
 	internal override void GetCharRGBA(char ch, int rgbaWide, int rgbaTall, Span<byte> rgba) {
-		FT_Load_Char(face, ch, FT_LOAD.FT_LOAD_RENDER |FT_LOAD.FT_LOAD_DEFAULT);
+		LoadChar(ch, render: true);
 		FT_GlyphSlotRec_* slot = face->glyph;
 		FT_Render_Glyph(slot, AntiAliased ? FT_Render_Mode_.FT_RENDER_MODE_MONO : FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
 		DrawBitmap(slot, rgbaWide, rgbaTall, rgba);

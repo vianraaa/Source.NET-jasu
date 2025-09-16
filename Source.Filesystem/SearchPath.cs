@@ -48,7 +48,7 @@ public abstract class SearchPath
 			hasSlash = true;
 		}
 		// Confirm we arent writing another slash
-		if ((fileName.Length > 0 && fileName[0] == '/' || fileName[0] == '\\') && hasSlash)
+		if ((fileName.Length > 0 && (fileName[0] == '/' || fileName[0] == '\\')) && hasSlash)
 			fileName = fileName[1..];
 
 		fileName.ClampedCopyTo(target[writePtr..]); writePtr += fileName.Length;
