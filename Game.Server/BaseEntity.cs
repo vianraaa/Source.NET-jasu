@@ -18,8 +18,6 @@ public partial class BaseEntity : IServerEntity
 	]);
 
 	public static SendTable DT_BaseEntity = new([
-		new SendPropDataTable<BaseEntity>("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst),
-
 	]);
 
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
