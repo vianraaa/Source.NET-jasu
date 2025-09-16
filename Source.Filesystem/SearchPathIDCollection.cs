@@ -41,4 +41,10 @@ public class SearchPathIDCollection : Dictionary<ulong, SearchPathCollection>
 	}
 
 	public ReadOnlySpan<char> GetName(ulong key) => searchPathNames.TryGetValue(key, out string? v) ? v : "";
+
+	internal SearchPathCollection? At(int idx) {
+		if (idx >= pathOrder.Count)
+			return null;
+		return this[pathOrder[idx]];
+	}
 }

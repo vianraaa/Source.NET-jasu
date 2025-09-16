@@ -116,4 +116,63 @@ public class PackStoreSearchPath : SearchPath
 	internal override ReadOnlySpan<char> GetPathString() {
 		return DiskPath;
 	}
+
+	protected override void PrepareFinds(List<string> files, List<string> dirs, string? wildcard) {
+		ReadOnlySpan<char> wildcardDir = string.Empty, wildcardFile = string.Empty, wildcardExt = string.Empty;
+		wildcard?.FileInfo(null, out wildcardDir, out wildcardFile, out wildcardExt);
+
+		int wildcardAsteriskAtDir = wildcardDir.IndexOf('*');
+		int wildcardAsteriskAtFile = wildcardFile.IndexOf('*');
+		int wildcardAsteriskAtExt = wildcardExt.IndexOf('*');
+
+		foreach (var directory in vpkDirectoryLookups) {
+			VpkDirectory dir = directory.Value;
+			string path = dir.Path;
+			path.FileInfo(null, out var baseDirectory, out var baseName, out _);
+
+			if (wildcardAsteriskAtDir == -1) {
+				if (!baseDirectory.PathEquals(wildcardDir))
+					continue;
+			}
+			else {
+				if (!path.PathStartsWith(wildcardDir))
+					continue;
+			}
+
+			dirs.Add(new(baseName));
+		}
+
+		foreach (var entryKVP in vpkEntryLookups) {
+			VpkEntry entry = entryKVP.Value;
+
+			if (wildcardAsteriskAtDir == -1) {
+				if (!entry.Path.PathEquals(wildcardDir))
+					continue;
+			}
+			else {
+				if (wildcardDir == "*" || !entry.Path.PathStartsWith(wildcardDir))
+					continue;
+			}
+
+			if (wildcardAsteriskAtFile == -1) {
+				if (!entry.Filename.PathEquals(wildcardFile))
+					continue;
+			}
+			else {
+				if (wildcardFile == "*" || !entry.Filename.PathStartsWith(wildcardFile))
+					continue;
+			}
+
+			if (wildcardAsteriskAtExt == -1) {
+				if (!entry.Extension.PathEquals(wildcardExt))
+					continue;
+			}
+			else {
+				if (wildcardExt == null || wildcardExt == "" || wildcardExt == "*" || !entry.Extension.PathStartsWith(wildcardExt))
+					continue;
+			}
+
+			files.Add(entry.FilenameAndExtension);
+		}
+	}
 }

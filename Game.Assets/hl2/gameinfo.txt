@@ -16,7 +16,6 @@
 		SearchPaths
 		{
 			game+game_write		hl2
-			gamebin				hl2/bin
 			
 			game+mod			hl2/hl2_pak.vpk
 			game				hl2/hl2_textures.vpk

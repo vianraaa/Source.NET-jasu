@@ -10,4 +10,5 @@ global using HCursor = nint;
 global using UtlSymId_t = ulong;
 global using vec_t = float;
 global using FileNameHandle_t = ulong;
+global using FileFindHandle_t = ulong;
 global using PackedEntityHandle_t = nint;

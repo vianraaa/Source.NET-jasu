@@ -2,6 +2,7 @@
 
 
 using Source.Common.Filesystem;
+using Source.Common.Utilities;
 
 namespace Source.FileSystem;
 
@@ -121,5 +122,28 @@ public class DiskSearchPath : SearchPath
 
 	internal override object? GetPackedStore() {
 		return null;
+	}
+
+	protected override void PrepareFinds(List<string> files, List<string> dirs, string? wildcard) {
+		IEnumerable<string> fileSearch, dirSearch;
+
+		if (wildcard != null) {
+			var directory = Path.GetDirectoryName(Path.Combine(DiskPath!, wildcard));
+			var pattern = Path.GetFileName(wildcard);
+			if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+				return;
+
+			fileSearch = Directory.EnumerateFiles(DiskPath!, wildcard);
+			dirSearch = Directory.EnumerateDirectories(DiskPath!, wildcard);
+		}
+		else {
+			fileSearch = Directory.EnumerateFiles(DiskPath!);
+			dirSearch = Directory.EnumerateDirectories(DiskPath!);
+		}
+
+		foreach (var file in fileSearch)
+			files.Add(Path.GetFileName(file));
+		foreach (var dir in dirSearch)
+			dirs.Add(Path.GetFileName(dir));
 	}
 }

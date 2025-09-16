@@ -11,7 +11,7 @@ namespace Source.Common.Utilities;
 public interface ISymbolTable {
 	UtlSymId_t AddString(ReadOnlySpan<char> str);
 	UtlSymId_t Find(ReadOnlySpan<char> str);
-	ReadOnlySpan<char> String(UtlSymId_t symbol);
+	string? String(UtlSymId_t symbol);
 	nint GetNumStrings();
 	void RemoveAll();
 }
@@ -37,7 +37,7 @@ public class UtlSymbolTable(bool caseInsensitive = false) : ISymbolTable
 		return 0;
 	}
 
-	public ReadOnlySpan<char> String(UtlSymId_t symbol) {
+	public string? String(UtlSymId_t symbol) {
 		if (Symbols.TryGetValue(symbol, out string? str))
 			return str;
 		return null;
@@ -65,7 +65,7 @@ public class UtlSymbolTableMT(bool caseInsensitive = false) : ISymbolTable
 		return 0;
 	}
 
-	public ReadOnlySpan<char> String(UtlSymId_t symbol) {
+	public string? String(UtlSymId_t symbol) {
 		if (Symbols.TryGetValue(symbol, out string? str))
 			return str;
 		return null;

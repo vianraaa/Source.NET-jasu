@@ -398,7 +398,7 @@ public static class UnmanagedUtils
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
 		list.EnsureCapacity(ensureTo);
 
-		while (list.Count < ensureTo) 
+		while (list.Count < ensureTo)
 			list.Add(new T());
 	}
 
@@ -408,7 +408,7 @@ public static class UnmanagedUtils
 		while (list.Count > ensureTo)
 			list.RemoveAt(list.Count - 1);
 
-		while (list.Count < ensureTo) 
+		while (list.Count < ensureTo)
 			list.Add(default);
 	}
 
@@ -468,7 +468,117 @@ public static class UnmanagedUtils
 		// Then copy 
 		inSpan.ClampedCopyTo(outSpan);
 	}
+	/// <summary>
+	/// Attempts to parse various elements of a filepath 
+	/// </summary>
+	/// <param name="inStr"></param>
+	/// <param name="slashSeparators"></param>
+	/// <param name="directoryName"></param>
+	/// <param name="fileName"></param>
+	/// <param name="fileExtension"></param>
+	public static void FileInfo(this ReadOnlySpan<char> inStr, Span<Range> slashSeparators, out ReadOnlySpan<char> directoryName, out ReadOnlySpan<char> fileName, out ReadOnlySpan<char> fileExtension) {
+		int slashSepIdx = 0;
+		int lastSlashIdx = -1;
+		int lastDotIdx = -1;
+		int lastMetRange = 0;
+		for (int i = 0; i < inStr.Length; i++) {
+			char c = inStr[i];
+			switch (c) {
+				case '/':
+				case '\\':
+					lastSlashIdx = i;
+					if (slashSeparators != null && slashSepIdx < slashSeparators.Length) {
+						slashSeparators[slashSepIdx++] = new(lastMetRange, i - 1);
+						lastMetRange = i + 1;
+					}
+					break;
+				case '.':
+					lastDotIdx = i;
+					break;
+			}
+		}
 
+		if (lastSlashIdx != -1)
+			directoryName = inStr[..lastSlashIdx];
+		else
+			directoryName = string.Empty;
+
+		if (lastDotIdx == -1) {
+			if (lastSlashIdx == -1)
+				fileName = inStr;
+			else
+				fileName = inStr[(lastSlashIdx + 1)..];
+			// no extension
+			fileExtension = null;
+		}
+		else {
+			if (lastSlashIdx == -1) {
+				fileName = inStr[..lastDotIdx];
+				fileExtension = inStr[(lastDotIdx + 1)..];
+			}
+			else {
+				fileName = inStr[(lastSlashIdx + 1)..lastDotIdx];
+				fileExtension = inStr[(lastDotIdx + 1)..];
+			}
+		}
+	}
+
+	public static void FileBase(this string inStr, Span<char> outSpan) => FileBase(inStr.AsSpan(), outSpan);
+	public static void FileInfo(this string inStr, Span<Range> slashSeparators, out ReadOnlySpan<char> directoryName, out ReadOnlySpan<char> fileName, out ReadOnlySpan<char> fileExtension) => FileInfo(inStr.AsSpan(), slashSeparators, out directoryName, out fileName, out fileExtension);
+	/// <summary>
+	/// Compare two string-spans against each other, with invariant casing and invariant slash usage.
+	/// </summary>
+	/// <param name="str1"></param>
+	/// <param name="str2"></param>
+	/// <returns></returns>
+	public static bool PathEquals(this string str1, ReadOnlySpan<char> str2) => PathEquals(str1.AsSpan(), str2);
+	/// <summary>
+	/// Compare two string-spans against each other, with invariant casing and invariant slash usage.
+	/// </summary>
+	/// <param name="str1"></param>
+	/// <param name="str2"></param>
+	/// <returns></returns>
+	public static bool PathEquals(this ReadOnlySpan<char> str1, ReadOnlySpan<char> str2) {
+		if (str1.Length != str2.Length) return false;
+		for (int i = 0; i < str1.Length; i++) {
+			char c1 = char.ToLowerInvariant(str1[i]);
+			char c2 = char.ToLowerInvariant(str2[i]);
+			if (c1 != c2) {
+				if ((c1 == '\\' && c2 == '/') || (c1 == '/' && c2 == '\\'))
+					continue; // Slash invariant
+				else
+					return false;
+			}
+		}
+		return true;
+	}
+	/// <summary>
+	/// Compare two string-spans against each other, with invariant casing and invariant slash usage.
+	/// </summary>
+	/// <param name="str1"></param>
+	/// <param name="str2"></param>
+	/// <returns></returns>
+	public static bool PathStartsWith(this string str1, ReadOnlySpan<char> str2) => PathStartsWith(str1.AsSpan(), str2);
+	/// <summary>
+	/// Compare two string-spans against each other, with invariant casing and invariant slash usage.
+	/// </summary>
+	/// <param name="str1"></param>
+	/// <param name="str2"></param>
+	/// <returns></returns>
+	public static bool PathStartsWith(this ReadOnlySpan<char> str1, ReadOnlySpan<char> str2) {
+		for (int i = 0; i < Math.Min(str1.Length, str2.Length); i++) {
+			char c1 = char.ToLowerInvariant(str1[i]);
+			char c2 = char.ToLowerInvariant(str2[i]);
+			if (c1 != c2) {
+				if ((c1 == '\\' && c2 == '/') || (c1 == '/' && c2 == '\\'))
+					continue; // Slash invariant
+				else
+					return false;
+			}
+		}
+
+		return true;
+	}
 	public static unsafe ulong Hash(this string target, bool invariant = true) => Hash((ReadOnlySpan<char>)target, invariant);
 	public static char Nibble(this char c) {
 		if ((c >= '0') && (c <= '9'))

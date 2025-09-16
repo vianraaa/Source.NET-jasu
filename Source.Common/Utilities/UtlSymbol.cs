@@ -31,7 +31,7 @@ public struct UtlSymbol
 		id = symbol.id;
 		ValidId = id != UTL_INVAL_SYMBOL;
 	}
-	public readonly ReadOnlySpan<char> String() => CurrTable().String(id);
+	public readonly string? String() => CurrTable().String(id);
 	public readonly bool IsValid() => ValidId && id != UTL_INVAL_SYMBOL;
 	public readonly UtlSymId_t Id => ValidId ? id : UTL_INVAL_SYMBOL;
 

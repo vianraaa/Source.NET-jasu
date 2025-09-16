@@ -414,6 +414,7 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	readonly Dictionary<ulong, FileNameHandle_t> fileNameHandles = [];
+	readonly Dictionary<FileNameHandle_t, string> fileNameStrings = [];
 	FileNameHandle_t currentHandle;
 	public FileNameHandle_t FindOrAddFileName(ReadOnlySpan<char> name) {
 		Span<char> newNameBuffer = stackalloc char[name.Length];
@@ -425,8 +426,10 @@ public class BaseFileSystem : IFileSystem
 		}
 
 		ulong hash = newNameBuffer[..newNamePtr].Hash();
-		if (!fileNameHandles.TryGetValue(hash, out var handle))
+		if (!fileNameHandles.TryGetValue(hash, out var handle)) {
 			handle = fileNameHandles[hash] = ++currentHandle;
+			fileNameStrings[handle] = new(name); // Make a copy of the string to live forever
+		}
 
 		return handle;
 	}
@@ -437,5 +440,141 @@ public class BaseFileSystem : IFileSystem
 
 	public void EndMapAccess() {
 
+	}
+
+	public struct FileFindContext {
+		public int Locked;
+
+		public UtlSymbol Wildcard;
+		public UtlSymbol PathID;
+		public FileFindHandle_t FindHandle;
+		public volatile int FileIdx;
+		public volatile int PathIdx;
+		public volatile int CollectionIdx;
+
+		int ranAtLeastOnce;
+		BaseFileSystem system;
+		SearchPathCollection? currentCollection;
+		SearchPath? currentPath;
+		HashSet<FileNameHandle_t>? foundAlready;
+
+		public void FullyLock(BaseFileSystem system, FileFindHandle_t lockedIdx, ReadOnlySpan<char> wildcard, ReadOnlySpan<char> pathID) {
+			this.system = system;
+			Reset();
+
+			FindHandle = lockedIdx;
+			Wildcard = new UtlSymbol(wildcard);
+			PathID = new UtlSymbol(pathID);
+		}
+
+		public void Reset() {
+			Wildcard = default;
+			PathID = default;
+
+			FileIdx = -1;
+			PathIdx = -1;
+			CollectionIdx = -1;
+			ranAtLeastOnce = 0;
+
+			currentCollection = null;
+			currentPath = null;
+
+			foundAlready ??= [];
+			foundAlready.Clear();
+		}
+
+		
+
+		public ReadOnlySpan<char> Next() {
+			findCollection:
+			if(currentCollection == null) {
+				currentCollection = PathID == 0
+					? system.SearchPaths.At(Interlocked.Increment(ref CollectionIdx))
+					: Interlocked.CompareExchange(ref ranAtLeastOnce, 1, 0) == 0
+						? system.SearchPaths[PathID]
+						: null;
+
+				if(currentCollection != null) {
+					// Reset these parts...
+					Interlocked.Exchange(ref FileIdx, -1);
+					Interlocked.Exchange(ref PathIdx, -1);
+					goto findPath; // We don't need to perform the next check
+				}
+			}
+			if (currentCollection == null)
+				return null; // Cannot continue.
+
+			findPath:
+			if(currentPath == null) {
+				// Find the next collection.
+				currentPath = currentCollection.At(Interlocked.Increment(ref PathIdx));
+
+				if (currentPath != null) {
+					currentPath.LockFinds(Wildcard, foundAlready!);
+					Interlocked.Exchange(ref FileIdx, -1);
+					// We don't need to perform the next check
+					goto findFileDir;
+				}
+			}
+
+			if(currentPath == null) {
+				// Search for a new collection?
+				currentCollection = null;
+				goto findCollection;
+			}
+
+		findFileDir:
+			string? currentFile = currentPath.FindAt(Interlocked.Increment(ref FileIdx));
+			if(currentFile == null) {
+				// Search for a new path?
+				currentPath.UnlockFinds();
+				currentPath = null;
+				goto findPath;
+			}
+
+			return currentFile;
+		}
+
+		public void Close() {
+			if(Locked == 0) {
+				Warning("Tried to unlock a file handle that was already unlocked!!!\n");
+				Assert(false);
+				return;
+			}
+
+			Locked = 0;
+			Reset();
+		}
+	}
+
+	const int MAX_FILE_HANDLES = 512;
+	readonly FileFindContext[] contexts = new FileFindContext[MAX_FILE_HANDLES];
+	FileFindHandle_t currentFindHandle;
+
+	public ReadOnlySpan<char> FindFirstEx(ReadOnlySpan<char> wildcard, ReadOnlySpan<char> pathID, out FileFindHandle_t findHandle) {
+		for (int i = 0; i < MAX_FILE_HANDLES; i++) {
+			findHandle = Interlocked.Increment(ref currentFindHandle);
+			ref FileFindContext ctx = ref contexts[(int)(findHandle % MAX_FILE_HANDLES)];
+			if (Interlocked.CompareExchange(ref ctx.Locked, 1, 0) == 0) {
+				ctx.FullyLock(this, findHandle, wildcard, pathID);
+				return ctx.Next();
+			}
+		}
+
+		throw new Exception("File find error - we likely aren't as thread safe as we had hoped, or 512+ file handles are currently allocated");
+	}
+
+	public ReadOnlySpan<char> FindNext(FileFindHandle_t findHandle) {
+		ref FileFindContext ctx = ref contexts[(int)(findHandle % MAX_FILE_HANDLES)];
+		return ctx.Next();
+	}
+
+	public void FindClose(FileFindHandle_t findHandle) {
+		ref FileFindContext ctx = ref contexts[(int)(findHandle % MAX_FILE_HANDLES)];
+		ctx.Close();
+	}
+
+	public ReadOnlySpan<char> String(FileNameHandle_t handle) {
+		return fileNameStrings.TryGetValue(handle, out string? v) ? v : null;
 	}
 }

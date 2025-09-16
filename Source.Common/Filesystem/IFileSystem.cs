@@ -132,26 +132,11 @@ public interface IFileSystem : IBaseFileSystem
 	void BeginMapAccess();
 	void EndMapAccess();
 
-	/// <summary>
-	/// Compare two string-spans against each other, with invariant casing and invariant slash usage.
-	/// </summary>
-	/// <param name="str1"></param>
-	/// <param name="str2"></param>
-	/// <returns></returns>
-	public static bool PathCompare(ReadOnlySpan<char> str1, ReadOnlySpan<char> str2) {
-		if (str1.Length != str2.Length) return false;
-		for (int i = 0; i < str1.Length; i++) {
-			char c1 = char.ToLowerInvariant(str1[i]);
-			char c2 = char.ToLowerInvariant(str2[i]);
-			if (c1 != c2) {
-				if ((c1 == '\\' && c2 == '/') || (c1 == '/' && c2 == '\\'))
-					continue; // Slash invariant
-				else
-					return false;
-			}
-		}
-		return true;
-	}
+	ReadOnlySpan<char> FindFirstEx(ReadOnlySpan<char> wildcard, ReadOnlySpan<char> pathID, out ulong findHandle);
+	ReadOnlySpan<char> FindNext(ulong findHandle);
+	void FindClose(ulong findHandle);
+
+	ReadOnlySpan<char> String(FileNameHandle_t nameHandle);
 }
 
 public enum PathTypeFilter

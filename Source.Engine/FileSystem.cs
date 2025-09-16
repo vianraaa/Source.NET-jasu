@@ -136,6 +136,18 @@ public class FileSystem(IFileSystem fileSystem, IServiceProvider services) {
 			ConMsg($"{where}\n");
 	}
 	[ConCommand]
+	void dir(in TokenizedCommand args) {
+		ReadOnlySpan<char> input = args.Arg(1);
+
+		ReadOnlySpan<char> filename = fileSystem.FindFirstEx(input, args.Arg(2), out FileFindHandle_t findHandle);
+		while (!filename.IsEmpty) {
+			Msg(filename);
+			Msg("\n");
+			filename = fileSystem.FindNext(findHandle);
+		}
+		fileSystem.FindClose(findHandle);
+	}
+	[ConCommand]
 	void path(in TokenizedCommand args) {
 		fileSystem.PrintSearchPaths();
 	}

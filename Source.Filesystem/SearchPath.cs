@@ -2,6 +2,7 @@
 
 
 using Source.Common.Filesystem;
+using Source.Common.Utilities;
 
 namespace Source.FileSystem;
 
@@ -50,7 +51,50 @@ public abstract class SearchPath
 		if ((fileName.Length > 0 && fileName[0] == '/' || fileName[0] == '\\') && hasSlash)
 			fileName = fileName[1..];
 
-		fileName.ClampedCopyTo(target[writePtr..]); writePtr+= fileName.Length;
+		fileName.ClampedCopyTo(target[writePtr..]); writePtr += fileName.Length;
 		return target[..writePtr];
+	}
+
+	protected abstract void PrepareFinds(List<string> files, List<string> dirs, string? wildcard);
+
+	uint FindsIdx;
+	readonly List<string> files = [];
+	readonly List<string> dirs = [];
+	internal void LockFinds(UtlSymbol wildcard, HashSet<UtlSymId_t> foundAlready) {
+		if (Interlocked.Increment(ref FindsIdx) == 1) {
+			// Prepare the find buffers...
+			// unfortunately requires a lock here.
+			lock (files)
+				lock (dirs) {
+					files.Clear();
+					dirs.Clear();
+					PrepareFinds(files, dirs, wildcard.String());
+					for (int i = dirs.Count - 1; i >= 0; i--)
+						if (!foundAlready.Add(dirs[i].Hash()))
+							dirs.RemoveAt(i);
+					for (int i = files.Count - 1; i >= 0; i--)
+						if (!foundAlready.Add(files[i].Hash()))
+							files.RemoveAt(i);
+				}
+
+		}
+	}
+	internal void UnlockFinds() {
+		Interlocked.Decrement(ref FindsIdx);
+	}
+	public string? FindAt(int index) {
+		if (Interlocked.CompareExchange(ref FindsIdx, 0, 0) == 0) {
+			AssertMsg(false, "Unlocked find attempt");
+			return null;
+		}
+
+		if (index >= files.Count) {
+			if (index >= (files.Count + dirs.Count))
+				return null;
+			else
+				return dirs[index - files.Count];
+		}
+		else
+			return files[index];
 	}
 }
