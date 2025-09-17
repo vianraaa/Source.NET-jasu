@@ -178,7 +178,7 @@ public interface IDataTableBase<PropType> where PropType : IDataTableProp
 public static class DataTableHelpers
 {
 	public static readonly Dictionary<Type, int> FieldSizes = new() {
-		{ typeof(sbyte), 1 }, { typeof(byte), 1 },
+		{ typeof(sbyte), 1 }, { typeof(byte), 1 }, { typeof(bool), 1 },
 		{ typeof(short), 2 }, { typeof(ushort), 2 },
 		{ typeof(int), 4 }, { typeof(uint), 4 }, { typeof(float), 4 },
 		{ typeof(QAngle), 12 },
