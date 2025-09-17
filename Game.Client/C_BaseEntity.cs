@@ -11,6 +11,7 @@ using Steamworks;
 
 using System;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -22,9 +23,15 @@ public partial class C_BaseEntity : IClientEntity
 		ret.Init(entNum, serialNum);
 		return ret;
 	}
-	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 
+	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
+
+	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
+		RecvPropInt(FIELDOF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
+
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
 
@@ -252,13 +259,13 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public void PreDataUpdate(DataUpdateType updateType) {
-		if (AddDataChangeEvent(this, updateType, ref DataChangeEventRef)) 
+		if (AddDataChangeEvent(this, updateType, ref DataChangeEventRef))
 			OnPreDataChanged(updateType);
 
 		bool newentity = (updateType == DataUpdateType.Created);
 
 		// if (!newentity) 
-			// Interp_RestoreToLastNetworked(GetVarMapping());
+		// Interp_RestoreToLastNetworked(GetVarMapping());
 
 		if (newentity && !IsClientCreated()) {
 			SpawnTime = engine.GetLastTimeStamp();
@@ -279,7 +286,7 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	private bool AddDataChangeEvent(C_BaseEntity c_BaseEntity, DataUpdateType updateType, ref int storedEvent) {
-		if(storedEvent >= 0) {
+		if (storedEvent >= 0) {
 			// todo
 			return false;
 		}

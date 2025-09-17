@@ -4,13 +4,16 @@ using Source.Common;
 using Source.Common.Engine;
 
 using System.Numerics;
+using System.Reflection;
 
 namespace Game.Server;
 
 public partial class BaseEntity : IServerEntity
 {
+	private static void SendProxy_AnimTime(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {}
+	
 	public static SendTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
-
+		SendPropInt (FIELDOF(nameof(AnimTime)), 8, PropFlags.Unsigned|PropFlags.ChangesOften|PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_AnimTime),
 	]);
 
 	public static SendTable DT_PredictableId = new(nameof(DT_PredictableId), [
