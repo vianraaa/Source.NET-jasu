@@ -567,6 +567,7 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 
 		if (parent != null) {
 			ref SendTablePrecalc.ProxyPath parentProxyPath = ref precalc.ProxyPaths.AsSpan()[parent.GetRecursiveProxyIndex()];
+			outProxyPath.Entries = (ushort)(parentProxyPath.Entries + 1);
 
 			for (int i = 0; i < parentProxyPath.Entries; i++)
 				precalc.ProxyPathEntries[curEntry++] = precalc.ProxyPathEntries[parentProxyPath.FirstEntry + i];
