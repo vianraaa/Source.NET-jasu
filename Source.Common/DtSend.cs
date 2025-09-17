@@ -62,7 +62,7 @@ public class SendProp : IDataTableProp
 		HighValue = highValue;
 	}
 	public SendProp(string? name, FieldInfo field, SendPropType type, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) {
-		nameOverride = name;
+		NameOverride = name;
 		Type = type;
 		FieldInfo = field;
 		Bits = bits;
@@ -71,7 +71,7 @@ public class SendProp : IDataTableProp
 		HighValue = highValue;
 	}
 
-	string? nameOverride;
+	public string? NameOverride;
 	PropFlags Flags;
 	SendTable? DataTable;
 
@@ -90,7 +90,7 @@ public class SendProp : IDataTableProp
 
 	public PropFlags GetFlags() => Flags;
 
-	public ReadOnlySpan<char> GetName() => nameOverride ?? FieldInfo.Name;
+	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo.Name;
 
 	public int GetNumElements() => Elements;
 

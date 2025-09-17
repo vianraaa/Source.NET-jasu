@@ -100,6 +100,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 
 			prop.Type = sendTableProp.Type;
 			prop.FieldInfo = sendTableProp.FieldInfo;
+			prop.NameOverride = sendTableProp.NameOverride;
 			prop.SetFlags(sendTableProp.GetFlags());
 
 			if (CommandLine.FindParm("-dti") != 0 && sendTableProp.GetParentArrayPropName() != null) {
