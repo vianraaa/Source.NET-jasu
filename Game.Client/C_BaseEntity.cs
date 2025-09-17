@@ -22,9 +22,18 @@ public partial class C_BaseEntity : IClientEntity
 		ret.Init(entNum, serialNum);
 		return ret;
 	}
-	public static RecvTable DT_BaseEntity = [
+	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 
-	];
+	]);
+
+	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
+
+	]);
+
+	public static RecvTable DT_BaseEntity = new([
+		RecvPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
+	]);
+
 	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 

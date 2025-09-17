@@ -9,11 +9,11 @@ namespace Game.Server;
 
 public partial class BaseEntity : IServerEntity
 {
-	public static SendTable DT_AnimTimeMustBeFirst = new([
+	public static SendTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 
 	]);
 
-	public static SendTable DT_PredictableId = new([
+	public static SendTable DT_PredictableId = new(nameof(DT_PredictableId), [
 
 	]);
 

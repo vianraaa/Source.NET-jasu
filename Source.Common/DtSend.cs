@@ -386,6 +386,10 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	public SendTable(SendProp[] props) {
 		Props = props;
 	}
+	public SendTable(string name, SendProp[] props) {
+		NetTableName = name;
+		Props = props;
+	}
 
 	public string? NetTableName;
 	public SendTablePrecalc? Precalc;

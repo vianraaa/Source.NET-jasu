@@ -363,6 +363,10 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 	public RecvTable(RecvProp[] props) {
 		Props = props;
 	}
+	public RecvTable(string name, RecvProp[] props) {
+		NetTableName = name;
+		Props = props;
+	}
 	public RecvProp[]? Props;
 	public RecvDecoder? Decoder;
 	public string? NetTableName;
