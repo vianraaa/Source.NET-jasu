@@ -1,37 +1,279 @@
 ﻿using CommunityToolkit.HighPerformance;
 
 using Source.Common.Engine;
+using Source.Common.Mathematics;
 
 using System.Buffers;
 using System.Collections;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.Metadata.Ecma335;
+
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Common;
 
 
 public static class SendPropHelpers
 {
-	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
-		return new SendProp(field, SendPropType.Float, bits, flags, lowValue, highValue);
+	public static void SendProxy_AngleToFloat(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
+		float angle = prop.GetValue<float>(instance);
+		outData.Float = MathLib.AngleMod(angle);
 	}
-	public static SendProp SendPropVector(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
-		return new SendProp(field, SendPropType.Vector, bits, flags, lowValue, highValue);
+	public static void SendProxy_FloatToFloat(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
+		outData.Float = prop.GetValue<float>(instance);
 	}
-	public static SendProp SendPropInt(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
-		return new SendProp(field, SendPropType.Int, bits, flags, lowValue, highValue);
+	public static void SendProxy_QAngles(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
+		var v = prop.GetValue<QAngle>(instance);
+		outData.X = MathLib.AngleMod(v.X);
+		outData.Y = MathLib.AngleMod(v.Y);
+		outData.Z = MathLib.AngleMod(v.Z);
 	}
-	public static SendProp SendPropString(FieldInfo field, int size, PropFlags flags = 0) {
-		return new SendProp(field, SendPropType.String, 0);
+	public static void SendProxy_VectorToVector(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
+		var v = prop.GetValue<Vector3>(instance);
+		outData.X = MathLib.AngleMod(v.X);
+		outData.Y = MathLib.AngleMod(v.Y);
+		outData.Z = MathLib.AngleMod(v.Z);
 	}
-	public static SendProp SendPropStringT(FieldInfo field) {
-		return SendPropString(field, Constants.DT_MAX_STRING_BUFFERSIZE, 0);
+	public static void SendProxy_VectorXYToVectorXY(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
+		var v = prop.GetValue<Vector3>(instance);
+		outData.X = MathLib.AngleMod(v.X);
+		outData.Y = MathLib.AngleMod(v.Y);
 	}
-	public static SendProp SendPropDataTable(string name, FieldInfo field) {
-		SendProp prop = new SendProp(name, field, SendPropType.DataTable);
-		prop.SetDataTable((SendTable)field.GetValue(null)!);
-		return prop;
+	public static void SendProxy_Int8ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = prop.GetValue<sbyte>(instance);
+	public static void SendProxy_Int16ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = prop.GetValue<short>(instance);
+	public static void SendProxy_Int32ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = prop.GetValue<int>(instance);
+	public static void SendProxy_UInt8ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = prop.GetValue<byte>(instance);
+	public static void SendProxy_UInt16ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = prop.GetValue<ushort>(instance);
+	public static void SendProxy_UInt32ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.Int = (int)prop.GetValue<uint>(instance);
+	public static void SendProxy_StringToString(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
+		=> outData.String = prop.GetValue<string>(instance);
+	public static object SendProxy_DataTableToDataTable(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID)
+		=> prop.GetValue<object>(instance);
+	public static void SendProxy_Empty(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) { }
+
+
+	static float AssignRangeMultiplier(int bits, double range) {
+		uint highValue;
+		if (bits == 32)
+			highValue = 0xFFFFFFFE;
+		else
+			highValue = (uint)((1 << bits) - 1);
+
+		float fHighLowMul = (float)(Math.Abs(range) <= double.Epsilon ? highValue : highValue / range);
+
+		if ((uint)(fHighLowMul * range) > highValue ||
+			 (fHighLowMul * range) > (double)highValue) {
+			Span<float> multipliers = [0.9999f, 0.99f, 0.9f, 0.8f, 0.7f];
+			int i;
+			for (i = 0; i < multipliers.Length; i++) {
+				fHighLowMul = (float)(highValue / range) * multipliers[i];
+				if ((uint)(fHighLowMul * range) > highValue || (fHighLowMul * range) > (double)highValue) {
+				}
+				else
+					break;
+			}
+
+			if (i == multipliers.Length) {
+				Assert(false);
+				return 0;
+			}
+		}
+
+		return fHighLowMul;
+	}
+
+
+	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		proxyFn ??= SendProxy_FloatToFloat;
+
+		SendProp ret = new();
+
+		if (bits <= 0 || bits == 32) {
+			flags |= PropFlags.NoScale;
+			lowValue = 0f;
+			highValue = 0f;
+		}
+		else {
+			if (highValue == Constants.HIGH_DEFAULT)
+				highValue = (1 << bits);
+
+			if ((flags & PropFlags.RoundDown) != 0)
+				highValue = highValue - ((highValue - lowValue) / (1 << bits));
+			else if ((flags & PropFlags.RoundUp) != 0)
+				lowValue = lowValue + ((highValue - lowValue) / (1 << bits));
+		}
+
+		ret.Type = SendPropType.Float;
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+		ret.LowValue = lowValue;
+		ret.HighValue = highValue;
+		ret.HighLowMul = AssignRangeMultiplier(ret.Bits, ret.HighValue - ret.LowValue);
+		ret.SetProxyFn(proxyFn);
+		if ((ret.GetFlags() & (PropFlags.Coord | PropFlags.NoScale | PropFlags.Normal | PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
+			ret.Bits = 0;
+
+		return ret;
+	}
+	public static SendProp SendPropVector(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_VectorToVector;
+
+		if (bits == 32)
+			flags |= PropFlags.NoScale;
+
+		ret.Type = SendPropType.Vector;
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+		ret.LowValue = lowValue;
+		ret.HighValue = highValue;
+		ret.HighLowMul = AssignRangeMultiplier(ret.Bits, ret.HighValue - ret.LowValue);
+		ret.SetProxyFn(proxyFn);
+		if ((ret.GetFlags() & (PropFlags.Coord | PropFlags.NoScale | PropFlags.Normal | PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
+			ret.Bits = 0;
+
+		return ret;
+	}
+	public static SendProp SendPropVectorXY(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_VectorXYToVectorXY;
+
+		if (bits == 32)
+			flags |= PropFlags.NoScale;
+
+		ret.Type = SendPropType.VectorXY;
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+		ret.LowValue = lowValue;
+		ret.HighValue = highValue;
+		ret.HighLowMul = AssignRangeMultiplier(ret.Bits, ret.HighValue - ret.LowValue);
+		ret.SetProxyFn(proxyFn);
+		if ((ret.GetFlags() & (PropFlags.Coord | PropFlags.NoScale | PropFlags.Normal | PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
+			ret.Bits = 0;
+
+		return ret;
+	}
+	public static SendProp SendPropAngle(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_AngleToFloat;
+
+		if (bits == 32)
+			flags |= PropFlags.NoScale;
+
+		ret.Type = SendPropType.Float;
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+		ret.LowValue = 0.0f;
+		ret.HighValue = 360.0f;
+		ret.HighLowMul = AssignRangeMultiplier(ret.Bits, ret.HighValue - ret.LowValue);
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	public static SendProp SendPropQAngles(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_QAngles;
+
+		if (bits == 32)
+			flags |= PropFlags.NoScale;
+
+		ret.Type = SendPropType.Vector;
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+		ret.LowValue = 0.0f;
+		ret.HighValue = 360.0f;
+		ret.HighLowMul = AssignRangeMultiplier(ret.Bits, ret.HighValue - ret.LowValue);
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	
+	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
+		if (proxyFn == null) {
+
+			if (sizeOfVar == 1)
+				proxyFn = SendProxy_Int8ToInt32;
+			else if (sizeOfVar == 2)
+				proxyFn = SendProxy_Int16ToInt32;
+			else if (sizeOfVar == 4)
+				proxyFn = SendProxy_Int32ToInt32;
+			else {
+				AssertMsg(false, $"SendPropInt var has invalid size ({(sizeOfVar == -1 ? "UNDEFINED" : sizeOfVar)})");
+				proxyFn = SendProxy_Int8ToInt32;
+			}
+		}
+
+		if (bits <= 0) {
+			Assert(sizeOfVar == 1 || sizeOfVar == 2 || sizeOfVar == 4);
+			bits = sizeOfVar * 8;
+		}
+
+		ret.Type = SendPropType.Int;
+
+		ret.FieldInfo = field;
+		ret.Bits = bits;
+		ret.SetFlags(flags);
+
+		ret.SetProxyFn(proxyFn);
+		if ((ret.GetFlags() & PropFlags.Unsigned) != 0) {
+			if (proxyFn == SendProxy_Int8ToInt32)
+				ret.SetProxyFn(SendProxy_UInt8ToInt32);
+			else if (proxyFn == SendProxy_Int16ToInt32)
+				ret.SetProxyFn(SendProxy_UInt16ToInt32);
+			else if (proxyFn == SendProxy_Int32ToInt32)
+				ret.SetProxyFn(SendProxy_UInt32ToInt32);
+		}
+
+		return ret;
+	}
+	public static SendProp SendPropString(FieldInfo field, int size, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		ret.Type = SendPropType.String;
+		ret.FieldInfo = field;
+		ret.SetFlags(flags);
+		ret.SetProxyFn(proxyFn ?? SendProxy_StringToString);
+
+		return ret;
+	}
+	public static SendProp SendPropStringT(FieldInfo field, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		ret.Type = SendPropType.String;
+		ret.FieldInfo = field;
+		ret.SetFlags(flags);
+		ret.SetProxyFn(proxyFn ?? SendProxy_StringToString);
+		return ret;
+	}
+	public static SendProp SendPropDataTable(string name, FieldInfo field, SendTableProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_DataTableToDataTable;
+
+		ret.Type = SendPropType.DataTable;
+		ret.NameOverride= name;
+		ret.FieldInfo = field;
+		ret.SetDataTable((SendTable)field.GetValue(null)!);
+		ret.SetDataTableProxyFn(proxyFn);
+
+		if (proxyFn == SendProxy_DataTableToDataTable) 
+			ret.SetFlags(PropFlags.ProxyAlwaysYes);
+
+		// TODO: Collapsible...
+
+		return ret;
 	}
 }
 
@@ -118,22 +360,22 @@ public class SendProp : IDataTableProp
 		ParentArrayPropName = new(str);
 	}
 
-	object Fn;
-	object DtFn;
+	SendVarProxyFn Fn;
+	SendTableProxyFn DtFn;
 
-	public object GetFn() {
+	public SendVarProxyFn GetProxyFn() {
 		return Fn;
 	}
 
-	public void SetFn(object fn) {
+	public void SetProxyFn(SendVarProxyFn fn) {
 		Fn = fn;
 	}
 
-	public void SetDataTableProxyFn(object value) {
+	public void SetDataTableProxyFn(SendTableProxyFn value) {
 		DtFn = value;
 	}
 
-	public object GetDataTableProxyFn() {
+	public SendTableProxyFn GetDataTableProxyFn() {
 		return DtFn;
 	}
 }
@@ -345,4 +587,7 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	}
 }
 
-public delegate void SendVarProxyFn<TypeFrom, TypeTo>(SendProp prop, in TypeFrom input, out TypeTo output, int objectID);
+public class SendProxyRecipients;
+
+public delegate void SendVarProxyFn(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID);
+public delegate object? SendTableProxyFn(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID);

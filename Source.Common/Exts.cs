@@ -122,15 +122,23 @@ public class ClassMemoryPool<T> where T : class, new()
 }
 
 
-internal static class FieldAccess<T>
+public static class FieldAccess {
+	public static T GetValueFast<T>(this FieldInfo field, object instance) => FieldAccess<T>.Getter(field)(instance);
+	public static ref T GetValueRefFast<T>(this FieldInfo field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
+	public static void SetValueFast<T>(this FieldInfo field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
+}
+
+public static class FieldAccess<T>
 {
-	internal delegate T Get(object o);
-	internal delegate void Set(object o, in T v);
+	public delegate T Get(object o);
+	public delegate ref T GetRef(object o);
+	public delegate void Set(object o, in T v);
 
 	internal static readonly Dictionary<FieldInfo, Get> Getters = [];
+	internal static readonly Dictionary<FieldInfo, GetRef> RefGetters = [];
 	internal static readonly Dictionary<FieldInfo, Set> Setters = [];
 
-	internal static Get Getter(FieldInfo field) {
+	public static Get Getter(FieldInfo field) {
 		if (Getters.TryGetValue(field, out var g))
 			return g;
 
@@ -151,7 +159,41 @@ internal static class FieldAccess<T>
 		return g;
 	}
 
-	internal static Set Setter(FieldInfo field) {
+	public static GetRef RefGetter(FieldInfo field) {
+		if (RefGetters.TryGetValue(field, out var g))
+			return g;
+
+		var method = new DynamicMethod(
+			$"refget_{field.Name}",
+			typeof(T).MakeByRefType(),
+			[typeof(object)],
+			typeof(FieldAccess<T>).Module,
+			true
+		);
+
+		var il = method.GetILGenerator();
+
+		if (!field.IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			if (field.DeclaringType!.IsValueType) {
+				il.Emit(OpCodes.Unbox, field.DeclaringType); 
+				il.Emit(OpCodes.Ldflda, field);              
+			}
+			else {
+				il.Emit(OpCodes.Castclass, field.DeclaringType); 
+				il.Emit(OpCodes.Ldflda, field);                  
+			}
+		}
+		else 
+			il.Emit(OpCodes.Ldsflda, field);
+		
+		il.Emit(OpCodes.Ret);
+
+		RefGetters[field] = g = (GetRef)method.CreateDelegate(typeof(GetRef));
+		return g;
+	}
+
+	public static Set Setter(FieldInfo field) {
 		if (Setters.TryGetValue(field, out var s))
 			return s;
 

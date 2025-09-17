@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using Source.Common.Mathematics;
+
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -48,6 +50,30 @@ public struct DVariant
 		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0];
 		set {
 			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0] = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public float X {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].X;
+		set {
+			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].X = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public float Y {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Y;
+		set {
+			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Y = value;
+			UsingReferenceData = false;
+			ReferenceData = null;
+		}
+	}
+	public float Z {
+		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Z;
+		set {
+			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Z = value;
 			UsingReferenceData = false;
 			ReferenceData = null;
 		}
@@ -139,9 +165,6 @@ public interface IDataTableProp
 	void SetFlags(PropFlags flags);
 	IDataTableBase<PropType>? GetDataTable<PropType>() where PropType : IDataTableProp;
 	void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp;
-
-	object GetFn();
-	void SetFn(object fn);
 }
 
 public interface IDataTableBase<PropType> where PropType : IDataTableProp
@@ -154,6 +177,13 @@ public interface IDataTableBase<PropType> where PropType : IDataTableProp
 
 public static class DataTableHelpers
 {
+	public static readonly Dictionary<Type, int> FieldSizes = new() {
+		{ typeof(sbyte), 1 }, { typeof(byte), 1 },
+		{ typeof(short), 2 }, { typeof(ushort), 2 },
+		{ typeof(int), 4 }, { typeof(uint), 4 }, { typeof(float), 4 },
+		{ typeof(QAngle), 12 },
+		{ typeof(Vector3), 12 },
+	};
 	/// <summary>
 	/// This is to be called on SendTables and RecvTables to setup array properties to point at their property 
 	/// templates and to set the PropFlags.InsideArray flag on the properties inside arrays.

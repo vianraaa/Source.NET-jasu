@@ -10,25 +10,122 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+using static Source.Common.Networking.svc_ClassInfo;
+
 namespace Source.Common;
 
-public static class RecvPropHelpers {
-	public static RecvProp RecvPropFloat(FieldInfo field) {
-		return new RecvProp(field, SendPropType.Float);
+public static class RecvPropHelpers
+{
+	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		field.SetValueFast<float>(instance, data.Value.Float);
 	}
-	public static RecvProp RecvPropVector(FieldInfo field) {
-		return new RecvProp(field, SendPropType.Vector);
+
+	public static void RecvProxy_VectorToVector(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		field.SetValueFast<Vector3>(instance, data.Value.Vector);
 	}
-	public static RecvProp RecvPropInt(FieldInfo field) {
-		return new RecvProp(field, SendPropType.Int);
+
+	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		ref Vector3 vec = ref field.GetValueRefFast<Vector3>(instance);
+		vec.X = data.Value.X;
+		vec.Y = data.Value.Y;
 	}
-	public static RecvProp RecvPropString(FieldInfo field) {
-		return new RecvProp(field, SendPropType.String);
+
+	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, object instance, int objectID) {
+
 	}
-	public static RecvProp RecvPropDataTable(string name, FieldInfo field) {
-		RecvProp prop = new RecvProp(name, field, SendPropType.DataTable);
-		prop.SetDataTable((RecvTable)field.GetValue(null)!);
-		return prop;
+
+	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((sbyte)data.Value.Int));
+	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
+	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked(data.Value.Int));
+	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		if(field.FieldType == typeof(string)) {
+			field.SetValueFast(instance, data.Value.String);
+			return;
+		}
+
+		throw new Exception("Cannot currently do a copy...");
+	}
+
+	public static RecvProp RecvPropFloat(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= RecvProxy_FloatToFloat;
+
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.Float;
+		ret.Flags = flags;
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	public static RecvProp RecvPropVector(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= RecvProxy_VectorToVector;
+
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.Vector;
+		ret.Flags = flags;
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	public static RecvProp RecvPropVectorXY(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= RecvProxy_VectorToVectorXY;
+
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.VectorXY;
+		ret.Flags = flags;
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	public static RecvProp RecvPropInt(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+
+		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
+		if (proxyFn == null) {
+			if (sizeOfVar == 1) 
+				proxyFn = RecvProxy_Int32ToInt8;
+			else if (sizeOfVar == 2) 
+				proxyFn = RecvProxy_Int32ToInt16;
+			else if (sizeOfVar == 4) 
+				proxyFn = RecvProxy_Int32ToInt32;
+			else {
+				AssertMsg(false, $"RecvPropInt var has invalid size {(sizeOfVar == -1 ? "UNDEFINED" : sizeOfVar)}");
+				proxyFn = RecvProxy_Int32ToInt8;
+			}
+		}
+
+		ret.FieldInfo = field;
+		ret.RecvType  = SendPropType.Int;
+		ret.Flags = flags;
+		ret.SetProxyFn(proxyFn
+			);
+
+		return ret;
+	}
+	public static RecvProp RecvPropString(FieldInfo field, int bufferSize = -1, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= RecvProxy_StringToString;
+
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.String;
+		ret.Flags = flags;
+		ret.StringBufferSize = bufferSize;
+		ret.SetProxyFn(proxyFn);
+
+		return ret;
+	}
+	public static RecvProp RecvPropDataTable(string name, FieldInfo field, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= DataTableRecvProxy_StaticDataTable;
+		ret.NameOverride = name;
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.DataTable;
+		ret.Flags = flags;
+		ret.SetDataTableProxyFn(proxyFn);
+		ret.SetDataTable((RecvTable)field.GetValue(null)!);
+		return ret;
 	}
 }
 
@@ -43,23 +140,27 @@ public static class RecvPropHelpers {
 public class RecvProp : IDataTableProp
 {
 	public FieldInfo FieldInfo;
-	public SendPropType Type;
+	public SendPropType RecvType;
 	public PropFlags Flags;
 	public int StringBufferSize;
 
+	public RecvProp() {
+
+	}
 	public RecvProp(FieldInfo field, SendPropType type) {
 		FieldInfo = field;
-		Type = type;
+		RecvType = type;
 	}
 	public RecvProp(string name, FieldInfo field, SendPropType type) {
-		nameOverride = name;
+		NameOverride = name;
 		FieldInfo = field;
-		Type = type;
+		RecvType = type;
 	}
-	string? nameOverride;
+	public string? NameOverride;
 	bool InsideArray;
 	RecvProp? ArrayProp;
-	object? ProxyFn;
+	RecvVarProxyFn ProxyFn;
+	DataTableRecvVarProxyFn DataTableProxyFn;
 	RecvTable? DataTable;
 	int Offset;
 	int Elements;
@@ -67,12 +168,12 @@ public class RecvProp : IDataTableProp
 	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
 	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
 
-	public RecvVarProxyFn<Instance, FieldType> GetProxyFn<Instance, FieldType>() where Instance : class
-		=> ProxyFn is RecvVarProxyFn<Instance, FieldType> fn ? fn : throw new InvalidCastException();
-	public void SetProxyFn<Instance, FieldType>(RecvVarProxyFn<Instance, FieldType> fn) where Instance : class
-		=> ProxyFn = fn;
+	public RecvVarProxyFn GetProxyFn() => ProxyFn;
+	public void SetProxyFn(RecvVarProxyFn fn) => ProxyFn = fn;
+	public DataTableRecvVarProxyFn GetDataTableProxyFn() => DataTableProxyFn;
+	public void SetDataTableProxyFn(DataTableRecvVarProxyFn fn) => DataTableProxyFn = fn;
 
-	public ReadOnlySpan<char> GetName() => nameOverride ?? FieldInfo.Name;
+	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo.Name;
 
 	public bool IsSigned() => (Flags & PropFlags.Unsigned) == 0;
 	public bool IsExcludeProp() => (Flags & PropFlags.Exclude) != 0;
@@ -82,7 +183,7 @@ public class RecvProp : IDataTableProp
 	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp => ArrayProp is PropType pt ? pt : throw new InvalidCastException();
 	public int GetNumElements() => Elements;
 	public int SetNumElements(int elements) => Elements = elements;
-	public SendPropType GetPropType() => Type;
+	public SendPropType GetPropType() => RecvType;
 	public PropFlags GetFlags() => Flags;
 	public void SetFlags(PropFlags flags) => Flags = flags;
 
@@ -91,18 +192,7 @@ public class RecvProp : IDataTableProp
 
 	public void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp
 		=> DataTable = dt == null ? null : dt is RecvTable rt ? rt : throw new InvalidCastException();
-
-	public object GetFn() {
-		return ProxyFn;
-	}
-
-	public void SetFn(object fn) {
-		ProxyFn = fn;
-	}
 }
-
-public delegate void RecvVarProxyFn<Instance, FieldType>(ref RecvProxyData data, GetRefFn<Instance, FieldType> fieldFn) where Instance : class;
-
 
 public class RecvDecoder
 {
@@ -145,7 +235,7 @@ public class SendTablePrecalc
 
 		ExcludeProp[] excludeProps = new ExcludeProp[Constants.MAX_EXCLUDE_PROPS];
 		int numExcludeProps = 0;
-		if (!SendTable.GetPropsExcluded(table!, excludeProps.AsSpan(), ref  numExcludeProps, Constants.MAX_EXCLUDE_PROPS))
+		if (!SendTable.GetPropsExcluded(table!, excludeProps.AsSpan(), ref numExcludeProps, Constants.MAX_EXCLUDE_PROPS))
 			return false;
 
 		// Now build the hierarchy.
@@ -305,3 +395,6 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 		InMainList = inList;
 	}
 }
+
+public delegate void RecvVarProxyFn(ref readonly RecvProxyData data, object instance, FieldInfo field);
+public delegate void DataTableRecvVarProxyFn(RecvProp prop, object instance, int objectID);

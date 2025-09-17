@@ -119,4 +119,6 @@ public static class MathLib
 		int* ptr = (int*)&shifted;
 		return (*ptr & ((1 << 23) - 1)) - (1 << 22);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float AngleMod(float a) => (360f / 65536) * ((int)(a * (65536f / 360.0f)) & 65535);
 }

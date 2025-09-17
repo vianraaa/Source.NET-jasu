@@ -118,7 +118,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 				clientProp.SetTableName(dtName);
 
 				prop.SetDataTableProxyFn(sendTableProp.GetDataTableProxyFn());
-				prop.SetFn(sendTableProp.GetFn());
+				prop.SetProxyFn(sendTableProp.GetProxyFn());
 			}
 			else {
 				if (prop.IsExcludeProp()) {
