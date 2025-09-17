@@ -31,17 +31,18 @@ public partial class C_BaseEntity : IClientEntity
 	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		RecvPropInt(FIELDOF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
+	public static readonly ClientClass CC_AnimTimeMustBeFirst = new ClientClass("AnimTimeMustBeFirst", CreateObject, null, DT_AnimTimeMustBeFirst);
 
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
 
 	]);
+	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", CreateObject, null, DT_PredictableId);
 
 	public static RecvTable DT_BaseEntity = new([
 		RecvPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
 	]);
-
-	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
+	public static readonly ClientClass CC_BaseEntity = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public int Index;
