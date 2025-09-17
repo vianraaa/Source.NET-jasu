@@ -8,6 +8,7 @@ using System;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -18,7 +19,8 @@ namespace Source.Engine;
 public struct DecodeInfo<Instance, Return> where Instance : class
 {
 	public RecvProxyData RecvProxyData;
-	public GetRefFn<Instance, Return> Getter;
+	public FieldInfo FieldInfo;
+	public Instance Object;
 	public SendProp Prop;
 	public bf_read In;
 }
@@ -193,13 +195,13 @@ public class IntPropTypeFns : PropTypeFns<int>
 			}
 		}
 
-		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn<Instance, int>()?.Invoke(ref decodeInfo.RecvProxyData, decodeInfo.Getter);
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 
 	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
 		info.RecvProxyData.Value.Int = 0;
 
-		info.RecvProxyData.RecvProp?.GetProxyFn<Instance, int>()(ref info.RecvProxyData, info.Getter);
+		info.RecvProxyData.RecvProp?.GetProxyFn()(ref info.RecvProxyData, info.Object, info.FieldInfo);
 	}
 
 	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
