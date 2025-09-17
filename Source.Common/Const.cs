@@ -258,6 +258,8 @@ public static class Constants
 	public const int VOICE_MAX_PLAYERS = MAX_PLAYERS;
 	public const int VOICE_MAX_PLAYERS_DW = (VOICE_MAX_PLAYERS / 32) + ((VOICE_MAX_PLAYERS & 31) != 0 ? 1 : 0);
 
+	public const float HIGH_DEFAULT = -121121.121121f;
+
 	public const double MIN_FPS = 0.1;
 	public const double MAX_FPS = 1000;
 

@@ -22,17 +22,18 @@ public class C_World : C_BaseEntity
 		return ret;
 	}
 	public static RecvTable DT_World = new([
-		new RecvPropDataTable<C_World>("baseclass", DT_BaseEntity),
-		new RecvPropFloat<C_World>("m_flWaveHeight", (instance) => ref instance.WaveHeight),
-		new RecvPropVector<C_World>("m_WorldMins", (instance) => ref instance.WorldMins),
-		new RecvPropVector<C_World>("m_WorldMaxs", (instance) => ref instance.WorldMaxs),
-		new RecvPropBool<C_World>("m_bStartDark", (instance) => ref instance.StartDark),
-		new RecvPropFloat<C_World>("m_flMaxOccludeeArea", (instance) => ref instance.MaxOccludeeArea),
-		new RecvPropFloat<C_World>("m_flMinOccluderArea", (instance) => ref instance.MinOccluderArea),
-		new RecvPropFloat<C_World>("m_flMaxPropScreenSpaceWidth", (instance) => ref instance.MaxPropScreenSpaceWidth),
-		new RecvPropFloat<C_World>("m_flMinPropScreenSpaceWidth", (instance) => ref instance.MinPropScreenSpaceWidth),
-		new RecvPropString<C_World>("m_iszDetailSpriteMaterial", (instance) => ref instance.DetailSpriteMaterial),
-		new RecvPropBool<C_World>("m_bColdWorld", (instance) => ref instance.ColdWorld),
+		RecvPropDataTable("baseclass", FIELDOF(nameof(DT_BaseEntity))),
+
+		RecvPropFloat(FIELDOF(nameof(WaveHeight))),
+		RecvPropVector(FIELDOF(nameof(WorldMins))),
+		RecvPropVector(FIELDOF(nameof(WorldMaxs))),
+		RecvPropInt(FIELDOF(nameof(StartDark))),
+		RecvPropFloat(FIELDOF(nameof(MaxOccludeeArea))),
+		RecvPropFloat(FIELDOF(nameof(MinOccluderArea))),
+		RecvPropFloat(FIELDOF(nameof(MaxPropScreenSpaceWidth))),
+		RecvPropFloat(FIELDOF(nameof(MinPropScreenSpaceWidth))),
+		RecvPropString(FIELDOF(nameof(DetailSpriteMaterial))),
+		RecvPropInt(FIELDOF(nameof(ColdWorld))),
 	]);
 
 	public static new readonly ClientClass ClientClass = new ClientClass("World", CreateObject, null, DT_World)

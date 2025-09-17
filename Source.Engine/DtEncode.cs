@@ -52,13 +52,13 @@ public abstract class BasePropTypeFns
 				val = 0;
 
 				if ((flags & PropFlags.RoundUp) == 0) 
-					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} < {prop.LowValue}) in SendPropFloat '{prop.VarName}', clamping.\n");		
+					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} < {prop.LowValue}) in SendPropFloat '{prop.FieldInfo}', clamping.\n");		
 			}
 			else if (incoming > prop.HighValue) {
 				val = (uint)((1 << prop.Bits) - 1);
 
 				if ((flags & PropFlags.RoundDown) == 0)
-					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} > {prop.HighValue}) in SendPropFloat '{prop.VarName}', clamping.\n");
+					Warning($"(class {PackedEntitiesManager.GetObjectClassName(objectID)}): Out-of-range value ({incoming} > {prop.HighValue}) in SendPropFloat '{prop.FieldInfo}', clamping.\n");
 			}
 			else {
 				float fRangeVal = (incoming - prop.LowValue) * prop.HighLowMul;

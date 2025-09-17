@@ -5,13 +5,38 @@ using Source.Common.Engine;
 using System.Buffers;
 using System.Collections;
 using System.Numerics;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Source.Common;
 
-public delegate Span<GetRefFn<InstanceType, ReturnType>> SendTableProxyFn<InstanceType, ReturnType>
-	(ReadOnlySpan<SendProp> props, GetRefFn<InstanceType, SendTable> baseT, int objectID) where InstanceType : class;
 
-public abstract class SendProp : IDataTableProp
+public static class SendPropHelpers
+{
+	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
+		return new SendProp(field, SendPropType.Float, bits, flags, lowValue, highValue);
+	}
+	public static SendProp SendPropVector(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
+		return new SendProp(field, SendPropType.Vector, bits, flags, lowValue, highValue);
+	}
+	public static SendProp SendPropInt(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT) {
+		return new SendProp(field, SendPropType.Int, bits, flags, lowValue, highValue);
+	}
+	public static SendProp SendPropString(FieldInfo field, int size, PropFlags flags = 0) {
+		return new SendProp(field, SendPropType.String, 0);
+	}
+	public static SendProp SendPropStringT(FieldInfo field) {
+		return SendPropString(field, Constants.DT_MAX_STRING_BUFFERSIZE, 0);
+	}
+	public static SendProp SendPropDataTable(string name, FieldInfo field) {
+		SendProp prop = new SendProp(name, field, SendPropType.DataTable);
+		prop.SetDataTable((SendTable)field.GetValue(null)!);
+		return prop;
+	}
+}
+
+
+public class SendProp : IDataTableProp
 {
 	public RecvProp? MatchingRecvProp;
 	public SendPropType Type;
@@ -22,32 +47,36 @@ public abstract class SendProp : IDataTableProp
 	public int Elements;
 	public string? ExcludeDTName;
 	public string? ParentArrayPropName;
-	public string? VarName;
+	public FieldInfo FieldInfo;
 	public float HighLowMul;
 
 	public SendProp() {
 
 	}
-	public SendProp(string varName, SendPropType type, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) {
+	public SendProp(FieldInfo field, SendPropType type, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) {
 		Type = type;
-		VarName = varName;
+		FieldInfo = field;
+		Bits = bits;
+		Flags = flags;
+		LowValue = lowValue;
+		HighValue = highValue;
+	}
+	public SendProp(string? name, FieldInfo field, SendPropType type, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) {
+		nameOverride = name;
+		Type = type;
+		FieldInfo = field;
 		Bits = bits;
 		Flags = flags;
 		LowValue = lowValue;
 		HighValue = highValue;
 	}
 
+	string? nameOverride;
 	PropFlags Flags;
 	SendTable? DataTable;
 
-	public abstract float GetFloat(object instance);
-	public abstract void SetFloat(object instance, float value);
-	public abstract int GetInt(object instance);
-	public abstract void SetInt(object instance, int value);
-	public abstract Vector3 GetVector3(object instance);
-	public abstract void SetVector3(object instance, Vector3 value);
-	public abstract ReadOnlySpan<char> GetString(object instance);
-	public abstract void SetString(object instance, ReadOnlySpan<char> str);
+	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
+	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
 
 	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp {
 		throw new NotImplementedException();
@@ -61,7 +90,7 @@ public abstract class SendProp : IDataTableProp
 
 	public PropFlags GetFlags() => Flags;
 
-	public ReadOnlySpan<char> GetName() => VarName;
+	public ReadOnlySpan<char> GetName() => nameOverride ?? FieldInfo.Name;
 
 	public int GetNumElements() => Elements;
 
@@ -106,146 +135,6 @@ public abstract class SendProp : IDataTableProp
 
 	public object GetDataTableProxyFn() {
 		return DtFn;
-	}
-}
-
-public class SendPropFloat<T>(string varName, GetRefFn<T, float> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Float, bits, flags, lowValue, highValue) where T : class
-{
-	public override float GetFloat(object instance) => refToField((T)instance);
-	public override void SetFloat(object instance, float value) {
-		ref float fl = ref refToField((T)instance);
-		fl = value;
-	}
-	public override int GetInt(object instance) => (int)refToField((T)instance);
-	public override void SetInt(object instance, int value) {
-		ref float fl = ref refToField((T)instance);
-		fl = value;
-	}
-	public override Vector3 GetVector3(object instance) => new(refToField((T)instance));
-	public override void SetVector3(object instance, Vector3 value) {
-		ref float fl = ref refToField((T)instance);
-		fl = value.X;
-	}
-
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropInt<T>(string varName, GetRefFn<T, int> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Int, bits, flags, lowValue, highValue) where T : class
-{
-	public override float GetFloat(object instance) => refToField((T)instance);
-	public override void SetFloat(object instance, float value) {
-		ref int fl = ref refToField((T)instance);
-		fl = (int)value;
-	}
-	public override int GetInt(object instance) => (int)refToField((T)instance);
-	public override void SetInt(object instance, int value) {
-		ref int fl = ref refToField((T)instance);
-		fl = value;
-	}
-	public override Vector3 GetVector3(object instance) => new(refToField((T)instance));
-	public override void SetVector3(object instance, Vector3 value) {
-		ref int fl = ref refToField((T)instance);
-		fl = (int)value.X;
-	}
-
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropVector<T>(string varName, GetRefFn<T, Vector3> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Vector, bits, flags, lowValue, highValue) where T : class
-{
-	public override float GetFloat(object instance) => refToField((T)instance).X;
-	public override void SetFloat(object instance, float value) {
-		ref Vector3 fl = ref refToField((T)instance);
-		fl = new(value, value, value);
-	}
-	public override int GetInt(object instance) => (int)refToField((T)instance).X;
-	public override void SetInt(object instance, int value) {
-		ref Vector3 fl = ref refToField((T)instance);
-		fl = new(value, value, value);
-	}
-	public override Vector3 GetVector3(object instance) => refToField((T)instance);
-	public override void SetVector3(object instance, Vector3 value) {
-		ref Vector3 fl = ref refToField((T)instance);
-		fl = value;
-	}
-
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropDataTable<T> : SendProp where T : class
-{
-	public SendPropDataTable(string varName, SendTable basetable) : base(varName, SendPropType.DataTable) {
-		SetDataTable(basetable);
-		SetFlags(PropFlags.Collapsible);
-	}
-	public override float GetFloat(object instance) => throw new NotImplementedException();
-	public override int GetInt(object instance) => throw new NotImplementedException();
-	public override Vector3 GetVector3(object instance) => throw new NotImplementedException();
-	public override void SetFloat(object instance, float value) => throw new NotImplementedException();
-	public override void SetInt(object instance, int value) => throw new NotImplementedException();
-	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropBool<T>(string varName, GetRefFn<T, bool> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Int, bits, flags, lowValue, highValue) where T : class
-{
-	public override float GetFloat(object instance) => refToField((T)instance) ? 1 : 0;
-	public override void SetFloat(object instance, float value) {
-		ref bool fl = ref refToField((T)instance);
-		fl = value != 0;
-	}
-	public override int GetInt(object instance) => refToField((T)instance) ? 1 : 0;
-	public override void SetInt(object instance, int value) {
-		ref bool fl = ref refToField((T)instance);
-		fl = value != 0;
-	}
-	public override Vector3 GetVector3(object instance) => new(refToField((T)instance) ? 1 : 0);
-	public override void SetVector3(object instance, Vector3 value) {
-		ref bool fl = ref refToField((T)instance);
-		fl = value.X != 0;
-	}
-
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropEHandle<T, BHT>(string varName, GetRefFn<T, BHT> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Int, bits, flags, lowValue, highValue) where T : class where BHT : BaseHandle
-{
-	public override float GetFloat(object instance) => refToField((T)instance).Index;
-	public override void SetFloat(object instance, float value) => SetInt(instance, (int)value);
-
-	public override int GetInt(object instance) => (int)refToField((T)instance).Index;
-	public override void SetInt(object instance, int value) {
-		ref BHT fl = ref refToField((T)instance);
-		fl.Index = (uint)value;
-	}
-
-	public override Vector3 GetVector3(object instance) => new(GetFloat(instance));
-	public override void SetVector3(object instance, Vector3 value) => SetFloat(instance, value.X);
-
-	public override ReadOnlySpan<char> GetString(object instance) => throw new NotSupportedException();
-	public override void SetString(object instance, ReadOnlySpan<char> str) => throw new NotSupportedException();
-}
-public class SendPropString<T>(string varName, GetRefFn<T, string?> refToField, int bits = 32, PropFlags flags = 0, float lowValue = 0f, float highValue = -121121.125f) : SendProp(varName, SendPropType.Int, bits, flags, lowValue, highValue) where T : class
-{
-	public override float GetFloat(object instance) => float.TryParse(refToField((T)instance), out var i) ? i : default;
-	public override void SetFloat(object instance, float value) {
-		ref string? fl = ref refToField((T)instance);
-		fl = value.ToString();
-	}
-
-	public override int GetInt(object instance) => int.TryParse(refToField((T)instance), out var i) ? i : default;
-	public override void SetInt(object instance, int value) {
-		ref string? fl = ref refToField((T)instance);
-		fl = value.ToString();
-	}
-
-	public override Vector3 GetVector3(object instance) => throw new NotImplementedException();
-	public override void SetVector3(object instance, Vector3 value) => throw new NotImplementedException();
-
-	public override ReadOnlySpan<char> GetString(object instance) => refToField((T)instance);
-	public override void SetString(object instance, ReadOnlySpan<char> str) {
-		ref string? fl = ref refToField((T)instance);
-		fl = new(str);
 	}
 }
 
@@ -440,10 +329,10 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 			precalc.ProxyPathEntries.AsSpan()[curEntry].DataTableProp = (ushort)node.DataTableProp;
 			++curEntry;
 		}
-		else 
+		else
 			outProxyPath.Entries = 0;
 
-		for (int i = 0; i < node.GetNumChildren(); i++) 
+		for (int i = 0; i < node.GetNumChildren(); i++)
 			FillPathEntries_R(precalc, node.GetChild(i), node, ref curEntry);
 	}
 

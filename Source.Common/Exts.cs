@@ -5,6 +5,7 @@ using K4os.Hash.xxHash;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Networking;
@@ -14,6 +15,7 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -116,6 +118,60 @@ public class ClassMemoryPool<T> where T : class, new()
 			value.ClearInstantiatedReference();
 			valueStates[value] = false;
 		}
+	}
+}
+
+
+internal static class FieldAccess<T>
+{
+	internal delegate T Get(object o);
+	internal delegate void Set(object o, in T v);
+
+	internal static readonly Dictionary<FieldInfo, Get> Getters = [];
+	internal static readonly Dictionary<FieldInfo, Set> Setters = [];
+
+	internal static Get Getter(FieldInfo field) {
+		if (Getters.TryGetValue(field, out var g))
+			return g;
+
+		var method = new DynamicMethod($"get_{field.Name}", typeof(T), [typeof(object)], typeof(FieldAccess<T>).Module, true);
+		var il = method.GetILGenerator();
+
+		if (!field.IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
+			il.Emit(OpCodes.Ldfld, field);
+		}
+		else {
+			il.Emit(OpCodes.Ldsfld, field);
+		}
+
+		il.Emit(OpCodes.Ret);
+		Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
+		return g;
+	}
+
+	internal static Set Setter(FieldInfo field) {
+		if (Setters.TryGetValue(field, out var s))
+			return s;
+
+		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T)], typeof(FieldAccess<T>).Module, true);
+		var il = method.GetILGenerator();
+
+		if (!field.IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
+			il.Emit(OpCodes.Ldarg_1);
+			il.Emit(OpCodes.Stfld, field);
+		}
+		else {
+			il.Emit(OpCodes.Ldarg_1);
+			il.Emit(OpCodes.Stsfld, field);
+		}
+
+		il.Emit(OpCodes.Ret);
+		Setters[field] = s = (Set)method.CreateDelegate(typeof(Set));
+		return s;
 	}
 }
 
@@ -772,6 +828,26 @@ public static class UnmanagedUtils
 /// <summary>
 /// Various C# reflection utilities
 /// </summary>
+public static class GlobalReflectionUtils {
+	public static FieldInfo FIELDOF(string name) {
+		Type? t = WhoCalledMe();
+		if (t == null)
+			throw new NullReferenceException("This doesnt work as well as we hoped!");
+		return t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
+	}
+	public static Type? WhoCalledMe() {
+		var stack = new StackTrace(skipFrames: 1, fNeedFileInfo: false);
+		for (int i = 0; i < stack.FrameCount; i++) {
+			var method = stack.GetFrame(i)!.GetMethod()!;
+			var declaringType = method.DeclaringType;
+			if (declaringType != null && declaringType != typeof(GlobalReflectionUtils)) 
+				return declaringType;
+		}
+		return null;
+	}
+}
 public static class ReflectionUtils
 {
 	public static bool TryToDelegate<T>(this MethodInfo m, object? instance, [NotNullWhen(true)] out T? asDelegate) where T : Delegate {

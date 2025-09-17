@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -56,6 +57,7 @@ public delegate void AssertFailedNotifyFunc(string file, int line, string messag
 
 public static class Dbg
 {
+	
 	static SpewOutputFunc _SpewOutputFunc = DefaultSpewFunc;
 	static AssertFailedNotifyFunc? _AssertFailedNotifyFunc = null;
 

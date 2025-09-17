@@ -10,7 +10,7 @@ namespace Game.Server;
 public partial class BaseEntity : IServerEntity
 {
 	public static SendTable DT_AnimTimeMustBeFirst = new([
-		new SendPropFloat<BaseEntity>("m_flAnimTime", (instance) => ref instance.AnimTime)
+
 	]);
 
 	public static SendTable DT_PredictableId = new([

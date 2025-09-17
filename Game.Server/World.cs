@@ -6,22 +6,24 @@ using System.Numerics;
 
 namespace Game.Server;
 
-[LinkEntityToClass(LocalName = "player")]
+[LinkEntityToClass(LocalName = "worldspawn")]
 public class World : BaseEntity
 {
 	public static SendTable DT_World = new([
-		new SendPropDataTable<World>("baseclass", DT_BaseEntity),
-		new SendPropFloat<World>("m_flWaveHeight", (instance) => ref instance.WaveHeight, 8, PropFlags.RoundUp),
-		new SendPropVector<World>("m_WorldMins", (instance) => ref instance.WorldMins, -1, PropFlags.Coord),
-		new SendPropVector<World>("m_WorldMaxs", (instance) => ref instance.WorldMaxs, -1, PropFlags.Coord),
-		new SendPropBool<World>("m_bStartDark", (instance) => ref instance.StartDark, -1, PropFlags.Unsigned),
-		new SendPropFloat<World>("m_flMaxOccludeeArea", (instance) => ref instance.MaxOccludeeArea, 0, PropFlags.NoScale),
-		new SendPropFloat<World>("m_flMinOccluderArea", (instance) => ref instance.MinOccluderArea, 0, PropFlags.NoScale),
-		new SendPropFloat<World>("m_flMaxPropScreenSpaceWidth", (instance) => ref instance.MaxPropScreenSpaceWidth, 0, PropFlags.NoScale),
-		new SendPropFloat<World>("m_flMinPropScreenSpaceWidth", (instance) => ref instance.MinPropScreenSpaceWidth, 0, PropFlags.NoScale),
-		new SendPropString<World>("m_iszDetailSpriteMaterial", (instance) => ref instance.DetailSpriteMaterial),
-		new SendPropBool<World>("m_bColdWorld", (instance) => ref instance.ColdWorld, 1, PropFlags.Unsigned),
+		SendPropDataTable("baseclass", FIELDOF(nameof(DT_BaseEntity))),
+
+		SendPropFloat(FIELDOF(nameof(WaveHeight)), 8, PropFlags.RoundUp, 0, 8),
+		SendPropVector(FIELDOF(nameof(WorldMins)), -1, PropFlags.Coord),
+		SendPropVector(FIELDOF(nameof(WorldMaxs)), -1, PropFlags.Coord),
+		SendPropInt(FIELDOF(nameof(StartDark)), 1, PropFlags.Unsigned),
+		SendPropFloat(FIELDOF(nameof(MaxOccludeeArea)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELDOF(nameof(MinOccluderArea)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELDOF(nameof(MaxPropScreenSpaceWidth)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELDOF(nameof(MinPropScreenSpaceWidth)), 0, PropFlags.NoScale),
+		SendPropStringT(FIELDOF(nameof(DetailSpriteMaterial))),
+		SendPropInt(FIELDOF(nameof(ColdWorld)), 1, PropFlags.Unsigned),
 	]);
+
 	public static readonly new ServerClass ServerClass = new ServerClass("World", DT_World)
 																		.WithManualClassID(StaticClassIndices.CWorld);
 	float WaveHeight;
