@@ -587,7 +587,5 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	}
 }
 
-public class SendProxyRecipients;
-
 public delegate void SendVarProxyFn(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID);
 public delegate object? SendTableProxyFn(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID);
