@@ -834,6 +834,7 @@ public static class GlobalReflectionUtils {
 		if (t == null)
 			throw new NullReferenceException("This doesnt work as well as we hoped!");
 		return t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
 			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
 	}
