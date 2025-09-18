@@ -241,6 +241,8 @@ public static class SendPropHelpers
 
 		return ret;
 	}
+	public static SendProp SendPropModelIndex(FieldInfo field)
+		=> SendPropInt(field, Constants.SP_MODEL_INDEX_BITS);
 	public static SendProp SendPropString(FieldInfo field, int size, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		ret.Type = SendPropType.String;

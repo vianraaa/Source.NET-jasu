@@ -232,4 +232,14 @@ public static class Protocol
 	public const string LIGHT_STYLES_TABLENAME = "lightstyles";
 	public const string USER_INFO_TABLENAME = "userinfo";
 	public const string SERVER_STARTUP_DATA_TABLENAME = "server_query_info";
+
+	public const int PROTOCOL_VERSION_23 = 23;
+	public const int PROTOCOL_VERSION_22 = 22;
+	public const int PROTOCOL_VERSION_21 = 21;
+	public const int PROTOCOL_VERSION_20 = 20;
+	public const int PROTOCOL_VERSION_19 = 19;
+	public const int PROTOCOL_VERSION_18 = 18;
+	public const int PROTOCOL_VERSION_17 = 17;
+	public const int PROTOCOL_VERSION_14 = 14;
+	public const int PROTOCOL_VERSION_12 = 12;
 }

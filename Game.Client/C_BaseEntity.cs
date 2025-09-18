@@ -39,9 +39,31 @@ public partial class C_BaseEntity : IClientEntity
 	]);
 	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", CreateObject, null, DT_PredictableId);
 
+	private static void RecvProxy_SimulationTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		C_BaseEntity entity = (C_BaseEntity)instance;
+
+		int addt = data.Value.Int;
+		int tickbase = (int)gpGlobals.GetNetworkBase(gpGlobals.TickCount, entity.EntIndex());
+
+		int t = tickbase + addt;
+
+		while (t < gpGlobals.TickCount - 127)
+			t += 256;
+		while (t > gpGlobals.TickCount + 127)
+			t -= 256;
+
+		entity.SimulationTime = (t * TICK_INTERVAL);
+	}
+
 	public static RecvTable DT_BaseEntity = new([
 		RecvPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
+		RecvPropInt(FIELDOF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
+		RecvPropInt(FIELDOF(nameof(InterpolationFrame))),
+		RecvPropVector(FIELDOF(nameof(NetworkOrigin))),
+		RecvPropQAngles(FIELDOF(nameof(NetworkAngles))),
+		RecvPropInt(FIELDOF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
 	]);
+
 	public static readonly ClientClass CC_BaseEntity = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
@@ -59,6 +81,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
+	public short ModelIndex;
 
 	EntityEffects Effects;
 	RenderMode RenderMode;
@@ -87,9 +110,6 @@ public partial class C_BaseEntity : IClientEntity
 
 	Handle<C_BasePlayer> PlayerSimulationOwner = new();
 	int DataChangeEventRef;
-
-	readonly ClientEntityList cl_entitylist = Singleton<ClientEntityList>();
-	readonly ClientGlobalVariables gpGlobals = Singleton<ClientGlobalVariables>();
 
 	public void ClientThink() {
 		throw new NotImplementedException();

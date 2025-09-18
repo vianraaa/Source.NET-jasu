@@ -1,5 +1,6 @@
 ﻿using Game.Shared;
 
+using Source;
 using Source.Common;
 using Source.Common.Engine;
 
@@ -22,6 +23,11 @@ public partial class BaseEntity : IServerEntity
 
 	public static SendTable DT_BaseEntity = new([
 		SendPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
+
+		SendPropInt(FIELDOF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: null /* todo */),
+		SendPropVector(FIELDOF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
+		SendPropInt(FIELDOF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
+		SendPropModelIndex(FIELDOF(nameof(ModelIndex))),
 	]);
 
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
@@ -29,7 +35,8 @@ public partial class BaseEntity : IServerEntity
 
 	float AnimTime;
 	float SimulationTime;
-	Vector3 Origin;
+	Vector3 NetworkOrigin;
+	Vector3 NetworkAngles;
 	byte InterpolationFrame;
 	int ModelIndex;
 

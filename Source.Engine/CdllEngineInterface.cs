@@ -2,6 +2,7 @@
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
+using Source.Common.Networking;
 using Source.Engine.Client;
 using Source.Engine.Server;
 
@@ -99,4 +100,6 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	public double GetLastTimeStamp() {
 		return cl.LastServerTickTime;
 	}
+
+	public uint GetProtocolVersion() => Protocol.VERSION;
 }

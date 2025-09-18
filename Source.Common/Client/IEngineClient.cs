@@ -93,4 +93,5 @@ public interface IEngineClient
 	bool IsInGame();
 	int GetLocalPlayer();
 	double GetLastTimeStamp();
+	uint GetProtocolVersion();
 }

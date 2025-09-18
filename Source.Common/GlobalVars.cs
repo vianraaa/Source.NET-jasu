@@ -15,9 +15,9 @@ public class GlobalVarsBase
 		this.timestampRandomizeWindow = 32;
 	}
 	public bool IsClient => isClient;
-	public int GetNetworkBase(int tick, int entity) {
-		int entityMod = entity % timestampRandomizeWindow;
-		int baseTick = timestampNetworkingBase * ((tick - entityMod) / timestampNetworkingBase);
+	public long GetNetworkBase(long tick, int entity) {
+		long entityMod = entity % timestampRandomizeWindow;
+		long baseTick = timestampNetworkingBase * ((tick - entityMod) / timestampNetworkingBase);
 		return baseTick;
 	}
 

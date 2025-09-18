@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 
 using static Source.Common.Networking.svc_ClassInfo;
@@ -38,7 +39,7 @@ public static class RecvPropHelpers
 	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
 	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked(data.Value.Int));
 	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		if(field.FieldType == typeof(string)) {
+		if (field.FieldType == typeof(string)) {
 			field.SetValueFast(instance, data.Value.String);
 			return;
 		}
@@ -57,6 +58,8 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
+	public static RecvProp RecvPropQAngles(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null)
+		=> RecvPropVector(field, flags, proxyFn);
 	public static RecvProp RecvPropVector(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_VectorToVector;
@@ -84,11 +87,11 @@ public static class RecvPropHelpers
 
 		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
 		if (proxyFn == null) {
-			if (sizeOfVar == 1) 
+			if (sizeOfVar == 1)
 				proxyFn = RecvProxy_Int32ToInt8;
-			else if (sizeOfVar == 2) 
+			else if (sizeOfVar == 2)
 				proxyFn = RecvProxy_Int32ToInt16;
-			else if (sizeOfVar == 4) 
+			else if (sizeOfVar == 4)
 				proxyFn = RecvProxy_Int32ToInt32;
 			else {
 				AssertMsg(false, $"RecvPropInt var has invalid size {(sizeOfVar == -1 ? "UNDEFINED" : sizeOfVar)}");
@@ -97,7 +100,7 @@ public static class RecvPropHelpers
 		}
 
 		ret.FieldInfo = field;
-		ret.RecvType  = SendPropType.Int;
+		ret.RecvType = SendPropType.Int;
 		ret.Flags = flags;
 		ret.SetProxyFn(proxyFn
 			);

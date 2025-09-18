@@ -62,6 +62,7 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	public bool Init() {
+		InitClientGlobals();
 		IGameSystem.Add(Singleton<ViewportClientSystem>());
 
 		ClientMode ??= new ClientModeHL2MPNormal(services, gpGlobals, HUD, Singleton<IEngineVGui>(), surface);

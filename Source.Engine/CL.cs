@@ -640,7 +640,8 @@ public class ClientDLL(IServiceProvider services, Sys Sys, EngineRecvTable RecvT
 			recvTables[nRecvTables++] = cur.RecvTable;
 		}
 
-		RecvTable.Init(recvTables.AsSpan()[..nRecvTables]);
+		RecvTable.Init(recvTables.AsSpan()[..nRecvTables]!); // << ! is acceptable here; anything beyond recvTables is null, anything before it shouldnt be
+		// (and if something is null before that point something else is already horribly broken)
 	}
 
 	public void Update() {
