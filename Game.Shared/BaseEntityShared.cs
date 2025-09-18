@@ -1,5 +1,4 @@
-﻿
-#if CLIENT_DLL
+﻿#if CLIENT_DLL
 namespace Game.Client;
 #else
 namespace Game.Server;

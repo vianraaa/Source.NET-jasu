@@ -11,8 +11,11 @@ namespace Game.Server;
 
 public partial class BaseEntity : IServerEntity
 {
-	private static void SendProxy_AnimTime(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {}
-	
+	private static void SendProxy_AnimTime(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID)
+		=> throw new NotImplementedException();
+	private static void SendProxy_ClientSideAnimation(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID)
+		=> throw new NotImplementedException();
+
 	public static SendTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		SendPropInt (FIELDOF(nameof(AnimTime)), 8, PropFlags.Unsigned|PropFlags.ChangesOften|PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_AnimTime),
 	]);
@@ -24,11 +27,12 @@ public partial class BaseEntity : IServerEntity
 	public static SendTable DT_BaseEntity = new([
 		SendPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
 
-		SendPropInt(FIELDOF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: null /* todo */),
+		SendPropInt(FIELDOF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_ClientSideAnimation /* todo */),
 		SendPropVector(FIELDOF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
 		SendPropInt(FIELDOF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
 		SendPropModelIndex(FIELDOF(nameof(ModelIndex))),
 	]);
+
 
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
@@ -39,6 +43,7 @@ public partial class BaseEntity : IServerEntity
 	Vector3 NetworkAngles;
 	byte InterpolationFrame;
 	int ModelIndex;
+	int Collision;
 
 	public Source.Common.Server.BaseEntity? GetBaseEntity() {
 		throw new NotImplementedException();
