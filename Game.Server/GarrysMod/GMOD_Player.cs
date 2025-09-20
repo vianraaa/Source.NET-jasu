@@ -11,6 +11,6 @@ public class GMOD_Player : HL2MP_Player
 	public static readonly SendTable DT_GMOD_Player = new([
 		SendPropDataTable("baseclass", DT_HL2MP_Player),
 	]);
-	public static readonly ServerClass ServerClass = new ServerClass("GMOD_Player", DT_GMOD_Player)
+	public static readonly new ServerClass ServerClass = new ServerClass("GMOD_Player", DT_GMOD_Player)
 															.WithManualClassID(StaticClassIndices.CGMOD_Player);
 }

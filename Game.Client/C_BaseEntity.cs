@@ -87,7 +87,7 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision))))
 	]);
 
-	public static readonly ClientClass CC_BaseEntity = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
+	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public int Index;
