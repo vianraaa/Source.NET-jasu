@@ -16,11 +16,11 @@ using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 
-public struct DecodeInfo<Instance, Return> where Instance : class
+public struct DecodeInfo
 {
 	public RecvProxyData RecvProxyData;
 	public FieldInfo FieldInfo;
-	public Instance Object;
+	public object Object;
 	public SendProp Prop;
 	public bf_read In;
 }
@@ -147,16 +147,11 @@ public abstract class BasePropTypeFns
 /// <typeparam name="Return"></typeparam>
 public abstract class PropTypeFns<Return> : BasePropTypeFns
 {
-	public abstract void Encode<Instance>(GetRefFn<Instance, Return> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) where Instance : class;
-	public abstract void Decode<Instance>(ref DecodeInfo<Instance, Return> decodeInfo) where Instance : class;
+	public abstract void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID);
+	public abstract void Decode(ref DecodeInfo decodeInfo);
 
-	public virtual void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, Return> sendField, GetRefFn<Instance, Return> recvField) where Instance : class {
-		throw new NotImplementedException("FastCopy not implemented yet, it seems to only be used in the singleplayer engine flow, which is currently not implemented.");
-		// ^^ should be a Generic_FastCopy equiv. at some point
-	}
-
-	public abstract bool IsZero<Instance>(GetRefFn<Instance, Return> fn, ref DVariant var, SendProp prop) where Instance : class;
-	public abstract void DecodeZero<Instance>(ref DecodeInfo<Instance, Return> info) where Instance : class;
+	public abstract bool IsZero(object instance, ref DVariant var, SendProp prop);
+	public abstract void DecodeZero(ref DecodeInfo info);
 }
 
 public class IntPropTypeFns : PropTypeFns<int>
@@ -172,7 +167,7 @@ public class IntPropTypeFns : PropTypeFns<int>
 		return p1.CompareBits(p2, prop.Bits) ? 1 : 0;
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		SendProp prop = decodeInfo.Prop;
 		PropFlags flags = prop.GetFlags();
 
@@ -198,13 +193,13 @@ public class IntPropTypeFns : PropTypeFns<int>
 		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		info.RecvProxyData.Value.Int = 0;
 
 		info.RecvProxyData.RecvProp?.GetProxyFn()(ref info.RecvProxyData, info.Object, info.FieldInfo);
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		int value = var.Int;
 
 		if ((prop.GetFlags() & PropFlags.VarInt) != 0) {
@@ -237,7 +232,7 @@ public class IntPropTypeFns : PropTypeFns<int>
 
 		return p.ReadUBitLong(prop.Bits) == 0;
 	}
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		return var.Int == 0;
 	}
 
@@ -255,38 +250,6 @@ public class IntPropTypeFns : PropTypeFns<int>
 }
 public class FloatPropTypeFns : PropTypeFns<int>
 {
-	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
-		throw new NotImplementedException();
-	}
-
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
-		throw new NotImplementedException();
-	}
-
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
-		throw new NotImplementedException();
-	}
-
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
-		throw new NotImplementedException();
-	}
-
-	public override ReadOnlySpan<char> GetTypeNameString() {
-		throw new NotImplementedException();
-	}
-
-	public override bool IsEncodedZero(SendProp prop, bf_read p) {
-		throw new NotImplementedException();
-	}
-
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
-		throw new NotImplementedException();
-	}
-
 	public override void SkipProp(SendProp prop, bf_read p) => _SkipProp(prop, p);
 
 	public static void _SkipProp(SendProp prop, bf_read inBuffer) {
@@ -316,6 +279,34 @@ public class FloatPropTypeFns : PropTypeFns<int>
 		else 
 			inBuffer.SeekRelative(prop.Bits);
 	}
+
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	public override void Decode(ref DecodeInfo decodeInfo) {
+		throw new NotImplementedException();
+	}
+
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
+		throw new NotImplementedException();
+	}
+
+	public override void DecodeZero(ref DecodeInfo info) {
+		throw new NotImplementedException();
+	}
+
+	public override ReadOnlySpan<char> GetTypeNameString() {
+		throw new NotImplementedException();
+	}
+
+	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
+		throw new NotImplementedException();
+	}
+
+	public override bool IsEncodedZero(SendProp prop, bf_read p) {
+		throw new NotImplementedException();
+	}
 }
 
 public class VectorPropTypeFns : PropTypeFns<int>
@@ -324,19 +315,15 @@ public class VectorPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		throw new NotImplementedException();
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		throw new NotImplementedException();
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		throw new NotImplementedException();
 	}
 
@@ -348,7 +335,7 @@ public class VectorPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		throw new NotImplementedException();
 	}
 
@@ -368,19 +355,15 @@ public class VectorXYPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		throw new NotImplementedException();
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		throw new NotImplementedException();
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		throw new NotImplementedException();
 	}
 
@@ -392,7 +375,7 @@ public class VectorXYPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		throw new NotImplementedException();
 	}
 
@@ -407,19 +390,15 @@ public class StringPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		throw new NotImplementedException();
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		throw new NotImplementedException();
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		throw new NotImplementedException();
 	}
 
@@ -431,7 +410,7 @@ public class StringPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		throw new NotImplementedException();
 	}
 
@@ -446,19 +425,15 @@ public class ArrayPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		throw new NotImplementedException();
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		throw new NotImplementedException();
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		throw new NotImplementedException();
 	}
 
@@ -470,7 +445,7 @@ public class ArrayPropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		throw new NotImplementedException();
 	}
 
@@ -485,19 +460,15 @@ public class DataTablePropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override void Decode<Instance>(ref DecodeInfo<Instance, int> decodeInfo) {
+	public override void Decode(ref DecodeInfo decodeInfo) {
 		throw new NotImplementedException();
 	}
 
-	public override void DecodeZero<Instance>(ref DecodeInfo<Instance, int> info) {
+	public override void DecodeZero(ref DecodeInfo info) {
 		throw new NotImplementedException();
 	}
 
-	public override void Encode<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-		throw new NotImplementedException();
-	}
-
-	public override void FastCopy<Instance>(SendProp sendProp, RecvProp recvProp, GetRefFn<Instance, int> sendField, GetRefFn<Instance, int> recvField) {
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		throw new NotImplementedException();
 	}
 
@@ -509,7 +480,7 @@ public class DataTablePropTypeFns : PropTypeFns<int>
 		throw new NotImplementedException();
 	}
 
-	public override bool IsZero<Instance>(GetRefFn<Instance, int> fn, ref DVariant var, SendProp prop) {
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
 		throw new NotImplementedException();
 	}
 
