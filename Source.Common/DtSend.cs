@@ -201,7 +201,7 @@ public static class SendPropHelpers
 		return ret;
 	}
 	
-	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
 		if (proxyFn == null) {
@@ -260,14 +260,30 @@ public static class SendPropHelpers
 		ret.SetProxyFn(proxyFn ?? SendProxy_StringToString);
 		return ret;
 	}
-	public static SendProp SendPropDataTable(string name, FieldInfo field, SendTableProxyFn? proxyFn = null) {
+	public static SendProp SendPropDataTable(string name, SendTable sendTable, SendTableProxyFn? proxyFn = null) {
+		SendProp ret = new();
+		proxyFn ??= SendProxy_DataTableToDataTable;
+
+		ret.Type = SendPropType.DataTable;
+		ret.NameOverride = name;
+		ret.SetDataTable(sendTable);
+		ret.SetDataTableProxyFn(proxyFn);
+
+		if (proxyFn == SendProxy_DataTableToDataTable)
+			ret.SetFlags(PropFlags.ProxyAlwaysYes);
+
+		// TODO: Collapsible...
+
+		return ret;
+	}
+	public static SendProp SendPropDataTable(string name, FieldInfo field, SendTable sendTable, SendTableProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		proxyFn ??= SendProxy_DataTableToDataTable;
 
 		ret.Type = SendPropType.DataTable;
 		ret.NameOverride= name;
 		ret.FieldInfo = field;
-		ret.SetDataTable((SendTable)field.GetValue(null)!);
+		ret.SetDataTable(sendTable);
 		ret.SetDataTableProxyFn(proxyFn);
 
 		if (proxyFn == SendProxy_DataTableToDataTable) 

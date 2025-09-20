@@ -9,4 +9,7 @@
 		<ProjectReference Include="..\Source.Common\Source.Common.csproj" />
 		<ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
+	</ItemGroup>
 </Project>

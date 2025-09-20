@@ -56,12 +56,14 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public static RecvTable DT_BaseEntity = new([
-		RecvPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
+		RecvPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst),
 		RecvPropInt(FIELDOF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
 		RecvPropInt(FIELDOF(nameof(InterpolationFrame))),
 		RecvPropVector(FIELDOF(nameof(NetworkOrigin))),
 		RecvPropQAngles(FIELDOF(nameof(NetworkAngles))),
 		RecvPropInt(FIELDOF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
+
+		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty)
 	]);
 
 	public static readonly ClientClass CC_BaseEntity = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
@@ -82,6 +84,8 @@ public partial class C_BaseEntity : IClientEntity
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
 	public short ModelIndex;
+
+	public CollisionProperty Collision = new();
 
 	EntityEffects Effects;
 	RenderMode RenderMode;
@@ -324,7 +328,7 @@ public partial class C_BaseEntity : IClientEntity
 	private bool IsServerEntity() => Index != -1;
 
 	public int EntIndex() {
-		throw new NotImplementedException();
+		return Index;
 	}
 
 	public void ReceiveMessage(int classID, bf_read msg) {

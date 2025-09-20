@@ -22,7 +22,7 @@ public class C_World : C_BaseEntity
 		return ret;
 	}
 	public static RecvTable DT_World = new([
-		RecvPropDataTable("baseclass", FIELDOF(nameof(DT_BaseEntity))),
+		RecvPropDataTable("baseclass", DT_BaseEntity),
 
 		RecvPropFloat(FIELDOF(nameof(WaveHeight))),
 		RecvPropVector(FIELDOF(nameof(WorldMins))),

@@ -197,17 +197,29 @@ public static class FieldAccess<T>
 		if (Setters.TryGetValue(field, out var s))
 			return s;
 
-		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T)], typeof(FieldAccess<T>).Module, true);
+		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T).MakeByRefType()], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
 
 		if (!field.IsStatic) {
 			il.Emit(OpCodes.Ldarg_0);
 			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
 			il.Emit(OpCodes.Ldarg_1);
+
+			if (typeof(T).IsValueType) 
+				il.Emit(OpCodes.Ldobj, typeof(T)); 
+			else 
+				il.Emit(OpCodes.Ldind_Ref); 
+			
 			il.Emit(OpCodes.Stfld, field);
 		}
 		else {
 			il.Emit(OpCodes.Ldarg_1);
+
+			if (typeof(T).IsValueType)
+				il.Emit(OpCodes.Ldobj, typeof(T));
+			else
+				il.Emit(OpCodes.Ldind_Ref);
+
 			il.Emit(OpCodes.Stsfld, field);
 		}
 

@@ -10,7 +10,7 @@ namespace Game.Server;
 public class World : BaseEntity
 {
 	public static SendTable DT_World = new([
-		SendPropDataTable("baseclass", FIELDOF(nameof(DT_BaseEntity))),
+		SendPropDataTable("baseclass", DT_BaseEntity),
 
 		SendPropFloat(FIELDOF(nameof(WaveHeight)), 8, PropFlags.RoundUp, 0, 8),
 		SendPropVector(FIELDOF(nameof(WorldMins)), -1, PropFlags.Coord),

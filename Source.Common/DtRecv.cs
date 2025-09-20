@@ -119,7 +119,7 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropDataTable(string name, FieldInfo field, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropDataTable(string name, FieldInfo field, RecvTable table, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= DataTableRecvProxy_StaticDataTable;
 		ret.NameOverride = name;
@@ -127,7 +127,17 @@ public static class RecvPropHelpers
 		ret.RecvType = SendPropType.DataTable;
 		ret.Flags = flags;
 		ret.SetDataTableProxyFn(proxyFn);
-		ret.SetDataTable((RecvTable)field.GetValue(null)!);
+		ret.SetDataTable(table);
+		return ret;
+	}
+	public static RecvProp RecvPropDataTable(string name, RecvTable table, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
+		RecvProp ret = new();
+		proxyFn ??= DataTableRecvProxy_StaticDataTable;
+		ret.NameOverride = name;
+		ret.RecvType = SendPropType.DataTable;
+		ret.Flags = flags;
+		ret.SetDataTableProxyFn(proxyFn);
+		ret.SetDataTable(table);
 		return ret;
 	}
 }

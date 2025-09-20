@@ -25,12 +25,13 @@ public partial class BaseEntity : IServerEntity
 	]);
 
 	public static SendTable DT_BaseEntity = new([
-		SendPropDataTable("AnimTimeMustBeFirst", FIELDOF(nameof(DT_AnimTimeMustBeFirst))),
+		SendPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst),
 
 		SendPropInt(FIELDOF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_ClientSideAnimation /* todo */),
 		SendPropVector(FIELDOF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
 		SendPropInt(FIELDOF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
 		SendPropModelIndex(FIELDOF(nameof(ModelIndex))),
+		SendPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty)
 	]);
 
 
@@ -43,7 +44,8 @@ public partial class BaseEntity : IServerEntity
 	Vector3 NetworkAngles;
 	byte InterpolationFrame;
 	int ModelIndex;
-	int Collision;
+	CollisionProperty Collision = new();
+
 
 	public Source.Common.Server.BaseEntity? GetBaseEntity() {
 		throw new NotImplementedException();
