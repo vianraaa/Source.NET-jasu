@@ -18,12 +18,6 @@ using System.Runtime.InteropServices;
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
 {
-	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
-		C_BaseEntity ret = new C_BaseEntity();
-		ret.Init(entNum, serialNum);
-		return ret;
-	}
-
 	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
 		throw new NotImplementedException();
 	}
@@ -36,13 +30,13 @@ public partial class C_BaseEntity : IClientEntity
 	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		RecvPropInt(FIELDOF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
-	public static readonly ClientClass CC_AnimTimeMustBeFirst = new ClientClass("AnimTimeMustBeFirst", CreateObject, null, DT_AnimTimeMustBeFirst);
+	public static readonly ClientClass CC_AnimTimeMustBeFirst = new ClientClass("AnimTimeMustBeFirst", null, null, DT_AnimTimeMustBeFirst);
 
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
 
 	]);
-	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", CreateObject, null, DT_PredictableId);
+	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", null, null, DT_PredictableId);
 
 	private static void RecvProxy_SimulationTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
 		C_BaseEntity entity = (C_BaseEntity)instance;
@@ -87,7 +81,7 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision))))
 	]);
 
-	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
+	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public int Index;

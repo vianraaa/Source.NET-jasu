@@ -16,14 +16,7 @@ namespace Game.Client;
 [LinkEntityToClass(LocalName = "player")]
 public class C_World : C_BaseEntity
 {
-	public static new IClientNetworkable CreateObject(int entNum, int serialNum) {
-		C_World ret = new C_World();
-		ret.Init(entNum, serialNum);
-		return ret;
-	}
-	public static RecvTable DT_World = new([
-		RecvPropDataTable("baseclass", DT_BaseEntity),
-
+	public static readonly RecvTable DT_World = new(DT_BaseEntity, [
 		RecvPropFloat(FIELDOF(nameof(WaveHeight))),
 		RecvPropVector(FIELDOF(nameof(WorldMins))),
 		RecvPropVector(FIELDOF(nameof(WorldMaxs))),
@@ -36,7 +29,7 @@ public class C_World : C_BaseEntity
 		RecvPropInt(FIELDOF(nameof(ColdWorld))),
 	]);
 
-	public static new readonly ClientClass ClientClass = new ClientClass("World", CreateObject, null, DT_World)
+	public static new readonly ClientClass ClientClass = new ClientClass("World", null, null, DT_World)
 																		.WithManualClassID(StaticClassIndices.CWorld);
 
 

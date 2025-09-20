@@ -389,6 +389,13 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 	public RecvTable(RecvProp[] props) {
 		Props = props;
 	}
+	public RecvTable(RecvTable parent, IEnumerable<RecvProp> props) {
+		Props = new RecvProp[props.Count() + 1];
+		Props[0] = RecvPropDataTable("baseclass", parent, 0, DataTableRecvProxy_StaticDataTable);
+		int i = 1;
+		foreach (var prop in props) 
+			Props[i++] = prop;
+	}
 	public RecvTable(string name, RecvProp[] props) {
 		NetTableName = name;
 		Props = props;

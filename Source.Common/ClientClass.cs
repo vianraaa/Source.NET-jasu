@@ -1,7 +1,9 @@
-﻿using Source.Common.Utilities;
+﻿using Source.Common.Server;
+using Source.Common.Utilities;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
 namespace Source.Common;
@@ -36,13 +38,35 @@ public class ClientClass
 	public ClientClass? Next;
 	public int ClassID;
 
-	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
+	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
+		if (createFn == null) {
+			Type t = WhoCalledMe() ?? throw new NullReferenceException("This doesnt work as well as we hoped!");
+			DynamicMethod method = new DynamicMethod($"CreateObjectDynImpl_{t.Name}", typeof(IClientNetworkable), [typeof(int), typeof(int)]);
+			ILGenerator il = method.GetILGenerator();
+
+			LocalBuilder ret = il.DeclareLocal(t);
+
+			il.Emit(OpCodes.Newobj, t.GetConstructor(Type.EmptyTypes)!);
+			il.Emit(OpCodes.Stloc, ret);
+
+			il.Emit(OpCodes.Ldloc, ret);
+			il.Emit(OpCodes.Ldarg_0); // entNum
+			il.Emit(OpCodes.Ldarg_1); // serialNum
+			il.Emit(OpCodes.Callvirt, t.GetMethod("Init", [typeof(int), typeof(int)])!);
+
+			il.Emit(OpCodes.Ldloc, ret);
+			il.Emit(OpCodes.Ret);
+
+			createFn = method.CreateDelegate<CreateClientClassFn>();
+		}
+
 		CreateFn = createFn;
 		CreateEventFn = createEventFn;
 		NetworkName = new(networkName);
 		RecvTable = recvTable;
 
-		if(nameOfTable != null)
+
+		if (nameOfTable != null)
 			recvTable.NetTableName = nameOfTable;
 
 		Next = Head;

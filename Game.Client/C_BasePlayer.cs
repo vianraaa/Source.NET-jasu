@@ -8,15 +8,10 @@ namespace Game.Client;
 
 public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 {
-	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
-		C_GMOD_Player ret = new C_GMOD_Player();
-		ret.Init(entNum, serialNum);
-		return ret;
-	}
-	public static readonly RecvTable DT_BasePlayer = new([
+	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 
 	]);
-	public static readonly new ClientClass ClientClass = new ClientClass("BasePlayer", CreateObject, null, DT_BasePlayer);
+	public static readonly new ClientClass ClientClass = new ClientClass("BasePlayer", null, null, DT_BasePlayer);
 
 
 	static C_BasePlayer? localPlayer;

@@ -8,15 +8,10 @@ namespace Game.Client.HL2MP;
 
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
-	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
-		C_HL2MP_Player ret = new C_HL2MP_Player();
-		ret.Init(entNum, serialNum);
-		return ret;
-	}
 	public static readonly RecvTable DT_HL2MP_Player = [
 
 	];
-	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", CreateObject, null, DT_HL2MP_Player)
+	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", null, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
 	public QAngle EyeAngles;

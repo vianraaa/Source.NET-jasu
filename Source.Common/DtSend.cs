@@ -404,6 +404,13 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	public SendTable(SendProp[] props) {
 		Props = props;
 	}
+	public SendTable(SendTable parent, IEnumerable<SendProp> props) {
+		Props = new SendProp[props.Count() + 1];
+		Props[0] = SendPropDataTable("baseclass", parent, SendProxy_DataTableToDataTable);
+		int i = 1;
+		foreach (var prop in props)
+			Props[i++] = prop;
+	}
 	public SendTable(string name, SendProp[] props) {
 		NetTableName = name;
 		Props = props;

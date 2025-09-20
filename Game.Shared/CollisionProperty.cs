@@ -82,12 +82,6 @@ public class CollisionProperty
 	Vector3 SpecifiedSurroundingMaxs;
 
 #if CLIENT_DLL
-	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
-		C_BaseEntity ret = new C_BaseEntity();
-		ret.Init(entNum, serialNum);
-		return ret;
-	}
-
 	public static RecvTable DT_CollisionProperty = new([
 		RecvPropVector(FIELDOF(nameof(MinsPreScaled)), 0, RecvProxy_OBBMinsPreScaled),
 		RecvPropVector(FIELDOF(nameof(MaxsPreScaled)), 0, RecvProxy_OBBMaxPreScaled),
@@ -103,7 +97,7 @@ public class CollisionProperty
 		RecvPropVector(FIELDOF(nameof(SpecifiedSurroundingMaxs)), 0, RecvProxy_VectorDirtySurround),
 	]);
 
-	public static readonly ClientClass CC_CollisionProperty = new ClientClass("CollisionProperty", CreateObject, null, DT_CollisionProperty);
+	public static readonly ClientClass CC_CollisionProperty = new ClientClass("CollisionProperty", null, null, DT_CollisionProperty);
 #else
 	public static SendTable DT_CollisionProperty = new([
 		SendPropVector(FIELDOF(nameof(MinsPreScaled)), 0, PropFlags.NoScale),
