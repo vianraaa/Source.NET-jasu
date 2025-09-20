@@ -90,7 +90,38 @@ public static class SendPropHelpers
 		return fHighLowMul;
 	}
 
+	static readonly string[] ElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
 
+	public static SendProp SendPropArray3(ArrayFieldInfo field, SendProp arrayProp, SendTableProxyFn? proxyFn = null) {
+		proxyFn ??= SendProxy_DataTableToDataTable;
+
+		SendProp ret = new();
+		int elements = field.Length;
+
+		Assert(elements != -1);
+		Assert(elements <= Constants.MAX_ARRAY_ELEMENTS);
+
+		ret.FieldInfo = field;
+		ret.Type = SendPropType.DataTable;
+		ret.SetDataTableProxyFn(proxyFn);
+
+		if (proxyFn == SendProxy_DataTableToDataTable)
+			ret.SetFlags(PropFlags.ProxyAlwaysYes);
+
+		SendProp[] props = new SendProp[elements];
+
+		for (int i = 0; i < elements; i++) {
+			props[i] = arrayProp.Copy();
+			props[i].FieldInfo = new ArrayFieldIndexInfo(field, i);
+			props[i].NameOverride = ElementNames[i];
+			props[i].SetParentArrayPropName(field.Name);
+		}
+
+		SendTable table = new SendTable(props);
+		ret.SetDataTable(table);
+
+		return ret;
+	}
 	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
 		proxyFn ??= SendProxy_FloatToFloat;
 
@@ -400,6 +431,26 @@ public class SendProp : IDataTableProp
 	public SendTableProxyFn GetDataTableProxyFn() {
 		return DtFn;
 	}
+
+	public SendProp Copy() => new() {
+		MatchingRecvProp = MatchingRecvProp,
+		Type = Type,
+		Bits = Bits,
+		LowValue = LowValue,
+		HighValue = HighValue,
+		ArrayProp = ArrayProp,
+		Elements = Elements,
+		Offset = Offset,
+		ExcludeDTName = ExcludeDTName,
+		ParentArrayPropName = ParentArrayPropName,
+		FieldInfo = FieldInfo,
+		HighLowMul = HighLowMul,
+		NameOverride = NameOverride,
+		Flags = Flags,
+		DataTable = DataTable,
+		Fn = Fn,
+		DtFn = DtFn,
+	};
 }
 
 public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>

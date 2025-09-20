@@ -114,7 +114,11 @@ public enum EntityEffects
 	BonemergeFastCull = 0x080,
 	ItemBlink = 0x100,
 	ParentAnimates = 0x200,
-	MaxBits = 16 // < gmod increased 10 -> 16
+
+	MaxBits = 16, // < gmod increased 10 -> 16
+	ParityBits = 3,
+	ParityMask = (1 << ParityBits) - 1,
+	MuzzleflashBits = 2
 }
 
 public enum FixAngle

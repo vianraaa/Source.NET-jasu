@@ -72,8 +72,8 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 	public int NewSequenceParity;
 	public int ResetEventsParity;
 	public byte MuzzleFlashParity;
-	public Vector3 LightingOrigin;
-	public Vector3 LightingOriginRelative;
+	public EHANDLE LightingOrigin;
+	public EHANDLE LightingOriginRelative;
 	public float FadeMinDist;
 	public float FadeMaxDist;
 	public float FadeScale;
