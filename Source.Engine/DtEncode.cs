@@ -134,6 +134,10 @@ public abstract class BasePropTypeFns
 	public abstract int CompareDeltas(SendProp prop, bf_read p1, bf_read p2);
 	public abstract bool IsEncodedZero(SendProp prop, bf_read p);
 	public abstract void SkipProp(SendProp prop, bf_read p);
+	public abstract void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID);
+	public abstract void Decode(ref DecodeInfo decodeInfo);
+	public abstract bool IsZero(object instance, ref DVariant var, SendProp prop);
+	public abstract void DecodeZero(ref DecodeInfo info);
 }
 
 /// <summary>
@@ -145,14 +149,7 @@ public abstract class BasePropTypeFns
 /// Inheritors of this class specify their <typeparamref name="Return"/> type, which allows them to encode/decode that specific type.
 /// </summary>
 /// <typeparam name="Return"></typeparam>
-public abstract class PropTypeFns<Return> : BasePropTypeFns
-{
-	public abstract void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID);
-	public abstract void Decode(ref DecodeInfo decodeInfo);
-
-	public abstract bool IsZero(object instance, ref DVariant var, SendProp prop);
-	public abstract void DecodeZero(ref DecodeInfo info);
-}
+public abstract class PropTypeFns<Return> : BasePropTypeFns;
 
 public class IntPropTypeFns : PropTypeFns<int>
 {

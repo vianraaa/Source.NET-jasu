@@ -31,7 +31,7 @@ public static class RecvPropHelpers
 		vec.Y = data.Value.Y;
 	}
 
-	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, object instance, int objectID) {
+	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, ref object? instance, FieldInfo fieldInfo, int objectID) {
 
 	}
 
@@ -404,4 +404,4 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 }
 
 public delegate void RecvVarProxyFn(ref readonly RecvProxyData data, object instance, FieldInfo field);
-public delegate void DataTableRecvVarProxyFn(RecvProp prop, object instance, int objectID);
+public delegate void DataTableRecvVarProxyFn(RecvProp prop, ref object? instance, FieldInfo fieldInfo, int objectID);

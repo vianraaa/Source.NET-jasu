@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -111,6 +112,85 @@ public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<Pro
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
+public abstract class DatatableStack {
+	public SendTablePrecalc Precalc;
+	public InlineArray256<object?> Proxies;
+	public object Instance;
+	protected int CurPropIndex;
+	protected SendProp? CurProp;
+	protected int ObjectID;
+	protected bool Initted;
+	public DatatableStack(SendTablePrecalc precalc, object instance, int objectID) {
+		Precalc = precalc;
+		Instance = instance;
+		ObjectID = objectID;
+	}
+
+	public void Init(bool explicitRoutes = false) {
+		if (explicitRoutes) {
+
+		}
+		else {
+			RecurseAndCallProxies(Precalc.Root, Instance);
+		}
+		Initted = true;
+	}
+	
+	public abstract void RecurseAndCallProxies(SendNode node, object instance);
+
+	public bool IsCurProxyValid() => Proxies[Precalc.PropProxyIndices[CurPropIndex]] != null;
+	public object? GetCurStructBase() => Proxies[Precalc.PropProxyIndices[CurPropIndex]];
+	public void SeekToProp(uint iProp) {
+		CurPropIndex = (int)iProp;
+		CurProp = Precalc.GetProp((int)iProp);
+	}
+
+	public int GetObjectID() {
+		return ObjectID;
+	}
+}
+
+public class ClientDatatableStack : DatatableStack
+{
+	readonly RecvDecoder Decoder;
+
+	public ClientDatatableStack(RecvDecoder decoder, object instance, int objectID) : base(decoder.Precalc, instance, objectID) {
+		Decoder = decoder;
+	}
+
+	public override void RecurseAndCallProxies(SendNode node, object? instance) {
+		Proxies[node.GetRecursiveProxyIndex()] = instance;
+
+		for (int iChild = 0; iChild < node.GetNumChildren(); iChild++) {
+			SendNode? curChild = node.GetChild(iChild);
+
+			object? newStructBase = null;
+			if (instance != null)
+				newStructBase = CallPropProxy(curChild, curChild.DataTableProp, instance);
+
+			RecurseAndCallProxies(curChild, newStructBase);
+		}
+	}
+
+	private object? CallPropProxy(SendNode curChild, int prop, object instance) {
+		RecvProp recvProp = Decoder.GetDatatableProp(prop);
+
+		object? val = null;
+		Assert(recvProp != null);
+		if (recvProp == null)
+			return null;
+
+		recvProp.GetDataTableProxyFn()(
+			recvProp,
+			ref val,
+			recvProp.FieldInfo,
+			GetObjectID()
+			);
+
+		return val;
+	}
+}
+
 [EngineComponent]
 public class EngineRecvTable(DtCommonEng DtCommonEng)
 {
@@ -127,7 +207,38 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 	}
 
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
-		return false;
+		RecvDecoder? decoder = table.Decoder;
+		ErrorIfNot(decoder != null, $"RecvTable_Decode: table '{table.GetName()}' missing a decoder.");
+
+		ClientDatatableStack theStack = new(decoder, instance, objectID);
+
+		theStack.Init();
+		int iStartBit = 0, nIndexBits = 0, iLastBit = inRead.BitsRead;
+		uint iProp;
+		using DeltaBitsReader deltaBitsReader = new(inRead);
+		while ((iProp = deltaBitsReader.ReadNextPropIndex()) < Constants.MAX_DATATABLE_PROPS) {
+			theStack.SeekToProp(iProp);
+
+			RecvProp? recvProp = decoder.GetProp((int)iProp);
+
+			DecodeInfo decodeInfo = new();
+			decodeInfo.Object = theStack.GetCurStructBase();
+
+			if (recvProp != null)
+				decodeInfo.FieldInfo = recvProp.FieldInfo;
+			else {
+				decodeInfo.FieldInfo = null;
+			}
+
+			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null; 
+			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
+			decodeInfo.In = inRead;
+			decodeInfo.RecvProxyData.ObjectID = objectID;
+
+			BasePropTypeFns.Get(decodeInfo.Prop.GetPropType()).Decode(ref decodeInfo);
+		}
+
+		return !inRead.Overflowed;
 	}
 	public int MergeDeltas(RecvTable table, bf_read? oldState, bf_read newState, bf_write outState, int objectID = -1, Span<int> changedProps = default, bool updateDTI = false) {
 		using DeltaBitsReader oldStateReader = new(oldState);
