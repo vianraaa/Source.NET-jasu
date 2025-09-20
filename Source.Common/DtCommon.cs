@@ -158,6 +158,8 @@ public interface IDataTableProp
 	void SetInsideArray();
 	bool SetArrayProp<PropType>(PropType propType) where PropType : IDataTableProp;
 	PropType GetArrayProp<PropType>() where PropType : IDataTableProp;
+	int GetOffset();
+	void SetOffset(int value);
 	int GetNumElements();
 	int SetNumElements(int elements);
 	SendPropType GetPropType();
@@ -245,7 +247,8 @@ public static class DataTableHelpers
 	}
 }
 
-public class RenamedRecvTableInfo {
+public class RenamedRecvTableInfo
+{
 	public static RenamedRecvTableInfo? Head;
 	public string OldName;
 	public string NewName;

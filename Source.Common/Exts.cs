@@ -122,7 +122,8 @@ public class ClassMemoryPool<T> where T : class, new()
 }
 
 
-public static class FieldAccess {
+public static class FieldAccess
+{
 	public static T GetValueFast<T>(this FieldInfo field, object instance) => FieldAccess<T>.Getter(field)(instance);
 	public static ref T GetValueRefFast<T>(this FieldInfo field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
 	public static void SetValueFast<T>(this FieldInfo field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
@@ -145,18 +146,23 @@ public static class FieldAccess<T>
 		var method = new DynamicMethod($"get_{field.Name}", typeof(T), [typeof(object)], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
 
-		if (!field.IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
-			il.Emit(OpCodes.Ldfld, field);
+		if (field is ArrayFieldIndexInfo arrayField) {
+			throw new Exception("implement me");
 		}
-		else {
-			il.Emit(OpCodes.Ldsfld, field);
-		}
+		{
+			if (!field.IsStatic) {
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
+				il.Emit(OpCodes.Ldfld, field);
+			}
+			else {
+				il.Emit(OpCodes.Ldsfld, field);
+			}
 
-		il.Emit(OpCodes.Ret);
-		Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
-		return g;
+			il.Emit(OpCodes.Ret);
+			Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
+			return g;
+		}
 	}
 
 	public static GetRef RefGetter(FieldInfo field) {
@@ -173,22 +179,26 @@ public static class FieldAccess<T>
 
 		var il = method.GetILGenerator();
 
-		if (!field.IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			if (field.DeclaringType!.IsValueType) {
-				il.Emit(OpCodes.Unbox, field.DeclaringType); 
-				il.Emit(OpCodes.Ldflda, field);              
-			}
-			else {
-				il.Emit(OpCodes.Castclass, field.DeclaringType); 
-				il.Emit(OpCodes.Ldflda, field);                  
-			}
+		if (field is ArrayFieldIndexInfo arrayField) {
+			throw new Exception("implement me");
 		}
-		else 
-			il.Emit(OpCodes.Ldsflda, field);
-		
-		il.Emit(OpCodes.Ret);
+		else {
+			if (!field.IsStatic) {
+				il.Emit(OpCodes.Ldarg_0);
+				if (field.DeclaringType!.IsValueType) {
+					il.Emit(OpCodes.Unbox, field.DeclaringType);
+					il.Emit(OpCodes.Ldflda, field);
+				}
+				else {
+					il.Emit(OpCodes.Castclass, field.DeclaringType);
+					il.Emit(OpCodes.Ldflda, field);
+				}
+			}
+			else
+				il.Emit(OpCodes.Ldsflda, field);
 
+			il.Emit(OpCodes.Ret);
+		}
 		RefGetters[field] = g = (GetRef)method.CreateDelegate(typeof(GetRef));
 		return g;
 	}
@@ -200,27 +210,32 @@ public static class FieldAccess<T>
 		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T).MakeByRefType()], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
 
-		if (!field.IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
-			il.Emit(OpCodes.Ldarg_1);
-
-			if (typeof(T).IsValueType) 
-				il.Emit(OpCodes.Ldobj, typeof(T)); 
-			else 
-				il.Emit(OpCodes.Ldind_Ref); 
-			
-			il.Emit(OpCodes.Stfld, field);
+		if (field is ArrayFieldInfo arrayField) {
+			throw new Exception("implement me");
 		}
 		else {
-			il.Emit(OpCodes.Ldarg_1);
+			if (!field.IsStatic) {
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
+				il.Emit(OpCodes.Ldarg_1);
 
-			if (typeof(T).IsValueType)
-				il.Emit(OpCodes.Ldobj, typeof(T));
-			else
-				il.Emit(OpCodes.Ldind_Ref);
+				if (typeof(T).IsValueType)
+					il.Emit(OpCodes.Ldobj, typeof(T));
+				else
+					il.Emit(OpCodes.Ldind_Ref);
 
-			il.Emit(OpCodes.Stsfld, field);
+				il.Emit(OpCodes.Stfld, field);
+			}
+			else {
+				il.Emit(OpCodes.Ldarg_1);
+
+				if (typeof(T).IsValueType)
+					il.Emit(OpCodes.Ldobj, typeof(T));
+				else
+					il.Emit(OpCodes.Ldind_Ref);
+
+				il.Emit(OpCodes.Stsfld, field);
+			}
 		}
 
 		il.Emit(OpCodes.Ret);
@@ -879,10 +894,121 @@ public static class UnmanagedUtils
 	}
 }
 
+
+// </3
+public enum ArrayFieldType
+{
+	StdArray,
+	InlineArray
+}
+public class ArrayFieldIndexInfo : FieldInfo
+{
+	public readonly ArrayFieldInfo BaseArrayField;
+	public readonly Type ElementType;
+	public readonly int Index;
+	public readonly string name;
+	public ArrayFieldIndexInfo(ArrayFieldInfo baseArrayField, int index) {
+		if (index < 0)
+			throw new IndexOutOfRangeException("Invalid operation");
+		if(baseArrayField.Type == ArrayFieldType.InlineArray && index >= baseArrayField.Length)
+			throw new IndexOutOfRangeException("Out of range index given the inline array target.");
+
+		BaseArrayField = baseArrayField;
+		ElementType = baseArrayField.ElementType;
+		Index = index;
+		name = $"{BaseArrayField.Name}[{index}]";
+	}
+
+	public override FieldAttributes Attributes => BaseArrayField.Attributes;
+	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+
+	public override Type FieldType => ElementType;
+
+	public override Type? DeclaringType => BaseArrayField.DeclaringType;
+
+	public override string Name => name;
+
+	public override Type? ReflectedType => BaseArrayField.ReflectedType;
+
+	public override object[] GetCustomAttributes(bool inherit) => [];
+	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
+	public override bool IsDefined(Type attributeType, bool inherit) => false;
+	public override object? GetValue(object? obj)
+		=> throw new NotImplementedException("Please use the GetValueFast<T> method.");
+	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
+		=> throw new NotImplementedException("Please use the SetValueFast<T> method.");
+}
+public class ArrayFieldInfo : FieldInfo
+{
+	public readonly FieldInfo BaseField;
+	public readonly Type ElementType;
+	public readonly int Length;
+	public readonly ArrayFieldType Type;
+	public ArrayFieldInfo(FieldInfo baseField) {
+		if (baseField.FieldType.IsArray) {
+			ElementType = baseField.FieldType.GetElementType()!;
+			Length = -1;
+			Type = ArrayFieldType.StdArray;
+		}
+		else {
+			var inlineArrayAttr = baseField.FieldType.GetCustomAttribute<InlineArrayAttribute>();
+			if (inlineArrayAttr == null)
+				throw new ArgumentException($"Field {baseField.Name} is not an array or an InlineArray", nameof(baseField));
+
+			ElementType = baseField.FieldType.GetElementType()
+						   ?? baseField.FieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0]?.FieldType
+						   ?? throw new InvalidOperationException($"Cannot determine InlineArray element type for {baseField.FieldType}");
+			Length = inlineArrayAttr.Length;
+			Type = ArrayFieldType.InlineArray;
+		}
+
+		BaseField = baseField;
+	}
+
+	readonly string name;
+	public override FieldAttributes Attributes => BaseField.Attributes;
+	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+
+	public override Type FieldType => BaseField.FieldType;
+	public override Type? DeclaringType => BaseField.DeclaringType;
+	public override string Name => name;
+	public override Type? ReflectedType => BaseField.ReflectedType;
+
+	public override object[] GetCustomAttributes(bool inherit)
+		=> [];
+	public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+		=> [];
+	public override bool IsDefined(Type attributeType, bool inherit) => false;
+	public override object? GetValue(object? obj)
+		=> throw new NotImplementedException("Please use the GetValueFast<T> method.");
+	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
+		=> throw new NotImplementedException("Please use the SetValueFast<T> method.");
+}
+
 /// <summary>
 /// Various C# reflection utilities
 /// </summary>
-public static class GlobalReflectionUtils {
+public static class GlobalReflectionUtils
+{
+	public static string[] GeneratePaddedStrings(int max) => GeneratePaddedStrings(0, max);
+	public static string[] GeneratePaddedStrings(int min, int max) {
+		string[] arr = new string[max - min + 1];
+		for (int i = 0; i < arr.Length; i++) {
+			arr[i] = (min + i).ToString("D3");
+		}
+		return arr;
+	}
+
+	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
+		Type? t = WhoCalledMe();
+		if (t == null)
+			throw new NullReferenceException("This doesnt work as well as we hoped!");
+		FieldInfo field = t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
+			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
+		return new ArrayFieldInfo(field);
+	}
 	public static FieldInfo FIELDOF(string name) {
 		Type? t = WhoCalledMe();
 		if (t == null)
@@ -897,7 +1023,7 @@ public static class GlobalReflectionUtils {
 		for (int i = 0; i < stack.FrameCount; i++) {
 			var method = stack.GetFrame(i)!.GetMethod()!;
 			var declaringType = method.DeclaringType;
-			if (declaringType != null && declaringType != typeof(GlobalReflectionUtils)) 
+			if (declaringType != null && declaringType != typeof(GlobalReflectionUtils))
 				return declaringType;
 		}
 		return null;

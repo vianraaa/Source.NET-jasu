@@ -1,5 +1,8 @@
 ﻿#if CLIENT_DLL
 using Game.Client;
+
+using Source;
+
 #endif
 
 #if GAME_DLL
@@ -10,6 +13,7 @@ using Source;
 #endif
 
 using Source.Common;
+using Source.Common.Hashing;
 
 using System.Numerics;
 using System.Reflection;
@@ -33,27 +37,33 @@ public class CollisionProperty
 #if CLIENT_DLL
 
 	private static void RecvProxy_VectorDirtySurround(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Vector3 vecold = field.GetValueFast<Vector3>(instance);
+		Vector3 vecnew = data.Value.Vector;
+		if (vecold != vecnew) {
+			field.SetValueFast(instance, in vecnew);
+			((CollisionProperty)instance)!.MarkSurroundingBoundsDirty();
+		}
 	}
 
+
 	private static void RecvProxy_SolidFlags(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		field.SetValueFast(instance, data.Value.Int);
 	}
 
 	private static void RecvProxy_Solid(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		field.SetValueFast(instance, data.Value.Int);
 	}
 
 	private static void RecvProxy_OBBMinsPreScaled(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning($"RecvProxy_OBBMinsPreScaled not yet implemented\n");
 	}
 
 	private static void RecvProxy_OBBMaxPreScaled(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning($"RecvProxy_OBBMaxPreScaled not yet implemented\n");
 	}
 
 	private static void RecvProxy_IntDirtySurround(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning($"RecvProxy_IntDirtySurround not yet implemented\n");
 	}
 #else
 	private static void SendProxy_SolidFlags(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
@@ -80,6 +90,11 @@ public class CollisionProperty
 	Vector3 SpecifiedSurroundingMaxsPreScaled;
 	Vector3 SpecifiedSurroundingMins;
 	Vector3 SpecifiedSurroundingMaxs;
+
+
+	private void MarkSurroundingBoundsDirty() {
+
+	}
 
 #if CLIENT_DLL
 	public static RecvTable DT_CollisionProperty = new([

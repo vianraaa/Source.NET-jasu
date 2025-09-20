@@ -22,6 +22,7 @@ Source:
 	GenInlineArray(8192)
 */
 
+using Source.Common;
 using Source.Common.Networking;
 
 using System.Runtime.CompilerServices;
@@ -171,3 +172,5 @@ namespace Source;
 [InlineArray(Protocol.STEAM_KEYSIZE)] public struct InlineArraySteamKeysize<T> { public T item; }
 [InlineArray(Constants.DT_MAX_STRING_BUFFERSIZE)] public struct InlineArrayDtMaxStringBufferSize<T> { public T item; }
 [InlineArray(Constants.MAX_TOTAL_SENDTABLE_PROPS)] public struct InlineArrayMaxTotalSendTableProps<T> { public T item; }
+[InlineArray(Studio.MAXSTUDIOPOSEPARAM)] public struct InlineArrayMaxStudioPoseParam<T> { public T item; }
+[InlineArray(Studio.MAXSTUDIOBONECTRLS)] public struct InlineArrayMaxStudioBoneCtrls<T> { public T item; }

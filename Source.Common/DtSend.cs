@@ -281,12 +281,12 @@ public static class SendPropHelpers
 		proxyFn ??= SendProxy_DataTableToDataTable;
 
 		ret.Type = SendPropType.DataTable;
-		ret.NameOverride= name;
+		ret.NameOverride = name;
 		ret.FieldInfo = field;
 		ret.SetDataTable(sendTable);
 		ret.SetDataTableProxyFn(proxyFn);
 
-		if (proxyFn == SendProxy_DataTableToDataTable) 
+		if (proxyFn == SendProxy_DataTableToDataTable)
 			ret.SetFlags(PropFlags.ProxyAlwaysYes);
 
 		// TODO: Collapsible...
@@ -305,10 +305,14 @@ public class SendProp : IDataTableProp
 	public float HighValue;
 	public SendProp? ArrayProp;
 	public int Elements;
+	public int Offset;
 	public string? ExcludeDTName;
 	public string? ParentArrayPropName;
 	public FieldInfo FieldInfo;
 	public float HighLowMul;
+
+	public int GetOffset() => Offset;
+	public void SetOffset(int value) => Offset = value;
 
 	public SendProp() {
 

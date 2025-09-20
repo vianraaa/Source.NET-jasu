@@ -135,6 +135,36 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
+
+	static readonly string[] ClientElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
+
+	public static RecvProp RecvPropArray3(ArrayFieldInfo field, RecvProp arrayProp, DataTableRecvVarProxyFn? varProxy = null) {
+		varProxy ??= DataTableRecvProxy_StaticDataTable;
+
+		RecvProp ret = new();
+		int elements = field.Length;
+
+		Assert(elements != -1);
+		Assert(elements <= Constants.MAX_ARRAY_ELEMENTS);
+
+		ret.FieldInfo = field;
+		ret.RecvType = SendPropType.DataTable;
+		ret.SetDataTableProxyFn(varProxy);
+
+		RecvProp[] props = new RecvProp[elements];
+
+		for (int i = 0; i < elements; i++) {
+			props[i] = arrayProp.Copy();
+			props[i].FieldInfo = new ArrayFieldIndexInfo(field, i);
+			props[i].NameOverride = ClientElementNames[i];
+			props[i].SetParentArrayPropName(field.Name);
+		}
+
+		RecvTable table = new RecvTable(props);
+		ret.SetDataTable(table);
+
+		return ret;
+	}
 	public static RecvProp RecvPropDataTable(string name, FieldInfo field, RecvTable table, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= DataTableRecvProxy_StaticDataTable;
@@ -191,6 +221,9 @@ public class RecvProp : IDataTableProp
 	int Offset;
 	int Elements;
 
+	public int GetOffset() => Offset;
+	public void SetOffset(int value) => Offset = value;
+
 	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
 	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
 
@@ -218,6 +251,26 @@ public class RecvProp : IDataTableProp
 
 	public void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp
 		=> DataTable = dt == null ? null : dt is RecvTable rt ? rt : throw new InvalidCastException();
+
+	public RecvProp Copy() => new() {
+		FieldInfo = FieldInfo,
+		RecvType = RecvType,
+		Flags = Flags,
+		StringBufferSize = StringBufferSize,
+		NameOverride = NameOverride,
+		InsideArray = InsideArray,
+		ArrayProp = ArrayProp,
+		ProxyFn = ProxyFn,
+		DataTableProxyFn = DataTableProxyFn,
+		DataTable = DataTable,
+		Offset = Offset,
+		ParentArrayPropName = ParentArrayPropName,
+		Elements = Elements
+	};
+
+	string? ParentArrayPropName;
+	public string? GetParentArrayPropName() => ParentArrayPropName;
+	public void SetParentArrayPropName(string name) => ParentArrayPropName = name;
 }
 
 public class RecvDecoder
@@ -288,7 +341,7 @@ public class SendTablePrecalc
 	}
 
 	public int GetNumProps() => Props.Count;
-	public SendProp GetProp(int i) => Props[i];
+	public SendProp? GetProp(int i) => i < 0 ? null : i >= Props.Count ? null : Props[i];
 	public int GetNumDatatableProps() => DataTableProps.Count;
 
 	public SendProp GetDatatableProp(int i) => DataTableProps[i];
@@ -393,7 +446,7 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 		Props = new RecvProp[props.Count() + 1];
 		Props[0] = RecvPropDataTable("baseclass", parent, 0, DataTableRecvProxy_StaticDataTable);
 		int i = 1;
-		foreach (var prop in props) 
+		foreach (var prop in props)
 			Props[i++] = prop;
 	}
 	public RecvTable(string name, RecvProp[] props) {

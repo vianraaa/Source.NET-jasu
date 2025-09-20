@@ -41,11 +41,15 @@ public class ClientClass
 	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
 		if (createFn == null) {
 			Type t = WhoCalledMe(skipFrames: 2) ?? throw new NullReferenceException("This doesnt work as well as we hoped!");
-			if (t.IsInstanceOfType(typeof(IClientEntity))) {
+			if (t.IsAssignableTo(typeof(IClientEntity))) {
 				DynamicMethod method = new DynamicMethod($"CreateObjectDynImpl_{t.Name}", typeof(IClientNetworkable), [typeof(int), typeof(int)]);
 				ILGenerator il = method.GetILGenerator();
 
 				LocalBuilder ret = il.DeclareLocal(t);
+				LocalBuilder success = il.DeclareLocal(typeof(bool));
+
+				Label returnNull = il.DefineLabel();
+				Label returnObj = il.DefineLabel();
 
 				il.Emit(OpCodes.Newobj, t.GetConstructor(Type.EmptyTypes)!);
 				il.Emit(OpCodes.Stloc, ret);
@@ -53,9 +57,19 @@ public class ClientClass
 				il.Emit(OpCodes.Ldloc, ret);
 				il.Emit(OpCodes.Ldarg_0); // entNum
 				il.Emit(OpCodes.Ldarg_1); // serialNum
-				il.Emit(OpCodes.Callvirt, t.GetMethod("Init", [typeof(int), typeof(int)])!);
+				il.Emit(OpCodes.Callvirt, t.GetMethod("Init", new[] { typeof(int), typeof(int) })!);
+				il.Emit(OpCodes.Stloc, success);
+
+				il.Emit(OpCodes.Ldloc, success);
+				il.Emit(OpCodes.Brfalse_S, returnNull);
 
 				il.Emit(OpCodes.Ldloc, ret);
+				il.Emit(OpCodes.Br_S, returnObj);
+
+				il.MarkLabel(returnNull);
+				il.Emit(OpCodes.Ldnull);
+
+				il.MarkLabel(returnObj);
 				il.Emit(OpCodes.Ret);
 
 				createFn = method.CreateDelegate<CreateClientClassFn>();

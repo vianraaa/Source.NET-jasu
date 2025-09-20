@@ -283,6 +283,7 @@ public static class Constants
 
 	public const int MAX_DATATABLES = 1024;
 	public const int MAX_DATATABLE_PROPS = 4096;
+	public const int MAX_ARRAY_ELEMENTS = 2048;
 	public const int DT_MAX_STRING_BITS = 9;
 	public const int DT_MAX_STRING_BUFFERSIZE = 1 << DT_MAX_STRING_BITS;
 
