@@ -892,8 +892,8 @@ public static class GlobalReflectionUtils {
 			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
 	}
-	public static Type? WhoCalledMe() {
-		var stack = new StackTrace(skipFrames: 1, fNeedFileInfo: false);
+	public static Type? WhoCalledMe(int skipFrames = 1) {
+		var stack = new StackTrace(skipFrames: skipFrames, fNeedFileInfo: false);
 		for (int i = 0; i < stack.FrameCount; i++) {
 			var method = stack.GetFrame(i)!.GetMethod()!;
 			var declaringType = method.DeclaringType;

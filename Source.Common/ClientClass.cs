@@ -40,24 +40,28 @@ public class ClientClass
 
 	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
 		if (createFn == null) {
-			Type t = WhoCalledMe() ?? throw new NullReferenceException("This doesnt work as well as we hoped!");
-			DynamicMethod method = new DynamicMethod($"CreateObjectDynImpl_{t.Name}", typeof(IClientNetworkable), [typeof(int), typeof(int)]);
-			ILGenerator il = method.GetILGenerator();
+			Type t = WhoCalledMe(skipFrames: 2) ?? throw new NullReferenceException("This doesnt work as well as we hoped!");
+			if (t.IsInstanceOfType(typeof(IClientEntity))) {
+				DynamicMethod method = new DynamicMethod($"CreateObjectDynImpl_{t.Name}", typeof(IClientNetworkable), [typeof(int), typeof(int)]);
+				ILGenerator il = method.GetILGenerator();
 
-			LocalBuilder ret = il.DeclareLocal(t);
+				LocalBuilder ret = il.DeclareLocal(t);
 
-			il.Emit(OpCodes.Newobj, t.GetConstructor(Type.EmptyTypes)!);
-			il.Emit(OpCodes.Stloc, ret);
+				il.Emit(OpCodes.Newobj, t.GetConstructor(Type.EmptyTypes)!);
+				il.Emit(OpCodes.Stloc, ret);
 
-			il.Emit(OpCodes.Ldloc, ret);
-			il.Emit(OpCodes.Ldarg_0); // entNum
-			il.Emit(OpCodes.Ldarg_1); // serialNum
-			il.Emit(OpCodes.Callvirt, t.GetMethod("Init", [typeof(int), typeof(int)])!);
+				il.Emit(OpCodes.Ldloc, ret);
+				il.Emit(OpCodes.Ldarg_0); // entNum
+				il.Emit(OpCodes.Ldarg_1); // serialNum
+				il.Emit(OpCodes.Callvirt, t.GetMethod("Init", [typeof(int), typeof(int)])!);
 
-			il.Emit(OpCodes.Ldloc, ret);
-			il.Emit(OpCodes.Ret);
+				il.Emit(OpCodes.Ldloc, ret);
+				il.Emit(OpCodes.Ret);
 
-			createFn = method.CreateDelegate<CreateClientClassFn>();
+				createFn = method.CreateDelegate<CreateClientClassFn>();
+			}
+			else
+				createFn = (_, _) => throw new NotImplementedException("ClientClass did not define how to create this object");
 		}
 
 		CreateFn = createFn;

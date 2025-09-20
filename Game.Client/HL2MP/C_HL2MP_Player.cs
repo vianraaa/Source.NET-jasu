@@ -8,9 +8,9 @@ namespace Game.Client.HL2MP;
 
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
-	public static readonly RecvTable DT_HL2MP_Player = [
+	public static readonly RecvTable DT_HL2MP_Player = new(DT_BasePlayer, [
 
-	];
+	]);
 	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", null, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
