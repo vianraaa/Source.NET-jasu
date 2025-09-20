@@ -28,6 +28,11 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
+	private static void RecvProxy_EffectFlags(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
+
+
 	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		RecvPropInt(FIELDOF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
@@ -57,13 +62,29 @@ public partial class C_BaseEntity : IClientEntity
 
 	public static RecvTable DT_BaseEntity = new([
 		RecvPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst),
+
 		RecvPropInt(FIELDOF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
 		RecvPropInt(FIELDOF(nameof(InterpolationFrame))),
+
 		RecvPropVector(FIELDOF(nameof(NetworkOrigin))),
 		RecvPropQAngles(FIELDOF(nameof(NetworkAngles))),
+
 		RecvPropInt(FIELDOF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
 
-		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty)
+		RecvPropInt(FIELDOF(nameof(Effects)), 0, RecvProxy_EffectFlags),
+		RecvPropInt(FIELDOF(nameof(RenderMode))),
+		RecvPropInt(FIELDOF(nameof(RenderFX))),
+		RecvPropInt(FIELDOF(nameof(ColorRender))),
+		RecvPropInt(FIELDOF(nameof(TeamNum))),
+		RecvPropInt(FIELDOF(nameof(CollisionGroup))),
+		RecvPropFloat(FIELDOF(nameof(Elasticity))),
+		RecvPropFloat(FIELDOF(nameof(ShadowCastDistance))),
+		RecvPropEHandle(FIELDOF(nameof(OwnerEntity))),
+		RecvPropEHandle(FIELDOF(nameof(EffectEntity))),
+		RecvPropInt(FIELDOF(nameof(MoveParent)), 0, RecvProxy_IntToMoveParent),
+		RecvPropInt(FIELDOF(nameof(ParentAttachment))),
+
+		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision))))
 	]);
 
 	public static readonly ClientClass CC_BaseEntity = new ClientClass("BaseEntity", CreateObject, null, DT_BaseEntity)
@@ -84,12 +105,19 @@ public partial class C_BaseEntity : IClientEntity
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
 	public short ModelIndex;
+	public byte ParentAttachment;
 
 	public CollisionProperty Collision = new();
 
-	EntityEffects Effects;
-	RenderMode RenderMode;
-	RenderMode OldRenderMode;
+	int Effects;
+	byte RenderMode;
+	byte RenderFX;
+	byte RenderFXBlend;
+	Color ColorRender;
+	int CollisionGroup;
+	float Elasticity;
+	float ShadowCastDistance;
+	byte OldRenderMode;
 
 	public int Health;
 	public double Speed;
@@ -97,6 +125,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	EHANDLE OwnerEntity = new();
 	EHANDLE EffectEntity = new();
+
 
 	long CreationTick;
 
@@ -197,14 +226,14 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public virtual bool ShouldDraw() {
-		if (RenderMode == RenderMode.None)
+		if ((RenderMode)RenderMode == Source.RenderMode.None)
 			return false;
 
 		return Model != null && !IsEffectActive(EntityEffects.NoDraw) && Index != 0;
 	}
 
 	private bool IsEffectActive(EntityEffects fx) {
-		return (Effects & fx) != 0;
+		return ((EntityEffects)Effects & fx) != 0;
 	}
 
 	public virtual bool Init(int entNum, int serialNum) {

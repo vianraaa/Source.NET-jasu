@@ -1,8 +1,21 @@
-﻿#if CLIENT_DLL
+﻿global using static Game.
+#if CLIENT_DLL
+Client
+#else
+Server
+#endif
+	.SharedBaseEntityConstants;
+
+#if CLIENT_DLL
 namespace Game.Client;
 #else
 namespace Game.Server;
 #endif
+
+public static class SharedBaseEntityConstants
+{
+	public const int NUM_PARENTATTACHMENT_BITS = 8; // < gmod increased 6 -> 8
+}
 
 [Flags]
 public enum EntityCapabilities : uint

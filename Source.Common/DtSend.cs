@@ -200,7 +200,7 @@ public static class SendPropHelpers
 
 		return ret;
 	}
-	
+
 	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;

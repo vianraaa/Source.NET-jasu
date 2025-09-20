@@ -47,6 +47,23 @@ public static class RecvPropHelpers
 		throw new Exception("Cannot currently do a copy...");
 	}
 
+	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		BaseHandle ehandle = field.GetValueFast<BaseHandle>(instance);
+
+		if (data.Value.Int == Constants.INVALID_NETWORKED_EHANDLE_VALUE) {
+			ehandle.Index = (uint)Constants.INVALID_EHANDLE_INDEX;
+		}
+		else {
+			int entity = data.Value.Int & ((1 << Constants.MAX_EDICT_BITS) - 1);
+			int serialNum = data.Value.Int >> Constants.MAX_EDICT_BITS;
+
+			ehandle.Init(entity, serialNum);
+		}
+	}
+	public static RecvProp RecvPropEHandle(FieldInfo field, RecvVarProxyFn? proxyFn = null) {
+		proxyFn ??= RecvProxy_IntToEHandle;
+		return RecvPropInt(field, 0, proxyFn);
+	}
 	public static RecvProp RecvPropFloat(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_FloatToFloat;
@@ -102,8 +119,7 @@ public static class RecvPropHelpers
 		ret.FieldInfo = field;
 		ret.RecvType = SendPropType.Int;
 		ret.Flags = flags;
-		ret.SetProxyFn(proxyFn
-			);
+		ret.SetProxyFn(proxyFn);
 
 		return ret;
 	}
@@ -140,6 +156,12 @@ public static class RecvPropHelpers
 		ret.SetDataTable(table);
 		return ret;
 	}
+
+	public static DataTableRecvVarProxyFn RECV_GET_OBJECT_AT_FIELD(FieldInfo field) {
+		return (RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) => {
+			outInstance = field.GetValueFast<object>(instance);
+		};
+	}
 }
 
 /// <summary>
@@ -159,15 +181,6 @@ public class RecvProp : IDataTableProp
 
 	public RecvProp() {
 
-	}
-	public RecvProp(FieldInfo field, SendPropType type) {
-		FieldInfo = field;
-		RecvType = type;
-	}
-	public RecvProp(string name, FieldInfo field, SendPropType type) {
-		NameOverride = name;
-		FieldInfo = field;
-		RecvType = type;
 	}
 	public string? NameOverride;
 	bool InsideArray;

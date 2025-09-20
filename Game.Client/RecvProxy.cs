@@ -1,4 +1,5 @@
 ﻿global using static Game.Client.RecvProxy;
+
 using Source;
 using Source.Common;
 using Source.Common.Networking;
@@ -16,5 +17,10 @@ public static class RecvProxy
 			modelIndex = -2 - ((-2 - modelIndex) << 1);
 		}
 		field.SetValueFast<short>(instance, unchecked((short)modelIndex));
+	}
+
+	public static void RecvProxy_IntToMoveParent(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		EHANDLE handle = field.GetValueFast<EHANDLE>(instance);
+		RecvProxy_IntToEHandle(in data, instance, field);
 	}
 }

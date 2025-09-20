@@ -227,9 +227,8 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 
 			if (recvProp != null)
 				decodeInfo.FieldInfo = recvProp.FieldInfo;
-			else {
+			else 
 				decodeInfo.FieldInfo = null;
-			}
 
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null; 
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);

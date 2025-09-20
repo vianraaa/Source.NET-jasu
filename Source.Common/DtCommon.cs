@@ -183,6 +183,7 @@ public static class DataTableHelpers
 		{ typeof(int), 4 }, { typeof(uint), 4 }, { typeof(float), 4 },
 		{ typeof(QAngle), 12 },
 		{ typeof(Vector3), 12 },
+		{ typeof(Color), 4 },
 	};
 	/// <summary>
 	/// This is to be called on SendTables and RecvTables to setup array properties to point at their property 
