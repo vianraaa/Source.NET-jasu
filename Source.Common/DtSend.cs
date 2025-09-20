@@ -590,7 +590,7 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	public int GetNumProps() => Props == null ? 0 : Props.Length;
 
 	public static bool GetPropsExcluded(SendTable table, Span<ExcludeProp> excludeProps, ref int numExcludeProps, int maxExcludeProps) {
-		for (int i = 0; i < table.Props!.Length; i++) {
+		for (int i = 0; i < table.Props?.Length; i++) {
 			SendProp prop = table.Props[i];
 
 			if (prop.IsExcludeProp()) {
