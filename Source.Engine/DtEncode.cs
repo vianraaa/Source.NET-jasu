@@ -92,7 +92,13 @@ public abstract class BasePropTypeFns
 		}
 	}
 
-	static void DecodeVector(SendProp prop, bf_read inBuffer, Span<float> v) {
+	public static Vector3 DecodeVector(SendProp prop, bf_read inBuffer) {
+		Span<float> stackFloats = stackalloc float[3];
+		DecodeVector(prop, inBuffer, stackFloats);
+		return new(stackFloats);
+	}
+
+	public static void DecodeVector(SendProp prop, bf_read inBuffer, Span<float> v) {
 		v[0] = DecodeFloat(prop, inBuffer);
 		v[1] = DecodeFloat(prop, inBuffer);
 
@@ -313,7 +319,8 @@ public class VectorPropTypeFns : PropTypeFns<int>
 	}
 
 	public override void Decode(ref DecodeInfo decodeInfo) {
-		throw new NotImplementedException();
+		decodeInfo.RecvProxyData.Value.Vector = DecodeVector(decodeInfo.Prop, decodeInfo.In);
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 
 	public override void DecodeZero(ref DecodeInfo info) {
