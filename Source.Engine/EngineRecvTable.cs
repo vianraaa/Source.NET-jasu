@@ -182,7 +182,8 @@ public class ClientDatatableStack : DatatableStack
 
 		recvProp.GetDataTableProxyFn()(
 			recvProp,
-			ref val,
+			out val,
+			instance,
 			recvProp.FieldInfo,
 			GetObjectID()
 			);
