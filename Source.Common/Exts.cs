@@ -963,6 +963,7 @@ public class ArrayFieldInfo : FieldInfo
 		}
 
 		BaseField = baseField;
+		name = baseField.Name;
 	}
 
 	readonly string name;

@@ -104,6 +104,7 @@ public static class SendPropHelpers
 		ret.FieldInfo = field;
 		ret.Type = SendPropType.DataTable;
 		ret.SetDataTableProxyFn(proxyFn);
+		ret.SetArrayProp(arrayProp);
 
 		if (proxyFn == SendProxy_DataTableToDataTable)
 			ret.SetFlags(PropFlags.ProxyAlwaysYes);
@@ -117,7 +118,7 @@ public static class SendPropHelpers
 			props[i].SetParentArrayPropName(field.Name);
 		}
 
-		SendTable table = new SendTable(props);
+		SendTable table = new SendTable(field.Name, props);
 		ret.SetDataTable(table);
 
 		return ret;

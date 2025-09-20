@@ -93,16 +93,16 @@ public struct DeltaBitsWriter : IDisposable
 	}
 }
 
-public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<PropType> where TableType : IDataTableBase<PropType> where PropType : IDataTableProp
+public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<KeyValuePair<TableType, PropType>> where TableType : IDataTableBase<PropType> where PropType : IDataTableProp
 {
-	public IEnumerator<PropType> GetEnumerator() {
+	public IEnumerator<KeyValuePair<TableType, PropType>> GetEnumerator() {
 		foreach (var r in Visit(table))
 			yield return r;
 	}
-	public IEnumerable<PropType> Visit(TableType table) {
+	public IEnumerable<KeyValuePair<TableType, PropType>> Visit(TableType table) {
 		for (int i = 0; i < table.GetNumProps(); i++) {
 			PropType type = table.GetProp(i);
-			yield return type;
+			yield return new(table, type);
 			if (type.GetPropType() == SendPropType.DataTable)
 				foreach (var t in Visit((TableType)type.GetDataTable<PropType>()!))
 					yield return t;
@@ -112,7 +112,8 @@ public class PropVisitor<TableType, PropType>(TableType table) : IEnumerable<Pro
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
-public abstract class DatatableStack {
+public abstract class DatatableStack
+{
 	public SendTablePrecalc Precalc;
 	public InlineArray256<object?> Proxies;
 	public object Instance;
@@ -135,7 +136,7 @@ public abstract class DatatableStack {
 		}
 		Initted = true;
 	}
-	
+
 	public abstract void RecurseAndCallProxies(SendNode node, object instance);
 
 	public bool IsCurProxyValid() => Proxies[Precalc.PropProxyIndices[CurPropIndex]] != null;
@@ -197,11 +198,14 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 {
 	public bool Init(Span<RecvTable> tables) {
 		foreach (var table in tables) {
-			if (table.IsInMainList())
-				continue;
+			PropVisitor<RecvTable, RecvProp> visitor = new(table);
+			foreach (var subTable in visitor) {
+				if (subTable.Key.IsInMainList())
+					continue;
 
-			table.SetInMainList(true);
-			DtCommonEng.RecvTables.AddLast(table);
+				subTable.Key.SetInMainList(true);
+				DtCommonEng.RecvTables.AddLast(subTable.Key);
+			}
 		}
 
 		return true;
@@ -227,10 +231,10 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 
 			if (recvProp != null)
 				decodeInfo.FieldInfo = recvProp.FieldInfo;
-			else 
+			else
 				decodeInfo.FieldInfo = null;
 
-			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null; 
+			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
 			decodeInfo.In = inRead;
 			decodeInfo.RecvProxyData.ObjectID = objectID;

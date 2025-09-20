@@ -160,7 +160,7 @@ public static class RecvPropHelpers
 			props[i].SetParentArrayPropName(field.Name);
 		}
 
-		RecvTable table = new RecvTable(props);
+		RecvTable table = new RecvTable(field.Name, props);
 		ret.SetDataTable(table);
 
 		return ret;
