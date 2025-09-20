@@ -6,8 +6,6 @@ using Source.Common.Mathematics;
 
 namespace Game.Client.HL2MP;
 
-[DeclareClientClass]
-[LinkEntityToClass(LocalName = "player")]
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
 	public static IClientNetworkable CreateObject(int entNum, int serialNum) {
@@ -16,8 +14,7 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 		return ret;
 	}
 	public static readonly RecvTable DT_HL2MP_Player = [
-		// We gotta redo this later
-		// Just focusing on the world for now.
+
 	];
 	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", CreateObject, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
