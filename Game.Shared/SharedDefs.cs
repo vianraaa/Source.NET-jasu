@@ -8,4 +8,5 @@ public static class SharedDefs
 
 	public const int NOINTERP_PARITY_MAX = 4;
 	public const int NOINTERP_PARITY_MAX_BITS = 2;
+	public const int ANIMATION_CYCLE_BITS = 15;
 }

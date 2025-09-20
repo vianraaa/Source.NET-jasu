@@ -15,7 +15,7 @@ public class BaseAnimating : BaseEntity
 	public const int ANIMATION_PLAYBACKRATE_BITS = 8;
 
 	public static readonly SendTable DT_ServerAnimationData = new([
-
+		SendPropFloat(FIELDOF(nameof(Cycle)), ANIMATION_CYCLE_BITS, PropFlags.ChangesOften|PropFlags.RoundDown, 0.0f, 1.0f)
 	]);
 	public static readonly ServerClass CC_ServerAnimationData = new ServerClass("ServerAnimationData", DT_ServerAnimationData);
 	public static readonly SendTable DT_BaseAnimating = new(DT_BaseEntity, [
@@ -79,4 +79,5 @@ public class BaseAnimating : BaseEntity
 	public float FadeMinDist;
 	public float FadeMaxDist;
 	public float FadeScale;
+	public int Cycle;
 }
