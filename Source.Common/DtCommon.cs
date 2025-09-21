@@ -20,6 +20,7 @@ public enum SendPropType
 	String,
 	Array,
 	DataTable,
+	GModTable
 	Max
 }
 

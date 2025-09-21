@@ -124,17 +124,17 @@ public abstract class BasePropTypeFns
 	/// </summary>
 
 	public readonly static BasePropTypeFns[] PropTypeFns = [
-			new IntPropTypeFns(),
+		new IntPropTypeFns(),
 		new FloatPropTypeFns(),
 		new VectorPropTypeFns(),
 		new VectorXYPropTypeFns(),
 		new StringPropTypeFns(),
 		new ArrayPropTypeFns(),
 		new DataTablePropTypeFns(),
+		new GModTablePropTypeFns(),
 	];
 
 	public static BasePropTypeFns Get(SendPropType propType) => PropTypeFns[(int)propType];
-	public static PropTypeFns<T> Get<T>(SendPropType propType) => PropTypeFns[(int)propType] is PropTypeFns<T> ptfnsT ? ptfnsT : throw new InvalidCastException("Bad type cast");
 
 	public abstract ReadOnlySpan<char> GetTypeNameString();
 	public abstract int CompareDeltas(SendProp prop, bf_read p1, bf_read p2);
@@ -146,18 +146,7 @@ public abstract class BasePropTypeFns
 	public abstract void DecodeZero(ref DecodeInfo info);
 }
 
-/// <summary>
-/// Generic abstract class which inherits <see cref="BasePropTypeFns"/>, using <typeparamref name="Return"/> to specify the field type
-/// it intends to modify. To avoid the Instance generic creeping into <see cref="BasePropTypeFns"/>, the Instance generic is instead placed in the 
-/// individual abstract methods. The Instance generic must be a class type and is passed into <see cref="DecodeInfo{Instance, Return}"/>
-/// and <see cref="GetRefFn{InstanceType, ReturnType}"/>'s InstanceType generic parameters, which is only really used to say "cast this <see cref="object"/>
-/// to InstanceType" in those functions (ie. pass around object references for the most part, then cast where applicable for the sake of field ref grabbing, etc).
-/// Inheritors of this class specify their <typeparamref name="Return"/> type, which allows them to encode/decode that specific type.
-/// </summary>
-/// <typeparam name="Return"></typeparam>
-public abstract class PropTypeFns<Return> : BasePropTypeFns;
-
-public class IntPropTypeFns : PropTypeFns<int>
+public class IntPropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		if ((prop.GetFlags() & PropFlags.VarInt) != 0) {
@@ -251,7 +240,7 @@ public class IntPropTypeFns : PropTypeFns<int>
 		}
 	}
 }
-public class FloatPropTypeFns : PropTypeFns<int>
+public class FloatPropTypeFns : BasePropTypeFns
 {
 	public override void SkipProp(SendProp prop, bf_read p) => _SkipProp(prop, p);
 
@@ -315,7 +304,7 @@ public class FloatPropTypeFns : PropTypeFns<int>
 	}
 }
 
-public class VectorPropTypeFns : PropTypeFns<int>
+public class VectorPropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		throw new NotImplementedException();
@@ -357,7 +346,7 @@ public class VectorPropTypeFns : PropTypeFns<int>
 	}
 }
 
-public class VectorXYPropTypeFns : PropTypeFns<int>
+public class VectorXYPropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		throw new NotImplementedException();
@@ -392,7 +381,7 @@ public class VectorXYPropTypeFns : PropTypeFns<int>
 	}
 }
 
-public class StringPropTypeFns : PropTypeFns<int>
+public class StringPropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		throw new NotImplementedException();
@@ -427,7 +416,7 @@ public class StringPropTypeFns : PropTypeFns<int>
 	}
 }
 
-public class ArrayPropTypeFns : PropTypeFns<int>
+public class ArrayPropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		throw new NotImplementedException();
@@ -462,7 +451,42 @@ public class ArrayPropTypeFns : PropTypeFns<int>
 	}
 }
 
-public class DataTablePropTypeFns : PropTypeFns<int>
+public class DataTablePropTypeFns : BasePropTypeFns
+{
+	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
+		throw new NotImplementedException();
+	}
+
+	public override void Decode(ref DecodeInfo decodeInfo) {
+		throw new NotImplementedException();
+	}
+
+	public override void DecodeZero(ref DecodeInfo info) {
+		throw new NotImplementedException();
+	}
+
+	public override void Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	public override ReadOnlySpan<char> GetTypeNameString() {
+		throw new NotImplementedException();
+	}
+
+	public override bool IsEncodedZero(SendProp prop, bf_read p) {
+		throw new NotImplementedException();
+	}
+
+	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
+		throw new NotImplementedException();
+	}
+
+	public override void SkipProp(SendProp prop, bf_read p) {
+		throw new NotImplementedException();
+	}
+}
+
+public class GModTablePropTypeFns : BasePropTypeFns
 {
 	public override int CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		throw new NotImplementedException();
