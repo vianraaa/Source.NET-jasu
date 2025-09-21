@@ -91,6 +91,9 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision)))),
 
 		// gmod specific
+		RecvPropInt(FIELDOF(nameof(TakeDamage))),
+		RecvPropInt(FIELDOF(nameof(RealClassName))),
+
 		RecvPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, RecvProxy_OverrideMaterial),
 		RecvPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0))),
 		RecvPropInt(FIELDOF(nameof(Health))),
