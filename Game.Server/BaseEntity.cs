@@ -3,6 +3,7 @@
 using Source;
 using Source.Common;
 using Source.Common.Engine;
+using Source.Common.Mathematics;
 
 using System.Numerics;
 using System.Reflection;
@@ -48,7 +49,24 @@ public partial class BaseEntity : IServerEntity
 		SendPropEHandle(FIELDOF(nameof(EffectEntity))),
 		SendPropEHandle(FIELDOF(nameof(MoveParent))),
 		SendPropInt(FIELDOF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
+		SendPropString(FIELDOF(nameof(OverrideMaterial)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
+		SendPropInt(FIELDOF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
+		SendPropInt(FIELDOF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
+		SendPropQAngles (FIELDOF(nameof(AngRotation)), 13, PropFlags.ChangesOften, SendProxy_Angles ),
+		SendPropInt( FIELDOF(nameof( TextureFrameIndex) ),     8, PropFlags.Unsigned ),
+		SendPropDataTable( "predictable_id", DT_PredictableId, SendProxy_SendPredictableId ),
+		SendPropInt(FIELDOF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),
+		SendPropInt(FIELDOF(nameof(AnimatedEveryTick)),        1, PropFlags.Unsigned ),
+		SendPropBool( FIELDOF(nameof( AlternateSorting ))),
 	]);
+
+	private static void SendProxy_Angles(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static object? SendProxy_SendPredictableId(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
 
 	public byte RenderFX;
 	public byte RenderMode;
@@ -60,6 +78,14 @@ public partial class BaseEntity : IServerEntity
 	public float Elasticity;
 	public float ShadowCastDistance;
 	public byte ParentAttachment;
+	public byte MoveType;
+	public byte MoveCollide;
+	public QAngle AngRotation;
+	public bool TextureFrameIndex;
+	public bool SimulatedEveryTick;
+	public bool AnimatedEveryTick;
+	public bool AlternateSorting;
+	public InlineArray255<char> OverrideMaterial;
 
 	public readonly EHANDLE OwnerEntity = new();
 	public readonly EHANDLE EffectEntity = new();

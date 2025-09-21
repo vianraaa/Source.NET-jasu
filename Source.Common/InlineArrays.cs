@@ -156,6 +156,7 @@ namespace Source;
 [InlineArray(126)] public struct InlineArray126<T> { public T item; }
 [InlineArray(127)] public struct InlineArray127<T> { public T item; }
 [InlineArray(128)] public struct InlineArray128<T> { public T item; }
+[InlineArray(255)] public struct InlineArray255<T> { public T item; }
 [InlineArray(256)] public struct InlineArray256<T> { public T item; }
 [InlineArray(260)] public struct InlineArray260<T> { public T item; }
 [InlineArray(512)] public struct InlineArray512<T> { public T item; }

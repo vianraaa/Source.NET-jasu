@@ -19,6 +19,8 @@ public static class RecvProxy
 		field.SetValueFast<short>(instance, unchecked((short)modelIndex));
 	}
 
+	public static RecvProp RecvPropBool(FieldInfo field) => RecvPropInt(field);
+
 	public static void RecvProxy_IntToMoveParent(ref readonly RecvProxyData data, object instance, FieldInfo field) {
 		EHANDLE handle = field.GetValueFast<EHANDLE>(instance);
 		RecvProxy_IntToEHandle(in data, instance, field);

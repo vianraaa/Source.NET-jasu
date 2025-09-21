@@ -78,8 +78,26 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(MoveParent)), 0, RecvProxy_IntToMoveParent),
 		RecvPropInt(FIELDOF(nameof(ParentAttachment))),
 
+		RecvPropString(FIELDOF(nameof(OverrideMaterial)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
+		RecvPropInt(FIELDOF(nameof(MoveType)), 0, RecvProxy_MoveType),
+		RecvPropInt(FIELDOF(nameof(MoveCollide)), 0, RecvProxy_MoveCollide),
+		RecvPropQAngles (FIELDOF(nameof(AngRotation))),
+		RecvPropInt( FIELDOF(nameof( TextureFrameIndex) )),
+		RecvPropDataTable( "predictable_id", DT_PredictableId ),
+		RecvPropInt(FIELDOF(nameof(SimulatedEveryTick))),
+		RecvPropInt(FIELDOF(nameof(AnimatedEveryTick))),
+		RecvPropBool( FIELDOF(nameof( AlternateSorting ))),
+
 		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision))))
 	]);
+
+	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_MoveType(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
 
 	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
@@ -100,6 +118,15 @@ public partial class C_BaseEntity : IClientEntity
 	public byte OldInterpolationFrame;
 	public short ModelIndex;
 	public byte ParentAttachment;
+
+	public byte MoveType;
+	public byte MoveCollide;
+	public QAngle AngRotation;
+	public bool TextureFrameIndex;
+	public bool SimulatedEveryTick;
+	public bool AnimatedEveryTick;
+	public bool AlternateSorting;
+	public InlineArray255<char> OverrideMaterial;
 
 	public CollisionProperty Collision = new();
 

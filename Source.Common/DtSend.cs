@@ -214,7 +214,7 @@ public static class SendPropHelpers
 
 		return ret;
 	}
-	public static SendProp SendPropQAngles(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
+	public static SendProp SendPropQAngles(FieldInfo field, int bits = 32, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		proxyFn ??= SendProxy_QAngles;
 
