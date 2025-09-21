@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 
 using static Source.Common.Networking.svc_ClassInfo;
 
@@ -275,8 +276,14 @@ public static class SendPropHelpers
 	}
 	public static SendProp SendPropModelIndex(FieldInfo field)
 		=> SendPropInt(field, Constants.SP_MODEL_INDEX_BITS);
-	public static SendProp SendPropString(FieldInfo field, int size, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
+	public static SendProp SendPropString(FieldInfo field, int bufferSize = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		SendProp ret = new();
+		if (bufferSize == -1) {
+			// Try to see if this is inline. If it is then we can set the explicit size ourselves
+			var inlineArrayAttr = field.FieldType.GetCustomAttribute<InlineArrayAttribute>();
+			if (inlineArrayAttr != null)
+				bufferSize = inlineArrayAttr.Length;
+		}
 		ret.Type = SendPropType.String;
 		ret.FieldInfo = field;
 		ret.SetFlags(flags);
