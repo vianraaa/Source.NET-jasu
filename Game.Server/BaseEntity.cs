@@ -52,7 +52,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
 		SendPropInt(FIELDOF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
 		SendPropInt(FIELDOF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
-		SendPropQAngles (FIELDOF(nameof(AngRotation)), 13, PropFlags.ChangesOften, SendProxy_Angles ),
+		SendPropQAngles (FIELDOF(nameof(AngRotation)), 24, PropFlags.ChangesOften | PropFlags.RoundDown, SendProxy_Angles ),
 		SendPropInt( FIELDOF(nameof( TextureFrameIndex) ),     8, PropFlags.Unsigned ),
 		SendPropDataTable( "predictable_id", DT_PredictableId, SendProxy_SendPredictableId ),
 		SendPropInt(FIELDOF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),

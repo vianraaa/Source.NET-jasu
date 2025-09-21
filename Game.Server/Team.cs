@@ -5,19 +5,11 @@ using Game.Shared;
 namespace Game.Server;
 public class Team : BaseEntity
 {
-	public static readonly SendTable DT_Team = new(DT_BaseEntity, [
+	public static readonly SendTable DT_Team = new([
 		SendPropInt(FIELDOF(nameof(TeamNum)), 5),
 		SendPropInt(FIELDOF(nameof(Score)), 0),
 		SendPropInt(FIELDOF(nameof(RoundsWon)), 8),
 		SendPropString(FIELDOF(nameof(Teamname))),
-
-		SendPropArray2(
-			SendProxyArrayLength_PlayerArray,
-			SendPropInt("player_array_element", 0, 4, 10, PropFlags.Unsigned, SendProxy_PlayerList),
-			Constants.MAX_PLAYERS,
-			0,
-			"player_array"
-			)
 	]);
 	public static readonly new ServerClass ServerClass = new ServerClass("Team", DT_Team).WithManualClassID(StaticClassIndices.CTeam);
 
