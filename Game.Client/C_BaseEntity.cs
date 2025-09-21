@@ -102,12 +102,27 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(GModFlags))),
 		RecvPropBool(FIELDOF(nameof(OnFire))),
 		RecvPropFloat(FIELDOF(nameof(CreationTime))),
+
 		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0)),
 		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1)),
 		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2)),
-		// Addon exposed datatables (i think)
-		// todo
-		// final fields
+
+		// NW2 table
+		RecvPropGModTable(FIELDOF(nameof(GMOD_DataTable))),
+
+		// Addon exposed data tables
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_bool)), RecvPropBool(FIELDOF_ARRAYINDEX(nameof(GMOD_bool), 0))),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_float)), RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(GMOD_float), 0))),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_int)), RecvPropInt(FIELDOF_ARRAYINDEX(nameof(GMOD_int), 0))),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_Vector)), RecvPropVector(FIELDOF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_QAngle)), RecvPropQAngles(FIELDOF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_EHANDLE)), RecvPropEHandle(FIELDOF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
+		RecvPropString(FIELDOF(nameof(GMOD_String0))),
+		RecvPropString(FIELDOF(nameof(GMOD_String1))),
+		RecvPropString(FIELDOF(nameof(GMOD_String2))),
+		RecvPropString(FIELDOF(nameof(GMOD_String3))),
+
+		// Creation IDs
 		RecvPropInt(FIELDOF(nameof(CreationID))),
 		RecvPropInt(FIELDOF(nameof(MapCreatedID))),
 	]);
@@ -177,6 +192,19 @@ public partial class C_BaseEntity : IClientEntity
 	float Elasticity;
 	float ShadowCastDistance;
 	byte OldRenderMode;
+
+	InlineArray32<bool> GMOD_bool;
+	InlineArray32<bool> GMOD_float;
+	InlineArray32<bool> GMOD_int;
+	InlineArray32<bool> GMOD_Vector;
+	InlineArray32<bool> GMOD_QAngle;
+	InlineArray32<EHANDLE> GMOD_EHANDLE; // << ENSURE THESE ARE INITIALIZED!!!!
+	InlineArray512<char> GMOD_String0;
+	InlineArray512<char> GMOD_String1;
+	InlineArray512<char> GMOD_String2;
+	InlineArray512<char> GMOD_String3;
+
+	public readonly GModTable GMOD_DataTable = new();
 
 	public double Speed;
 	public int TeamNum;

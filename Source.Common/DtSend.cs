@@ -332,6 +332,15 @@ public static class SendPropHelpers
 
 		return ret;
 	}
+
+	public static SendProp SendPropGModTable(FieldInfo field) {
+		SendProp ret = new();
+
+		ret.Type = SendPropType.GModTable;
+		ret.FieldInfo = field;
+
+		return ret;
+	}
 }
 
 

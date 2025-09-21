@@ -199,6 +199,15 @@ public static class RecvPropHelpers
 			outInstance = field.GetValueFast<object>(instance);
 		};
 	}
+
+	public static RecvProp RecvPropGModTable(FieldInfo field) {
+		RecvProp ret = new();
+
+		ret.RecvType = SendPropType.GModTable;
+		ret.FieldInfo = field;
+
+		return ret;
+	}
 }
 
 /// <summary>

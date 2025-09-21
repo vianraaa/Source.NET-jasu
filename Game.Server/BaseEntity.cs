@@ -71,12 +71,26 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(GModFlags)), 7),
 		SendPropBool(FIELDOF(nameof(OnFire))),
 		SendPropFloat(FIELDOF(nameof(CreationTime)), 0, PropFlags.NoScale),
+
 		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0), 0, PropFlags.NoScale | PropFlags.ChangesOften),
 		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1), 0, PropFlags.NoScale | PropFlags.ChangesOften),
 		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2), 0, PropFlags.NoScale | PropFlags.ChangesOften),
-		// Addon exposed datatables (i think)
-		// todo
-		// final fields
+
+		SendPropGModTable(FIELDOF(nameof(GMOD_DataTable))),
+
+		// Addon exposed data tables
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_bool)), SendPropBool(FIELDOF_ARRAYINDEX(nameof(GMOD_bool), 0))),
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_float)), SendPropFloat(FIELDOF_ARRAYINDEX(nameof(GMOD_float), 0))),
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_int)), SendPropInt(FIELDOF_ARRAYINDEX(nameof(GMOD_int), 0))),
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_Vector)),SendPropVector(FIELDOF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_QAngle)), SendPropQAngles(FIELDOF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
+		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_EHANDLE)), SendPropEHandle(FIELDOF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
+		SendPropString(FIELDOF(nameof(GMOD_String0))),
+		SendPropString(FIELDOF(nameof(GMOD_String1))),
+		SendPropString(FIELDOF(nameof(GMOD_String2))),
+		SendPropString(FIELDOF(nameof(GMOD_String3))),
+
+		// Creation IDs
 		SendPropInt(FIELDOF(nameof(CreationID)), 24),
 		SendPropInt(FIELDOF(nameof(MapCreatedID)), 16),
 	]);
@@ -123,9 +137,22 @@ public partial class BaseEntity : IServerEntity
 	public int CreationID;
 	public int MapCreatedID;
 
+	public readonly GModTable GMOD_DataTable = new();
+
 	public readonly EHANDLE OwnerEntity = new();
 	public readonly EHANDLE EffectEntity = new();
 	public readonly EHANDLE MoveParent = new();
+
+	InlineArray32<bool> GMOD_bool;
+	InlineArray32<bool> GMOD_float;
+	InlineArray32<bool> GMOD_int;
+	InlineArray32<bool> GMOD_Vector;
+	InlineArray32<bool> GMOD_QAngle;
+	InlineArray32<EHANDLE> GMOD_EHANDLE; // << ENSURE THESE ARE INITIALIZED!!!!
+	InlineArray512<char> GMOD_String0;
+	InlineArray512<char> GMOD_String1;
+	InlineArray512<char> GMOD_String2;
+	InlineArray512<char> GMOD_String3;
 
 
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
