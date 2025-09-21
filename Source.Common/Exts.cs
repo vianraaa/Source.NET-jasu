@@ -210,7 +210,7 @@ public static class FieldAccess<T>
 		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T).MakeByRefType()], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
 
-		if (field is ArrayFieldInfo arrayField) {
+		if (field is ArrayFieldIndexInfo arrayField) {
 			throw new Exception("implement me");
 		}
 		else {
