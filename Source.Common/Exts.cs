@@ -899,7 +899,8 @@ public static class UnmanagedUtils
 public enum ArrayFieldType
 {
 	StdArray,
-	InlineArray
+	InlineArray,
+	Vector3
 }
 public class ArrayFieldIndexInfo : FieldInfo
 {
@@ -949,6 +950,11 @@ public class ArrayFieldInfo : FieldInfo
 			ElementType = baseField.FieldType.GetElementType()!;
 			Length = -1;
 			Type = ArrayFieldType.StdArray;
+		}
+		else if(baseField.FieldType == typeof(Vector3)) {
+			ElementType = typeof(float);
+			Length = 3;
+			Type = ArrayFieldType.Vector3;
 		}
 		else {
 			var inlineArrayAttr = baseField.FieldType.GetCustomAttribute<InlineArrayAttribute>();
@@ -1000,6 +1006,17 @@ public static class GlobalReflectionUtils
 		return arr;
 	}
 
+	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
+		Type? t = WhoCalledMe();
+		if (t == null)
+			throw new NullReferenceException("This doesnt work as well as we hoped!");
+		FieldInfo field = t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
+			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
+
+		return new ArrayFieldIndexInfo(new ArrayFieldInfo(field), index);
+	}
 	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
 		Type? t = WhoCalledMe();
 		if (t == null)

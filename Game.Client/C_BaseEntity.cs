@@ -88,8 +88,30 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(AnimatedEveryTick))),
 		RecvPropBool( FIELDOF(nameof( AlternateSorting ))),
 
-		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision))))
+		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision)))),
+
+		// gmod specific
+		RecvPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, RecvProxy_OverrideMaterial),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), RecvPropInt(null!)),
+		RecvPropInt(FIELDOF(nameof(Health))),
+		RecvPropInt(FIELDOF(nameof(MaxHealth))),
+		RecvPropInt(FIELDOF(nameof(SpawnFlags))),
+		RecvPropInt(FIELDOF(nameof(GModFlags))),
+		RecvPropBool(FIELDOF(nameof(OnFire))),
+		RecvPropFloat(FIELDOF(nameof(CreationTime))),
+		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0)),
+		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1)),
+		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2)),
+		// Addon exposed datatables (i think)
+		// todo
+		// final fields
+		RecvPropInt(FIELDOF(nameof(CreationID))),
+		RecvPropInt(FIELDOF(nameof(MapCreatedID))),
 	]);
+
+	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
 
 	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, FieldInfo field) {
 		throw new NotImplementedException();
@@ -126,7 +148,20 @@ public partial class C_BaseEntity : IClientEntity
 	public bool SimulatedEveryTick;
 	public bool AnimatedEveryTick;
 	public bool AlternateSorting;
+
+	public byte TakeDamage;
+	public ushort RealClassName;
 	public InlineArray255<char> OverrideMaterial;
+	public InlineArray32<ushort> OverrideSubMaterials;
+	public int Health;
+	public int MaxHealth;
+	public int SpawnFlags;
+	public int GModFlags;
+	public bool OnFire;
+	public float CreationTime;
+	public Vector3 Velocity;
+	public int CreationID;
+	public int MapCreatedID;
 
 	public CollisionProperty Collision = new();
 
@@ -140,7 +175,6 @@ public partial class C_BaseEntity : IClientEntity
 	float ShadowCastDistance;
 	byte OldRenderMode;
 
-	public int Health;
 	public double Speed;
 	public int TeamNum;
 

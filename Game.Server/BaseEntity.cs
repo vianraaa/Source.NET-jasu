@@ -7,6 +7,7 @@ using Source.Common.Mathematics;
 
 using System.Numerics;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Game.Server;
 
@@ -49,7 +50,6 @@ public partial class BaseEntity : IServerEntity
 		SendPropEHandle(FIELDOF(nameof(EffectEntity))),
 		SendPropEHandle(FIELDOF(nameof(MoveParent))),
 		SendPropInt(FIELDOF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
-		SendPropString(FIELDOF(nameof(OverrideMaterial)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
 		SendPropInt(FIELDOF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
 		SendPropInt(FIELDOF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
 		SendPropQAngles (FIELDOF(nameof(AngRotation)), 13, PropFlags.ChangesOften, SendProxy_Angles ),
@@ -58,12 +58,35 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),
 		SendPropInt(FIELDOF(nameof(AnimatedEveryTick)),        1, PropFlags.Unsigned ),
 		SendPropBool( FIELDOF(nameof( AlternateSorting ))),
+
+		// The rest of this is Garry's Mod specific in order
+		SendPropInt(FIELDOF(nameof(TakeDamage)), 8),
+		SendPropInt(FIELDOF(nameof(RealClassName)), 16, PropFlags.Unsigned),
+
+		SendPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
+		SendPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), SendPropInt(null!, 16, PropFlags.Unsigned)),
+		SendPropInt(FIELDOF(nameof(Health)), 32, PropFlags.Normal | PropFlags.ChangesOften | PropFlags.VarInt),
+		SendPropInt(FIELDOF(nameof(MaxHealth)), 32),
+		SendPropInt(FIELDOF(nameof(SpawnFlags)), 32),
+		SendPropInt(FIELDOF(nameof(GModFlags)), 7),
+		SendPropBool(FIELDOF(nameof(OnFire))),
+		SendPropFloat(FIELDOF(nameof(CreationTime)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		// Addon exposed datatables (i think)
+		// todo
+		// final fields
+		SendPropInt(FIELDOF(nameof(CreationID)), 24),
+		SendPropInt(FIELDOF(nameof(MapCreatedID)), 16),
 	]);
 
+	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+		throw new NotImplementedException();
+	}
 	private static void SendProxy_Angles(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
-
 	private static object? SendProxy_SendPredictableId(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();
 	}
@@ -85,7 +108,20 @@ public partial class BaseEntity : IServerEntity
 	public bool SimulatedEveryTick;
 	public bool AnimatedEveryTick;
 	public bool AlternateSorting;
+
+	public byte TakeDamage;
+	public ushort RealClassName;
 	public InlineArray255<char> OverrideMaterial;
+	public InlineArray32<ushort> OverrideSubMaterials;
+	public int Health;
+	public int MaxHealth;
+	public int SpawnFlags;
+	public int GModFlags;
+	public bool OnFire;
+	public float CreationTime;
+	public Vector3 Velocity;
+	public int CreationID;
+	public int MapCreatedID;
 
 	public readonly EHANDLE OwnerEntity = new();
 	public readonly EHANDLE EffectEntity = new();
