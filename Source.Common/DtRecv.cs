@@ -235,7 +235,7 @@ public class RecvProp : IDataTableProp
 	DataTableRecvVarProxyFn DataTableProxyFn;
 	RecvTable? DataTable;
 	int Offset;
-	int Elements;
+	int Elements = 1;
 
 	public int GetOffset() => Offset;
 	public void SetOffset(int value) => Offset = value;

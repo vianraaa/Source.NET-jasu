@@ -44,7 +44,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(ColorRender)), 32, PropFlags.Unsigned),
 		SendPropInt(FIELDOF(nameof(TeamNum)), TEAMNUM_NUM_BITS, 0),
 		SendPropInt(FIELDOF(nameof(CollisionGroup)), 5, PropFlags.Unsigned),
-		SendPropFloat(FIELDOF(nameof(Elasticity)), 0, PropFlags.Coord),
+		SendPropFloat(FIELDOF(nameof(Elasticity)), 0, PropFlags.Coord | PropFlags.NoScale),
 		SendPropFloat(FIELDOF(nameof(ShadowCastDistance)), 12, PropFlags.Unsigned),
 		SendPropEHandle(FIELDOF(nameof(OwnerEntity))),
 		SendPropEHandle(FIELDOF(nameof(EffectEntity))),

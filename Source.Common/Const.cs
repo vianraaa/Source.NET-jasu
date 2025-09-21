@@ -251,7 +251,7 @@ public static class Constants
 	public const int MAX_USER_MSG_DATA = 255;
 	public const int MAX_ENTITY_MSG_DATA = 255;
 	public const int MAX_DECAL_INDEX_BITS = 9;
-	public const int SP_MODEL_INDEX_BITS = 13;
+	public const int SP_MODEL_INDEX_BITS = 14; // < gmod changed this from 13 -> 14
 
 	public const int MAX_PACKEDENTITY_DATA = 16384;
 	public const int MAX_PACKEDENTITY_PROPS = 4096;

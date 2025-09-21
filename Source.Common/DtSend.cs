@@ -352,7 +352,7 @@ public class SendProp : IDataTableProp
 	public float LowValue;
 	public float HighValue;
 	public SendProp? ArrayProp;
-	public int Elements;
+	public int Elements = 1;
 	public int Offset;
 	public string? ExcludeDTName;
 	public string? ParentArrayPropName;
