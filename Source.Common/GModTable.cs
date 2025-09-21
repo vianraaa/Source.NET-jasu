@@ -18,7 +18,7 @@ public class GModTable {
 
 	public GModTable() {
 		Values = [];
-		FindValue = typeof(Dictionary<int, DVariant>).GetMethod("FindValue", BindingFlags.Public | BindingFlags.NonPublic)!.CreateDelegate<GetRefDVariant>(Values);
+		FindValue = typeof(Dictionary<int, DVariant>).GetMethod("FindValue", (BindingFlags)~0)!.CreateDelegate<GetRefDVariant>(Values);
 	}
 
 	public const int ENTRIES_BITS = 12;
