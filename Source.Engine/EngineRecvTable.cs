@@ -53,15 +53,15 @@ public struct DeltaBitsReader : IDisposable
 		return ~0u;
 	}
 
-	public void SkipPropData(SendProp prop) => BasePropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
+	public void SkipPropData(SendProp prop) => PropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
 	public void CopyPropData(bf_write outWrite, SendProp prop) {
 		int start = Buffer!.BitsRead;
-		BasePropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
+		PropTypeFns.Get(prop.Type).SkipProp(prop, Buffer!);
 		int len = Buffer!.BitsRead - start;
 		Buffer!.Seek(start);
 		outWrite.WriteBitsFromBuffer(Buffer!, len);
 	}
-	public void ComparePropData(ref DeltaBitsReader inReader, SendProp prop) => BasePropTypeFns.Get(prop.Type).CompareDeltas(prop, Buffer!, inReader.Buffer!);
+	public void ComparePropData(ref DeltaBitsReader inReader, SendProp prop) => PropTypeFns.Get(prop.Type).CompareDeltas(prop, Buffer!, inReader.Buffer!);
 
 	public void Dispose() {
 		Assert(Buffer == null);
@@ -241,7 +241,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			decodeInfo.In = inRead;
 			decodeInfo.RecvProxyData.ObjectID = objectID;
 
-			BasePropTypeFns.Get(decodeInfo.Prop.GetPropType()).Decode(ref decodeInfo);
+			PropTypeFns.Get(decodeInfo.Prop.GetPropType()).Decode(ref decodeInfo);
 		}
 
 		return !inRead.Overflowed;
