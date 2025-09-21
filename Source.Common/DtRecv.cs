@@ -27,8 +27,8 @@ public static class RecvPropHelpers
 
 	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, FieldInfo field) {
 		ref Vector3 vec = ref field.GetValueRefFast<Vector3>(instance);
-		vec.X = data.Value.X;
-		vec.Y = data.Value.Y;
+		vec.X = data.Value.Vector[0];
+		vec.Y = data.Value.Vector[1];
 	}
 
 	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {

@@ -25,73 +25,12 @@ public enum SendPropType
 
 public struct DVariant
 {
-	// Enough space to fit an int (4 bytes), a float (4 bytes), a Vector3 (12 bytes)
-	InlineArray16<byte> ValueData;
-	object? ReferenceData;
+	public float Float;
+	public int Int;
+	public Vector3 Vector;
+	public string? String;
+	public object? Data;
 	bool UsingReferenceData;
-
-	public float Float {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, float>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, float>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public int Int {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, int>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, int>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public Vector3 Vector {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0];
-		set {
-			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0] = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public float X {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].X;
-		set {
-			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].X = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public float Y {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Y;
-		set {
-			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Y = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public float Z {
-		get => UsingReferenceData ? default : MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Z;
-		set {
-			MemoryMarshal.Cast<byte, Vector3>(ValueData)[0].Z = value;
-			UsingReferenceData = false;
-			ReferenceData = null;
-		}
-	}
-	public string? String {
-		get => UsingReferenceData ? ReferenceData is string str ? str : null : null;
-		set {
-			UsingReferenceData = true;
-			ReferenceData = value;
-		}
-	}
-	public object? Data {
-		get => UsingReferenceData ? ReferenceData : null;
-		set {
-			UsingReferenceData = true;
-			ReferenceData = value;
-		}
-	}
 
 	public SendPropType Type;
 }

@@ -234,6 +234,8 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			else
 				decodeInfo.FieldInfo = null;
 
+			DevMsg($"Decoding {(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
 			decodeInfo.In = inRead;

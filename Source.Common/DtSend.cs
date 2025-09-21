@@ -26,20 +26,20 @@ public static class SendPropHelpers
 	}
 	public static void SendProxy_QAngles(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
 		var v = prop.GetValue<QAngle>(instance);
-		outData.X = MathLib.AngleMod(v.X);
-		outData.Y = MathLib.AngleMod(v.Y);
-		outData.Z = MathLib.AngleMod(v.Z);
+		outData.Vector[0] = MathLib.AngleMod(v.X);
+		outData.Vector[1] = MathLib.AngleMod(v.Y);
+		outData.Vector[2] = MathLib.AngleMod(v.Z);
 	}
 	public static void SendProxy_VectorToVector(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
 		var v = prop.GetValue<Vector3>(instance);
-		outData.X = MathLib.AngleMod(v.X);
-		outData.Y = MathLib.AngleMod(v.Y);
-		outData.Z = MathLib.AngleMod(v.Z);
+		outData.Vector[0] = MathLib.AngleMod(v.X);
+		outData.Vector[1] = MathLib.AngleMod(v.Y);
+		outData.Vector[2] = MathLib.AngleMod(v.Z);
 	}
 	public static void SendProxy_VectorXYToVectorXY(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
 		var v = prop.GetValue<Vector3>(instance);
-		outData.X = MathLib.AngleMod(v.X);
-		outData.Y = MathLib.AngleMod(v.Y);
+		outData.Vector[0] = MathLib.AngleMod(v.X);
+		outData.Vector[1] = MathLib.AngleMod(v.Y);
 	}
 	public static void SendProxy_Int8ToInt32(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID)
 		=> outData.Int = prop.GetValue<sbyte>(instance);

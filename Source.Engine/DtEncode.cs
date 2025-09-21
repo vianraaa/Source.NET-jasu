@@ -322,7 +322,8 @@ public class VectorPropTypeFns : PropTypeFns<int>
 	}
 
 	public override void Decode(ref DecodeInfo decodeInfo) {
-		decodeInfo.RecvProxyData.Value.Vector = DecodeVector(decodeInfo.Prop, decodeInfo.In);
+		Vector3 vec = DecodeVector(decodeInfo.Prop, decodeInfo.In);
+		decodeInfo.RecvProxyData.Value.Vector = vec;
 		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 
