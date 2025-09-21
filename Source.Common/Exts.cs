@@ -211,7 +211,43 @@ public static class FieldAccess<T>
 		var il = method.GetILGenerator();
 
 		if (field is ArrayFieldIndexInfo arrayField) {
-			throw new Exception("implement me");
+			if (!field.IsStatic) {
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
+
+				if (arrayField.BaseArrayField.BaseField.FieldType.IsArray) {
+					il.Emit(OpCodes.Ldfld, arrayField.BaseArrayField.BaseField);
+					il.Emit(OpCodes.Ldc_I4, arrayField.Index);
+
+					il.Emit(OpCodes.Ldarg_1);
+					if (typeof(T).IsValueType)
+						il.Emit(OpCodes.Ldobj, typeof(T));
+					else
+						il.Emit(OpCodes.Ldind_Ref);
+					il.Emit(OpCodes.Stelem, arrayField.ElementType);
+				}
+				else {
+					il.Emit(OpCodes.Ldflda, arrayField.BaseArrayField.BaseField);
+
+					// treat it as a pointer and add index * sizeof(T)
+					il.Emit(OpCodes.Conv_U);
+					il.Emit(OpCodes.Ldc_I4, arrayField.Index * Marshal.SizeOf(arrayField.ElementType));
+					il.Emit(OpCodes.Add);
+					il.Emit(OpCodes.Conv_U);  // now we have element address
+
+					// store into it
+					il.Emit(OpCodes.Ldarg_1);
+					if (typeof(T).IsValueType)
+						il.Emit(OpCodes.Ldobj, typeof(T));
+					else
+						il.Emit(OpCodes.Ldind_Ref);
+
+					il.Emit(OpCodes.Stobj, arrayField.ElementType);
+				}
+			}
+			else {
+				throw new Exception("implement me");
+			}
 		}
 		else {
 			if (!field.IsStatic) {
