@@ -304,6 +304,12 @@ public class RecvDecoder
 	public RecvProp? GetProp(int i) => (uint)i < (uint)GetNumProps() ? Props[i] : null;
 	public SendProp GetSendProp(int i) => Precalc.GetProp(i);
 
+	public void DumpNames() {
+		int i = 0;
+		foreach (var propname in Props.Where(x => x != null).Select(x => new string(x.GetName())))
+			Msg($"Prop #{i++}: {propname}\n");
+	}
+
 	public int GetNumDatatableProps() => DataTableProps.Count;
 	public RecvProp GetDatatableProp(int i) => DataTableProps[i];
 

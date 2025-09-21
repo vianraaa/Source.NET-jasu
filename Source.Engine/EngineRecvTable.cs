@@ -225,6 +225,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			theStack.SeekToProp(iProp);
 
 			RecvProp? recvProp = decoder.GetProp((int)iProp);
+			// decoder.DumpNames();
 
 			DecodeInfo decodeInfo = new();
 			decodeInfo.Object = theStack.GetCurStructBase();
