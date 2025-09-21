@@ -74,7 +74,7 @@ public abstract class BasePropTypeFns
 	}
 
 
-	static float DecodeFloat(SendProp prop, bf_read inBuffer) {
+	internal static float DecodeFloat(SendProp prop, bf_read inBuffer) {
 		var flags = prop.GetFlags();
 		if ((flags & PropFlags.Coord) != 0)
 			return inBuffer.ReadBitCoord();
@@ -288,7 +288,10 @@ public class FloatPropTypeFns : PropTypeFns<int>
 	}
 
 	public override void Decode(ref DecodeInfo decodeInfo) {
-		throw new NotImplementedException();
+		decodeInfo.RecvProxyData.Value.Float = DecodeFloat(decodeInfo.Prop, decodeInfo.In);
+
+		if (decodeInfo.RecvProxyData.RecvProp != null)
+			decodeInfo.RecvProxyData.RecvProp.GetProxyFn()(in decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 
 	public override bool IsZero(object instance, ref DVariant var, SendProp prop) {
