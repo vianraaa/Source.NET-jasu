@@ -92,7 +92,7 @@ public partial class C_BaseEntity : IClientEntity
 
 		// gmod specific
 		RecvPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, RecvProxy_OverrideMaterial),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), RecvPropInt(null!)),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0)),
 		RecvPropInt(FIELDOF(nameof(Health))),
 		RecvPropInt(FIELDOF(nameof(MaxHealth))),
 		RecvPropInt(FIELDOF(nameof(SpawnFlags))),
