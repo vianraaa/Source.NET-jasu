@@ -41,6 +41,6 @@ public class C_World : C_BaseEntity
 	float MinOccluderArea;
 	float MaxPropScreenSpaceWidth;
 	float MinPropScreenSpaceWidth;
-	string? DetailSpriteMaterial;
+	InlineArray256<char> DetailSpriteMaterial;
 	bool ColdWorld;
 }

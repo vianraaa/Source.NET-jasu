@@ -43,7 +43,7 @@ public struct RecvProxyData
 	public int Element;
 	public int ObjectID;
 }
-
+[Flags]
 public enum PropFlags
 {
 	Unsigned = 1 << 0,

@@ -234,7 +234,10 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			else
 				decodeInfo.FieldInfo = null;
 
-			DevMsg($"Decoding {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+			if (recvProp?.GetParentArrayPropName() != null)
+				DevMsg($"Decoding {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+			else
+				DevMsg($"Decoding {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
 
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
@@ -420,7 +423,6 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			if (recvProp.IsInsideArray() != sendProp.IsInsideArray())
 				return RecvPropMismatchReason.MismatchedArrayType;
 
-
 			if (recvProp.GetPropType() == SendPropType.Array) {
 				if (recvProp.GetNumElements() != sendProp.GetNumElements())
 					return RecvPropMismatchReason.MismatchedArrayElements;
@@ -446,8 +448,6 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		recvProps.SetSize(sendProps.Count);
 		for (int i = 0; i < sendProps.Count; i++) {
 			SendProp sendProp = sendProps[i];
-			if (sendProp == null)
-				break;
 			if (!lookup.TryGetValue(sendProp, out RecvProp? recv))
 				recvProps[i] = null!;
 			else

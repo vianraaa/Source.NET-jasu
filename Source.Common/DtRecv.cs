@@ -6,6 +6,7 @@ using Source.Common;
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
@@ -233,14 +234,8 @@ public static class RecvPropHelpers
 	}
 }
 
-/// <summary>
-/// This is the base receive property abstract class. We differentiate from Source here by using 
-/// generic-types that inherit from RecvProp for specific type access, where get/set goes through
-/// overloaded abstract/virtual methods (replicating the RecvPropFloat/whatever calls that normally
-/// get done via the implement clientclass etc. macros in Source). The way Source does it is with raw
-/// pointer access, we semi-replicate that behavior in <see cref="GetRefFn{InstanceType, ReturnType}"/>
-/// since it returns a by-reference var to the field on <c>InstanceType</c>.
-/// </summary>
+
+[DebuggerDisplay("RecvProp<{RecvType}> {NameOverride ?? FieldInfo.Name} [{Flags,ac}]")]
 public class RecvProp : IDataTableProp
 {
 	public FieldInfo FieldInfo;
@@ -278,7 +273,8 @@ public class RecvProp : IDataTableProp
 	public bool IsInsideArray() => InsideArray;
 	public void SetInsideArray() => InsideArray = true;
 	public bool SetArrayProp<PropType>(PropType propType) where PropType : IDataTableProp => (ArrayProp = (propType is RecvProp rp) ? rp : throw new InvalidCastException()) != null;
-	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp => ArrayProp is PropType pt ? pt : throw new InvalidCastException();
+	public PropType? GetArrayProp<PropType>() where PropType : IDataTableProp => ArrayProp == null ? default : ArrayProp is PropType pt ? pt : throw new InvalidCastException();
+	public RecvProp? GetArrayProp() => ArrayProp;
 	public int GetNumElements() => Elements;
 	public int SetNumElements(int elements) => Elements = elements;
 	public SendPropType GetPropType() => RecvType;
@@ -382,7 +378,9 @@ public class SendTablePrecalc
 		SendTable.BuildHierarchy(GetRootNode(), table, ref bhs);
 		SendTable.SortByPriority(ref bhs);
 
-		Props.Clear(); Props.AddRange(bhs.Props[..bhs.NumProps]);
+		Props.Clear(); 
+		Props.AddRange(bhs.Props[..bhs.NumProps]);
+
 		DataTableProps.Clear(); DataTableProps.AddRange(bhs.DataTableProps[..bhs.NumDataTableProps]);
 		PropProxyIndices.Clear(); PropProxyIndices.AddRange(bhs.PropProxyIndices[..bhs.NumProps]);
 

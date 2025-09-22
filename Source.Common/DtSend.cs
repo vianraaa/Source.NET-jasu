@@ -5,6 +5,7 @@ using Source.Common.Mathematics;
 
 using System.Buffers;
 using System.Collections;
+using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -371,7 +372,7 @@ public static class SendPropHelpers
 	}
 }
 
-
+[DebuggerDisplay("SendProp<{Type}> {NameOverride ?? FieldInfo.Name} [{Flags,ac}]")]
 public class SendProp : IDataTableProp
 {
 	public RecvProp? MatchingRecvProp;
@@ -568,7 +569,7 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 		for (i = 0; i < (table?.Props?.Length ?? 0); i++) {
 			SendProp prop = table.Props![i];
 
-			if (prop.IsExcludeProp() || prop.IsInsideArray() || FindExcludeProp(table.GetName(), prop.GetName(), bhs.ExcludeProps!, out _)) {
+			if (prop.IsExcludeProp() || prop.IsInsideArray() || FindExcludeProp(table.GetName(), prop.GetName(), bhs.ExcludeProps!)) {
 				continue;
 			}
 
@@ -605,15 +606,13 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 		}
 	}
 
-	private static bool FindExcludeProp(ReadOnlySpan<char> tableName, ReadOnlySpan<char> propName, ExcludeProp[]? excludeProps, out ExcludeProp excludeProp) {
+	private static bool FindExcludeProp(ReadOnlySpan<char> tableName, ReadOnlySpan<char> propName, ExcludeProp[]? excludeProps) {
 		for (int i = 0; i < excludeProps?.Length; i++) {
 			if (tableName.Equals(excludeProps[i].TableName!, StringComparison.OrdinalIgnoreCase) && propName.Equals(excludeProps[i].PropName!, StringComparison.OrdinalIgnoreCase)) {
-				excludeProp = excludeProps[i];
 				return true;
 			}
 		}
 
-		excludeProp = default;
 		return false;
 	}
 
