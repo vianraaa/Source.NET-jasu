@@ -201,10 +201,10 @@ public partial class C_BaseEntity : IClientEntity
 	byte OldRenderMode;
 
 	InlineArray32<bool> GMOD_bool;
-	InlineArray32<bool> GMOD_float;
-	InlineArray32<bool> GMOD_int;
-	InlineArray32<bool> GMOD_Vector;
-	InlineArray32<bool> GMOD_QAngle;
+	InlineArray32<float> GMOD_float;
+	InlineArray32<int> GMOD_int;
+	InlineArray32<Vector3> GMOD_Vector;
+	InlineArray32<QAngle> GMOD_QAngle;
 	InlineArray32<EHANDLE> GMOD_EHANDLE; // << ENSURE THESE ARE INITIALIZED!!!!
 	InlineArray512<char> GMOD_String0;
 	InlineArray512<char> GMOD_String1;
