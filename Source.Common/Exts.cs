@@ -130,6 +130,10 @@ public static class FieldAccess
 	public static T GetValueFast<T>(this FieldInfo field, object instance) => FieldAccess<T>.Getter(field)(instance);
 	public static ref T GetValueRefFast<T>(this FieldInfo field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
 	public static void SetValueFast<T>(this FieldInfo field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
+
+	public static void CopyStringToField(this FieldInfo field, object instance, string? str) {
+		Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
+	}
 }
 
 public static class FieldAccess<T>

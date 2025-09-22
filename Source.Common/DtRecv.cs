@@ -42,12 +42,7 @@ public static class RecvPropHelpers
 	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
 	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked(data.Value.Int));
 	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		if (field.FieldType == typeof(string)) {
-			field.SetValueFast(instance, data.Value.String);
-			return;
-		}
-
-		throw new Exception("Cannot currently do a copy...");
+		field.CopyStringToField(instance, data.Value.String);
 	}
 
 	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, FieldInfo field) {
