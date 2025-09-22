@@ -537,7 +537,15 @@ public struct PropTypeFns
     public static ReadOnlySpan<char> Array_GetTypeNameString() => "DPT_Array";
 	public static bool Array_IsEncodedZero(SendProp prop, bf_read p) => throw new NotImplementedException();
 	public static bool Array_IsZero(object instance, ref DVariant var, SendProp prop) => throw new NotImplementedException();
-	public static void Array_SkipProp(SendProp prop, bf_read p) => throw new NotImplementedException();
+	public static void Array_SkipProp(SendProp prop, bf_read p) {
+		SendProp? arrayProp = prop.GetArrayProp();
+		AssertMsg(arrayProp != null, "Array_SkipProp: missing m_pArrayProp for a property.");
+
+		int nElements = (int)p.ReadUBitLong(prop.GetNumArrayLengthBits());
+
+		for (int i = 0; i < nElements; i++) 
+			Get(arrayProp.GetPropType()).SkipProp(arrayProp, p);
+	}
 	#endregion
 	#region SendPropType.DataTable
 	public static int DataTable_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) => throw new NotImplementedException();
@@ -557,6 +565,17 @@ public struct PropTypeFns
 	public static ReadOnlySpan<char> GModTable_GetTypeNameString() => throw new NotImplementedException();
 	public static bool GModTable_IsEncodedZero(SendProp prop, bf_read p) => throw new NotImplementedException();
 	public static bool GModTable_IsZero(object instance, ref DVariant var, SendProp prop) => throw new NotImplementedException();
-	public static void GModTable_SkipProp(SendProp prop, bf_read p) => throw new NotImplementedException();
+	public static void GModTable_SkipProp(SendProp prop, bf_read p) {
+		int len = (int)p.ReadUBitLong(GModTable.ENTRIES_BITS);
+		bool clear = p.ReadBool();
+
+		for (int i = 0; i < len; i++) {
+			int key = (int)p.ReadUBitLong(GModTable.ENTRY_KEY_BITS);
+			int valueType = (int)p.ReadUBitLong(GModTable.ENTRY_VALUE_TYPE_BITS);
+
+			if (valueType != 0)
+				GmodTableTypeFns.Get(valueType).Skip(p);
+		}
+	}
 	#endregion
 }
