@@ -1031,6 +1031,8 @@ public class ArrayFieldIndexInfo : FieldInfo
 }
 public class ArrayFieldInfo : FieldInfo
 {
+	public readonly Dictionary<long, ArrayFieldIndexInfo> FieldAccessors = [];
+
 	public readonly FieldInfo BaseField;
 	public readonly Type ElementType;
 	public readonly int Length;
@@ -1080,6 +1082,16 @@ public class ArrayFieldInfo : FieldInfo
 		=> throw new NotImplementedException("Please use the GetValueFast<T> method.");
 	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
 		=> throw new NotImplementedException("Please use the SetValueFast<T> method.");
+
+	// Instance is passed here because in the future we should sanity-check our target field against the 
+	// incoming untrusted index. Although a bad index wouldn't cause pandamonium beyond an out of range exception,
+	// it would be nice to handle it without an exception being raised in the future/being able to Assert for it.
+	public FieldInfo? GetIndexFieldInfo(object instance, int index) {
+		if (!FieldAccessors.TryGetValue(index, out ArrayFieldIndexInfo? ret))
+			FieldAccessors[index] = ret = new(this, index);
+
+		return ret;
+	}
 }
 
 /// <summary>

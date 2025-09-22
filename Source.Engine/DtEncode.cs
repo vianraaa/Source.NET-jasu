@@ -23,6 +23,16 @@ public struct DecodeInfo
 	public object Object;
 	public SendProp Prop;
 	public bf_read In;
+
+	public void CopyVars(ref readonly DecodeInfo decodeInfo) {
+		Object = decodeInfo.Object;
+		FieldInfo = decodeInfo.FieldInfo;
+		RecvProxyData.RecvProp = decodeInfo.RecvProxyData.RecvProp;
+		Prop = decodeInfo.Prop;
+		In = decodeInfo.In;
+		RecvProxyData.ObjectID = decodeInfo.RecvProxyData.ObjectID;
+		RecvProxyData.Element = decodeInfo.RecvProxyData.Element;
+	}
 }
 
 public static class PackedEntitiesManager
@@ -152,7 +162,7 @@ public struct PropTypeFns
 
 	public static void EncodeVector(SendProp prop, Vector3 incoming, bf_write outBuffer, int objectID) {
 		EncodeFloat(prop, incoming[0], outBuffer, objectID);
-        EncodeFloat(prop, incoming[1], outBuffer, objectID);
+		EncodeFloat(prop, incoming[1], outBuffer, objectID);
 
 		if ((prop.GetFlags() & PropFlags.Normal) == 0)
 			EncodeFloat(prop, incoming[2], outBuffer, objectID);
@@ -160,34 +170,34 @@ public struct PropTypeFns
 			// writing a sign bit for Z instead
 			outBuffer.WriteBool(incoming[2] <= -BitBuffer.NORMAL_RESOLUTION);
 		}
-    }
+	}
 
-    public static Vector3 DecodeVectorXY(SendProp prop, bf_read inBuffer) {
-        Span<float> stackFloats = stackalloc float[3];
-        DecodeVectorXY(prop, inBuffer, stackFloats);
-        return new(stackFloats);
-    }
+	public static Vector3 DecodeVectorXY(SendProp prop, bf_read inBuffer) {
+		Span<float> stackFloats = stackalloc float[3];
+		DecodeVectorXY(prop, inBuffer, stackFloats);
+		return new(stackFloats);
+	}
 
-    public static void DecodeVectorXY(SendProp prop, bf_read inBuffer, Span<float> v) {
-        v[0] = DecodeFloat(prop, inBuffer);
-        v[1] = DecodeFloat(prop, inBuffer);
-    }
+	public static void DecodeVectorXY(SendProp prop, bf_read inBuffer, Span<float> v) {
+		v[0] = DecodeFloat(prop, inBuffer);
+		v[1] = DecodeFloat(prop, inBuffer);
+	}
 
-    public static void EncodeVectorXY(SendProp prop, Vector3 incoming, bf_write outBuffer, int objectID) {
-        EncodeFloat(prop, incoming[0], outBuffer, objectID);
-        EncodeFloat(prop, incoming[1], outBuffer, objectID);
-    }
+	public static void EncodeVectorXY(SendProp prop, Vector3 incoming, bf_write outBuffer, int objectID) {
+		EncodeFloat(prop, incoming[0], outBuffer, objectID);
+		EncodeFloat(prop, incoming[1], outBuffer, objectID);
+	}
 
-	public static string? DecodeString(SendProp prop, bf_read inBuffer) { 
+	public static string? DecodeString(SendProp prop, bf_read inBuffer) {
 		int len = (int)inBuffer.ReadUBitLong(Constants.DT_MAX_STRING_BITS);
-        if (len > Constants.DT_MAX_STRING_BUFFERSIZE) {
+		if (len > Constants.DT_MAX_STRING_BUFFERSIZE) {
 			Warning($"String_Decode( {prop.GetName()} ) invalid length ({len})\n");
 			len = Constants.DT_MAX_STRING_BUFFERSIZE - 1;
 		}
 
 		inBuffer.ReadString(out string? str, len);
 		return str;
-    }
+	}
 
 	public static void EncodeString(SendProp prop, string? incoming, bf_write outBuffer, int objectID) {
 		if (incoming == null) {
@@ -198,10 +208,10 @@ public struct PropTypeFns
 		outBuffer.WriteString(incoming, true, incoming.Length);
 	}
 
-    /// <summary>
-    /// Indices correlate to <see cref="SendPropType"/> enum values.
-    /// </summary>
-    static readonly PropTypeFns[] g_PropTypeFns = [
+	/// <summary>
+	/// Indices correlate to <see cref="SendPropType"/> enum values.
+	/// </summary>
+	static readonly PropTypeFns[] g_PropTypeFns = [
 		new(Int_Encode, Int_Decode, Int_CompareDeltas, Generic_FastCopy, Int_GetTypeNameString, Int_IsZero, Int_DecodeZero, Int_IsEncodedZero, Int_SkipProp),
 		new(Float_Encode, Float_Decode, Float_CompareDeltas, Generic_FastCopy, Float_GetTypeNameString, Float_IsZero, Float_DecodeZero, Float_IsEncodedZero, Float_SkipProp),
 		new(Vector_Encode, Vector_Decode, Vector_CompareDeltas, Generic_FastCopy, Vector_GetTypeNameString, Vector_IsZero, Vector_DecodeZero, Vector_IsEncodedZero, Vector_SkipProp),
@@ -222,8 +232,8 @@ public struct PropTypeFns
 
 		sendProp.GetProxyFn()(sendProp, sendData, sendFieldInfo, ref recvProxyData.Value, 0, objectID);
 
-        // Fill in the data for the recv proxy.
-        recvProxyData.RecvProp = recvProp;
+		// Fill in the data for the recv proxy.
+		recvProxyData.RecvProp = recvProp;
 		recvProxyData.Element = 0;
 		recvProxyData.ObjectID = objectID;
 		recvProp.GetProxyFn()(ref recvProxyData, recvData, recvFieldInfo);
@@ -315,7 +325,7 @@ public struct PropTypeFns
 	}
 	#endregion
 	#region SendPropType.Float
-	public static void Float_SkipProp(SendProp prop, bf_read p) { 
+	public static void Float_SkipProp(SendProp prop, bf_read p) {
 		if ((prop.GetFlags() & PropFlags.Coord) != 0) {
 			uint val = p.ReadUBitLong(2);
 			if (val != 0) {
@@ -343,8 +353,8 @@ public struct PropTypeFns
 			p.SeekRelative(prop.Bits);
 	}
 	public static void Float_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-        EncodeFloat(prop, var.Float, writeOut, objectID);
-    }
+		EncodeFloat(prop, var.Float, writeOut, objectID);
+	}
 	public static void Float_Decode(ref DecodeInfo decodeInfo) {
 		decodeInfo.RecvProxyData.Value.Float = DecodeFloat(decodeInfo.Prop, decodeInfo.In);
 
@@ -361,12 +371,12 @@ public struct PropTypeFns
 			decodeInfo.RecvProxyData.RecvProp.GetProxyFn()(in decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 	public static ReadOnlySpan<char> Float_GetTypeNameString() => "DPT_Float";
-    public static int Float_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
+	public static int Float_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		return (DecodeFloat(prop, p1) != DecodeFloat(prop, p2)) ? 1 : 0;
-    }
+	}
 	public static bool Float_IsEncodedZero(SendProp prop, bf_read p) {
-        return DecodeFloat(prop, p) == 0.0f;
-    }
+		return DecodeFloat(prop, p) == 0.0f;
+	}
 	#endregion
 	#region SendPropType.Vector
 	public static int Vector_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
@@ -374,13 +384,13 @@ public struct PropTypeFns
 		int c2 = Float_CompareDeltas(prop, p1, p2);
 
 		int c3;
-        if ((prop.GetFlags() & PropFlags.Normal) != 0)
+		if ((prop.GetFlags() & PropFlags.Normal) != 0)
 			c3 = (p1.ReadOneBit() != p2.ReadOneBit()) ? 1 : 0;
 		else
 			c3 = Float_CompareDeltas(prop, p1, p2);
 
 		return c1 | c2 | c3;
-    }
+	}
 	public static void Vector_Decode(ref DecodeInfo decodeInfo) {
 		Vector3 vec = DecodeVector(decodeInfo.Prop, decodeInfo.In);
 		decodeInfo.RecvProxyData.Value.Vector = vec;
@@ -388,19 +398,19 @@ public struct PropTypeFns
 	}
 	public static void Vector_DecodeZero(ref DecodeInfo decodeInfo) {
 		decodeInfo.RecvProxyData.Value.Vector = new();
-        decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
-    }
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
+	}
 	public static void Vector_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		EncodeVector(prop, var.Vector, writeOut, objectID);
 	}
 	public static ReadOnlySpan<char> Vector_GetTypeNameString() => "DPT_Vector";
-    public static bool Vector_IsEncodedZero(SendProp prop, bf_read p) {
+	public static bool Vector_IsEncodedZero(SendProp prop, bf_read p) {
 		Vector3 v = DecodeVector(prop, p);
 		return v[0] == 0.0f && v[1] == 0.0f && v[2] == 0.0f;
 	}
 	public static bool Vector_IsZero(object instance, ref DVariant var, SendProp prop) {
 		return var.Vector[0] == 0.0f && var.Vector[1] == 0.0f && var.Vector[2] == 0.0f;
-    }
+	}
 	public static void Vector_SkipProp(SendProp prop, bf_read p) {
 		Float_SkipProp(prop, p);
 		Float_SkipProp(prop, p);
@@ -413,18 +423,18 @@ public struct PropTypeFns
 	#region SendPropType.VectorXY
 	public static int VectorXY_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		int c1 = Float_CompareDeltas(prop, p1, p2);
-        int c2 = Float_CompareDeltas(prop, p1, p2);
+		int c2 = Float_CompareDeltas(prop, p1, p2);
 
 		return c1 | c2;
-    }
+	}
 	public static void VectorXY_Decode(ref DecodeInfo decodeInfo) {
 		Vector3 vec = DecodeVectorXY(decodeInfo.Prop, decodeInfo.In);
-        decodeInfo.RecvProxyData.Value.Vector = vec;
-        decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
-    }
+		decodeInfo.RecvProxyData.Value.Vector = vec;
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
+	}
 	public static void VectorXY_DecodeZero(ref DecodeInfo decodeInfo) {
 		decodeInfo.RecvProxyData.Value.Vector = new();
-        decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
 	}
 	public static void VectorXY_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		EncodeVectorXY(prop, var.Vector, writeOut, objectID);
@@ -437,31 +447,32 @@ public struct PropTypeFns
 	public static bool VectorXY_IsZero(object instance, ref DVariant var, SendProp prop) => var.Vector[0] == 0.0f && var.Vector[1] == 0.0f;
 	public static void VectorXY_SkipProp(SendProp prop, bf_read p) {
 		Float_SkipProp(prop, p);
-        Float_SkipProp(prop, p);
-    }
+		Float_SkipProp(prop, p);
+	}
 	#endregion
 	#region SendPropType.String
 	public static int String_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) {
 		int len1 = (int)p1.ReadUBitLong(Constants.DT_MAX_STRING_BITS);
-        int len2 = (int)p1.ReadUBitLong(Constants.DT_MAX_STRING_BITS);
+		int len2 = (int)p1.ReadUBitLong(Constants.DT_MAX_STRING_BITS);
 
 		if (len1 == len2) {
 			if (len1 == 0)
 				return 0;
 
 			return p1.CompareBits(p2, len1 * 8) ? 1 : 0;
-		} else {
+		}
+		else {
 			return 1;
 		}
-    }
+	}
 	public static void String_Decode(ref DecodeInfo decodeInfo) {
 		decodeInfo.RecvProxyData.Value.String = DecodeString(decodeInfo.Prop, decodeInfo.In);
-        decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
-    }
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
+	}
 	public static void String_DecodeZero(ref DecodeInfo decodeInfo) {
 		decodeInfo.RecvProxyData.Value.String = "";
-        decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
-    }
+		decodeInfo.RecvProxyData.RecvProp?.GetProxyFn()(ref decodeInfo.RecvProxyData, decodeInfo.Object, decodeInfo.FieldInfo);
+	}
 	public static void String_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
 		EncodeString(prop, var.String, writeOut, objectID);
 	}
@@ -496,35 +507,88 @@ public struct PropTypeFns
 
 		int nLengthBits = prop.GetNumArrayLengthBits();
 		int length1 = (int)p1.ReadUBitLong(nLengthBits);
-        int length2 = (int)p1.ReadUBitLong(nLengthBits);
+		int length2 = (int)p1.ReadUBitLong(nLengthBits);
 
 		int bDifferent = (length1 != length2) ? 1 : 0;
 
-        // Compare deltas on the props that are the same.
-        int nSame = Math.Min(length1, length2);
+		// Compare deltas on the props that are the same.
+		int nSame = Math.Min(length1, length2);
 		for (int iElement = 0; iElement < nSame; iElement++) {
 			bDifferent |= g_PropTypeFns[(int)arrayProp.Type].CompareDeltas(arrayProp, p1, p2);
 		}
 
-        // Now just eat up the remaining properties in whichever buffer was larger.
+		// Now just eat up the remaining properties in whichever buffer was larger.
 		if (length1 != length2) {
 			bf_read buffer = (length1 > length2) ? p1 : p2;
 
 			int nExtra = Math.Max(length1, length2) - nSame;
 			for (int iEatUp = 0; iEatUp < nExtra; iEatUp++) {
 				g_PropTypeFns[(int)arrayProp.Type].SkipProp(prop, buffer);
-            }
+			}
 		}
 
-        return bDifferent;
+		return bDifferent;
 	}
-	public static void Array_Decode(ref DecodeInfo decodeInfo) => throw new NotImplementedException();
-    public static void Array_DecodeZero(ref DecodeInfo info) => throw new NotImplementedException();
-	public static void Array_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
-        SendProp? arrayProp = prop.GetArrayProp();
-        AssertMsg(arrayProp != null, $"Array_Decode: missing m_pArrayProp for SendProp '{prop.GetName()}'.");
+	public static void Array_Decode(ref DecodeInfo decodeInfo) {
+		SendProp? arrayProp = decodeInfo.Prop.GetArrayProp();
+		AssertMsg(arrayProp != null, "Array_Decode: missing SendProp for a property.");
 
-        int nElements = Array_GetLength(instance, prop, objectID);
+		DecodeInfo subDecodeInfo = default;
+		subDecodeInfo.CopyVars(ref decodeInfo);
+		subDecodeInfo.Prop = arrayProp;
+
+		FieldInfo targetField;
+
+		ArrayLengthRecvProxyFn lengthProxy = null!;
+		if (decodeInfo.RecvProxyData.RecvProp != null) {
+			RecvProp? arrayRecvProp = decodeInfo.RecvProxyData.RecvProp.GetArrayProp();
+			subDecodeInfo.RecvProxyData.RecvProp = arrayRecvProp!;
+
+			subDecodeInfo.Object = decodeInfo.Object;
+			subDecodeInfo.FieldInfo = arrayRecvProp!.FieldInfo;
+
+			lengthProxy = decodeInfo.RecvProxyData.RecvProp.GetArrayLengthProxy()!;
+			targetField = subDecodeInfo.FieldInfo;
+		}
+		else 
+			targetField = arrayProp.FieldInfo;
+		
+		if (targetField is not ArrayFieldInfo arrayFieldInfo) {
+			if (targetField is not ArrayFieldIndexInfo arrayFieldindexInfo) {
+				Warning("Cannot Array_Decode on a non-ArrayFieldInfo target!\n");
+				Assert(false);
+				return;
+			}
+			arrayFieldInfo = arrayFieldindexInfo.BaseArrayField;
+		}
+
+
+		int nElements = (int)decodeInfo.In.ReadUBitLong(decodeInfo.Prop.GetNumArrayLengthBits());
+
+		if (lengthProxy != null)
+			lengthProxy(decodeInfo.Object, decodeInfo.RecvProxyData.ObjectID, nElements);
+
+		for (subDecodeInfo.RecvProxyData.Element = 0; subDecodeInfo.RecvProxyData.Element < nElements; subDecodeInfo.RecvProxyData.Element++) {
+			var element = arrayFieldInfo.GetIndexFieldInfo(subDecodeInfo.Object!, subDecodeInfo.RecvProxyData.Element);
+			if(element == null) {
+				Warning($"Invalid element at {subDecodeInfo.RecvProxyData.Element}\n");
+				continue;
+			}
+			subDecodeInfo.FieldInfo = element;
+			Get(arrayProp.GetPropType()).Decode(ref subDecodeInfo);
+		}
+	}
+
+	private static RecvProp? GetMatchingRecvProp(SendProp arraySendProp) {
+		throw new NotImplementedException();
+	}
+
+	public static void Array_DecodeZero(ref DecodeInfo info) => throw new NotImplementedException();
+	public static void Array_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) {
+		SendProp? arrayProp = prop.GetArrayProp();
+		AssertMsg(arrayProp != null, $"Array_Decode: missing m_pArrayProp for SendProp '{prop.GetName()}'.");
+
+		int nElements = Array_GetLength(instance, prop, objectID);
 
 		writeOut.WriteUBitLong((uint)nElements, prop.GetNumArrayLengthBits());
 
@@ -533,8 +597,8 @@ public struct PropTypeFns
 
 			// arrayProp.GetProxyFn()(arrayProp, instance, ) ??? how fieldinfo
 		}
-    }
-    public static ReadOnlySpan<char> Array_GetTypeNameString() => "DPT_Array";
+	}
+	public static ReadOnlySpan<char> Array_GetTypeNameString() => "DPT_Array";
 	public static bool Array_IsEncodedZero(SendProp prop, bf_read p) => throw new NotImplementedException();
 	public static bool Array_IsZero(object instance, ref DVariant var, SendProp prop) => throw new NotImplementedException();
 	public static void Array_SkipProp(SendProp prop, bf_read p) {
@@ -543,7 +607,7 @@ public struct PropTypeFns
 
 		int nElements = (int)p.ReadUBitLong(prop.GetNumArrayLengthBits());
 
-		for (int i = 0; i < nElements; i++) 
+		for (int i = 0; i < nElements; i++)
 			Get(arrayProp.GetPropType()).SkipProp(arrayProp, p);
 	}
 	#endregion
