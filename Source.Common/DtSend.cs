@@ -340,7 +340,9 @@ public static class SendPropHelpers
 		if (proxyFn == SendProxy_DataTableToDataTable)
 			ret.SetFlags(PropFlags.ProxyAlwaysYes);
 
-		// TODO: Collapsible...
+		if(proxyFn == SendProxy_DataTableToDataTable && name == "baseclass") {
+			ret.SetFlags(PropFlags.Collapsible);
+		}
 
 		return ret;
 	}
