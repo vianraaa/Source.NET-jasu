@@ -90,7 +90,6 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(MoveParent)), 0, RecvProxy_IntToMoveParent),
 		RecvPropInt(FIELDOF(nameof(ParentAttachment))),
 
-		RecvPropString(FIELDOF(nameof(OverrideMaterial)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
 		RecvPropInt(FIELDOF(nameof(MoveType)), 0, RecvProxy_MoveType),
 		RecvPropInt(FIELDOF(nameof(MoveCollide)), 0, RecvProxy_MoveCollide),
 		RecvPropQAngles (FIELDOF(nameof(AngRotation))),
@@ -106,7 +105,7 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(TakeDamage))),
 		RecvPropInt(FIELDOF(nameof(RealClassName))),
 
-		RecvPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, RecvProxy_OverrideMaterial),
+		RecvPropInt(FIELDOF(nameof(OverrideMaterial))),
 
 		RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), PropFlags.Unsigned),
 		RecvPropArray2(null, 32, "OverrideSubMaterials"),
@@ -187,7 +186,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	public byte TakeDamage;
 	public ushort RealClassName;
-	public InlineArray255<char> OverrideMaterial;
+	public ushort OverrideMaterial;
 	public InlineArray32<ushort> OverrideSubMaterials;
 	public int Health;
 	public int MaxHealth;

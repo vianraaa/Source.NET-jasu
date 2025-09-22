@@ -64,7 +64,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(TakeDamage)), 8),
 		SendPropInt(FIELDOF(nameof(RealClassName)), 16, PropFlags.Unsigned),
 
-		SendPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
+		SendPropInt(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
 
 		SendPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), 16, PropFlags.Unsigned),
 		SendPropArray2(null, 32, "OverrideSubMaterials"),
@@ -100,13 +100,14 @@ public partial class BaseEntity : IServerEntity
 	]);
 
 	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
-		throw new NotImplementedException();
+		Warning("SendProxy_OverrideMaterial not yet implemented\n");
 	}
 	private static void SendProxy_Angles(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
-		throw new NotImplementedException();
+		Warning("SendProxy_Angles not yet implemented\n");
 	}
 	private static object? SendProxy_SendPredictableId(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
-		throw new NotImplementedException();
+		Warning("SendProxy_SendPredictableId not yet implemented\n");
+		return null;
 	}
 
 	public byte RenderFX;
@@ -129,7 +130,7 @@ public partial class BaseEntity : IServerEntity
 
 	public byte TakeDamage;
 	public ushort RealClassName;
-	public InlineArray255<char> OverrideMaterial;
+	public ushort OverrideMaterial;
 	public InlineArray32<ushort> OverrideSubMaterials;
 	public int Health;
 	public int MaxHealth;
