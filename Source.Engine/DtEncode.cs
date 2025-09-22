@@ -623,7 +623,22 @@ public struct PropTypeFns
 	#endregion
 	#region SendPropType.GModTable
 	public static int GModTable_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) => throw new NotImplementedException();
-	public static void GModTable_Decode(ref DecodeInfo decodeInfo) => throw new NotImplementedException();
+	public static void GModTable_Decode(ref DecodeInfo decodeInfo) {
+		var gmodtable = decodeInfo.FieldInfo.GetValueFast<GModTable>(decodeInfo.Object);
+
+		int len = (int)decodeInfo.In.ReadUBitLong(GModTable.ENTRIES_BITS);
+		bool clear = decodeInfo.In.ReadBool();
+
+		if (clear)
+			gmodtable.Clear();
+
+		for (int i = 0; i < len; i++) {
+			int key = (int)decodeInfo.In.ReadUBitLong(GModTable.ENTRY_KEY_BITS);
+			int valueType = (int)decodeInfo.In.ReadUBitLong(GModTable.ENTRY_VALUE_TYPE_BITS);
+			if (valueType != 0) 
+				GmodTableTypeFns.Get(valueType).Read(decodeInfo.In, ref gmodtable[key]);
+		}
+	}
 	public static void GModTable_DecodeZero(ref DecodeInfo info) => throw new NotImplementedException();
 	public static void GModTable_Encode(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID) => throw new NotImplementedException();
 	public static ReadOnlySpan<char> GModTable_GetTypeNameString() => throw new NotImplementedException();
