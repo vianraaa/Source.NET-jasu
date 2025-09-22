@@ -511,6 +511,8 @@ public class SendProp : IDataTableProp
 	public void SetArrayLengthProxy(ArrayLengthSendProxyFn? arrayLengthFn) {
 		arrayLengthProxyFn = arrayLengthFn;
 	}
+
+	public int GetNumArrayLengthBits() => (int)Math.Floor(Math.Log2(GetNumElements()) + 1); // $todo am i sure?
 }
 
 public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
