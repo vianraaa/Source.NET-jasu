@@ -64,7 +64,10 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(RealClassName)), 16, PropFlags.Unsigned),
 
 		SendPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
-		SendPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), SendPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), 16, PropFlags.Unsigned)),
+
+		SendPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), 16, PropFlags.Unsigned),
+		SendPropArray2(null, 32, "OverrideSubMaterials"),
+
 		SendPropInt(FIELDOF(nameof(Health)), 32, PropFlags.Normal | PropFlags.ChangesOften | PropFlags.VarInt),
 		SendPropInt(FIELDOF(nameof(MaxHealth)), 32),
 		SendPropInt(FIELDOF(nameof(SpawnFlags)), 32),

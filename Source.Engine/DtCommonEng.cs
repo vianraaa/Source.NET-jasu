@@ -90,7 +90,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 
 		for (int iProp = 0; iProp < (table.Props?.Length ?? 0); iProp++) {
 			// Fill the same types
-			table.Props![iProp] = (SendProp)RuntimeHelpers.GetUninitializedObject(sendTable.Props![iProp].GetType());
+			table.Props![iProp] = new SendProp();
 		}
 
 		for (int iProp = 0; iProp < (table.Props?.Length ?? 0); iProp++) {
@@ -118,7 +118,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 				clientProp.SetTableName(dtName);
 
 				prop.SetDataTableProxyFn(sendTableProp.GetDataTableProxyFn());
-				prop.SetProxyFn(sendTableProp.GetProxyFn());
+				prop.SetOffset(sendTableProp.GetOffset());
 			}
 			else {
 				if (prop.IsExcludeProp()) {

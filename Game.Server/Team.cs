@@ -1,6 +1,7 @@
 ﻿using Source.Common;
 using Source;
 using Game.Shared;
+using System.Reflection;
 
 namespace Game.Server;
 public class Team : BaseEntity
@@ -10,7 +11,14 @@ public class Team : BaseEntity
 		SendPropInt(FIELDOF(nameof(Score)), 0),
 		SendPropInt(FIELDOF(nameof(RoundsWon)), 8),
 		SendPropString(FIELDOF(nameof(Teamname))),
+
+		SendPropInt("player_array_element", 10, PropFlags.Unsigned, SendProxy_PlayerList, 4),
+		SendPropArray2(SendProxyArrayLength_PlayerArray, Constants.MAX_PLAYERS, "player_array")
 	]);
+
+	private static int SendProxyArrayLength_PlayerArray(object instance, int objectID) => ((Team)instance).Players.Count;
+	private static void SendProxy_PlayerList(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	}
 	public static readonly new ServerClass ServerClass = new ServerClass("Team", DT_Team).WithManualClassID(StaticClassIndices.CTeam);
 
 	public readonly List<BasePlayer> Players = [];

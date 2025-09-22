@@ -16,6 +16,7 @@ using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Common;
 
+public delegate void ArrayLengthRecvProxyFn(object instance, int objectID, int currentArrayLength);
 public static class RecvPropHelpers
 {
 	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, FieldInfo field) {
@@ -100,10 +101,14 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropInt(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropInt(string fieldName, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1)
+		=> RecvPropInt(fieldName, null, flags, proxyFn, sizeOfVar);
+	public static RecvProp RecvPropInt(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1)
+		=> RecvPropInt(null, field, flags, proxyFn, sizeOfVar);
+	public static RecvProp RecvPropInt(string? nameOverride, FieldInfo? field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1) {
 		RecvProp ret = new();
 
-		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
+		sizeOfVar = sizeOfVar == -1 ? field == null ? -1 : DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1 : sizeOfVar;
 		if (proxyFn == null) {
 			if (sizeOfVar == 1)
 				proxyFn = RecvProxy_Int32ToInt8;
@@ -118,6 +123,7 @@ public static class RecvPropHelpers
 		}
 
 		ret.FieldInfo = field;
+		ret.NameOverride = nameOverride;
 		ret.RecvType = SendPropType.Int;
 		ret.Flags = flags;
 		ret.SetProxyFn(proxyFn);
@@ -144,6 +150,23 @@ public static class RecvPropHelpers
 	}
 
 	static readonly string[] ClientElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
+
+	/// <summary>
+	/// Requires a variable template directly above the call!
+	/// </summary>
+	public static RecvProp RecvPropArray2(ArrayLengthRecvProxyFn arrayLengthProxy, int elementCount, ReadOnlySpan<char> arrayName) {
+		return InternalRecvPropArray(elementCount, arrayName, arrayLengthProxy);
+	}
+
+	public static RecvProp InternalRecvPropArray(int elementCount, ReadOnlySpan<char> name, ArrayLengthRecvProxyFn? arrayLengthFn = null) {
+		RecvProp ret = new();
+
+		ret.InitArray(elementCount);
+		ret.NameOverride = new(name);
+		ret.SetArrayLengthProxy(arrayLengthFn);
+
+		return ret;
+	}
 
 	public static RecvProp RecvPropArray3(ArrayFieldInfo field, RecvProp arrayProp, DataTableRecvVarProxyFn? varProxy = null) {
 		varProxy ??= DataTableRecvProxy_StaticDataTable;
@@ -287,6 +310,17 @@ public class RecvProp : IDataTableProp
 	string? ParentArrayPropName;
 	public string? GetParentArrayPropName() => ParentArrayPropName;
 	public void SetParentArrayPropName(string name) => ParentArrayPropName = name;
+
+	ArrayLengthRecvProxyFn? arrayLengthProxyFn;
+	public ArrayLengthRecvProxyFn? GetArrayLengthProxy() => arrayLengthProxyFn; 
+	public void SetArrayLengthProxy(ArrayLengthRecvProxyFn? arrayLengthFn) {
+		arrayLengthProxyFn = arrayLengthFn;
+	}
+
+	internal void InitArray(int elementCount) {
+		RecvType = SendPropType.Array;
+		Elements = elementCount;
+	}
 }
 
 public class RecvDecoder
@@ -346,9 +380,9 @@ public class SendTablePrecalc
 		bhs.NumProps = bhs.NumDataTableProps = 0;
 		bhs.PropProxies = 0;
 		SendTable.BuildHierarchy(GetRootNode(), table, ref bhs);
-
 		SendTable.SortByPriority(ref bhs);
-		Props.Clear(); Props.AddRange(bhs.Props);
+
+		Props.Clear(); Props.AddRange(bhs.Props[..bhs.NumProps]);
 		DataTableProps.Clear(); DataTableProps.AddRange(bhs.DataTableProps[..bhs.NumDataTableProps]);
 		PropProxyIndices.Clear(); PropProxyIndices.AddRange(bhs.PropProxyIndices[..bhs.NumProps]);
 

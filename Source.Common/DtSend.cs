@@ -15,7 +15,7 @@ using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Common;
 
-
+public delegate int ArrayLengthSendProxyFn(object instance, int objectID);
 public static class SendPropHelpers
 {
 	public static void SendProxy_AngleToFloat(SendProp prop, object instance, FieldInfo data, ref DVariant outData, int element, int objectID) {
@@ -93,6 +93,12 @@ public static class SendPropHelpers
 
 	static readonly string[] ElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
 
+	/// <summary>
+	/// Requires a variable template directly above the call!
+	/// </summary>
+	public static SendProp SendPropArray2(ArrayLengthSendProxyFn proxyFn, int elementCount, ReadOnlySpan<char> arrayName) {
+		return InternalSendPropArray(elementCount, arrayName, proxyFn);
+	}
 	public static SendProp SendPropArray3(ArrayFieldInfo field, SendProp arrayProp, SendTableProxyFn? proxyFn = null) {
 		proxyFn ??= SendProxy_DataTableToDataTable;
 
@@ -124,6 +130,20 @@ public static class SendPropHelpers
 
 		return ret;
 	}
+	
+	public static SendProp InternalSendPropArray(int elementCount, ReadOnlySpan<char> name, ArrayLengthSendProxyFn? arrayLengthFn = null) {
+		SendProp ret = new();
+
+		ret.Type = SendPropType.Array;
+		ret.Elements = elementCount;
+		ret.NameOverride = new(name);
+		ret.SetProxyFn(SendProxy_Empty);
+		ret.ArrayProp = null;
+		ret.SetArrayLengthProxy(arrayLengthFn);
+
+		return ret;
+	}
+
 	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
 		proxyFn ??= SendProxy_FloatToFloat;
 
@@ -234,11 +254,19 @@ public static class SendPropHelpers
 		return ret;
 	}
 
-	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
-		SendProp ret = new();
-		int sizeOfVar = DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1;
-		if (proxyFn == null) {
+	public static SendProp SendPropInt(FieldInfo field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null, int sizeOfVar = -1)
+		=> SendPropInt(null, field, bits, flags, proxyFn, sizeOfVar);
+	public static SendProp SendPropInt(string name, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null, int sizeOfVar = -1)
+		=> SendPropInt(name, null, bits, flags, proxyFn, sizeOfVar);
 
+	public static SendProp SendPropInt(string? nameOverride, FieldInfo? field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null, int sizeOfVar = -1) {
+		SendProp ret = new();
+		sizeOfVar = sizeOfVar == -1 
+						? field == null 
+							? -1 : DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) 
+							? v : -1 
+						: sizeOfVar;
+		if (proxyFn == null) {
 			if (sizeOfVar == 1)
 				proxyFn = SendProxy_Int8ToInt32;
 			else if (sizeOfVar == 2)
@@ -257,7 +285,7 @@ public static class SendPropHelpers
 		}
 
 		ret.Type = SendPropType.Int;
-
+		ret.NameOverride = nameOverride;
 		ret.FieldInfo = field;
 		ret.Bits = bits;
 		ret.SetFlags(flags);
@@ -390,8 +418,12 @@ public class SendProp : IDataTableProp
 	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
 	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
 
-	public PropType GetArrayProp<PropType>() where PropType : IDataTableProp {
-		throw new NotImplementedException();
+	public SendProp? GetArrayProp() {
+		return ArrayProp;
+	}
+
+	public PropType? GetArrayProp<PropType>() where PropType : IDataTableProp {
+		return (PropType?)(object?)ArrayProp;
 	}
 
 	public SendTable? GetDataTable() => DataTable;
@@ -468,6 +500,13 @@ public class SendProp : IDataTableProp
 		Fn = Fn,
 		DtFn = DtFn,
 	};
+
+	ArrayLengthSendProxyFn? arrayLengthProxyFn;
+
+	public ArrayLengthSendProxyFn? GetArrayLengthProxy() => arrayLengthProxyFn;
+	public void SetArrayLengthProxy(ArrayLengthSendProxyFn? arrayLengthFn) {
+		arrayLengthProxyFn = arrayLengthFn;
+	}
 }
 
 public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
@@ -686,6 +725,10 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 
 	IEnumerator IEnumerable.GetEnumerator() {
 		return Props.GetEnumerator();
+	}
+
+	public void SetHasPropsEncodedAgainstTickcount(bool state) {
+		HasPropsEncodedAgainstCurrentTickCount = state;
 	}
 }
 

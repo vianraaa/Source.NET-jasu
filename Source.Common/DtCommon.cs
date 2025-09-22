@@ -97,7 +97,7 @@ public interface IDataTableProp
 	bool IsInsideArray();
 	void SetInsideArray();
 	bool SetArrayProp<PropType>(PropType propType) where PropType : IDataTableProp;
-	PropType GetArrayProp<PropType>() where PropType : IDataTableProp;
+	PropType? GetArrayProp<PropType>() where PropType : IDataTableProp;
 	int GetOffset();
 	void SetOffset(int value);
 	int GetNumElements();

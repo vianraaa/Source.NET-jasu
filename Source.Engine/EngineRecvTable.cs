@@ -192,7 +192,6 @@ public class ClientDatatableStack : DatatableStack
 		return val;
 	}
 }
-
 [EngineComponent]
 public class EngineRecvTable(DtCommonEng DtCommonEng)
 {

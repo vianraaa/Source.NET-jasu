@@ -95,7 +95,10 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(RealClassName))),
 
 		RecvPropString(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, RecvProxy_OverrideMaterial),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(OverrideSubMaterials)), RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0))),
+
+		RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), PropFlags.Unsigned),
+		RecvPropArray2(null, 32, "OverrideSubMaterials"),
+
 		RecvPropInt(FIELDOF(nameof(Health))),
 		RecvPropInt(FIELDOF(nameof(MaxHealth))),
 		RecvPropInt(FIELDOF(nameof(SpawnFlags))),
