@@ -15,6 +15,23 @@ public static class FieldAccess
 	public static void CopyStringToField(this FieldInfo field, object instance, string? str) {
 		Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
 	}
+
+	static readonly Dictionary<Type, bool> linearTypeResults = [];
+	internal static bool TypesFieldsAreCompletelyLinear(Type baseFieldType) {
+		if (linearTypeResults.TryGetValue(baseFieldType, out bool ret))
+			return ret;
+
+		var fields = baseFieldType.GetFields((BindingFlags)~0);
+		if (fields.Length == 0)
+			return linearTypeResults[baseFieldType] = true; // What to return here, even
+
+		Type? t = fields[0].FieldType;
+		for (int i = 1; i < fields.Length; i++) 
+			if (fields[i].FieldType != t)
+				return linearTypeResults[baseFieldType] = false;
+
+		return linearTypeResults[baseFieldType] = true;
+	}
 }
 
 /// <summary>
@@ -255,7 +272,7 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 		}
 		else if (baseFieldType.IsValueType) {
 			InlineArrayAttribute? attr = baseFieldType.GetCustomAttribute<InlineArrayAttribute>();
-			if (attr != null) {
+			if (attr != null || FieldAccess.TypesFieldsAreCompletelyLinear(baseFieldType)) {
 				var firstField = baseFieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0];
 
 				var tempLocal = il.DeclareLocal(baseFieldType);
@@ -279,6 +296,8 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 				il.Emit(OpCodes.Ldarg_1);              // load the value to assign
 				il.Emit(OpCodes.Stobj, ElementType);   // store value into computed address
 			}
+			else
+				throw new NotImplementedException($"Cannot interpret an array index from the type '{baseFieldType}'.");
 		}
 
 		il.Emit(OpCodes.Ret);
