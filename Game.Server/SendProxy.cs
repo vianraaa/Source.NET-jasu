@@ -10,6 +10,19 @@ namespace Game.Server;
 
 public static class SendProxy
 {
+	public const int PREDICTABLE_ID_BITS = 31;
+
+	public static SendProp SendPropPredictableId(FieldInfo field)
+		=> SendPropInt(field, PREDICTABLE_ID_BITS, PropFlags.Unsigned, SendProxy_PredictableIdToInt);
+
+	private static void SendProxy_PredictableIdToInt(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+		PredictableId? pId = field.GetValueFast<PredictableId?>(instance);
+		if (pId != null)
+			outData.Int = pId.GetRaw();
+		else 
+			outData.Int = 0;
+	}
+
 	public static SendProp SendPropBool(FieldInfo field) {
 		return SendPropInt(field, 1, PropFlags.Unsigned);
 	}

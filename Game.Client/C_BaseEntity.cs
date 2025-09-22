@@ -34,7 +34,8 @@ public partial class C_BaseEntity : IClientEntity
 
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
-
+		RecvPropPredictableId(FIELDOF(nameof(PredictableId))),
+		RecvPropInt(FIELDOF(nameof(IsPlayerSimulated))),
 	]);
 	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", null, null, DT_PredictableId);
 
@@ -169,6 +170,9 @@ public partial class C_BaseEntity : IClientEntity
 	public bool SimulatedEveryTick;
 	public bool AnimatedEveryTick;
 	public bool AlternateSorting;
+
+	public readonly PredictableId PredictableId = new();
+	public readonly bool IsPlayerSimulated;
 
 	public byte TakeDamage;
 	public ushort RealClassName;

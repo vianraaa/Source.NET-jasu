@@ -27,7 +27,8 @@ public partial class BaseEntity : IServerEntity
 		throw new NotImplementedException();
 	}
 	public static SendTable DT_PredictableId = new(nameof(DT_PredictableId), [
-
+		SendPropPredictableId(FIELDOF(nameof(PredictableID))),
+		SendPropInt(FIELDOF(nameof(IsPlayerSimulated)), 1, PropFlags.Unsigned)
 	]);
 
 	public static SendTable DT_BaseEntity = new([
@@ -139,6 +140,9 @@ public partial class BaseEntity : IServerEntity
 	public Vector3 Velocity;
 	public int CreationID;
 	public int MapCreatedID;
+
+	public readonly PredictableId PredictableID = new();
+	public readonly bool IsPlayerSimulated;
 
 	public readonly GModTable GMOD_DataTable = new();
 

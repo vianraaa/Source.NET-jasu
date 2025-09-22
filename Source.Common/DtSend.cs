@@ -502,6 +502,7 @@ public class SendProp : IDataTableProp
 		DataTable = DataTable,
 		Fn = Fn,
 		DtFn = DtFn,
+		arrayLengthProxyFn = arrayLengthProxyFn
 	};
 
 	ArrayLengthSendProxyFn? arrayLengthProxyFn;
@@ -518,8 +519,8 @@ public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 	public SendTable(SendProp[] props) {
 		Props = props;
 	}
-	public SendTable(SendTable parent, IEnumerable<SendProp> props) {
-		Props = new SendProp[props.Count() + 1];
+	public SendTable(SendTable parent, SendProp[] props) {
+		Props = new SendProp[props.Length + 1];
 		Props[0] = SendPropDataTable("baseclass", parent, SendProxy_DataTableToDataTable);
 		int i = 1;
 		foreach (var prop in props)

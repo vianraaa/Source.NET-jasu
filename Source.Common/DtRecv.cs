@@ -300,7 +300,8 @@ public class RecvProp : IDataTableProp
 		DataTable = DataTable,
 		Offset = Offset,
 		ParentArrayPropName = ParentArrayPropName,
-		Elements = Elements
+		Elements = Elements,
+		arrayLengthProxyFn = arrayLengthProxyFn
 	};
 
 	string? ParentArrayPropName;
