@@ -8,6 +8,11 @@ namespace Game.Client;
 
 public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 {
+	public static readonly RecvTable DT_LocalPlayerExclusive = new([
+
+	]);
+	public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("BasePlayer", null, null, DT_LocalPlayerExclusive);
+
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 
 	]);

@@ -12,7 +12,7 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 	public static readonly RecvTable DT_ServerAnimationData = new([
 		RecvPropFloat(FIELDOF(nameof(Cycle))),
 	]);
-	public static readonly new ClientClass CC_ServerAnimationData = new ClientClass("ServerAnimationData", null, null, DT_ServerAnimationData);
+	public static readonly ClientClass CC_ServerAnimationData = new ClientClass("ServerAnimationData", null, null, DT_ServerAnimationData);
 	public static readonly RecvTable DT_BaseAnimating = new(DT_BaseEntity, [
 		RecvPropInt(FIELDOF(nameof(Sequence)), 0, RecvProxy_Sequence),
 		RecvPropInt(FIELDOF(nameof(ForceBone))),
