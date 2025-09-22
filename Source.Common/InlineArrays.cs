@@ -175,3 +175,15 @@ namespace Source;
 [InlineArray(Constants.MAX_TOTAL_SENDTABLE_PROPS)] public struct InlineArrayMaxTotalSendTableProps<T> { public T item; }
 [InlineArray(Studio.MAXSTUDIOPOSEPARAM)] public struct InlineArrayMaxStudioPoseParam<T> { public T item; }
 [InlineArray(Studio.MAXSTUDIOBONECTRLS)] public struct InlineArrayMaxStudioBoneCtrls<T> { public T item; }
+
+// Super specific type needed. Create these as necessary. These new up their values on construction
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+[InlineArray(32)] public struct InlineArrayNew32<T> where T : new() { 
+	public T item;
+	public InlineArrayNew32() {
+		for (int i = 0; i < 32; i++) {
+			this[i] = new();
+		}
+	}
+}
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.

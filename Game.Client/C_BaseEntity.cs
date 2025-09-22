@@ -15,15 +15,26 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
 {
 	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		C_BaseEntity pEntity = (C_BaseEntity)instance;
+		
+		long t = gpGlobals.GetNetworkBase(gpGlobals.TickCount, pEntity.EntIndex()) + data.Value.Int;
+
+		while (t < gpGlobals.TickCount - 127)
+			t += 256;
+		while (t > gpGlobals.TickCount + 127)
+			t -= 256;
+
+		pEntity.AnimTime = t * TICK_INTERVAL;
 	}
 
 	private static void RecvProxy_EffectFlags(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		// ((C_BaseEntity)instance).SetEffects(data.Value.Int);
 	}
 
 
@@ -132,15 +143,15 @@ public partial class C_BaseEntity : IClientEntity
 	]);
 
 	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning("RecvProxy_OverrideMaterial not implemented yet\n");
 	}
 
 	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning("RecvProxy_MoveCollide not implemented yet\n");
 	}
 
 	private static void RecvProxy_MoveType(ref readonly RecvProxyData data, object instance, FieldInfo field) {
-		throw new NotImplementedException();
+		Warning("RecvProxy_MoveType not implemented yet\n");
 	}
 
 	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)
@@ -205,7 +216,7 @@ public partial class C_BaseEntity : IClientEntity
 	InlineArray32<int> GMOD_int;
 	InlineArray32<Vector3> GMOD_Vector;
 	InlineArray32<QAngle> GMOD_QAngle;
-	InlineArray32<EHANDLE> GMOD_EHANDLE; // << ENSURE THESE ARE INITIALIZED!!!!
+	InlineArrayNew32<EHANDLE> GMOD_EHANDLE = new(); 
 	InlineArray512<char> GMOD_String0;
 	InlineArray512<char> GMOD_String1;
 	InlineArray512<char> GMOD_String2;

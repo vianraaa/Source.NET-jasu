@@ -361,7 +361,10 @@ public struct PropTypeFns
 	public static ReadOnlySpan<char> String_GetTypeNameString() => throw new NotImplementedException();
 	public static bool String_IsEncodedZero(SendProp prop, bf_read p) => throw new NotImplementedException();
 	public static bool String_IsZero(object instance, ref DVariant var, SendProp prop) => throw new NotImplementedException();
-	public static void String_SkipProp(SendProp prop, bf_read p) => throw new NotImplementedException();
+	public static void String_SkipProp(SendProp prop, bf_read p) {
+		int len = (int)p.ReadUBitLong(Constants.DT_MAX_STRING_BITS);
+		p.SeekRelative(len * 8);
+	}
 	#endregion
 	#region SendPropType.Array
 	public static int Array_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) => throw new NotImplementedException();

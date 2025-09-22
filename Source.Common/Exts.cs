@@ -5,6 +5,8 @@ using K4os.Hash.xxHash;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SharpCompress.Compressors.Xz;
+
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
@@ -27,6 +29,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security.AccessControl;
 using System.Text;
 
 namespace Source;
@@ -147,9 +150,56 @@ public static class FieldAccess<T>
 		var il = method.GetILGenerator();
 
 		if (field is ArrayFieldIndexInfo arrayField) {
-			throw new Exception("implement me");
+			if (!field.IsStatic) {
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
+				il.Emit(OpCodes.Ldfld, arrayField.BaseArrayField.BaseField);
+			}
+			else {
+				il.Emit(OpCodes.Ldsfld, field);
+			}
+
+			var baseFieldType = arrayField.BaseArrayField.BaseField.FieldType;
+			if (baseFieldType.IsArray) {
+				il.Emit(OpCodes.Ldc_I4, arrayField.Index);
+				il.Emit(OpCodes.Ldelema, arrayField.ElementType);
+			}
+			else if (baseFieldType.IsValueType) {
+				InlineArrayAttribute? attr = baseFieldType.GetCustomAttribute<InlineArrayAttribute>();
+				if (attr != null) {
+					var firstField = baseFieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0];
+
+					var tempLocal = il.DeclareLocal(baseFieldType);
+					il.Emit(OpCodes.Stloc, tempLocal);      // Store the inline array struct
+					il.Emit(OpCodes.Ldloca, tempLocal);    // Load address of struct
+					il.Emit(OpCodes.Ldflda, firstField);   // Get address of first element
+
+					// Manual offset calculation if index > 0
+					if (arrayField.Index > 0) {
+						// Push the index
+						il.Emit(OpCodes.Ldc_I4, arrayField.Index);
+						// Push the size of one element
+						il.Emit(OpCodes.Sizeof, arrayField.ElementType);
+						// Multiply: index * sizeof(element)
+						il.Emit(OpCodes.Mul);
+						// Add to the base address
+						il.Emit(OpCodes.Add);
+					}
+
+					// Load the value from the calculated address
+					il.Emit(OpCodes.Ldobj, arrayField.ElementType);
+
+					// Box if we're returning object
+					if (typeof(T) == typeof(object) && arrayField.ElementType.IsValueType) {
+						il.Emit(OpCodes.Box, arrayField.ElementType);
+					}
+				}
+			}
+			il.Emit(OpCodes.Ret);
+			Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
+			return g;
 		}
-		{
+		else {
 			if (!field.IsStatic) {
 				il.Emit(OpCodes.Ldarg_0);
 				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
@@ -947,7 +997,7 @@ public class ArrayFieldIndexInfo : FieldInfo
 	public ArrayFieldIndexInfo(ArrayFieldInfo baseArrayField, int index) {
 		if (index < 0)
 			throw new IndexOutOfRangeException("Invalid operation");
-		if(baseArrayField.Type == ArrayFieldType.InlineArray && index >= baseArrayField.Length)
+		if (baseArrayField.Type == ArrayFieldType.InlineArray && index >= baseArrayField.Length)
 			throw new IndexOutOfRangeException("Out of range index given the inline array target.");
 
 		BaseArrayField = baseArrayField;
@@ -987,7 +1037,7 @@ public class ArrayFieldInfo : FieldInfo
 			Length = -1;
 			Type = ArrayFieldType.StdArray;
 		}
-		else if(baseField.FieldType == typeof(Vector3)) {
+		else if (baseField.FieldType == typeof(Vector3)) {
 			ElementType = typeof(float);
 			Length = 3;
 			Type = ArrayFieldType.Vector3;
