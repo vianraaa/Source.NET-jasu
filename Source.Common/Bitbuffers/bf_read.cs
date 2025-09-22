@@ -571,7 +571,8 @@ public unsafe class bf_read : BitBuffer
 		return i;
 	}
 	public string? ReadString(int maxLen, bool bLine = false) {
-		Assert(maxLen != 0);
+		if (maxLen == 0)
+			return string.Empty;
 
 		Span<byte> writeTarget = stackalloc byte[maxLen];
 
