@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 
 namespace Source.Common.Commands;
 
@@ -57,7 +58,7 @@ public class ConVar : ConCommandBase, IConVar
 
 		Changed += callback;
 
-		doubleValue = double.TryParse(value, out var dRes) ? dRes : 0;
+		doubleValue = double.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var dRes) ? dRes : 0;
 		intValue = int.TryParse(value, out var iRes) ? iRes : 0;
 
 		Assert(!hasMin || doubleValue >= minVal);
