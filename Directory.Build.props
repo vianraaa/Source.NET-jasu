@@ -16,11 +16,4 @@
 	<PropertyGroup Condition="'$(IsLinux)'=='true'">
 		<DefineConstants>$(DefineConstants);LINUX</DefineConstants>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Source.CodeAnalysis\Source.CodeAnalysis.csproj">
-			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-			<OutputItemType>Analyzer</OutputItemType>
-		</ProjectReference>
-	</ItemGroup>
 </Project>
