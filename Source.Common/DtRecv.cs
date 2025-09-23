@@ -167,6 +167,7 @@ public static class RecvPropHelpers
 		extraData.MaxElements = maxElements;
 		extraData.ResizeFn = fn;
 		extraData.EnsureCapacityFn = ensureFn;
+		extraData.FieldInfo = field;
 		
 		if (arrayProp.RecvType == SendPropType.DataTable)
 			extraData.DataTableProxyFn = arrayProp.GetDataTableProxyFn();
@@ -185,8 +186,10 @@ public static class RecvPropHelpers
 		for (int i = 1; i < maxElements + 1; i++) {
 			props[i] = arrayProp; 
 			props[i].SetOffset(0); 
-			props[i].NameOverride = ClientElementNames[i - 1]; 
-			props[i].SetExtraData(extraData);
+			props[i].NameOverride = ClientElementNames[i - 1];
+			var indexedData = extraData.Clone();
+			indexedData.Index = i - 1;
+			props[i].SetExtraData(indexedData);
 												
 			if (arrayProp.RecvType == SendPropType.DataTable) {
 				props[i].SetDataTableProxyFn(RecvProxy_UtlVectorElement_DataTable);
@@ -202,7 +205,10 @@ public static class RecvPropHelpers
 	}
 
 	private static void DataTableRecvProxy_LengthProxy(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
-		throw new NotImplementedException();
+		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)prop.GetExtraData()!;
+		extra.EnsureCapacityFn(instance, extra.FieldInfo.GetValueFast<object>(instance!), extra.MaxElements);
+
+		outInstance = instance;
 	}
 
 	private static void RecvProxy_UtlVectorElement(ref readonly RecvProxyData data, object instance, FieldInfo field) {
@@ -210,7 +216,13 @@ public static class RecvPropHelpers
 	}
 
 	private static void RecvProxy_UtlVectorElement_DataTable(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
-		throw new NotImplementedException();
+		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)prop.GetExtraData()!;
+
+		int iElement = extra.Index;
+		Assert(iElement < extra.MaxElements);
+		
+		// TODO: This is really confusing... do we need to reconsider datatable proxies...
+		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValueFast<object>, null, objectID);
 	}
 
 	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, FieldInfo field) {
