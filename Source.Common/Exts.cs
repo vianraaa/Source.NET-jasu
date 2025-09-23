@@ -788,37 +788,11 @@ public static class GlobalReflectionUtils
 		}
 		return arr;
 	}
-
-	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
-		Type? t = WhoCalledMe();
-		if (t == null)
-			throw new NullReferenceException("This doesnt work as well as we hoped!");
-		FieldInfo field = t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
-
-		return new ArrayFieldIndexInfo(new ArrayFieldInfo(field), index);
-	}
-	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
-		Type? t = WhoCalledMe();
-		if (t == null)
-			throw new NullReferenceException("This doesnt work as well as we hoped!");
-		FieldInfo field = t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
-		return new ArrayFieldInfo(field);
-	}
-	public static FieldInfo FIELDOF(string name) {
-		Type? t = WhoCalledMe();
-		if (t == null)
-			throw new NullReferenceException("This doesnt work as well as we hoped!");
-		return t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
-	}
+	/// <summary>
+	/// Try to get the type that called this method, taking account of skip frames if necessary
+	/// </summary>
+	/// <param name="skipFrames"></param>
+	/// <returns></returns>
 	public static Type? WhoCalledMe(int skipFrames = 1) {
 		var stack = new StackTrace(skipFrames: skipFrames, fNeedFileInfo: false);
 		for (int i = 0; i < stack.FrameCount; i++) {

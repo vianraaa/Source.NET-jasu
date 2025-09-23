@@ -1,8 +1,11 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+
+using static Source.Common.Formats.Keyvalues.KeyValues;
 
 namespace Source.Common;
 
@@ -26,7 +29,7 @@ public static class FieldAccess
 			return linearTypeResults[baseFieldType] = true; // What to return here, even
 
 		Type? t = fields[0].FieldType;
-		for (int i = 1; i < fields.Length; i++) 
+		for (int i = 1; i < fields.Length; i++)
 			if (fields[i].FieldType != t)
 				return linearTypeResults[baseFieldType] = false;
 
@@ -162,6 +165,7 @@ public enum ArrayFieldType
 	InlineArray,
 	Vector3
 }
+
 public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 {
 	public readonly ArrayFieldInfo BaseArrayField;
@@ -206,7 +210,7 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
 			il.Emit(OpCodes.Ldfld, field);
 		}
-		else 
+		else
 			il.Emit(OpCodes.Ldsfld, field);
 
 		var baseFieldType = field.FieldType;
@@ -267,8 +271,8 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 		var baseFieldType = field.FieldType;
 		if (baseFieldType.IsArray) {
 			il.Emit(OpCodes.Ldc_I4, Index);
-			il.Emit(OpCodes.Ldarg_1);                 
-			il.Emit(OpCodes.Stelem, ElementType);     
+			il.Emit(OpCodes.Ldarg_1);
+			il.Emit(OpCodes.Stelem, ElementType);
 		}
 		else if (baseFieldType.IsValueType) {
 			InlineArrayAttribute? attr = baseFieldType.GetCustomAttribute<InlineArrayAttribute>();
@@ -377,5 +381,144 @@ public class ArrayFieldInfo : FieldInfo, IFieldILGenerator
 
 	public void GenerateSet<T>(ILGenerator il) {
 		throw new NotImplementedException();
+	}
+}
+
+public class StructElementFieldInfo : FieldInfo, IFieldILGenerator
+{
+	public override FieldAttributes Attributes => throw new NotImplementedException();
+	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+	public override Type FieldType => throw new NotImplementedException();
+	public override Type? DeclaringType => throw new NotImplementedException();
+	public override string Name => throw new NotImplementedException();
+	public override Type? ReflectedType => throw new NotImplementedException();
+	public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
+	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
+	public override object? GetValue(object? obj) => throw new NotImplementedException();
+	public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture) => throw new NotImplementedException();
+
+
+	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
+
+
+	readonly Type[] types;
+	readonly FieldInfo[] fields;
+
+	public StructElementFieldInfo(Type type, string[] names) {
+		ArgumentNullException.ThrowIfNull(type);
+		ArgumentNullException.ThrowIfNull(names);
+
+		types = new Type[names.Length + 1];
+		fields = new FieldInfo[names.Length];
+		Type? workingType = type;
+
+		for (int i = 0; i < names.Length; i++) {
+			fields[i] = workingType.GetField(names[i], (BindingFlags)~0)!;
+			types[i] = workingType;
+			workingType = fields[i].FieldType;
+		}
+		types[^1] = fields[^1].FieldType;
+	}
+}
+
+public class StructArrayElementFieldInfo : FieldInfo, IFieldILGenerator
+{
+	public override FieldAttributes Attributes => throw new NotImplementedException();
+	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+	public override Type FieldType => throw new NotImplementedException();
+	public override Type? DeclaringType => throw new NotImplementedException();
+	public override string Name => throw new NotImplementedException();
+	public override Type? ReflectedType => throw new NotImplementedException();
+	public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
+	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
+	public override object? GetValue(object? obj) => throw new NotImplementedException();
+	public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture) => throw new NotImplementedException();
+
+
+	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
+
+
+	readonly Type[] types;
+	readonly FieldInfo[] fields;
+	readonly int index;
+
+	public StructArrayElementFieldInfo(Type type, string[] names, int index) {
+		ArgumentNullException.ThrowIfNull(type);
+		ArgumentNullException.ThrowIfNull(names);
+
+		types = new Type[names.Length + 1];
+		fields = new FieldInfo[names.Length];
+		Type? workingType = type;
+
+		for (int i = 0; i < names.Length; i++) {
+			fields[i] = workingType.GetField(names[i], (BindingFlags)~0)!;
+			types[i] = workingType;
+			workingType = fields[i].FieldType;
+		}
+		types[^1] = fields[^1].FieldType;
+		this.index = index;
+	}
+}
+
+/// <summary>
+/// Various methods that implement field accessors.
+/// </summary>
+public static class FieldAccessReflectionUtils
+{
+	static FieldInfo baseField(Type? t, string name) {
+		if (t == null)
+			throw new NullReferenceException("This doesnt work as well as we hoped!");
+		return t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
+			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
+	}
+	/// <summary>
+	/// Generic C# <see cref="FieldInfo"/> retrieval.
+	/// </summary>
+	/// <param name="name"></param>
+	/// <returns></returns>
+	/// <exception cref="NullReferenceException"></exception>
+	/// <exception cref="KeyNotFoundException"></exception>
+	public static FieldInfo FIELDOF(string name) {
+		Type? t = WhoCalledMe();
+		return baseField(t, name);
+	}
+	/// <summary>
+	/// A field representing an array.
+	/// </summary>
+	/// <param name="name"></param>
+	/// <returns></returns>
+	/// <exception cref="NullReferenceException"></exception>
+	/// <exception cref="KeyNotFoundException"></exception>
+	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
+		Type? t = WhoCalledMe();
+		return new ArrayFieldInfo(baseField(t, name));
+	}
+	/// <summary>
+	/// A field representing an array - but also specifying the index of the array.
+	/// </summary>
+	/// <param name="name"></param>
+	/// <param name="index"></param>
+	/// <returns></returns>
+	/// <exception cref="NullReferenceException"></exception>
+	/// <exception cref="KeyNotFoundException"></exception>
+	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
+		Type? t = WhoCalledMe();
+		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), index);
+	}
+	public static StructElementFieldInfo FIELDOF_STRUCTELEM(string[] fields) {
+		Type? t = WhoCalledMe();
+		return new StructElementFieldInfo(t!, fields);
+	}
+	public static StructArrayElementFieldInfo FIELDOF_STRUCTARRAYELEM(string[] fields, int index) {
+		Type? t = WhoCalledMe();
+		return new StructArrayElementFieldInfo(t!, fields, index);
 	}
 }

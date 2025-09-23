@@ -297,4 +297,6 @@ public static class Constants
 
 	public const int PROPINDEX_NUMBITS = 12;
 	public const int MAX_TOTAL_SENDTABLE_PROPS = (1 << PROPINDEX_NUMBITS);
+
+	public const int PLAYER_FLAG_BITS = 16; // gmod changed from 11 > 16
 }

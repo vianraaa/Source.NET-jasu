@@ -30,9 +30,4 @@ public class PlayerLocalData
 	public bool StepSize;
 	public bool AllowAutoMovement;
 	public bool SlowMovement;
-
-	//public static readonly SendTable DT_Local = new([
-
-	//]);
-	//public static readonly ServerClass ServerClass = new("Local", DT_Local);
 }

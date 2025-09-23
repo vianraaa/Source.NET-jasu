@@ -6,6 +6,7 @@ global using static Source.Common.ThreadUtils;
 global using static Source.Common.Engine.ImportUtils;
 global using static Source.Common.Mathematics.MathLibConsts;
 global using static Source.GlobalReflectionUtils;
+global using static Source.Common.FieldAccessReflectionUtils;
 global using static Source.Common.RecvPropHelpers;
 global using static Source.Common.SendPropHelpers;
 global using CRC32_t = uint;
