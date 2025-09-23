@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -20,11 +20,11 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
 		<PackageReference Include="K4os.Hash.xxHash" Version="1.0.8" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
 		<PackageReference Include="Pastel" Version="6.0.1" />
 		<PackageReference Include="Snappier" Version="1.2.0" />
 		<PackageReference Include="SevenZip" Version="19.0.0" />
-		<PackageReference Include="SharpCompress" Version="0.39.0"/>
+		<PackageReference Include="SharpCompress" Version="0.39.0" />
 		<PackageReference Include="Steamworks.NET" Version="20.1.0" />
 	</ItemGroup>
 	<ItemGroup>
