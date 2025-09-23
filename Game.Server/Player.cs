@@ -45,8 +45,6 @@ public partial class BasePlayer : BaseCombatCharacter
 	readonly EHANDLE ObserverTarget = new();
 	readonly EHANDLE ZoomOwner = new();
 	int LifeState;
-	int BonusProgress;
-	int BonusChallenge;
 	float MaxSpeed;
 	int Flags;
 	int ObserverMode;
