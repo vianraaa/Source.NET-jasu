@@ -487,7 +487,7 @@ public static class FieldAccessReflectionUtils
 	/// <exception cref="NullReferenceException"></exception>
 	/// <exception cref="KeyNotFoundException"></exception>
 	public static FieldInfo FIELDOF(string name) {
-		Type? t = WhoCalledMe();
+		Type? t = WhoCalledMe(2);
 		return baseField(t, name);
 	}
 	/// <summary>
@@ -498,7 +498,7 @@ public static class FieldAccessReflectionUtils
 	/// <exception cref="NullReferenceException"></exception>
 	/// <exception cref="KeyNotFoundException"></exception>
 	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
-		Type? t = WhoCalledMe();
+		Type? t = WhoCalledMe(2);
 		return new ArrayFieldInfo(baseField(t, name));
 	}
 	/// <summary>
@@ -510,15 +510,15 @@ public static class FieldAccessReflectionUtils
 	/// <exception cref="NullReferenceException"></exception>
 	/// <exception cref="KeyNotFoundException"></exception>
 	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
-		Type? t = WhoCalledMe();
+		Type? t = WhoCalledMe(2);
 		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), index);
 	}
 	public static StructElementFieldInfo FIELDOF_STRUCTELEM(string[] fields) {
-		Type? t = WhoCalledMe();
+		Type? t = WhoCalledMe(2);
 		return new StructElementFieldInfo(t!, fields);
 	}
 	public static StructArrayElementFieldInfo FIELDOF_STRUCTARRAYELEM(string[] fields, int index) {
-		Type? t = WhoCalledMe();
+		Type? t = WhoCalledMe(2);
 		return new StructArrayElementFieldInfo(t!, fields, index);
 	}
 }
