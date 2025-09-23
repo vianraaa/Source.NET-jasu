@@ -16,12 +16,8 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropInt(FIELDOF(nameof(DeadFlag)))
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
-	public static readonly RecvTable DT_Local = new([
-
-	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
-
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
-
+		RecvPropDataTable(nameof(Local), C_PlayerLocalData.DT_Local)
 	]); public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
@@ -89,4 +85,5 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	}
 
 	public bool DeadFlag;
+	readonly C_PlayerLocalData Local = new();
 }

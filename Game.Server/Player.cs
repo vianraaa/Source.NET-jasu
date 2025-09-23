@@ -11,12 +11,9 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropInt(FIELDOF(nameof(DeadFlag)), 1, PropFlags.Unsigned)
 	]); public static readonly ServerClass CC_PlayerState = new("PlayerState", DT_PlayerState);
 
-	public static readonly SendTable DT_Local = new([
-
-	]); public static readonly ServerClass CC_Local = new("Local", DT_Local);
-
+	
 	public static readonly SendTable DT_LocalPlayerExclusive = new([
-
+		SendPropDataTable(nameof(Local), PlayerLocalData.DT_Local)
 	]); public static readonly ServerClass PlayerExclusive = new("LocalPlayerExclusive", DT_LocalPlayerExclusive);
 
 	public static readonly SendTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
@@ -68,4 +65,5 @@ public partial class BasePlayer : BaseCombatCharacter
 
 	bool DeadFlag;
 	readonly PlayerState pl = new();
+	readonly PlayerLocalData Local = new();
 }

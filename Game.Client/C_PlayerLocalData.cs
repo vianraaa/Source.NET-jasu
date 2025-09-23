@@ -7,17 +7,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game.Server;
+namespace Game.Client;
 
-public class PlayerLocalData
+public class C_PlayerLocalData
 {
-	public static readonly SendTable DT_Local = new([
-		SendPropInt(FIELDOF(nameof(HideHUD)), (int)Shared.HideHudBits.BitCount, PropFlags.Unsigned),
-	]); public static readonly ServerClass CC_Local = new("Local", DT_Local);
+	public static readonly RecvTable DT_Local = new([
+		RecvPropInt(FIELDOF(nameof(HideHUD))),
+	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
 
-
-	// TODO: NETWORK VARS!!!!!
-	public bool HideHUD;
+	public int HideHUD;
 	public float FOVRate;
 	public bool Ducked;
 	public bool Ducking;

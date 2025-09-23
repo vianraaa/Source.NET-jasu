@@ -1,4 +1,6 @@
-﻿using Source.GUI.Controls;
+﻿using Game.Shared;
+
+using Source.GUI.Controls;
 
 namespace Game.Client.HUD;
 

@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.HighPerformance;
 
+using Game.Shared;
+
 using Source;
 using Source.Common;
 using Source.Common.Bitbuffers;
