@@ -20,7 +20,7 @@ public class BaseAnimating : BaseEntity
 	public static readonly ServerClass CC_ServerAnimationData = new ServerClass("ServerAnimationData", DT_ServerAnimationData);
 	public static readonly SendTable DT_BaseAnimating = new(DT_BaseEntity, [
 		SendPropInt( FIELDOF(nameof(ForceBone)), 8, 0 ),
-		SendPropVector( FIELDOF(nameof(Force)), -1, PropFlags.NoScale ),
+		SendPropVector( FIELDOF(nameof(Force)), 0, PropFlags.NoScale ),
 
 		SendPropInt( FIELDOF(nameof(Skin)), ANIMATION_SKIN_BITS),
 		SendPropInt( FIELDOF(nameof(Body)), ANIMATION_BODY_BITS),
@@ -51,6 +51,11 @@ public class BaseAnimating : BaseEntity
 		SendPropFloat( FIELDOF(nameof(FadeMinDist) ), 0, PropFlags.NoScale ),
 		SendPropFloat( FIELDOF(nameof(FadeMaxDist )), 0, PropFlags.NoScale ),
 		SendPropFloat( FIELDOF(nameof(FadeScale )), 0, PropFlags.NoScale ),
+
+		// Gmod specific
+		SendPropEHandle(FIELDOF(nameof(BoneManipulator))),
+		SendPropEHandle(FIELDOF(nameof(FlexManipulator))),
+		SendPropVector(FIELDOF(nameof(OverrideViewTarget)), 0, PropFlags.NoScale),
 	]);
 	public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimating", DT_BaseAnimating);
 
@@ -74,10 +79,13 @@ public class BaseAnimating : BaseEntity
 	public int NewSequenceParity;
 	public int ResetEventsParity;
 	public int MuzzleFlashParity;
-	public EHANDLE LightingOrigin = new();
-	public EHANDLE LightingOriginRelative = new();
+	public readonly EHANDLE LightingOrigin = new();
+	public readonly EHANDLE LightingOriginRelative = new();
+	public readonly EHANDLE BoneManipulator = new();
+	public readonly EHANDLE FlexManipulator = new();
 	public float FadeMinDist;
 	public float FadeMaxDist;
 	public float FadeScale;
 	public int Cycle;
+	public Vector3 OverrideViewTarget;
 }

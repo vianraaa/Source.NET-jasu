@@ -14,36 +14,43 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 	]);
 	public static readonly ClientClass CC_ServerAnimationData = new ClientClass("ServerAnimationData", null, null, DT_ServerAnimationData);
 	public static readonly RecvTable DT_BaseAnimating = new(DT_BaseEntity, [
-		RecvPropInt(FIELDOF(nameof(Sequence)), 0, RecvProxy_Sequence),
-		RecvPropInt(FIELDOF(nameof(ForceBone))),
-		RecvPropVector(FIELDOF(nameof(Force))),
-		RecvPropInt(FIELDOF(nameof(Skin))),
-		RecvPropInt(FIELDOF(nameof(Body))),
-		RecvPropInt(FIELDOF(nameof(HitboxSet))),
+		RecvPropInt( FIELDOF(nameof(ForceBone))),
+		RecvPropVector( FIELDOF(nameof(Force))),
 
-		RecvPropFloat(FIELDOF(nameof(ModelScale))),
+		RecvPropInt( FIELDOF(nameof(Skin))),
+		RecvPropInt( FIELDOF(nameof(Body))),
 
-		RecvPropArray3(FIELDOF_ARRAY(nameof(PoseParameter)), RecvPropFloat(null!) ),
+		RecvPropInt( FIELDOF(nameof(HitboxSet))),
 
-		RecvPropFloat(FIELDOF(nameof(PlaybackRate))),
+		RecvPropFloat( FIELDOF(nameof(ModelScale))),
 
-		RecvPropArray3( FIELDOF_ARRAY(nameof(EncodedController)), RecvPropFloat(null!)),
+		RecvPropArray3( FIELDOF_ARRAY(nameof(PoseParameter)), RecvPropFloat(null!)),
 
-		RecvPropInt( FIELDOF(nameof(ClientSideAnimation ))),
-		RecvPropInt( FIELDOF(nameof(ClientSideFrameReset ))),
+		RecvPropInt( FIELDOF(nameof(Sequence))),
+		RecvPropFloat( FIELDOF(nameof(PlaybackRate))),
 
-		RecvPropInt( FIELDOF(nameof( NewSequenceParity ))),
-		RecvPropInt( FIELDOF(nameof( ResetEventsParity) )),
-		RecvPropInt( FIELDOF(nameof( MuzzleFlashParity )) ),
+		RecvPropArray3(FIELDOF_ARRAY(nameof(EncodedController)), RecvPropFloat(null!) ),
 
-		RecvPropEHandle(FIELDOF(nameof(LightingOrigin))),
-		RecvPropEHandle(FIELDOF(nameof(LightingOriginRelative))),
+		RecvPropInt( FIELDOF(nameof( ClientSideAnimation ))),
+		RecvPropInt( FIELDOF(nameof( ClientSideFrameReset ))),
 
-		RecvPropDataTable( "serveranimdata", DT_ServerAnimationData),
+		RecvPropInt( FIELDOF(nameof( NewSequenceParity) )),
+		RecvPropInt( FIELDOF(nameof( ResetEventsParity ))),
+		RecvPropInt( FIELDOF(nameof( MuzzleFlashParity ))),
 
-		RecvPropFloat( FIELDOF(nameof( FadeMinDist ) )),
-		RecvPropFloat( FIELDOF(nameof( FadeMaxDist ) )),
-		RecvPropFloat( FIELDOF(nameof( FadeScale ) )),
+		RecvPropEHandle( FIELDOF(nameof( LightingOrigin )) ),
+		RecvPropEHandle( FIELDOF(nameof( LightingOriginRelative )) ),
+
+		RecvPropDataTable( "serveranimdata", DT_ServerAnimationData ),
+
+		RecvPropFloat( FIELDOF(nameof(FadeMinDist) )),
+		RecvPropFloat( FIELDOF(nameof(FadeMaxDist ))),
+		RecvPropFloat( FIELDOF(nameof(FadeScale ))),
+
+		// Gmod specific
+		RecvPropEHandle(FIELDOF(nameof(BoneManipulator))),
+		RecvPropEHandle(FIELDOF(nameof(FlexManipulator))),
+		RecvPropVector(FIELDOF(nameof(OverrideViewTarget))),
 	]);
 
 	private static void RecvProxy_Sequence(ref readonly RecvProxyData data, object instance, FieldInfo field) {
@@ -72,8 +79,11 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 	public int NewSequenceParity;
 	public int ResetEventsParity;
 	public byte MuzzleFlashParity;
-	public EHANDLE LightingOrigin;
-	public EHANDLE LightingOriginRelative;
+	public readonly EHANDLE LightingOrigin = new();
+	public readonly EHANDLE LightingOriginRelative = new();
+	public readonly EHANDLE BoneManipulator = new();
+	public readonly EHANDLE FlexManipulator = new();
+	public Vector3 OverrideViewTarget;
 	public float FadeMinDist;
 	public float FadeMaxDist;
 	public float FadeScale;

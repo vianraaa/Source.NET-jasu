@@ -145,6 +145,73 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
+	public static RecvProp RecvPropUtlVector(FieldInfo field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
+		RecvProp ret = new();
+
+		Assert(maxElements <= Constants.MAX_ARRAY_ELEMENTS);
+
+		ret.RecvType = SendPropType.DataTable;
+		ret.FieldInfo = field;
+		ret.SetOffset(0);
+		ret.SetDataTableProxyFn(DataTableRecvProxy_StaticDataTable);
+
+		RecvProp[] props = new RecvProp[maxElements + 1];
+
+		RecvPropExtra_UtlVector extraData = new RecvPropExtra_UtlVector();
+
+		extraData.MaxElements = maxElements;
+		extraData.ResizeFn = fn;
+		extraData.EnsureCapacityFn = ensureFn;
+		
+		if (arrayProp.RecvType == SendPropType.DataTable)
+			extraData.DataTableProxyFn = arrayProp.GetDataTableProxyFn();
+		else
+			extraData.ProxyFn = arrayProp.GetProxyFn();
+
+		RecvProp lengthProp = new RecvProp();
+		lengthProp = RecvPropInt($"lengthprop{maxElements}", 0, RecvProxy_UtlVectorLength);
+		lengthProp.SetExtraData(extraData);
+
+		string lengthProxyTableName = DtUtlVectorCommon.AllocateUniqueDataTableName(false, $"_LPT_{field.Name}_{maxElements}");
+		RecvTable lengthTable = new RecvTable(lengthProxyTableName, [lengthProp]);
+		props[0] = RecvPropDataTable("lengthproxy", null, lengthTable, 0, DataTableRecvProxy_LengthProxy);
+		props[0].SetExtraData(extraData);
+
+		for (int i = 1; i < maxElements + 1; i++) {
+			props[i] = arrayProp; 
+			props[i].SetOffset(0); 
+			props[i].NameOverride = ClientElementNames[i - 1]; 
+			props[i].SetExtraData(extraData);
+												
+			if (arrayProp.RecvType == SendPropType.DataTable) {
+				props[i].SetDataTableProxyFn(RecvProxy_UtlVectorElement_DataTable);
+			}
+			else {
+				props[i].SetProxyFn(RecvProxy_UtlVectorElement);
+			}
+		}
+
+		RecvTable table = new RecvTable(DtUtlVectorCommon.AllocateUniqueDataTableName(false, $"_ST_{field.Name}_{maxElements}"), props); 
+		ret.SetDataTable(table);
+		return ret;
+	}
+
+	private static void DataTableRecvProxy_LengthProxy(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_UtlVectorElement(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_UtlVectorElement_DataTable(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+		throw new NotImplementedException();
+	}
+
 	static readonly string[] ClientElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
 
 	/// <summary>
@@ -249,6 +316,7 @@ public class RecvProp : IDataTableProp
 	RecvTable? DataTable;
 	int Offset;
 	int Elements = 1;
+	object? ExtraData;
 
 	public int GetOffset() => Offset;
 	public void SetOffset(int value) => Offset = value;
@@ -296,7 +364,8 @@ public class RecvProp : IDataTableProp
 		Offset = Offset,
 		ParentArrayPropName = ParentArrayPropName,
 		Elements = Elements,
-		arrayLengthProxyFn = arrayLengthProxyFn
+		arrayLengthProxyFn = arrayLengthProxyFn,
+		ExtraData = ExtraData
 	};
 
 	string? ParentArrayPropName;
@@ -313,6 +382,9 @@ public class RecvProp : IDataTableProp
 		RecvType = SendPropType.Array;
 		Elements = elementCount;
 	}
+
+	public object? GetExtraData() => ExtraData;
+	public void SetExtraData(object? data) => ExtraData = data;
 }
 
 public class RecvDecoder

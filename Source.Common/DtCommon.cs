@@ -11,6 +11,17 @@ public delegate ref ReturnType GetRefFn<InstanceType, ReturnType>(InstanceType t
 public delegate Span<ReturnType> GetSpanFn<InstanceType, ReturnType>(InstanceType type) where InstanceType : class;
 
 
+public static class DtCommon {
+	public static int NumBitsForCount(int maxElements) {
+		int bits = 0;
+		while (maxElements > 0) {
+			++bits;
+			maxElements >>= 1;
+		}
+		return bits;
+	}
+}
+
 public enum SendPropType
 {
 	Int,
@@ -107,6 +118,9 @@ public interface IDataTableProp
 	void SetFlags(PropFlags flags);
 	IDataTableBase<PropType>? GetDataTable<PropType>() where PropType : IDataTableProp;
 	void SetDataTable<PropType>(IDataTableBase<PropType>? dt) where PropType : IDataTableProp;
+
+	object? GetExtraData();
+	void SetExtraData(object? data);
 }
 
 public interface IDataTableBase<PropType> where PropType : IDataTableProp

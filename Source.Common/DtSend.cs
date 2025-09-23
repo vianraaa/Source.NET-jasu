@@ -346,6 +346,78 @@ public static class SendPropHelpers
 
 		return ret;
 	}
+	delegate void EnsureCapacityBasicFn(int length);
+	public static SendProp SendPropList(FieldInfo field, int maxElements, SendProp arrayProp, SendTableProxyFn? proxyFn = null) {
+		proxyFn ??= SendProxy_DataTableToDataTable;
+
+		SendProp ret = new();
+		ret.Type = SendPropType.DataTable;
+		ret.FieldInfo = field;
+		ret.SetDataTableProxyFn(proxyFn);
+
+		if (proxyFn == SendProxy_DataTableToDataTable)
+			ret.SetFlags(PropFlags.ProxyAlwaysYes);
+
+		// Hack to get this to work. This is also rather slow. I'm just lazy and need it to work
+		MethodInfo ensureCapacity = field.FieldType.GetMethod("EnsureCapacity")!;
+		SendPropExtra_UtlVector extraData = new() {
+			MaxElements = maxElements,
+			EnsureCapacityFn = (instance, list, size) => {
+				ensureCapacity.CreateDelegate<EnsureCapacityBasicFn>(list)(size);
+			}
+		};
+
+		if (arrayProp.Type == SendPropType.DataTable)
+			extraData.DataTableProxyFn = arrayProp.GetDataTableProxyFn();
+		else
+			extraData.ProxyFn = arrayProp.GetProxyFn();
+
+		SendProp[] props = new SendProp[maxElements + 1]; 
+		SendProp lengthProp = SendPropInt($"lengthprop{maxElements}", DtCommon.NumBitsForCount(maxElements), PropFlags.Unsigned, SendProxy_UtlVectorLength);
+		lengthProp.SetExtraData(extraData);
+
+		string lengthProxyTableName = DtUtlVectorCommon.AllocateUniqueDataTableName(true, $"_LPT_{field.Name}_{maxElements}");
+		SendTable lengthTable = new SendTable(lengthProxyTableName, [lengthProp]);
+		props[0] = SendPropDataTable("lengthproxy", lengthTable, SendProxy_LengthTable);
+		props[0].SetExtraData(extraData);
+
+		for (int i = 1; i < maxElements + 1; i++) {
+			props[i] = arrayProp;
+			props[i].SetOffset(0); 
+			props[i].NameOverride = ElementNames[i - 1]; 
+			props[i].ParentArrayPropName = field.Name;
+			props[i].SetExtraData(extraData);
+
+			if (arrayProp.Type == SendPropType.DataTable) {
+				props[i].SetDataTableProxyFn(SendProxy_UtlVectorElement_DataTable);
+				props[i].SetFlags(PropFlags.ProxyAlwaysYes);
+			}
+			else {
+				props[i].SetProxyFn(SendProxy_UtlVectorElement);
+			}
+		}
+
+		SendTable table = new SendTable(DtUtlVectorCommon.AllocateUniqueDataTableName(true, $"_ST_{field.Name}_{maxElements}"), props);
+		ret.SetDataTable(table);
+		return ret;
+	}
+
+	private static void SendProxy_UtlVectorLength(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static object? SendProxy_UtlVectorElement_DataTable(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static void SendProxy_UtlVectorElement(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+		throw new NotImplementedException();
+	}
+
+	private static object? SendProxy_LengthTable(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
+
 	public static SendProp SendPropDataTable(string name, FieldInfo field, SendTable sendTable, SendTableProxyFn? proxyFn = null) {
 		SendProp ret = new();
 		proxyFn ??= SendProxy_DataTableToDataTable;
@@ -389,6 +461,7 @@ public class SendProp : IDataTableProp
 	public string? ParentArrayPropName;
 	public FieldInfo FieldInfo;
 	public float HighLowMul;
+	public object? ExtraData;
 
 	public int GetOffset() => Offset;
 	public void SetOffset(int value) => Offset = value;
@@ -502,7 +575,8 @@ public class SendProp : IDataTableProp
 		DataTable = DataTable,
 		Fn = Fn,
 		DtFn = DtFn,
-		arrayLengthProxyFn = arrayLengthProxyFn
+		arrayLengthProxyFn = arrayLengthProxyFn,
+		ExtraData = ExtraData
 	};
 
 	ArrayLengthSendProxyFn? arrayLengthProxyFn;
@@ -513,6 +587,9 @@ public class SendProp : IDataTableProp
 	}
 
 	public int GetNumArrayLengthBits() => (int)Math.Floor(Math.Log2(GetNumElements()) + 1); // $todo am i sure?
+
+	public object? GetExtraData() => ExtraData;
+	public void SetExtraData(object? data) => ExtraData = data;
 }
 
 public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
