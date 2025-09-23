@@ -69,6 +69,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Usings", "Usings", "{AFA9FA
 		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
 		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
 		usings_readme.txt = usings_readme.txt
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Roslyn Code Analysis", "Roslyn Code Analysis", "{F4200901-E70B-4811-B0CD-054FD520D5D7}"
