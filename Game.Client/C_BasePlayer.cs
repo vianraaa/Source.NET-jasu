@@ -9,7 +9,7 @@ namespace Game.Client;
 public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 {
 	public static readonly RecvTable DT_PlayerState = new([
-		SendPropInt(FIELDOF(nameof(DeadFlag)), 1, PropFlags.Unsigned)
+		RecvPropInt(FIELDOF(nameof(DeadFlag)))
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
 	public static readonly RecvTable DT_Local = new([
