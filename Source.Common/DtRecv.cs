@@ -145,7 +145,12 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	public static RecvProp RecvPropUtlVector(FieldInfo field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
+	public static RecvProp RecvPropList(FieldInfo field, ResizeVectorFn fn, int maxElements, RecvProp arrayProp) {
+		MethodInfo ensureCapacityFn = field.FieldType.GetMethod("EnsureCapacity")!;
+		// ^^ TODO: GET RID OF THIS GARBAGE
+		return RecvPropList(field, fn, (_, list, capacity) => ensureCapacityFn.Invoke(list, [capacity]), maxElements, arrayProp);
+	}
+	public static RecvProp RecvPropList(FieldInfo field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
 		RecvProp ret = new();
 
 		Assert(maxElements <= Constants.MAX_ARRAY_ELEMENTS);

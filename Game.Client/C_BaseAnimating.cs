@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using Game.Shared;
+
+using Source;
 using Source.Common;
 using Source.Common.Engine;
 
@@ -57,7 +59,7 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 		throw new NotImplementedException();
 	}
 
-	public static readonly new ClientClass ClientClass = new ClientClass("BaseAnimating", null, null, DT_BaseAnimating);
+	public static readonly new ClientClass ClientClass = new ClientClass("BaseAnimating", null, null, DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
 
 	public void OnModelLoadComplete(Model model) {
 		throw new NotImplementedException();

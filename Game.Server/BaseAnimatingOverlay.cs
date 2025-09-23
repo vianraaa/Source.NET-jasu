@@ -1,14 +1,31 @@
-﻿using Source.Common;
+﻿using Game.Shared;
+
+using Source.Common;
 
 namespace Game.Server;
 
-public class AnimationLayer {
-	public static readonly SendTable DT_AnimationLayer = new([
+public class AnimationLayer
+{
+	public const int ORDER_BITS = 4;
+	public const int WEIGHT_BITS = 8;
 
-	]); public static readonly ServerClass SC_AnimationLayer = new ServerClass("AnimationLayer", DT_AnimationLayer);
+	public static readonly SendTable DT_AnimationLayer = new([
+		SendPropInt(FIELDOF(nameof(Sequence)), BaseAnimating.ANIMATION_SEQUENCE_BITS, PropFlags.Unsigned),
+		SendPropFloat(FIELDOF(nameof(Cycle)), ANIMATION_CYCLE_BITS, PropFlags.RoundDown, 0.0f, 1.0f),
+		SendPropFloat(FIELDOF(nameof(PrevCycle)), ANIMATION_CYCLE_BITS, PropFlags.RoundDown, 0.0f, 1.0f),
+		SendPropFloat(FIELDOF(nameof(Weight)), WEIGHT_BITS, 0, 0.0f, 1.0f),
+		SendPropInt(FIELDOF(nameof(Order)), ORDER_BITS, PropFlags.Unsigned),
+	]); public static readonly ServerClass ServerClass = new ServerClass("AnimationLayer", DT_AnimationLayer);
+
+	public int Sequence;
+	public float Cycle;
+	public float PrevCycle;
+	public float Weight;
+	public int Order;
 }
 
-public class BaseAnimatingOverlay : BaseAnimating {
+public class BaseAnimatingOverlay : BaseAnimating
+{
 	public const int MAX_OVERLAYS = 15;
 
 	public static readonly SendTable DT_OverlayVars = new([
@@ -17,7 +34,7 @@ public class BaseAnimatingOverlay : BaseAnimating {
 
 	public static readonly SendTable DT_BaseAnimatingOverlay = new(DT_BaseAnimating, [
 		SendPropDataTable("overlay_vars", DT_OverlayVars)
-	]); public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimatingOverlay", DT_BaseAnimatingOverlay);
+	]); public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimatingOverlay", DT_BaseAnimatingOverlay).WithManualClassID(StaticClassIndices.CBaseAnimatingOverlay);
 
 	readonly List<AnimationLayer> AnimOverlay = [];
 }

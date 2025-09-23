@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using Game.Shared;
+
+using Source;
 using Source.Common;
 
 using System.Numerics;
@@ -57,7 +59,7 @@ public class BaseAnimating : BaseEntity
 		SendPropEHandle(FIELDOF(nameof(FlexManipulator))),
 		SendPropVector(FIELDOF(nameof(OverrideViewTarget)), 0, PropFlags.NoScale),
 	]);
-	public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimating", DT_BaseAnimating);
+	public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimating", DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
 
 	public int ForceBone;
 	public Vector3 Force;
