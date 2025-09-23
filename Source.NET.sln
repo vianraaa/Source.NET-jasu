@@ -52,7 +52,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Bitmap", "Source.Bit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.StdShader.Gl46", "Source.StdShader.Gl46\Source.StdShader.Gl46.csproj", "{DACE2A97-2C34-44CA-82F6-B77501B89E3C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Files", "0. Files", "{D287F29B-08EA-45EE-AD68-D46F801ECB5C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Files, Dependencies, & Code Analysis", "0. Files, Dependencies, & Code Analysis", "{D287F29B-08EA-45EE-AD68-D46F801ECB5C}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
