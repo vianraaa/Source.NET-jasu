@@ -174,9 +174,7 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 	public readonly bool NegativeIndex;
 	public readonly string name;
 	public ArrayFieldIndexInfo(ArrayFieldInfo baseArrayField, int index) {
-		if (index < 0)
-			throw new IndexOutOfRangeException("Invalid operation");
-		if (baseArrayField.Type == ArrayFieldType.InlineArray && index >= baseArrayField.Length)
+		if (baseArrayField.Type == ArrayFieldType.InlineArray && Math.Abs(index) >= baseArrayField.Length)
 			throw new IndexOutOfRangeException("Out of range index given the inline array target.");
 
 		BaseArrayField = baseArrayField;
