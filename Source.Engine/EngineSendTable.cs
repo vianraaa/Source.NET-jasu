@@ -90,6 +90,8 @@ public class EngineSendTable(DtCommonEng DtCommonEng)
 				prop.SetOffset(-prop.GetOffset());
 				prop.SetFlags(prop.GetFlags() | PropFlags.IsAVectorElem);
 			}
+			else if (prop.FieldInfo is ArrayFieldIndexInfo afii && afii.NegativeIndex)
+				prop.SetFlags(prop.GetFlags() | PropFlags.IsAVectorElem);
 		}
 	}
 }

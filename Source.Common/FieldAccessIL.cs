@@ -171,6 +171,7 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 	public readonly ArrayFieldInfo BaseArrayField;
 	public readonly Type ElementType;
 	public readonly int Index;
+	public readonly bool NegativeIndex;
 	public readonly string name;
 	public ArrayFieldIndexInfo(ArrayFieldInfo baseArrayField, int index) {
 		if (index < 0)
@@ -182,6 +183,10 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 		ElementType = baseArrayField.ElementType;
 		Index = index;
 		name = $"{BaseArrayField.Name}[{index}]";
+
+		NegativeIndex = index < 0;
+		if (NegativeIndex)
+			Index = -Index;
 	}
 
 	public override FieldAttributes Attributes => BaseArrayField.Attributes;
@@ -512,6 +517,10 @@ public static class FieldAccessReflectionUtils
 	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
 		Type? t = WhoCalledMe(2);
 		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), index);
+	}
+	public static ArrayFieldIndexInfo FIELDOF_VECTORELEM(string name, int index) {
+		Type? t = WhoCalledMe(2);
+		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), -index);
 	}
 	public static StructElementFieldInfo FIELDOF_STRUCTELEM(string[] fields) {
 		Type? t = WhoCalledMe(2);

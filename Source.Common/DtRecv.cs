@@ -222,7 +222,7 @@ public static class RecvPropHelpers
 		Assert(iElement < extra.MaxElements);
 		
 		// TODO: This is really confusing... do we need to reconsider datatable proxies...
-		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValueFast<object>, null, objectID);
+		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValueFast<object>(instance!), null, objectID);
 	}
 
 	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, FieldInfo field) {
