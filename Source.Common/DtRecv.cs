@@ -184,7 +184,8 @@ public static class RecvPropHelpers
 		props[0].SetExtraData(extraData);
 
 		for (int i = 1; i < maxElements + 1; i++) {
-			props[i] = arrayProp; 
+			props[i] = arrayProp.Copy();
+			props[i].FieldInfo = field;
 			props[i].SetOffset(0); 
 			props[i].NameOverride = ClientElementNames[i - 1];
 			var indexedData = extraData.Clone();
