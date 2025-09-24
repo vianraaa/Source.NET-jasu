@@ -146,7 +146,7 @@ public static class SendPropHelpers
 	}
 
 	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
-		if (field.FieldType == typeof(double))
+		if (field != null && field.FieldType == typeof(double))
 			proxyFn ??= SendProxy_FloatToFloat; // << review if need a custom sendproxy here?
 		else
 			proxyFn ??= SendProxy_FloatToFloat;

@@ -6,7 +6,7 @@ using Source.Common;
 namespace Game.Client;
 public partial class C_BaseCombatCharacter : C_BaseFlex
 {
-	public static readonly RecvTable DT_BCCLocalPlayerExclusive = new(DT_BaseFlex, [
+	public static readonly RecvTable DT_BCCLocalPlayerExclusive = new([
 		RecvPropTime(FIELDOF(nameof(NextAttack))),
 	]);
 	public static readonly ClientClass CC_BCCLocalPlayerExclusive = new ClientClass("BCCLocalPlayerExclusive", null, null, DT_BCCLocalPlayerExclusive);

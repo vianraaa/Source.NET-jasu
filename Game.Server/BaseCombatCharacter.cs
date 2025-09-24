@@ -9,7 +9,7 @@ using System.Reflection;
 namespace Game.Server;
 public class BaseCombatCharacter : BaseFlex
 {
-	public static readonly SendTable DT_BCCLocalPlayerExclusive = new(DT_BaseFlex, [
+	public static readonly SendTable DT_BCCLocalPlayerExclusive = new([
 		SendPropTime(FIELDOF(nameof(NextAttack))),
 	]);
 	public static readonly ServerClass CC_BCCLocalPlayerExclusive = new ServerClass("BCCLocalPlayerExclusive", DT_BCCLocalPlayerExclusive);
