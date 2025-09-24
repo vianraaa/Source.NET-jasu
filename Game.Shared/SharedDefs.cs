@@ -1,5 +1,7 @@
 ﻿global using static Game.Shared.SharedDefs;
 
+using System.Runtime.CompilerServices;
+
 namespace Game.Shared;
 
 public static class SharedDefs
@@ -12,6 +14,7 @@ public static class SharedDefs
 
 	public const int MAX_VIEWMODELS = 2;
 	public const int MAX_BEAM_ENTS = 10;
+	public const int MAX_WEAPONS = 256;
 }
 
 
@@ -31,4 +34,12 @@ public enum HideHudBits
 	BonusProgress = 1 << 11,
 
 	BitCount = 12
+}
+
+
+[InlineArray(MAX_WEAPONS)]
+public struct InlineArrayNewMaxWeapons<T> where T : new()
+{
+	public T item;
+	public InlineArrayNewMaxWeapons() { for (int i = 0; i < MAX_WEAPONS; i++) this[i] = new(); }
 }

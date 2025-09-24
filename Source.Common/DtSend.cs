@@ -131,7 +131,7 @@ public static class SendPropHelpers
 
 		return ret;
 	}
-	
+
 	public static SendProp InternalSendPropArray(int elementCount, ReadOnlySpan<char> name, ArrayLengthSendProxyFn? arrayLengthFn = null) {
 		SendProp ret = new();
 
@@ -146,7 +146,10 @@ public static class SendPropHelpers
 	}
 
 	public static SendProp SendPropFloat(FieldInfo field, int bits = 32, PropFlags flags = 0, float lowValue = 0, float highValue = Constants.HIGH_DEFAULT, SendVarProxyFn? proxyFn = null) {
-		proxyFn ??= SendProxy_FloatToFloat;
+		if (field.FieldType == typeof(double))
+			proxyFn ??= SendProxy_FloatToFloat; // << review if need a custom sendproxy here?
+		else
+			proxyFn ??= SendProxy_FloatToFloat;
 
 		SendProp ret = new();
 
@@ -262,10 +265,10 @@ public static class SendPropHelpers
 
 	public static SendProp SendPropInt(string? nameOverride, FieldInfo? field, int bits = -1, PropFlags flags = 0, SendVarProxyFn? proxyFn = null, int sizeOfVar = -1) {
 		SendProp ret = new();
-		sizeOfVar = sizeOfVar == -1 
-						? field == null 
-							? -1 : DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) 
-							? v : -1 
+		sizeOfVar = sizeOfVar == -1
+						? field == null
+							? -1 : DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v)
+							? v : -1
 						: sizeOfVar;
 		if (proxyFn == null) {
 			if (sizeOfVar == 1)
@@ -340,7 +343,7 @@ public static class SendPropHelpers
 		if (proxyFn == SendProxy_DataTableToDataTable)
 			ret.SetFlags(PropFlags.ProxyAlwaysYes);
 
-		if(proxyFn == SendProxy_DataTableToDataTable && name == "baseclass") {
+		if (proxyFn == SendProxy_DataTableToDataTable && name == "baseclass") {
 			ret.SetFlags(PropFlags.Collapsible);
 		}
 
@@ -372,7 +375,7 @@ public static class SendPropHelpers
 		else
 			extraData.ProxyFn = arrayProp.GetProxyFn();
 
-		SendProp[] props = new SendProp[maxElements + 1]; 
+		SendProp[] props = new SendProp[maxElements + 1];
 		SendProp lengthProp = SendPropInt($"lengthprop{maxElements}", DtCommon.NumBitsForCount(maxElements), PropFlags.Unsigned, SendProxy_UtlVectorLength);
 		lengthProp.SetExtraData(extraData);
 
@@ -383,8 +386,8 @@ public static class SendPropHelpers
 
 		for (int i = 1; i < maxElements + 1; i++) {
 			props[i] = arrayProp;
-			props[i].SetOffset(0); 
-			props[i].NameOverride = ElementNames[i - 1]; 
+			props[i].SetOffset(0);
+			props[i].NameOverride = ElementNames[i - 1];
 			props[i].ParentArrayPropName = field.Name;
 			props[i].SetExtraData(extraData);
 

@@ -28,7 +28,9 @@ public static class RecvProxy
 		}
 		field.SetValueFast<short>(instance, unchecked((short)modelIndex));
 	}
-
+	public static RecvProp RecvPropTime(FieldInfo field) {
+		return RecvPropFloat(field);
+	}
 	public static RecvProp RecvPropBool(FieldInfo field) => RecvPropInt(field);
 
 	public static void RecvProxy_IntToMoveParent(ref readonly RecvProxyData data, object instance, FieldInfo field) {

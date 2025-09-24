@@ -178,12 +178,10 @@ namespace Source;
 
 // Super specific type needed. Create these as necessary. These new up their values on construction
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-[InlineArray(32)] public struct InlineArrayNew32<T> where T : new() { 
+[InlineArray(32)]
+public struct InlineArrayNew32<T> where T : new()
+{
 	public T item;
-	public InlineArrayNew32() {
-		for (int i = 0; i < 32; i++) {
-			this[i] = new();
-		}
-	}
+	public InlineArrayNew32() { for (int i = 0; i < 32; i++) this[i] = new(); }
 }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.

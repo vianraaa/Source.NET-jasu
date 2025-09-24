@@ -26,6 +26,9 @@ public static class SendProxy
 	public static SendProp SendPropBool(FieldInfo field) {
 		return SendPropInt(field, 1, PropFlags.Unsigned);
 	}
+	public static SendProp SendPropTime(FieldInfo field) {
+		return SendPropFloat(field, -1, PropFlags.NoScale);
+	}
 	public static SendProp SendPropEHandle(FieldInfo field, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		return SendPropInt(field, Constants.NUM_NETWORKED_EHANDLE_BITS, PropFlags.Unsigned | flags, proxyFn ?? SendProxy_EHandleToInt);
 	}
