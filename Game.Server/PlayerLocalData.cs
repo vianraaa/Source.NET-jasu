@@ -16,7 +16,7 @@ namespace Game.Server;
 public class PlayerLocalData
 {
 	public static readonly SendTable DT_Local = new([
-		SendPropArray3  (FIELDOF_ARRAY(nameof(m_chAreaBits)), SendPropInt(FIELDOF_ARRAY(m_chAreaBits), 8, PropFlags.Unsigned)),
+		/*SendPropArray3  (FIELDOF_ARRAY(nameof(m_chAreaBits)), SendPropInt(FIELDOF_ARRAY(m_chAreaBits), 8, PropFlags.Unsigned)),
 		SendPropArray3  (FIELDOF_ARRAY(nameof(m_chAreaPortalBits)), SendPropInt(FIELDOF_ARRAY(m_chAreaPortalBits), 8, PropFlags.Unsigned)),
 		SendPropInt     (FIELDOF(nameof(iHideHUD)), (int)HideHudBits.BitCount, PropFlags.Unsigned),
 		SendPropFloat   (FIELDOF(nameof(flFOVRate)), 0, PropFlags.NoScale ),
@@ -59,7 +59,7 @@ public class PlayerLocalData
 		SendPropVector( SENDINFO_STRUCTARRAYELEM( m_audio.localSound, 7 ), -1, PropFlags.Coord),
 		SendPropInt( FIELDOF_STRUCTELEM( m_audio.soundscapeIndex ), 17, 0 ),
 		SendPropInt( FIELDOF_STRUCTELEM( m_audio.localBits ), NUM_AUDIO_LOCAL_SOUNDS, PropFlags.Unsigned ),
-		SendPropEHandle( FIELDOF_STRUCTELEM( m_audio.ent ) ),
+		SendPropEHandle( FIELDOF_STRUCTELEM( m_audio.ent ) ),*/
 	]); public static readonly ServerClass CC_Local = new("Local", DT_Local);
 
 

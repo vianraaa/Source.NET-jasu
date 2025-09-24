@@ -21,8 +21,6 @@ public enum GameActionSet {
 	Spectator
 }
 
-
-
 public class ClientModeShared(IServiceProvider services, ClientGlobalVariables gpGlobals, Hud Hud, IEngineVGui enginevgui, ISurface Surface) : IClientMode
 {
 	IEngineClient engine;
@@ -54,13 +52,13 @@ public class ClientModeShared(IServiceProvider services, ClientGlobalVariables g
 		if (engine.Con_IsVisible())
 			return 1;
 
-		if (currentBinding != null && currentBinding.Equals("messagemode", StringComparison.Ordinal) || currentBinding.Equals("say", StringComparison.Ordinal)) {
+		if (!currentBinding.IsEmpty && currentBinding.Equals("messagemode", StringComparison.Ordinal) || currentBinding.Equals("say", StringComparison.Ordinal)) {
 			if (down != 0)
 				StartMessageMode(MessageModeType.Say);
 
 			return 0;
 		}
-		else if (currentBinding != null && currentBinding.Equals("messagemode2", StringComparison.Ordinal) || currentBinding.Equals("say_team", StringComparison.Ordinal)) {
+		else if (!currentBinding.IsEmpty && currentBinding.Equals("messagemode2", StringComparison.Ordinal) || currentBinding.Equals("say_team", StringComparison.Ordinal)) {
 			if (down != 0)
 				StartMessageMode(MessageModeType.SayTeam);
 

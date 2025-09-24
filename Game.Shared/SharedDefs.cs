@@ -1,4 +1,4 @@
-﻿#if !CLIENT_DLL && !SERVER_DLL
+﻿#if !CLIENT_DLL && !GAME_DLL
 global using EHANDLE = Source.Common.BaseHandle; // < Intellisense compatibility
 #endif
 

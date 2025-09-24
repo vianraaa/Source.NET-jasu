@@ -1,21 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Project Settings -->
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
+
+	<!-- Project References -->
 	<ItemGroup>
 		<ProjectReference Include="..\Source.Engine\Source.Engine.csproj" />
 	</ItemGroup>
+
+	<!-- Global Usings -->
 	<ItemGroup>
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
+	
+	<!-- Shared Game Code -->
 	<ItemGroup>
 		<Compile Include="..\Game.Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
 		<Compile Include="..\Game.Shared\HL2\*.cs" Link="Shared\HL2\%(Filename)%(Extension)" />
 	</ItemGroup>
+	
+	<!-- Constants -->
 	<PropertyGroup>
 		<DefineConstants>$(DefineConstants);CLIENT_DLL</DefineConstants>
 	</PropertyGroup>
+
+	<!-- Analyzers -->
+	<ItemGroup>
+		<ProjectReference Include="../Source.CodeAnalysis/Source.CodeAnalysis/Source.CodeAnalysis.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+	</ItemGroup>
 </Project>
