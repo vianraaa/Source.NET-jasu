@@ -6,11 +6,6 @@ using System.Runtime.InteropServices;
 
 namespace Source.Common;
 
-
-public delegate ref ReturnType GetRefFn<InstanceType, ReturnType>(InstanceType type) where InstanceType : class;
-public delegate Span<ReturnType> GetSpanFn<InstanceType, ReturnType>(InstanceType type) where InstanceType : class;
-
-
 public static class DtCommon {
 	public static int NumBitsForCount(int maxElements) {
 		int bits = 0;

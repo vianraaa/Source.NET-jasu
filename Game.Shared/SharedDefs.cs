@@ -1,4 +1,8 @@
-﻿global using static Game.Shared.SharedDefs;
+﻿#if !CLIENT_DLL && !SERVER_DLL
+global using EHANDLE = Source.Common.BaseHandle; // < Intellisense compatibility
+#endif
+
+global using static Game.Shared.SharedDefs;
 
 using System.Runtime.CompilerServices;
 
@@ -15,6 +19,8 @@ public static class SharedDefs
 	public const int MAX_VIEWMODELS = 2;
 	public const int MAX_BEAM_ENTS = 10;
 	public const int MAX_WEAPONS = 256;
+
+	public const int NUM_AUDIO_LOCAL_SOUNDS = 8;
 }
 
 
@@ -36,6 +42,8 @@ public enum HideHudBits
 	BitCount = 12
 }
 
+
+[InlineArray(NUM_AUDIO_LOCAL_SOUNDS)] public struct InlineArrayNumLocalAudioSounds<T> { public T item; }
 
 [InlineArray(MAX_WEAPONS)]
 public struct InlineArrayNewMaxWeapons<T> where T : new()

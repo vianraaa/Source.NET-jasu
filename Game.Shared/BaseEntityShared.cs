@@ -7,8 +7,10 @@ Server
 	.SharedBaseEntityConstants;
 
 #if CLIENT_DLL
+global using SharedBaseEntity = Game.Client.C_BaseEntity;
 namespace Game.Client;
 #else
+global using SharedBaseEntity = Game.Server.BaseEntity;
 namespace Game.Server;
 #endif
 

@@ -22,7 +22,7 @@ public class BaseCombatCharacter : BaseFlex
 
 	public double NextAttack;
 	public readonly EHANDLE ActiveWeapon = new();
-	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons;
+	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons = new();
 
 	private static object? SendProxy_SendBaseCombatCharacterLocalDataTable(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();

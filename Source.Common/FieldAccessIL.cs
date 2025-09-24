@@ -387,7 +387,7 @@ public class ArrayFieldInfo : FieldInfo, IFieldILGenerator
 	}
 }
 
-public class StructElementFieldInfo : FieldInfo, IFieldILGenerator
+public class StructElementFieldInfo<InstanceType, RefType> : FieldInfo, IFieldILGenerator
 {
 	public override FieldAttributes Attributes => throw new NotImplementedException();
 	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
@@ -407,27 +407,13 @@ public class StructElementFieldInfo : FieldInfo, IFieldILGenerator
 	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
 
 
-	readonly Type[] types;
-	readonly FieldInfo[] fields;
-
-	public StructElementFieldInfo(Type type, string[] names) {
-		ArgumentNullException.ThrowIfNull(type);
-		ArgumentNullException.ThrowIfNull(names);
-
-		types = new Type[names.Length + 1];
-		fields = new FieldInfo[names.Length];
-		Type? workingType = type;
-
-		for (int i = 0; i < names.Length; i++) {
-			fields[i] = workingType.GetField(names[i], (BindingFlags)~0)!;
-			types[i] = workingType;
-			workingType = fields[i].FieldType;
-		}
-		types[^1] = fields[^1].FieldType;
+	GetRefFn<InstanceType, RefType> getRef;
+	public StructElementFieldInfo(GetRefFn<InstanceType, RefType> getRef) {
+		this.getRef = getRef;
 	}
 }
 
-public class StructArrayElementFieldInfo : FieldInfo, IFieldILGenerator
+public class StructArrayElementFieldInfo<InstanceType, RefType> : FieldInfo, IFieldILGenerator
 {
 	public override FieldAttributes Attributes => throw new NotImplementedException();
 	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
@@ -447,24 +433,10 @@ public class StructArrayElementFieldInfo : FieldInfo, IFieldILGenerator
 	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
 
 
-	readonly Type[] types;
-	readonly FieldInfo[] fields;
 	readonly int index;
-
-	public StructArrayElementFieldInfo(Type type, string[] names, int index) {
-		ArgumentNullException.ThrowIfNull(type);
-		ArgumentNullException.ThrowIfNull(names);
-
-		types = new Type[names.Length + 1];
-		fields = new FieldInfo[names.Length];
-		Type? workingType = type;
-
-		for (int i = 0; i < names.Length; i++) {
-			fields[i] = workingType.GetField(names[i], (BindingFlags)~0)!;
-			types[i] = workingType;
-			workingType = fields[i].FieldType;
-		}
-		types[^1] = fields[^1].FieldType;
+	GetRefFn<InstanceType, RefType> getRef;
+	public StructArrayElementFieldInfo(GetRefFn<InstanceType, RefType> getRef, int index) {
+		this.getRef = getRef;
 		this.index = index;
 	}
 }
@@ -520,12 +492,11 @@ public static class FieldAccessReflectionUtils
 		Type? t = WhoCalledMe(2);
 		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), -index);
 	}
-	public static StructElementFieldInfo FIELDOF_STRUCTELEM(string[] fields) {
-		Type? t = WhoCalledMe(2);
-		return new StructElementFieldInfo(t!, fields);
-	}
-	public static StructArrayElementFieldInfo FIELDOF_STRUCTARRAYELEM(string[] fields, int index) {
-		Type? t = WhoCalledMe(2);
-		return new StructArrayElementFieldInfo(t!, fields, index);
-	}
+	public static StructElementFieldInfo<InstanceType, RefType> FIELDOF_STRUCTELEM<InstanceType, RefType>(GetRefFn<InstanceType, RefType> howToGetARef)
+		=> new StructElementFieldInfo<InstanceType, RefType>(howToGetARef);
+	
+	public static StructArrayElementFieldInfo<InstanceType, RefType> FIELDOF_STRUCTARRAYELEM<InstanceType, RefType>(GetRefFn<InstanceType, RefType> howToGetARef, int index)
+		=> new StructArrayElementFieldInfo<InstanceType, RefType>(howToGetARef, index);
+	
 }
+public delegate ref Ref GetRefFn<Instance, Ref>(Instance instance);
