@@ -460,9 +460,9 @@ public static class FieldAccessReflectionUtils
 			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
 	}
-	public static string ParseNameField(string name) {
+	public static string ParseNameField(string? name) {
 		ArgumentNullException.ThrowIfNull(name);
-		throw new NotImplementedException();
+		return name;
 	}
 	public static DirectAccessor<Instance, Ref> FIELDOF<Instance, Ref>(GetRefFn<Instance, Ref> exp, [CallerArgumentExpression(nameof(exp))] string? expName = null) {
 		return new DirectAccessor<Instance, Ref>(exp, ParseNameField(expName));
