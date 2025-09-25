@@ -64,7 +64,10 @@ public interface IFieldILGenerator {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ref T GetValueRef<T>(IFieldILGenerator self, object instance) => ref FieldAccess<T>.RefGetter(self)(instance);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void SetValue<T>(IFieldILGenerator self, object instance, in T value) => FieldAccess<T>.Setter(self)(instance, in value);
+	public static bool SetValue<T>(IFieldILGenerator self, object instance, in T value) {
+		FieldAccess<T>.Setter(self)(instance, in value);
+		return true;
+	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void CopyStringToField(IFieldILGenerator self, object instance, string? str) => Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
 }
@@ -81,7 +84,7 @@ public interface IFieldAccessor
 
 	public T GetValue<T>(object instance);
 	public ref T GetValueRef<T>(object instance);
-	public void SetValue<T>(object instance, in T value);
+	public bool SetValue<T>(object instance, in T value);
 	public void CopyStringToField(object instance, string? str);
 }
 
@@ -217,7 +220,7 @@ public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor, IFieldILGenerator
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
+	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
 
 public class ArrayFieldIndexInfo : IFieldAccessor, IFieldILGenerator
@@ -357,7 +360,7 @@ public class ArrayFieldIndexInfo : IFieldAccessor, IFieldILGenerator
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
+	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
 public class ArrayFieldInfo : IFieldAccessor, IFieldILGenerator
 {
@@ -421,29 +424,36 @@ public class ArrayFieldInfo : IFieldAccessor, IFieldILGenerator
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
+	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
 
-public class DirectAccessor<Instance, Ref>(GetRefFn<Instance, Ref> accessor, string name) : IFieldAccessor
+
+public delegate Value GetFn<Instance, Value>(Instance instance);
+public delegate void SetFn<Instance, Value>(Instance instance, in Value value);
+public class GetSetAccessor<Instance, Value>(GetFn<Instance, Value> get, SetFn<Instance, Value>? set = null, string? name = null) : IFieldAccessor
 {
 	public string Name => name;
 	public bool IsStatic => false;
 	public Type DeclaringType => typeof(Instance);
-	public Type FieldType => typeof(Ref);
+	public Type FieldType => typeof(Value);
 
 	public void CopyStringToField(object instance, string? str) {
 		Warning("CopyStringToField needs work\n");
 	}
 	public ref T GetValueRef<T>(object instance)=> throw new NotImplementedException("There's no good way to do this right now. TODO: If we run into this, consider removing it altogether in favor of get/sets.");
 	public T GetValue<T>(object instance) {
-		ref Ref valueRef = ref accessor((Instance)instance);
+		Value valueRef = get((Instance)instance);
 		T output = default;
 		DynamicConversion.CastConvert(in valueRef, ref output);
 		return output;
 	}
-	public void SetValue<T>(object instance, in T value) {
-		ref Ref valueRef = ref accessor((Instance)instance);
-		DynamicConversion.CastConvert(in value, ref valueRef);
+	public bool SetValue<T>(object instance, in T value) {
+		if (set == null)
+			return false;
+		Value writeTarget = default;
+		DynamicConversion.CastConvert(in value, ref writeTarget);
+		set((Instance)instance, in writeTarget);
+		return true;
 	}
 }
 
@@ -464,8 +474,8 @@ public static class FieldAccessReflectionUtils
 		ArgumentNullException.ThrowIfNull(name);
 		return name;
 	}
-	public static DirectAccessor<Instance, Ref> FIELDOF<Instance, Ref>(GetRefFn<Instance, Ref> exp, [CallerArgumentExpression(nameof(exp))] string? expName = null) {
-		return new DirectAccessor<Instance, Ref>(exp, ParseNameField(expName));
+	public static GetSetAccessor<Instance, Value> FIELDOF<Instance, Value>(GetFn<Instance, Value> get, SetFn<Instance, Value>? set = null, [CallerArgumentExpression(nameof(get))] string? name = null) {
+		return new GetSetAccessor<Instance, Value>(get, set, name);
 	}
 	/// <summary>
 	/// Generic C# <see cref="FieldInfo"/> retrieval.
@@ -506,4 +516,3 @@ public static class FieldAccessReflectionUtils
 		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), -index);
 	}
 }
-public delegate ref Ref GetRefFn<Instance, Ref>(Instance instance);
