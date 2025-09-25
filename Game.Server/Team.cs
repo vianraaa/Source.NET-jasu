@@ -17,7 +17,7 @@ public class Team : BaseEntity
 	]);
 
 	private static int SendProxyArrayLength_PlayerArray(object instance, int objectID) => ((Team)instance).Players.Count;
-	private static void SendProxy_PlayerList(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_PlayerList(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 	}
 	public static readonly new ServerClass ServerClass = new ServerClass("Team", DT_Team).WithManualClassID(StaticClassIndices.CTeam);
 

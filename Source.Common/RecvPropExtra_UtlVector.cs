@@ -9,7 +9,7 @@ public class RecvPropExtra_UtlVector
 	public EnsureCapacityFn EnsureCapacityFn;
 	public DataTableRecvVarProxyFn DataTableProxyFn;
 	public RecvVarProxyFn ProxyFn;
-	public FieldInfo FieldInfo;
+	public IFieldAccessor FieldInfo;
 
 	public int Index;
 

@@ -53,11 +53,11 @@ public partial class BasePlayer : BaseCombatCharacter
 	readonly EHANDLE ColorCorrectionCtrl = new();
 	bool UseWeaponsInVehicle;
 
-	private static void SendProxy_CropFlagsToPlayerFlagBitsLength(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_CropFlagsToPlayerFlagBitsLength(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
 
-	private static object? SendProxy_SendLocalDataTable(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+	private static object? SendProxy_SendLocalDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();
 	}
 

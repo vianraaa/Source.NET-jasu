@@ -12,10 +12,10 @@ public static class SendProxy
 {
 	public const int PREDICTABLE_ID_BITS = 31;
 
-	public static SendProp SendPropPredictableId(FieldInfo field)
+	public static SendProp SendPropPredictableId(IFieldAccessor field)
 		=> SendPropInt(field, PREDICTABLE_ID_BITS, PropFlags.Unsigned, SendProxy_PredictableIdToInt);
 
-	private static void SendProxy_PredictableIdToInt(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_PredictableIdToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		PredictableId? pId = field.GetValueFast<PredictableId?>(instance);
 		if (pId != null)
 			outData.Int = pId.GetRaw();
@@ -23,17 +23,17 @@ public static class SendProxy
 			outData.Int = 0;
 	}
 
-	public static SendProp SendPropBool(FieldInfo field) {
+	public static SendProp SendPropBool(IFieldAccessor field) {
 		return SendPropInt(field, 1, PropFlags.Unsigned);
 	}
-	public static SendProp SendPropTime(FieldInfo field) {
+	public static SendProp SendPropTime(IFieldAccessor field) {
 		return SendPropFloat(field, -1, PropFlags.NoScale);
 	}
-	public static SendProp SendPropEHandle(FieldInfo field, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
+	public static SendProp SendPropEHandle(IFieldAccessor field, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		return SendPropInt(field, Constants.NUM_NETWORKED_EHANDLE_BITS, PropFlags.Unsigned | flags, proxyFn ?? SendProxy_EHandleToInt);
 	}
 
-	private static void SendProxy_EHandleToInt(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_EHandleToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		BaseHandle? handle = field.GetValueFast<BaseHandle?>(instance);
 		if (handle != null && handle.Get() != null) {
 			int iSerialNum = handle.GetSerialNumber() & ((1 << Constants.NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS) - 1);

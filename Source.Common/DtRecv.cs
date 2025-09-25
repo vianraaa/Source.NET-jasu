@@ -20,32 +20,32 @@ namespace Source.Common;
 public delegate void ArrayLengthRecvProxyFn(object instance, int objectID, int currentArrayLength);
 public static class RecvPropHelpers
 {
-	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.SetValueFast<float>(instance, data.Value.Float);
 	}
 
-	public static void RecvProxy_VectorToVector(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	public static void RecvProxy_VectorToVector(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.SetValueFast<Vector3>(instance, data.Value.Vector);
 	}
 
-	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		ref Vector3 vec = ref field.GetValueRefFast<Vector3>(instance);
 		vec.X = data.Value.Vector[0];
 		vec.Y = data.Value.Vector[1];
 	}
 
-	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
+	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
 		outInstance = instance;
 	}
 
-	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((sbyte)data.Value.Int));
-	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
-	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, FieldInfo field) => field.SetValueFast(instance, unchecked(data.Value.Int));
-	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked((sbyte)data.Value.Int));
+	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
+	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked(data.Value.Int));
+	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.CopyStringToField(instance, data.Value.String);
 	}
 
-	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		BaseHandle ehandle = field.GetValueFast<BaseHandle>(instance);
 
 		if (data.Value.Int == Constants.INVALID_NETWORKED_EHANDLE_VALUE) {
@@ -58,11 +58,11 @@ public static class RecvPropHelpers
 			ehandle.Init(entity, serialNum);
 		}
 	}
-	public static RecvProp RecvPropEHandle(FieldInfo field, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropEHandle(IFieldAccessor field, RecvVarProxyFn? proxyFn = null) {
 		proxyFn ??= RecvProxy_IntToEHandle;
 		return RecvPropInt(field, 0, proxyFn);
 	}
-	public static RecvProp RecvPropFloat(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropFloat(IFieldAccessor field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_FloatToFloat;
 
@@ -73,9 +73,9 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropQAngles(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null)
+	public static RecvProp RecvPropQAngles(IFieldAccessor field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null)
 		=> RecvPropVector(field, flags, proxyFn);
-	public static RecvProp RecvPropVector(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropVector(IFieldAccessor field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_VectorToVector;
 
@@ -86,7 +86,7 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropVectorXY(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropVectorXY(IFieldAccessor field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_VectorToVectorXY;
 
@@ -99,9 +99,9 @@ public static class RecvPropHelpers
 	}
 	public static RecvProp RecvPropInt(string fieldName, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1)
 		=> RecvPropInt(fieldName, null, flags, proxyFn, sizeOfVar);
-	public static RecvProp RecvPropInt(FieldInfo field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1)
+	public static RecvProp RecvPropInt(IFieldAccessor field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1)
 		=> RecvPropInt(null, field, flags, proxyFn, sizeOfVar);
-	public static RecvProp RecvPropInt(string? nameOverride, FieldInfo? field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1) {
+	public static RecvProp RecvPropInt(string? nameOverride, IFieldAccessor? field, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null, int sizeOfVar = -1) {
 		RecvProp ret = new();
 
 		sizeOfVar = sizeOfVar == -1 ? field == null ? -1 : DataTableHelpers.FieldSizes.TryGetValue(field.FieldType, out int v) ? v : -1 : sizeOfVar;
@@ -126,7 +126,7 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropString(FieldInfo field, int bufferSize = -1, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropString(IFieldAccessor field, int bufferSize = -1, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_StringToString;
 		if (bufferSize == -1) {
@@ -145,12 +145,12 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	public static RecvProp RecvPropList(FieldInfo field, ResizeVectorFn fn, int maxElements, RecvProp arrayProp) {
+	public static RecvProp RecvPropList(IFieldAccessor field, ResizeVectorFn fn, int maxElements, RecvProp arrayProp) {
 		MethodInfo ensureCapacityFn = field.FieldType.GetMethod("EnsureCapacity")!;
 		// ^^ TODO: GET RID OF THIS GARBAGE
 		return RecvPropList(field, fn, (_, list, capacity) => ensureCapacityFn.Invoke(list, [capacity]), maxElements, arrayProp);
 	}
-	public static RecvProp RecvPropList(FieldInfo field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
+	public static RecvProp RecvPropList(IFieldAccessor field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
 		RecvProp ret = new();
 
 		Assert(maxElements <= Constants.MAX_ARRAY_ELEMENTS);
@@ -205,18 +205,18 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	private static void DataTableRecvProxy_LengthProxy(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
+	private static void DataTableRecvProxy_LengthProxy(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
 		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)prop.GetExtraData()!;
 		extra.EnsureCapacityFn(instance, extra.FieldInfo.GetValueFast<object>(instance!), extra.MaxElements);
 
 		outInstance = instance;
 	}
 
-	private static void RecvProxy_UtlVectorElement(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_UtlVectorElement(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		throw new NotImplementedException();
 	}
 
-	private static void RecvProxy_UtlVectorElement_DataTable(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) {
+	private static void RecvProxy_UtlVectorElement_DataTable(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
 		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)prop.GetExtraData()!;
 
 		int iElement = extra.Index;
@@ -226,7 +226,7 @@ public static class RecvPropHelpers
 		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValueFast<object>(instance!), null, objectID);
 	}
 
-	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		throw new NotImplementedException();
 	}
 
@@ -276,7 +276,7 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
-	public static RecvProp RecvPropDataTable(string name, FieldInfo field, RecvTable table, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
+	public static RecvProp RecvPropDataTable(string name, IFieldAccessor field, RecvTable table, PropFlags flags = 0, DataTableRecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= DataTableRecvProxy_StaticDataTable;
 		ret.NameOverride = name;
@@ -298,13 +298,13 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	public static DataTableRecvVarProxyFn RECV_GET_OBJECT_AT_FIELD(FieldInfo field) {
-		return (RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID) => {
+	public static DataTableRecvVarProxyFn RECV_GET_OBJECT_AT_FIELD(IFieldAccessor field) {
+		return (RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) => {
 			outInstance = field.GetValueFast<object>(instance);
 		};
 	}
 
-	public static RecvProp RecvPropGModTable(FieldInfo field) {
+	public static RecvProp RecvPropGModTable(IFieldAccessor field) {
 		RecvProp ret = new();
 
 		ret.RecvType = SendPropType.GModTable;
@@ -318,7 +318,7 @@ public static class RecvPropHelpers
 [DebuggerDisplay("RecvProp<{RecvType}> {NameOverride ?? FieldInfo.Name} [{Flags,ac}]")]
 public class RecvProp : IDataTableProp
 {
-	public FieldInfo FieldInfo;
+	public IFieldAccessor FieldInfo;
 	public SendPropType RecvType;
 	public PropFlags Flags;
 	public int StringBufferSize;
@@ -626,5 +626,5 @@ public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 	}
 }
 
-public delegate void RecvVarProxyFn(ref readonly RecvProxyData data, object instance, FieldInfo field);
-public delegate void DataTableRecvVarProxyFn(RecvProp prop, out object? outInstance, object? instance, FieldInfo fieldInfo, int objectID);
+public delegate void RecvVarProxyFn(ref readonly RecvProxyData data, object instance, IFieldAccessor field);
+public delegate void DataTableRecvVarProxyFn(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID);

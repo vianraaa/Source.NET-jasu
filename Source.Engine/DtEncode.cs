@@ -19,7 +19,7 @@ namespace Source.Engine;
 public struct DecodeInfo
 {
 	public RecvProxyData RecvProxyData;
-	public FieldInfo FieldInfo;
+	public IFieldAccessor FieldInfo;
 	public object Object;
 	public SendProp Prop;
 	public bf_read In;
@@ -43,7 +43,7 @@ public static class PackedEntitiesManager
 public delegate void EncodeFn(object instance, ref DVariant var, SendProp prop, bf_write writeOut, int objectID);
 public delegate void DecodeFn(ref DecodeInfo info);
 public delegate int CompareDeltasFn(SendProp prop, bf_read p1, bf_read p2);
-public delegate void FastCopyFn(SendProp sendProp, RecvProp recvProp, object sendData, FieldInfo sendFieldInfo, object recvData, FieldInfo recvFieldInfo, int objectID);
+public delegate void FastCopyFn(SendProp sendProp, RecvProp recvProp, object sendData, IFieldAccessor sendFieldInfo, object recvData, IFieldAccessor recvFieldInfo, int objectID);
 public delegate ReadOnlySpan<char> GetTypeNameStringFn();
 public delegate bool IsZeroFn(object instance, ref DVariant var, SendProp prop);
 public delegate void DecodeZeroFn(ref DecodeInfo info);
@@ -225,7 +225,7 @@ public struct PropTypeFns
 	public static ref readonly PropTypeFns Get(SendPropType propType) => ref g_PropTypeFns[(int)propType];
 
 	// Implementations for prop type fns.
-	private static void Generic_FastCopy(SendProp sendProp, RecvProp recvProp, object sendData, FieldInfo sendFieldInfo, object recvData, FieldInfo recvFieldInfo, int objectID) {
+	private static void Generic_FastCopy(SendProp sendProp, RecvProp recvProp, object sendData, IFieldAccessor sendFieldInfo, object recvData, IFieldAccessor recvFieldInfo, int objectID) {
 		// Get the data out of the ent.
 		RecvProxyData recvProxyData;
 		recvProxyData.Value = new();
@@ -537,7 +537,7 @@ public struct PropTypeFns
 		subDecodeInfo.CopyVars(ref decodeInfo);
 		subDecodeInfo.Prop = arrayProp;
 
-		FieldInfo targetField;
+		IFieldAccessor targetField;
 
 		ArrayLengthRecvProxyFn lengthProxy = null!;
 		if (decodeInfo.RecvProxyData.RecvProp != null) {

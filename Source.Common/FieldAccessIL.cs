@@ -11,11 +11,11 @@ namespace Source.Common;
 
 public static class FieldAccess
 {
-	public static T GetValueFast<T>(this FieldInfo field, object instance) => FieldAccess<T>.Getter(field)(instance);
-	public static ref T GetValueRefFast<T>(this FieldInfo field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
-	public static void SetValueFast<T>(this FieldInfo field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
+	public static T GetValueFast<T>(this IFieldAccessor field, object instance) => FieldAccess<T>.Getter(field)(instance);
+	public static ref T GetValueRefFast<T>(this IFieldAccessor field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
+	public static void SetValueFast<T>(this IFieldAccessor field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
 
-	public static void CopyStringToField(this FieldInfo field, object instance, string? str) {
+	public static void CopyStringToField(this IFieldAccessor field, object instance, string? str) {
 		Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
 	}
 
@@ -37,14 +37,21 @@ public static class FieldAccess
 	}
 }
 
-/// <summary>
-/// Define how to build IL methods for types.
-/// </summary>
-public interface IFieldILGenerator
-{
+public interface IFieldILGenerator {
 	public void GenerateGet<T>(ILGenerator il);
 	public void GenerateGetRef<T>(ILGenerator il);
 	public void GenerateSet<T>(ILGenerator il);
+}
+
+/// <summary>
+/// Define how to build IL methods for types.
+/// </summary>
+public interface IFieldAccessor : IFieldILGenerator
+{
+	public string Name { get; }
+	public bool IsStatic { get; }
+	public Type DeclaringType { get; }
+	public Type FieldType { get; }
 }
 
 public static class FieldAccess<T>
@@ -53,37 +60,23 @@ public static class FieldAccess<T>
 	public delegate ref T GetRef(object o);
 	public delegate void Set(object o, in T v);
 
-	internal static readonly Dictionary<FieldInfo, Get> Getters = [];
-	internal static readonly Dictionary<FieldInfo, GetRef> RefGetters = [];
-	internal static readonly Dictionary<FieldInfo, Set> Setters = [];
+	internal static readonly Dictionary<IFieldAccessor, Get> Getters = [];
+	internal static readonly Dictionary<IFieldAccessor, GetRef> RefGetters = [];
+	internal static readonly Dictionary<IFieldAccessor, Set> Setters = [];
 
-	public static Get Getter(FieldInfo field) {
+	public static Get Getter(IFieldAccessor field) {
 		if (Getters.TryGetValue(field, out var g))
 			return g;
 
 		var method = new DynamicMethod($"get_{field.Name}", typeof(T), [typeof(object)], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
-
-		if (field is IFieldILGenerator fieldILGenerator)
-			fieldILGenerator.GenerateGet<T>(il);
-		else {
-			if (!field.IsStatic) {
-				il.Emit(OpCodes.Ldarg_0);
-				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
-				il.Emit(OpCodes.Ldfld, field);
-			}
-			else {
-				il.Emit(OpCodes.Ldsfld, field);
-			}
-
-			il.Emit(OpCodes.Ret);
-		}
+		field.GenerateGet<T>(il);
 
 		Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
 		return g;
 	}
 
-	public static GetRef RefGetter(FieldInfo field) {
+	public static GetRef RefGetter(IFieldAccessor field) {
 		if (RefGetters.TryGetValue(field, out var g))
 			return g;
 
@@ -96,62 +89,19 @@ public static class FieldAccess<T>
 		);
 
 		var il = method.GetILGenerator();
+		field.GenerateGetRef<T>(il);
 
-		if (field is IFieldILGenerator fieldILGenerator)
-			fieldILGenerator.GenerateGetRef<T>(il);
-		else {
-			if (!field.IsStatic) {
-				il.Emit(OpCodes.Ldarg_0);
-				if (field.DeclaringType!.IsValueType) {
-					il.Emit(OpCodes.Unbox, field.DeclaringType);
-					il.Emit(OpCodes.Ldflda, field);
-				}
-				else {
-					il.Emit(OpCodes.Castclass, field.DeclaringType);
-					il.Emit(OpCodes.Ldflda, field);
-				}
-			}
-			else
-				il.Emit(OpCodes.Ldsflda, field);
-
-			il.Emit(OpCodes.Ret);
-		}
 		RefGetters[field] = g = (GetRef)method.CreateDelegate(typeof(GetRef));
 		return g;
 	}
 
-	public static Set Setter(FieldInfo field) {
+	public static Set Setter(IFieldAccessor field) {
 		if (Setters.TryGetValue(field, out var s))
 			return s;
 
 		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T).MakeByRefType()], typeof(FieldAccess<T>).Module, true);
 		var il = method.GetILGenerator();
-		if (field is IFieldILGenerator fieldILGenerator)
-			fieldILGenerator.GenerateSet<T>(il);
-		else {
-			if (!field.IsStatic) {
-				il.Emit(OpCodes.Ldarg_0);
-				il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, field.DeclaringType);
-				il.Emit(OpCodes.Ldarg_1);
-
-				if (typeof(T).IsValueType)
-					il.Emit(OpCodes.Ldobj, typeof(T));
-				else
-					il.Emit(OpCodes.Ldind_Ref);
-
-				il.Emit(OpCodes.Stfld, field);
-			}
-			else {
-				il.Emit(OpCodes.Ldarg_1);
-
-				if (typeof(T).IsValueType)
-					il.Emit(OpCodes.Ldobj, typeof(T));
-				else
-					il.Emit(OpCodes.Ldind_Ref);
-
-				il.Emit(OpCodes.Stsfld, field);
-			}
-		}
+		field.GenerateSet<T>(il);
 
 		il.Emit(OpCodes.Ret);
 		Setters[field] = s = (Set)method.CreateDelegate(typeof(Set));
@@ -166,7 +116,72 @@ public enum ArrayFieldType
 	Vector3
 }
 
-public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
+public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor
+{
+
+	public string Name => Field.Name;
+	public bool IsStatic => Field.IsStatic;
+	public Type DeclaringType => Field.DeclaringType!;
+	public Type FieldType => Field.FieldType!;
+
+	public void GenerateGet<T>(ILGenerator il) {
+		if (!IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, DeclaringType);
+			il.Emit(OpCodes.Ldfld, Field);
+		}
+		else {
+			il.Emit(OpCodes.Ldsfld, Field);
+		}
+
+		il.Emit(OpCodes.Ret);
+	}
+
+	public void GenerateGetRef<T>(ILGenerator il) {
+		if (!IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			if (DeclaringType!.IsValueType) {
+				il.Emit(OpCodes.Unbox, DeclaringType);
+				il.Emit(OpCodes.Ldflda, Field);
+			}
+			else {
+				il.Emit(OpCodes.Castclass, DeclaringType);
+				il.Emit(OpCodes.Ldflda, Field);
+			}
+		}
+		else
+			il.Emit(OpCodes.Ldsflda, Field);
+
+		il.Emit(OpCodes.Ret);
+	}
+
+	public void GenerateSet<T>(ILGenerator il) {
+		if (!IsStatic) {
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, DeclaringType);
+			il.Emit(OpCodes.Ldarg_1);
+
+			if (typeof(T).IsValueType)
+				il.Emit(OpCodes.Ldobj, typeof(T));
+			else
+				il.Emit(OpCodes.Ldind_Ref);
+
+			il.Emit(OpCodes.Stfld, Field);
+		}
+		else {
+			il.Emit(OpCodes.Ldarg_1);
+
+			if (typeof(T).IsValueType)
+				il.Emit(OpCodes.Ldobj, typeof(T));
+			else
+				il.Emit(OpCodes.Ldind_Ref);
+
+			il.Emit(OpCodes.Stsfld, Field);
+		}
+	}
+}
+
+public class ArrayFieldIndexInfo : IFieldAccessor
 {
 	public readonly ArrayFieldInfo BaseArrayField;
 	public readonly Type ElementType;
@@ -187,24 +202,10 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 			Index = -Index;
 	}
 
-	public override FieldAttributes Attributes => BaseArrayField.Attributes;
-	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
-
-	public override Type FieldType => ElementType;
-
-	public override Type? DeclaringType => BaseArrayField.DeclaringType;
-
-	public override string Name => name;
-
-	public override Type? ReflectedType => BaseArrayField.ReflectedType;
-
-	public override object[] GetCustomAttributes(bool inherit) => [];
-	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => [];
-	public override bool IsDefined(Type attributeType, bool inherit) => false;
-	public override object? GetValue(object? obj)
-		=> throw new NotImplementedException("Please use the GetValueFast<T> method.");
-	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
-		=> throw new NotImplementedException("Please use the SetValueFast<T> method.");
+	public Type FieldType => ElementType;
+	public Type? DeclaringType => BaseArrayField.DeclaringType;
+	public string Name => name;
+	public bool IsStatic => BaseArrayField.BaseField.IsStatic;
 
 	public void GenerateGet<T>(ILGenerator il) {
 		var field = BaseArrayField.BaseField;
@@ -310,7 +311,7 @@ public class ArrayFieldIndexInfo : FieldInfo, IFieldILGenerator
 		il.Emit(OpCodes.Ret);
 	}
 }
-public class ArrayFieldInfo : FieldInfo, IFieldILGenerator
+public class ArrayFieldInfo : IFieldAccessor
 {
 	public readonly Dictionary<long, ArrayFieldIndexInfo> FieldAccessors = [];
 
@@ -346,28 +347,15 @@ public class ArrayFieldInfo : FieldInfo, IFieldILGenerator
 	}
 
 	readonly string name;
-	public override FieldAttributes Attributes => BaseField.Attributes;
-	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
 
-	public override Type FieldType => BaseField.FieldType;
-	public override Type? DeclaringType => BaseField.DeclaringType;
-	public override string Name => name;
-	public override Type? ReflectedType => BaseField.ReflectedType;
-
-	public override object[] GetCustomAttributes(bool inherit)
-		=> [];
-	public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-		=> [];
-	public override bool IsDefined(Type attributeType, bool inherit) => false;
-	public override object? GetValue(object? obj)
-		=> throw new NotImplementedException("Please use the GetValueFast<T> method.");
-	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
-		=> throw new NotImplementedException("Please use the SetValueFast<T> method.");
-
+	public Type FieldType => BaseField.FieldType;
+	public Type? DeclaringType => BaseField.DeclaringType;
+	public string Name => name;
+	public bool IsStatic => BaseField.IsStatic;
 	// Instance is passed here because in the future we should sanity-check our target field against the 
 	// incoming untrusted index. Although a bad index wouldn't cause pandamonium beyond an out of range exception,
 	// it would be nice to handle it without an exception being raised in the future/being able to Assert for it.
-	public FieldInfo? GetIndexFieldInfo(object instance, int index) {
+	public IFieldAccessor? GetIndexFieldInfo(object instance, int index) {
 		if (!FieldAccessors.TryGetValue(index, out ArrayFieldIndexInfo? ret))
 			FieldAccessors[index] = ret = new(this, index);
 
@@ -387,57 +375,31 @@ public class ArrayFieldInfo : FieldInfo, IFieldILGenerator
 	}
 }
 
-public class StructElementFieldInfo<InstanceType, RefType> : FieldInfo, IFieldILGenerator
+public class StructElementFieldInfo<InstanceType, RefType> : IFieldAccessor
 {
-	public override FieldAttributes Attributes => throw new NotImplementedException();
-	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
-	public override Type FieldType => throw new NotImplementedException();
-	public override Type? DeclaringType => throw new NotImplementedException();
-	public override string Name => throw new NotImplementedException();
-	public override Type? ReflectedType => throw new NotImplementedException();
-	public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
-	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
-	public override object? GetValue(object? obj) => throw new NotImplementedException();
-	public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
-	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture) => throw new NotImplementedException();
-
-
-	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
-
-
 	GetRefFn<InstanceType, RefType> getRef;
 	public StructElementFieldInfo(GetRefFn<InstanceType, RefType> getRef) {
 		this.getRef = getRef;
 	}
-}
 
-public class StructArrayElementFieldInfo<InstanceType, RefType> : FieldInfo, IFieldILGenerator
-{
-	public override FieldAttributes Attributes => throw new NotImplementedException();
-	public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
-	public override Type FieldType => throw new NotImplementedException();
-	public override Type? DeclaringType => throw new NotImplementedException();
-	public override string Name => throw new NotImplementedException();
-	public override Type? ReflectedType => throw new NotImplementedException();
-	public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
-	public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
-	public override object? GetValue(object? obj) => throw new NotImplementedException();
-	public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
-	public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture) => throw new NotImplementedException();
+	public string Name => throw new NotImplementedException();
 
+	public bool IsStatic => throw new NotImplementedException();
 
-	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
+	public Type DeclaringType => throw new NotImplementedException();
 
+	public Type FieldType => throw new NotImplementedException();
 
-	readonly int index;
-	GetRefFn<InstanceType, RefType> getRef;
-	public StructArrayElementFieldInfo(GetRefFn<InstanceType, RefType> getRef, int index) {
-		this.getRef = getRef;
-		this.index = index;
+	public void GenerateGet<T>(ILGenerator il) {
+		throw new NotImplementedException();
+	}
+
+	public void GenerateGetRef<T>(ILGenerator il) {
+		throw new NotImplementedException();
+	}
+
+	public void GenerateSet<T>(ILGenerator il) {
+		throw new NotImplementedException();
 	}
 }
 
@@ -461,9 +423,9 @@ public static class FieldAccessReflectionUtils
 	/// <returns></returns>
 	/// <exception cref="NullReferenceException"></exception>
 	/// <exception cref="KeyNotFoundException"></exception>
-	public static FieldInfo FIELDOF(string name) {
+	public static BasicFieldInfo FIELDOF(string name) {
 		Type? t = WhoCalledMe(2);
-		return baseField(t, name);
+		return new BasicFieldInfo(baseField(t, name));
 	}
 	/// <summary>
 	/// A field representing an array.
@@ -492,11 +454,5 @@ public static class FieldAccessReflectionUtils
 		Type? t = WhoCalledMe(2);
 		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), -index);
 	}
-	public static StructElementFieldInfo<InstanceType, RefType> FIELDOF_STRUCTELEM<InstanceType, RefType>(GetRefFn<InstanceType, RefType> howToGetARef)
-		=> new StructElementFieldInfo<InstanceType, RefType>(howToGetARef);
-	
-	public static StructArrayElementFieldInfo<InstanceType, RefType> FIELDOF_STRUCTARRAYELEM<InstanceType, RefType>(GetRefFn<InstanceType, RefType> howToGetARef, int index)
-		=> new StructArrayElementFieldInfo<InstanceType, RefType>(howToGetARef, index);
-	
 }
 public delegate ref Ref GetRefFn<Instance, Ref>(Instance instance);

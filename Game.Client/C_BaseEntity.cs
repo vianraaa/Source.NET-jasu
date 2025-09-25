@@ -20,7 +20,7 @@ using static System.Net.Mime.MediaTypeNames;
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
 {
-	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		C_BaseEntity pEntity = (C_BaseEntity)instance;
 		
 		long t = gpGlobals.GetNetworkBase(gpGlobals.TickCount, pEntity.EntIndex()) + data.Value.Int;
@@ -33,7 +33,7 @@ public partial class C_BaseEntity : IClientEntity
 		pEntity.AnimTime = t * TICK_INTERVAL;
 	}
 
-	private static void RecvProxy_EffectFlags(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_EffectFlags(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		// ((C_BaseEntity)instance).SetEffects(data.Value.Int);
 	}
 
@@ -50,7 +50,7 @@ public partial class C_BaseEntity : IClientEntity
 	]);
 	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", null, null, DT_PredictableId);
 
-	private static void RecvProxy_SimulationTime(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_SimulationTime(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		C_BaseEntity entity = (C_BaseEntity)instance;
 
 		int addt = data.Value.Int;
@@ -141,15 +141,15 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELDOF(nameof(MapCreatedID))),
 	]);
 
-	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning("RecvProxy_OverrideMaterial not implemented yet\n");
 	}
 
-	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning("RecvProxy_MoveCollide not implemented yet\n");
 	}
 
-	private static void RecvProxy_MoveType(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_MoveType(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning("RecvProxy_MoveType not implemented yet\n");
 	}
 

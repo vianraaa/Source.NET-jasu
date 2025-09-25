@@ -36,7 +36,7 @@ public class CollisionProperty
 {
 #if CLIENT_DLL
 
-	private static void RecvProxy_VectorDirtySurround(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_VectorDirtySurround(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Vector3 vecold = field.GetValueFast<Vector3>(instance);
 		Vector3 vecnew = data.Value.Vector;
 		if (vecold != vecnew) {
@@ -46,31 +46,31 @@ public class CollisionProperty
 	}
 
 
-	private static void RecvProxy_SolidFlags(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_SolidFlags(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.SetValueFast(instance, data.Value.Int);
 	}
 
-	private static void RecvProxy_Solid(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_Solid(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.SetValueFast(instance, data.Value.Int);
 	}
 
-	private static void RecvProxy_OBBMinsPreScaled(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_OBBMinsPreScaled(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning($"RecvProxy_OBBMinsPreScaled not yet implemented\n");
 	}
 
-	private static void RecvProxy_OBBMaxPreScaled(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_OBBMaxPreScaled(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning($"RecvProxy_OBBMaxPreScaled not yet implemented\n");
 	}
 
-	private static void RecvProxy_IntDirtySurround(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_IntDirtySurround(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		Warning($"RecvProxy_IntDirtySurround not yet implemented\n");
 	}
 #else
-	private static void SendProxy_SolidFlags(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_SolidFlags(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
 
-	private static void SendProxy_Solid(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_Solid(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
 #endif

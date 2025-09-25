@@ -15,15 +15,15 @@ public partial class BaseEntity : IServerEntity
 {
 	public const int TEAMNUM_NUM_BITS = 15; // < gmod increased 6 -> 15
 
-	private static void SendProxy_AnimTime(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID)
+	private static void SendProxy_AnimTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)
 		=> throw new NotImplementedException();
-	private static void SendProxy_SimulationTime(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID)
+	private static void SendProxy_SimulationTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)
 		=> throw new NotImplementedException();
 
 	public static SendTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		SendPropInt (FIELDOF(nameof(AnimTime)), 8, PropFlags.Unsigned|PropFlags.ChangesOften|PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_AnimTime),
 	]);
-	public static object? SendProxy_ClientSideAnimation(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+	public static object? SendProxy_ClientSideAnimation(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();
 	}
 	public static SendTable DT_PredictableId = new(nameof(DT_PredictableId), [
@@ -99,13 +99,13 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELDOF(nameof(MapCreatedID)), 16),
 	]);
 
-	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		Warning("SendProxy_OverrideMaterial not yet implemented\n");
 	}
-	private static void SendProxy_Angles(SendProp prop, object instance, FieldInfo field, ref DVariant outData, int element, int objectID) {
+	private static void SendProxy_Angles(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		Warning("SendProxy_Angles not yet implemented\n");
 	}
-	private static object? SendProxy_SendPredictableId(SendProp prop, object instance, FieldInfo data, SendProxyRecipients recipients, int objectID) {
+	private static object? SendProxy_SendPredictableId(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		Warning("SendProxy_SendPredictableId not yet implemented\n");
 		return null;
 	}

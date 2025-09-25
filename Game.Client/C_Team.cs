@@ -23,7 +23,7 @@ public class C_Team : C_BaseEntity
 
 	}
 
-	private static void RecvProxy_PlayerList(ref readonly RecvProxyData data, object instance, FieldInfo field) {
+	private static void RecvProxy_PlayerList(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 
 	}
 
