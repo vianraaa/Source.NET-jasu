@@ -37,21 +37,21 @@ public class CollisionProperty
 #if CLIENT_DLL
 
 	private static void RecvProxy_VectorDirtySurround(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Vector3 vecold = field.GetValueFast<Vector3>(instance);
+		Vector3 vecold = field.GetValue<Vector3>(instance);
 		Vector3 vecnew = data.Value.Vector;
 		if (vecold != vecnew) {
-			field.SetValueFast(instance, in vecnew);
+			field.SetValue(instance, in vecnew);
 			((CollisionProperty)instance)!.MarkSurroundingBoundsDirty();
 		}
 	}
 
 
 	private static void RecvProxy_SolidFlags(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValueFast(instance, data.Value.Int);
+		field.SetValue(instance, data.Value.Int);
 	}
 
 	private static void RecvProxy_Solid(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValueFast(instance, data.Value.Int);
+		field.SetValue(instance, data.Value.Int);
 	}
 
 	private static void RecvProxy_OBBMinsPreScaled(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {

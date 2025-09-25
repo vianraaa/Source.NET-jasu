@@ -13,7 +13,7 @@ namespace Game.Client;
 public static class RecvProxy
 {
 	public static void RecvProxy_IntToPredictableId(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		PredictableId pId = field.GetValueFast<PredictableId>(instance);
+		PredictableId pId = field.GetValue<PredictableId>(instance);
 		pId.SetRaw(data.Value.Int);
 	}
 	public static RecvProp RecvPropPredictableId(IFieldAccessor field) {
@@ -26,7 +26,7 @@ public static class RecvProxy
 			Assert(modelIndex > -20000);
 			modelIndex = -2 - ((-2 - modelIndex) << 1);
 		}
-		field.SetValueFast<short>(instance, unchecked((short)modelIndex));
+		field.SetValue<short>(instance, unchecked((short)modelIndex));
 	}
 	public static RecvProp RecvPropTime(IFieldAccessor field) {
 		return RecvPropFloat(field);
@@ -34,7 +34,7 @@ public static class RecvProxy
 	public static RecvProp RecvPropBool(IFieldAccessor field) => RecvPropInt(field);
 
 	public static void RecvProxy_IntToMoveParent(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		EHANDLE handle = field.GetValueFast<EHANDLE>(instance);
+		EHANDLE handle = field.GetValue<EHANDLE>(instance);
 		RecvProxy_IntToEHandle(in data, instance, field);
 	}
 }

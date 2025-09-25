@@ -624,7 +624,7 @@ public struct PropTypeFns
 	#region SendPropType.GModTable
 	public static int GModTable_CompareDeltas(SendProp prop, bf_read p1, bf_read p2) => throw new NotImplementedException();
 	public static void GModTable_Decode(ref DecodeInfo decodeInfo) {
-		var gmodtable = decodeInfo.FieldInfo.GetValueFast<GModTable>(decodeInfo.Object);
+		var gmodtable = decodeInfo.FieldInfo.GetValue<GModTable>(decodeInfo.Object);
 
 		int len = (int)decodeInfo.In.ReadUBitLong(GModTable.ENTRIES_BITS);
 		bool clear = decodeInfo.In.ReadBool();

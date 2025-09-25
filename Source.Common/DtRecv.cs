@@ -21,15 +21,15 @@ public delegate void ArrayLengthRecvProxyFn(object instance, int objectID, int c
 public static class RecvPropHelpers
 {
 	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValueFast<float>(instance, data.Value.Float);
+		field.SetValue<float>(instance, data.Value.Float);
 	}
 
 	public static void RecvProxy_VectorToVector(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValueFast<Vector3>(instance, data.Value.Vector);
+		field.SetValue<Vector3>(instance, data.Value.Vector);
 	}
 
 	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		ref Vector3 vec = ref field.GetValueRefFast<Vector3>(instance);
+		ref Vector3 vec = ref field.GetValueRef<Vector3>(instance);
 		vec.X = data.Value.Vector[0];
 		vec.Y = data.Value.Vector[1];
 	}
@@ -38,15 +38,15 @@ public static class RecvPropHelpers
 		outInstance = instance;
 	}
 
-	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked((sbyte)data.Value.Int));
-	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked((short)data.Value.Int));
-	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValueFast(instance, unchecked(data.Value.Int));
+	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((sbyte)data.Value.Int));
+	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((short)data.Value.Int));
+	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked(data.Value.Int));
 	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		field.CopyStringToField(instance, data.Value.String);
 	}
 
 	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		BaseHandle ehandle = field.GetValueFast<BaseHandle>(instance);
+		BaseHandle ehandle = field.GetValue<BaseHandle>(instance);
 
 		if (data.Value.Int == Constants.INVALID_NETWORKED_EHANDLE_VALUE) {
 			ehandle.Index = (uint)Constants.INVALID_EHANDLE_INDEX;
@@ -207,7 +207,7 @@ public static class RecvPropHelpers
 
 	private static void DataTableRecvProxy_LengthProxy(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
 		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)prop.GetExtraData()!;
-		extra.EnsureCapacityFn(instance, extra.FieldInfo.GetValueFast<object>(instance!), extra.MaxElements);
+		extra.EnsureCapacityFn(instance, extra.FieldInfo.GetValue<object>(instance!), extra.MaxElements);
 
 		outInstance = instance;
 	}
@@ -223,7 +223,7 @@ public static class RecvPropHelpers
 		Assert(iElement < extra.MaxElements);
 		
 		// TODO: This is really confusing... do we need to reconsider datatable proxies...
-		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValueFast<object>(instance!), null, objectID);
+		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValue<object>(instance!), null, objectID);
 	}
 
 	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
@@ -300,7 +300,7 @@ public static class RecvPropHelpers
 
 	public static DataTableRecvVarProxyFn RECV_GET_OBJECT_AT_FIELD(IFieldAccessor field) {
 		return (RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) => {
-			outInstance = field.GetValueFast<object>(instance);
+			outInstance = field.GetValue<object>(instance);
 		};
 	}
 

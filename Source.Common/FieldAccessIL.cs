@@ -11,14 +11,6 @@ namespace Source.Common;
 
 public static class FieldAccess
 {
-	public static T GetValueFast<T>(this IFieldAccessor field, object instance) => FieldAccess<T>.Getter(field)(instance);
-	public static ref T GetValueRefFast<T>(this IFieldAccessor field, object instance) => ref FieldAccess<T>.RefGetter(field)(instance);
-	public static void SetValueFast<T>(this IFieldAccessor field, object instance, in T value) => FieldAccess<T>.Setter(field)(instance, in value);
-
-	public static void CopyStringToField(this IFieldAccessor field, object instance, string? str) {
-		Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
-	}
-
 	static readonly Dictionary<Type, bool> linearTypeResults = [];
 	internal static bool TypesFieldsAreCompletelyLinear(Type baseFieldType) {
 		if (linearTypeResults.TryGetValue(baseFieldType, out bool ret))
@@ -52,6 +44,15 @@ public interface IFieldAccessor : IFieldILGenerator
 	public bool IsStatic { get; }
 	public Type DeclaringType { get; }
 	public Type FieldType { get; }
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(this)(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public ref T GetValueRef<T>(object instance) => ref FieldAccess<T>.RefGetter(this)(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(this)(instance, in value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void CopyStringToField(object instance, string? str) => Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
 }
 
 public static class FieldAccess<T>
