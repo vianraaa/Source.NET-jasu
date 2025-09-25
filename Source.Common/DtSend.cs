@@ -494,8 +494,10 @@ public class SendProp : IDataTableProp
 	PropFlags Flags;
 	SendTable? DataTable;
 
-	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
-	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public T GetValue<T>(object instance) => FieldInfo.GetValue<T>(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetValue<T>(object instance, in T value) => FieldInfo.SetValue(instance, in value);
 
 	public SendProp? GetArrayProp() {
 		return ArrayProp;

@@ -1,5 +1,10 @@
-﻿using System.Diagnostics;
+﻿using CommunityToolkit.HighPerformance;
+
+using SharpCompress.Common;
+
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -9,6 +14,23 @@ using static Source.Common.Formats.Keyvalues.KeyValues;
 
 namespace Source.Common;
 
+public static class DynamicConversion
+{
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void CastConvert<From, To>(in From from, ref To to) => DynamicConversion<From, To>.CastConvert(in from, ref to);
+}
+
+delegate To CastFn<From, To>(in From from);
+public static class DynamicConversion<From, To> {
+	static CastFn<From, To> castFn;
+	static DynamicConversion() {
+		var param = Expression.Parameter(typeof(From));
+		var body = Expression.Convert(param, typeof(To));
+		castFn = Expression.Lambda<CastFn<From, To>>(body, param).Compile();
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void CastConvert(in From from, ref To to) => to = castFn(in from);
+}
 public static class FieldAccess
 {
 	static readonly Dictionary<Type, bool> linearTypeResults = [];
@@ -27,32 +49,40 @@ public static class FieldAccess
 
 		return linearTypeResults[baseFieldType] = true;
 	}
+
+	
 }
 
 public interface IFieldILGenerator {
+	public string Name { get; }
 	public void GenerateGet<T>(ILGenerator il);
 	public void GenerateGetRef<T>(ILGenerator il);
 	public void GenerateSet<T>(ILGenerator il);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T GetValue<T>(IFieldILGenerator self, object instance) => FieldAccess<T>.Getter(self)(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref T GetValueRef<T>(IFieldILGenerator self, object instance) => ref FieldAccess<T>.RefGetter(self)(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void SetValue<T>(IFieldILGenerator self, object instance, in T value) => FieldAccess<T>.Setter(self)(instance, in value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void CopyStringToField(IFieldILGenerator self, object instance, string? str) => Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
 }
 
 /// <summary>
 /// Define how to build IL methods for types.
 /// </summary>
-public interface IFieldAccessor : IFieldILGenerator
+public interface IFieldAccessor
 {
 	public string Name { get; }
 	public bool IsStatic { get; }
 	public Type DeclaringType { get; }
 	public Type FieldType { get; }
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(this)(instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ref T GetValueRef<T>(object instance) => ref FieldAccess<T>.RefGetter(this)(instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(this)(instance, in value);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void CopyStringToField(object instance, string? str) => Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
+	public T GetValue<T>(object instance);
+	public ref T GetValueRef<T>(object instance);
+	public void SetValue<T>(object instance, in T value);
+	public void CopyStringToField(object instance, string? str);
 }
 
 public static class FieldAccess<T>
@@ -61,11 +91,11 @@ public static class FieldAccess<T>
 	public delegate ref T GetRef(object o);
 	public delegate void Set(object o, in T v);
 
-	internal static readonly Dictionary<IFieldAccessor, Get> Getters = [];
-	internal static readonly Dictionary<IFieldAccessor, GetRef> RefGetters = [];
-	internal static readonly Dictionary<IFieldAccessor, Set> Setters = [];
+	internal static readonly Dictionary<IFieldILGenerator, Get> Getters = [];
+	internal static readonly Dictionary<IFieldILGenerator, GetRef> RefGetters = [];
+	internal static readonly Dictionary<IFieldILGenerator, Set> Setters = [];
 
-	public static Get Getter(IFieldAccessor field) {
+	public static Get Getter(IFieldILGenerator field) {
 		if (Getters.TryGetValue(field, out var g))
 			return g;
 
@@ -77,7 +107,7 @@ public static class FieldAccess<T>
 		return g;
 	}
 
-	public static GetRef RefGetter(IFieldAccessor field) {
+	public static GetRef RefGetter(IFieldILGenerator field) {
 		if (RefGetters.TryGetValue(field, out var g))
 			return g;
 
@@ -96,7 +126,7 @@ public static class FieldAccess<T>
 		return g;
 	}
 
-	public static Set Setter(IFieldAccessor field) {
+	public static Set Setter(IFieldILGenerator field) {
 		if (Setters.TryGetValue(field, out var s))
 			return s;
 
@@ -117,9 +147,8 @@ public enum ArrayFieldType
 	Vector3
 }
 
-public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor
+public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor, IFieldILGenerator
 {
-
 	public string Name => Field.Name;
 	public bool IsStatic => Field.IsStatic;
 	public Type DeclaringType => Field.DeclaringType!;
@@ -180,9 +209,18 @@ public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor
 			il.Emit(OpCodes.Stsfld, Field);
 		}
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
 
-public class ArrayFieldIndexInfo : IFieldAccessor
+public class ArrayFieldIndexInfo : IFieldAccessor, IFieldILGenerator
 {
 	public readonly ArrayFieldInfo BaseArrayField;
 	public readonly Type ElementType;
@@ -311,8 +349,17 @@ public class ArrayFieldIndexInfo : IFieldAccessor
 
 		il.Emit(OpCodes.Ret);
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
-public class ArrayFieldInfo : IFieldAccessor
+public class ArrayFieldInfo : IFieldAccessor, IFieldILGenerator
 {
 	public readonly Dictionary<long, ArrayFieldIndexInfo> FieldAccessors = [];
 
@@ -363,44 +410,40 @@ public class ArrayFieldInfo : IFieldAccessor
 		return ret;
 	}
 
-	public void GenerateGet<T>(ILGenerator il) {
-		throw new NotImplementedException();
-	}
+	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
+	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
 
-	public void GenerateGetRef<T>(ILGenerator il) {
-		throw new NotImplementedException();
-	}
-
-	public void GenerateSet<T>(ILGenerator il) {
-		throw new NotImplementedException();
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
 }
 
-public class StructElementFieldInfo<InstanceType, RefType> : IFieldAccessor
+public class DirectAccessor<Instance, Ref>(GetRefFn<Instance, Ref> accessor, string name) : IFieldAccessor
 {
-	GetRefFn<InstanceType, RefType> getRef;
-	public StructElementFieldInfo(GetRefFn<InstanceType, RefType> getRef) {
-		this.getRef = getRef;
+	public string Name => name;
+	public bool IsStatic => false;
+	public Type DeclaringType => typeof(Instance);
+	public Type FieldType => typeof(Ref);
+
+	public void CopyStringToField(object instance, string? str) {
+		Warning("CopyStringToField needs work\n");
 	}
-
-	public string Name => throw new NotImplementedException();
-
-	public bool IsStatic => throw new NotImplementedException();
-
-	public Type DeclaringType => throw new NotImplementedException();
-
-	public Type FieldType => throw new NotImplementedException();
-
-	public void GenerateGet<T>(ILGenerator il) {
-		throw new NotImplementedException();
+	public ref T GetValueRef<T>(object instance)=> throw new NotImplementedException("There's no good way to do this right now. TODO: If we run into this, consider removing it altogether in favor of get/sets.");
+	public T GetValue<T>(object instance) {
+		ref Ref valueRef = ref accessor((Instance)instance);
+		T output = default;
+		DynamicConversion.CastConvert(in valueRef, ref output);
+		return output;
 	}
-
-	public void GenerateGetRef<T>(ILGenerator il) {
-		throw new NotImplementedException();
-	}
-
-	public void GenerateSet<T>(ILGenerator il) {
-		throw new NotImplementedException();
+	public void SetValue<T>(object instance, in T value) {
+		ref Ref valueRef = ref accessor((Instance)instance);
+		DynamicConversion.CastConvert(in value, ref valueRef);
 	}
 }
 
@@ -416,6 +459,13 @@ public static class FieldAccessReflectionUtils
 			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
 			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
+	}
+	public static string ParseNameField(string name) {
+		ArgumentNullException.ThrowIfNull(name);
+		throw new NotImplementedException();
+	}
+	public static DirectAccessor<Instance, Ref> FIELDOF<Instance, Ref>(GetRefFn<Instance, Ref> exp, [CallerArgumentExpression(nameof(exp))] string? expName = null) {
+		return new DirectAccessor<Instance, Ref>(exp, ParseNameField(expName));
 	}
 	/// <summary>
 	/// Generic C# <see cref="FieldInfo"/> retrieval.

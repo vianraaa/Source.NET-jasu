@@ -339,8 +339,10 @@ public class RecvProp : IDataTableProp
 	public int GetOffset() => Offset;
 	public void SetOffset(int value) => Offset = value;
 
-	public T GetValue<T>(object instance) => FieldAccess<T>.Getter(FieldInfo)(instance);
-	public void SetValue<T>(object instance, in T value) => FieldAccess<T>.Setter(FieldInfo)(instance, value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public T GetValue<T>(object instance) => FieldInfo.GetValue<T>(instance);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetValue<T>(object instance, in T value) => FieldInfo.SetValue(instance, in value);
 
 	public RecvVarProxyFn GetProxyFn() => ProxyFn;
 	public void SetProxyFn(RecvVarProxyFn fn) => ProxyFn = fn;
