@@ -304,14 +304,14 @@ namespace Source.Common
 	public class DynamicArrayIndexAccessor : DynamicAccessor
 	{
 		public readonly DynamicArrayAccessor BaseArrayAccessor;
-		public readonly bool HadNegativeIndex;
+		public readonly bool IsAVectorElement;
 
 		public override int Index { get; }
 
-		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index) : base(baseArray.TargetType, $"{baseArray.Name}[{Math.Abs(index)}]") {
+		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index, bool isVector = false) : base(baseArray.TargetType, $"{baseArray.Name}[{Math.Abs(index)}]") {
 			BaseArrayAccessor = baseArray;
 			Index = Math.Abs(index);
-			HadNegativeIndex = index < 0;
+			IsAVectorElement = isVector;
 		}
 	}
 
@@ -599,6 +599,6 @@ namespace Source
 		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index = 0) => new(OF_ARRAY(expression), index);
-		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), -index);
+		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index, true);
 	}
 }

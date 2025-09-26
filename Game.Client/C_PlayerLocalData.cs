@@ -60,7 +60,26 @@ public class C_PlayerLocalData
 		RecvPropInt(FIELD.OF("Audio.SoundscapeIndex")),
 		RecvPropInt(FIELD.OF("Audio.LocalBits")),
 		RecvPropEHandle( FIELD.OF("Audio.Ent")),
+
+		// gmod data
+		RecvPropFloat(FIELD.OF(nameof(SprintSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(WalkSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(SlowWalkSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(LadderSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(CrouchedWalkSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(DuckSpeed))),
+		RecvPropFloat(FIELD.OF(nameof(UnDuckSpeed))),
+		RecvPropBool(FIELD.OF(nameof(DuckToggled))),
 	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
+
+	public float SprintSpeed;
+	public float WalkSpeed;
+	public float SlowWalkSpeed;
+	public float LadderSpeed;
+	public float CrouchedWalkSpeed;
+	public float DuckSpeed;
+	public float UnDuckSpeed;
+	public bool DuckToggled;
 
 	// TODO: NETWORK VARS!!!!!
 	public InlineArrayMaxAreaStateBytes<byte> AreaBits;

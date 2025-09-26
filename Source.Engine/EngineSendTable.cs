@@ -90,7 +90,7 @@ public class EngineSendTable(DtCommonEng DtCommonEng)
 				prop.SetOffset(-prop.GetOffset());
 				prop.SetFlags(prop.GetFlags() | PropFlags.IsAVectorElem);
 			}
-			else if (prop.FieldInfo is DynamicArrayIndexAccessor afii && afii.HadNegativeIndex)
+			else if (prop.FieldInfo is DynamicArrayIndexAccessor afii && afii.IsAVectorElement)
 				prop.SetFlags(prop.GetFlags() | PropFlags.IsAVectorElem);
 		}
 	}

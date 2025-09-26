@@ -27,7 +27,7 @@ public class PlayerLocalData
 		SendPropFloat(FIELD.OF(nameof(DuckTime)), 12, PropFlags.ChangesOften, 0.0f, 2048.0f),
 		SendPropFloat(FIELD.OF(nameof(DuckJumpTime)), 12, PropFlags.RoundDown, 0.0f, 2048.0f),
 		SendPropFloat(FIELD.OF(nameof(JumpTime)), 12, PropFlags.RoundDown, 0.0f, 2048.0f),
-		SendPropFloat(FIELD.OF(nameof(FallVelocity)), 17, PropFlags.ChangesOften, -4096.0f, 4096.0f),
+		SendPropFloat(FIELD.OF(nameof(FallVelocity)), 32, PropFlags.NoScale | PropFlags.ChangesOften, -4096.0f, 4096.0f),
 		SendPropVector(FIELD.OF(nameof(PunchAngle)), -1,  PropFlags.Coord|PropFlags.ChangesOften),
 		SendPropVector(FIELD.OF(nameof(PunchAngleVel)), -1,  PropFlags.Coord),
 		SendPropInt(FIELD.OF(nameof(DrawViewmodel)), 1, PropFlags.Unsigned),
@@ -61,8 +61,25 @@ public class PlayerLocalData
 		SendPropInt(FIELD.OF("Audio.SoundscapeIndex"), 17, 0),
 		SendPropInt(FIELD.OF("Audio.LocalBits"), NUM_AUDIO_LOCAL_SOUNDS, PropFlags.Unsigned),
 		SendPropEHandle(FIELD.OF("Audio.Ent")),
+
+		SendPropFloat(FIELD.OF(nameof(SprintSpeed))),
+		SendPropFloat(FIELD.OF(nameof(WalkSpeed))),
+		SendPropFloat(FIELD.OF(nameof(SlowWalkSpeed))),
+		SendPropFloat(FIELD.OF(nameof(LadderSpeed))),
+		SendPropFloat(FIELD.OF(nameof(CrouchedWalkSpeed))),
+		SendPropFloat(FIELD.OF(nameof(DuckSpeed))),
+		SendPropFloat(FIELD.OF(nameof(UnDuckSpeed))),
+		SendPropBool(FIELD.OF(nameof(DuckToggled))),
 	]); public static readonly ServerClass CC_Local = new("Local", DT_Local);
 
+	public float SprintSpeed;
+	public float WalkSpeed;
+	public float SlowWalkSpeed;
+	public float LadderSpeed;
+	public float CrouchedWalkSpeed;
+	public float DuckSpeed;
+	public float UnDuckSpeed;
+	public bool DuckToggled;
 
 	// TODO: NETWORK VARS!!!!!
 	public InlineArrayMaxAreaStateBytes<byte> AreaBits;
