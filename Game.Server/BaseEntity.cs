@@ -16,18 +16,6 @@ public partial class BaseEntity : IServerEntity
 {
 	public const int TEAMNUM_NUM_BITS = 15; // < gmod increased 6 -> 15
 
-	protected static void SendProxy_OriginXY(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
-		BaseEntity entity = (BaseEntity)instance!;
-		Vector3 v = entity.GetLocalOrigin();
-		outData.Vector[0] = v.X;
-		outData.Vector[1] = v.Y;
-	}
-	protected static void SendProxy_OriginZ(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
-		BaseEntity entity = (BaseEntity)instance!;
-		Vector3 v = entity.GetLocalOrigin();
-		outData.Float = v.Z;
-	}
-
 	private static void SendProxy_AnimTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)
 		=> throw new NotImplementedException();
 	private static void SendProxy_SimulationTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)

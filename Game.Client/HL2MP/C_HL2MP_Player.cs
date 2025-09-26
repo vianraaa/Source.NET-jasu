@@ -11,19 +11,17 @@ using FIELD = FIELD<C_HL2MP_Player>;
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
 	public static readonly RecvTable DT_HL2MPLocalPlayerExclusive = new([
-		RecvPropVectorXY(FIELD.OF(nameof(Origin))),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Origin), 2)),
+		RecvPropVector(FIELD.OF(nameof(Origin))),
 
-		RecvPropFloat(FIELD.OF("EyeAngles[0]")),
-		RecvPropFloat(FIELD.OF("EyeAngles[1]")),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1)),
 	]); public static readonly ClientClass CC_HL2MPLocalPlayerExclusive = new ClientClass("HL2MPLocalPlayerExclusive", null, null, DT_HL2MPLocalPlayerExclusive);
 
 	public static readonly RecvTable DT_HL2MPNonLocalPlayerExclusive = new([
-		RecvPropVectorXY(FIELD.OF(nameof(Origin)) ),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Origin), 2)),
+		RecvPropVector(FIELD.OF(nameof(Origin))),
 
-		RecvPropFloat(FIELD.OF("EyeAngles[0]")),
-		RecvPropFloat(FIELD.OF("EyeAngles[1]")),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1)),
 	]); public static readonly ClientClass CC_HL2MPNonLocalPlayerExclusive = new ClientClass("HL2MPNonLocalPlayerExclusive", null, null, DT_HL2MPNonLocalPlayerExclusive);
 
 

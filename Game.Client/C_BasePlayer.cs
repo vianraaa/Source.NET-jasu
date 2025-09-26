@@ -24,9 +24,6 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropInt(FIELD.OF(nameof(NextThinkTick))),
 		RecvPropEHandle(FIELD.OF(nameof(LastWeapon))),
 		RecvPropEHandle(FIELD.OF(nameof(GroundEntity))),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 0)),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 1)),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 2)),
 		RecvPropVector(FIELD.OF(nameof(BaseVelocity))),
 		RecvPropEHandle(FIELD.OF(nameof(ConstraintEntity))),
 		RecvPropVector(FIELD.OF(nameof(ConstraintCenter))),
@@ -36,7 +33,21 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropFloat(FIELD.OF(nameof(DeathTime))),
 		RecvPropInt(FIELD.OF(nameof(WaterLevel))),
 		RecvPropFloat(FIELD.OF(nameof(LaggedMovementValue))),
-	]); public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
+	]);
+
+	private static void RecvProxy_LocalVelocityX(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_LocalVelocityY(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
+		throw new NotImplementedException();
+	}
+
+	private static void RecvProxy_LocalVelocityZ(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
+		throw new NotImplementedException();
+	}
+
+	public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 		RecvPropDataTable(nameof(pl), FIELD.OF(nameof(pl)), DT_PlayerState),
