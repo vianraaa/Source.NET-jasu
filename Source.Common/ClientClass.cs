@@ -100,13 +100,6 @@ public class ClientClass
 }
 
 
-/// <summary>
-/// Declares a client class
-/// </summary>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class DeclareClientClass : Attribute;
-
-
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class ImplementClientClassAttribute : Attribute
 {
