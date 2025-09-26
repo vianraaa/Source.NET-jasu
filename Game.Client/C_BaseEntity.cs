@@ -74,7 +74,7 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELD.OF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
 		RecvPropInt(FIELD.OF(nameof(InterpolationFrame))),
 
-		RecvPropVector(FIELD.OF(nameof(NetworkOrigin))),
+		RecvPropVector(FIELD.OF(nameof(Origin))),
 		RecvPropQAngles(FIELD.OF(nameof(NetworkAngles))),
 
 		RecvPropInt(FIELD.OF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
@@ -247,7 +247,7 @@ public partial class C_BaseEntity : IClientEntity
 	public QAngle OldAngRotation;
 
 	public Matrix4x4 CoordinateFrame;
-	public Vector3 NetworkOrigin;
+	public Vector3 Origin;
 	public QAngle NetworkAngles;
 
 	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
@@ -414,7 +414,7 @@ public partial class C_BaseEntity : IClientEntity
 		return CoordinateFrame;
 	}
 
-	public Vector3 GetNetworkOrigin() => NetworkOrigin;
+	public Vector3 GetNetworkOrigin() => Origin;
 	public QAngle GetNetworkAngles() => NetworkAngles;
 
 	private void CalcAbsolutePosition() {

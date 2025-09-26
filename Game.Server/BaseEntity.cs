@@ -16,6 +16,18 @@ public partial class BaseEntity : IServerEntity
 {
 	public const int TEAMNUM_NUM_BITS = 15; // < gmod increased 6 -> 15
 
+	protected static void SendProxy_OriginXY(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+		BaseEntity entity = (BaseEntity)instance!;
+		Vector3 v = entity.GetLocalOrigin();
+		outData.Vector[0] = v.X;
+		outData.Vector[1] = v.Y;
+	}
+	protected static void SendProxy_OriginZ(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+		BaseEntity entity = (BaseEntity)instance!;
+		Vector3 v = entity.GetLocalOrigin();
+		outData.Float = v.Z;
+	}
+
 	private static void SendProxy_AnimTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)
 		=> throw new NotImplementedException();
 	private static void SendProxy_SimulationTime(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID)
@@ -36,7 +48,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst, SendProxy_ClientSideAnimation),
 
 		SendPropInt(FIELD.OF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_SimulationTime /* todo */),
-		SendPropVector(FIELD.OF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
+		SendPropVector(FIELD.OF(nameof(Origin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
 		SendPropInt(FIELD.OF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
 		SendPropModelIndex(FIELD.OF(nameof(ModelIndex))),
 		SendPropDataTable(nameof(Collision), FIELD.OF(nameof(Collision)), CollisionProperty.DT_CollisionProperty),
@@ -100,6 +112,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELD.OF(nameof(MapCreatedID)), 16),
 	]);
 
+	public ref readonly Vector3 GetLocalOrigin() => ref Origin;
 	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		Warning("SendProxy_OverrideMaterial not yet implemented\n");
 	}
@@ -174,12 +187,12 @@ public partial class BaseEntity : IServerEntity
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public float AnimTime;
-	float SimulationTime;
-	Vector3 NetworkOrigin;
-	Vector3 NetworkAngles;
-	byte InterpolationFrame;
-	int ModelIndex;
-	CollisionProperty Collision = new();
+	public float SimulationTime;
+	public Vector3 Origin;
+	public Vector3 NetworkAngles;
+	public byte InterpolationFrame;
+	public int ModelIndex;
+	public CollisionProperty Collision = new();
 	public float Friction;
 
 	public ICollideable? GetCollideable() {

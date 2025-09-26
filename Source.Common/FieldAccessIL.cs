@@ -308,7 +308,7 @@ namespace Source.Common
 
 		public override int Index { get; }
 
-		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index) : base(baseArray.TargetType, $"{baseArray.Name}[{index}]") {
+		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index) : base(baseArray.TargetType, $"{baseArray.Name}[{Math.Abs(index)}]") {
 			BaseArrayAccessor = baseArray;
 			Index = Math.Abs(index);
 			HadNegativeIndex = index < 0;

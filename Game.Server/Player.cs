@@ -70,6 +70,9 @@ public partial class BasePlayer : BaseCombatCharacter
 	public static object? SendProxy_SendLocalDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();
 	}
+	public static object? SendProxy_SendNonLocalDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
 
 	public static readonly new ServerClass ServerClass = new ServerClass("BasePlayer", DT_BasePlayer);
 
