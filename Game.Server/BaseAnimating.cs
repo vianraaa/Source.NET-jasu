@@ -6,7 +6,7 @@ using Source.Common;
 using System.Numerics;
 
 namespace Game.Server;
-
+using FIELD = Source.FIELD<Game.Server.BaseAnimating>;
 public class BaseAnimating : BaseEntity
 {
 	public const int ANIMATION_SEQUENCE_BITS = 12;
@@ -17,47 +17,47 @@ public class BaseAnimating : BaseEntity
 	public const int ANIMATION_PLAYBACKRATE_BITS = 8;
 
 	public static readonly SendTable DT_ServerAnimationData = new([
-		SendPropFloat(FIELDOF(nameof(Cycle)), ANIMATION_CYCLE_BITS, PropFlags.ChangesOften|PropFlags.RoundDown, 0.0f, 1.0f)
+		SendPropFloat(FIELD.OF(nameof(Cycle)), ANIMATION_CYCLE_BITS, PropFlags.ChangesOften|PropFlags.RoundDown, 0.0f, 1.0f)
 	]);
 	public static readonly ServerClass CC_ServerAnimationData = new ServerClass("ServerAnimationData", DT_ServerAnimationData);
 	public static readonly SendTable DT_BaseAnimating = new(DT_BaseEntity, [
-		SendPropInt( FIELDOF(nameof(ForceBone)), 8, 0 ),
-		SendPropVector( FIELDOF(nameof(Force)), 0, PropFlags.NoScale ),
+		SendPropInt( FIELD.OF(nameof(ForceBone)), 8, 0 ),
+		SendPropVector( FIELD.OF(nameof(Force)), 0, PropFlags.NoScale ),
 
-		SendPropInt( FIELDOF(nameof(Skin)), ANIMATION_SKIN_BITS),
-		SendPropInt( FIELDOF(nameof(Body)), ANIMATION_BODY_BITS),
+		SendPropInt( FIELD.OF(nameof(Skin)), ANIMATION_SKIN_BITS),
+		SendPropInt( FIELD.OF(nameof(Body)), ANIMATION_BODY_BITS),
 
-		SendPropInt( FIELDOF(nameof(HitboxSet)),ANIMATION_HITBOXSET_BITS, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof(HitboxSet)),ANIMATION_HITBOXSET_BITS, PropFlags.Unsigned ),
 
-		SendPropFloat( FIELDOF(nameof(ModelScale)) ),
+		SendPropFloat( FIELD.OF(nameof(ModelScale)) ),
 
-		SendPropArray3( FIELDOF_ARRAY(nameof(PoseParameter)), SendPropFloat(null!, ANIMATION_POSEPARAMETER_BITS, 0, 0.0f, 1.0f ) ),
+		SendPropArray3( FIELD.OF_ARRAY(nameof(PoseParameter)), SendPropFloat(null!, ANIMATION_POSEPARAMETER_BITS, 0, 0.0f, 1.0f ) ),
 
-		SendPropInt( FIELDOF(nameof(Sequence)), ANIMATION_SEQUENCE_BITS, PropFlags.Unsigned ),
-		SendPropFloat( FIELDOF(nameof(PlaybackRate)), ANIMATION_PLAYBACKRATE_BITS, PropFlags.RoundUp, -4.0f, 12.0f ),
+		SendPropInt( FIELD.OF(nameof(Sequence)), ANIMATION_SEQUENCE_BITS, PropFlags.Unsigned ),
+		SendPropFloat( FIELD.OF(nameof(PlaybackRate)), ANIMATION_PLAYBACKRATE_BITS, PropFlags.RoundUp, -4.0f, 12.0f ),
 
-		SendPropArray3(FIELDOF_ARRAY(nameof(EncodedController)), SendPropFloat(null!, 11, PropFlags.RoundDown, 0.0f, 1.0f ) ),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(EncodedController)), SendPropFloat(null!, 11, PropFlags.RoundDown, 0.0f, 1.0f ) ),
 
-		SendPropInt( FIELDOF(nameof( ClientSideAnimation )), 1, PropFlags.Unsigned ),
-		SendPropInt( FIELDOF(nameof( ClientSideFrameReset )), 1, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof( ClientSideAnimation )), 1, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof( ClientSideFrameReset )), 1, PropFlags.Unsigned ),
 
-		SendPropInt( FIELDOF(nameof( NewSequenceParity) ), (int)EntityEffects.ParityBits, PropFlags.Unsigned ),
-		SendPropInt( FIELDOF(nameof( ResetEventsParity )), (int)EntityEffects.ParityBits, PropFlags.Unsigned ),
-		SendPropInt( FIELDOF(nameof( MuzzleFlashParity )), (int)EntityEffects.MuzzleflashBits, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof( NewSequenceParity) ), (int)EntityEffects.ParityBits, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof( ResetEventsParity )), (int)EntityEffects.ParityBits, PropFlags.Unsigned ),
+		SendPropInt( FIELD.OF(nameof( MuzzleFlashParity )), (int)EntityEffects.MuzzleflashBits, PropFlags.Unsigned ),
 
-		SendPropEHandle( FIELDOF(nameof( LightingOrigin )) ),
-		SendPropEHandle( FIELDOF(nameof( LightingOriginRelative )) ),
+		SendPropEHandle( FIELD.OF(nameof( LightingOrigin )) ),
+		SendPropEHandle( FIELD.OF(nameof( LightingOriginRelative )) ),
 
 		SendPropDataTable( "serveranimdata", DT_ServerAnimationData, SendProxy_ClientSideAnimation ),
 
-		SendPropFloat( FIELDOF(nameof(FadeMinDist) ), 0, PropFlags.NoScale ),
-		SendPropFloat( FIELDOF(nameof(FadeMaxDist )), 0, PropFlags.NoScale ),
-		SendPropFloat( FIELDOF(nameof(FadeScale )), 0, PropFlags.NoScale ),
+		SendPropFloat( FIELD.OF(nameof(FadeMinDist) ), 0, PropFlags.NoScale ),
+		SendPropFloat( FIELD.OF(nameof(FadeMaxDist )), 0, PropFlags.NoScale ),
+		SendPropFloat( FIELD.OF(nameof(FadeScale )), 0, PropFlags.NoScale ),
 
 		// Gmod specific
-		SendPropEHandle(FIELDOF(nameof(BoneManipulator))),
-		SendPropEHandle(FIELDOF(nameof(FlexManipulator))),
-		SendPropVector(FIELDOF(nameof(OverrideViewTarget)), 0, PropFlags.NoScale),
+		SendPropEHandle(FIELD.OF(nameof(BoneManipulator))),
+		SendPropEHandle(FIELD.OF(nameof(FlexManipulator))),
+		SendPropVector(FIELD.OF(nameof(OverrideViewTarget)), 0, PropFlags.NoScale),
 	]);
 	public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimating", DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
 

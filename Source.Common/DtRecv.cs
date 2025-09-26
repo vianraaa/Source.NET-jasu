@@ -29,9 +29,10 @@ public static class RecvPropHelpers
 	}
 
 	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		ref Vector3 vec = ref field.GetValueRef<Vector3>(instance);
+		Vector3 vec = field.GetValue<Vector3>(instance);
 		vec.X = data.Value.Vector[0];
 		vec.Y = data.Value.Vector[1];
+		field.SetValue(instance, vec);
 	}
 
 	public static void DataTableRecvProxy_StaticDataTable(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
@@ -42,7 +43,7 @@ public static class RecvPropHelpers
 	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((short)data.Value.Int));
 	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked(data.Value.Int));
 	public static void RecvProxy_StringToString(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.CopyStringToField(instance, data.Value.String);
+		Warning("TODO: RecvProxy_StringToString!!!!\n");
 	}
 
 	public static void RecvProxy_IntToEHandle(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
@@ -249,7 +250,7 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	public static RecvProp RecvPropArray3(ArrayFieldInfo field, RecvProp arrayProp, DataTableRecvVarProxyFn? varProxy = null) {
+	public static RecvProp RecvPropArray3(DynamicArrayAccessor field, RecvProp arrayProp, DataTableRecvVarProxyFn? varProxy = null) {
 		varProxy ??= DataTableRecvProxy_StaticDataTable;
 
 		RecvProp ret = new();
@@ -266,7 +267,7 @@ public static class RecvPropHelpers
 
 		for (int i = 0; i < elements; i++) {
 			props[i] = arrayProp.Copy();
-			props[i].FieldInfo = new ArrayFieldIndexInfo(field, i);
+			// TODO SUPER TODO IMPORTANT props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
 			props[i].NameOverride = ClientElementNames[i];
 			props[i].SetParentArrayPropName(field.Name);
 		}

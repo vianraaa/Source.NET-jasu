@@ -4,13 +4,15 @@ using Game.Shared;
 using System.Reflection;
 
 namespace Game.Server;
+using FIELD = Source.FIELD<Team>;
+
 public class Team : BaseEntity
 {
 	public static readonly SendTable DT_Team = new([
-		SendPropInt(FIELDOF(nameof(TeamNum)), 5),
-		SendPropInt(FIELDOF(nameof(Score)), 0),
-		SendPropInt(FIELDOF(nameof(RoundsWon)), 8),
-		SendPropString(FIELDOF(nameof(Teamname))),
+		SendPropInt(FIELD.OF(nameof(TeamNum)), 5),
+		SendPropInt(FIELD.OF(nameof(Score)), 0),
+		SendPropInt(FIELD.OF(nameof(RoundsWon)), 8),
+		SendPropString(FIELD.OF(nameof(Teamname))),
 
 		SendPropInt("player_array_element", 10, PropFlags.Unsigned, SendProxy_PlayerList, 4),
 		SendPropArray2(SendProxyArrayLength_PlayerArray, Constants.MAX_PLAYERS, "player_array")

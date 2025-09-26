@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Game.Server;
+using FIELD = Source.FIELD<BaseEntity>;
 
 public partial class BaseEntity : IServerEntity
 {
@@ -21,82 +22,82 @@ public partial class BaseEntity : IServerEntity
 		=> throw new NotImplementedException();
 
 	public static SendTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
-		SendPropInt (FIELDOF(nameof(AnimTime)), 8, PropFlags.Unsigned|PropFlags.ChangesOften|PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_AnimTime),
+		SendPropInt (FIELD.OF(nameof(AnimTime)), 8, PropFlags.Unsigned|PropFlags.ChangesOften|PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_AnimTime),
 	]);
 	public static object? SendProxy_ClientSideAnimation(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();
 	}
 	public static SendTable DT_PredictableId = new(nameof(DT_PredictableId), [
-		SendPropPredictableId(FIELDOF(nameof(PredictableID))),
-		SendPropInt(FIELDOF(nameof(IsPlayerSimulated)), 1, PropFlags.Unsigned)
+		SendPropPredictableId(FIELD.OF(nameof(PredictableID))),
+		SendPropInt(FIELD.OF(nameof(IsPlayerSimulated)), 1, PropFlags.Unsigned)
 	]);
 
 	public static SendTable DT_BaseEntity = new([
 		SendPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst, SendProxy_ClientSideAnimation),
 
-		SendPropInt(FIELDOF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_SimulationTime /* todo */),
-		SendPropVector(FIELDOF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
-		SendPropInt(FIELDOF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
-		SendPropModelIndex(FIELDOF(nameof(ModelIndex))),
-		SendPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty),
-		SendPropInt(FIELDOF(nameof(RenderFX)), 8, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(RenderMode)), 8, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(Effects)), (int)EntityEffects.MaxBits, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(ColorRender)), 32, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(TeamNum)), TEAMNUM_NUM_BITS, 0),
-		SendPropInt(FIELDOF(nameof(CollisionGroup)), 5, PropFlags.Unsigned),
-		SendPropFloat(FIELDOF(nameof(Elasticity)), 0, PropFlags.Coord | PropFlags.NoScale),
-		SendPropFloat(FIELDOF(nameof(ShadowCastDistance)), 12, PropFlags.Unsigned),
-		SendPropEHandle(FIELDOF(nameof(OwnerEntity))),
-		SendPropEHandle(FIELDOF(nameof(EffectEntity))),
-		SendPropEHandle(FIELDOF(nameof(MoveParent))),
-		SendPropInt(FIELDOF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
-		SendPropInt(FIELDOF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
-		SendPropQAngles (FIELDOF(nameof(AngRotation)), 24, PropFlags.ChangesOften | PropFlags.RoundDown, SendProxy_Angles ),
-		SendPropInt( FIELDOF(nameof( TextureFrameIndex) ),     8, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(SimulationTime)), SIMULATION_TIME_WINDOW_BITS, PropFlags.Unsigned | PropFlags.ChangesOften | PropFlags.EncodedAgainstTickCount, proxyFn: SendProxy_SimulationTime /* todo */),
+		SendPropVector(FIELD.OF(nameof(NetworkOrigin)), -1, PropFlags.Coord | PropFlags.ChangesOften, 0, Constants.HIGH_DEFAULT, proxyFn: null /* todo */),
+		SendPropInt(FIELD.OF(nameof(InterpolationFrame)), NOINTERP_PARITY_MAX_BITS, PropFlags.Unsigned),
+		SendPropModelIndex(FIELD.OF(nameof(ModelIndex))),
+		SendPropDataTable(nameof(Collision), FIELD.OF(nameof(Collision)), CollisionProperty.DT_CollisionProperty),
+		SendPropInt(FIELD.OF(nameof(RenderFX)), 8, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(RenderMode)), 8, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(Effects)), (int)EntityEffects.MaxBits, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(ColorRender)), 32, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(TeamNum)), TEAMNUM_NUM_BITS, 0),
+		SendPropInt(FIELD.OF(nameof(CollisionGroup)), 5, PropFlags.Unsigned),
+		SendPropFloat(FIELD.OF(nameof(Elasticity)), 0, PropFlags.Coord | PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(ShadowCastDistance)), 12, PropFlags.Unsigned),
+		SendPropEHandle(FIELD.OF(nameof(OwnerEntity))),
+		SendPropEHandle(FIELD.OF(nameof(EffectEntity))),
+		SendPropEHandle(FIELD.OF(nameof(MoveParent))),
+		SendPropInt(FIELD.OF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
+		SendPropQAngles (FIELD.OF(nameof(AngRotation)), 24, PropFlags.ChangesOften | PropFlags.RoundDown, SendProxy_Angles ),
+		SendPropInt( FIELD.OF(nameof( TextureFrameIndex) ),     8, PropFlags.Unsigned ),
 		SendPropDataTable( "predictable_id", DT_PredictableId, SendProxy_SendPredictableId ),
-		SendPropInt(FIELDOF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),
-		SendPropInt(FIELDOF(nameof(AnimatedEveryTick)),        1, PropFlags.Unsigned ),
-		SendPropBool( FIELDOF(nameof( AlternateSorting ))),
+		SendPropInt(FIELD.OF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(AnimatedEveryTick)),        1, PropFlags.Unsigned ),
+		SendPropBool( FIELD.OF(nameof( AlternateSorting ))),
 
 		// The rest of this is Garry's Mod specific in order
-		SendPropInt(FIELDOF(nameof(TakeDamage)), 8),
-		SendPropInt(FIELDOF(nameof(RealClassName)), 16, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(TakeDamage)), 8),
+		SendPropInt(FIELD.OF(nameof(RealClassName)), 16, PropFlags.Unsigned),
 
-		SendPropInt(FIELDOF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
+		SendPropInt(FIELD.OF(nameof(OverrideMaterial)), 16, PropFlags.Unsigned, SendProxy_OverrideMaterial),
 
-		SendPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), 16, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), 16, PropFlags.Unsigned),
 		SendPropArray2(null, 32, "OverrideSubMaterials"),
 
-		SendPropInt(FIELDOF(nameof(Health)), 32, PropFlags.Normal | PropFlags.ChangesOften | PropFlags.VarInt),
-		SendPropInt(FIELDOF(nameof(MaxHealth)), 32),
-		SendPropInt(FIELDOF(nameof(SpawnFlags)), 32),
-		SendPropInt(FIELDOF(nameof(GModFlags)), 7),
-		SendPropBool(FIELDOF(nameof(OnFire))),
-		SendPropFloat(FIELDOF(nameof(CreationTime)), 0, PropFlags.NoScale),
+		SendPropInt(FIELD.OF(nameof(Health)), 32, PropFlags.Normal | PropFlags.ChangesOften | PropFlags.VarInt),
+		SendPropInt(FIELD.OF(nameof(MaxHealth)), 32),
+		SendPropInt(FIELD.OF(nameof(SpawnFlags)), 32),
+		SendPropInt(FIELD.OF(nameof(GModFlags)), 7),
+		SendPropBool(FIELD.OF(nameof(OnFire))),
+		SendPropFloat(FIELD.OF(nameof(CreationTime)), 0, PropFlags.NoScale),
 
-		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0), 0, PropFlags.NoScale | PropFlags.ChangesOften),
-		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1), 0, PropFlags.NoScale | PropFlags.ChangesOften),
-		SendPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 0), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 1), 0, PropFlags.NoScale | PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 2), 0, PropFlags.NoScale | PropFlags.ChangesOften),
 
-		SendPropGModTable(FIELDOF(nameof(GMOD_DataTable))),
+		SendPropGModTable(FIELD.OF(nameof(GMOD_DataTable))),
 
 		// Addon exposed data tables
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_bool)), SendPropBool(FIELDOF_ARRAYINDEX(nameof(GMOD_bool), 0))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_float)), SendPropFloat(FIELDOF_ARRAYINDEX(nameof(GMOD_float), 0))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_int)), SendPropInt(FIELDOF_ARRAYINDEX(nameof(GMOD_int), 0))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_Vector)),SendPropVector(FIELDOF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_QAngle)), SendPropQAngles(FIELDOF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(GMOD_EHANDLE)), SendPropEHandle(FIELDOF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
-		SendPropString(FIELDOF(nameof(GMOD_String0))),
-		SendPropString(FIELDOF(nameof(GMOD_String1))),
-		SendPropString(FIELDOF(nameof(GMOD_String2))),
-		SendPropString(FIELDOF(nameof(GMOD_String3))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_bool)), SendPropBool(FIELD.OF_ARRAYINDEX(nameof(GMOD_bool), 0))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_float)), SendPropFloat(FIELD.OF_ARRAYINDEX(nameof(GMOD_float), 0))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_int)), SendPropInt(FIELD.OF_ARRAYINDEX(nameof(GMOD_int), 0))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_Vector)),SendPropVector(FIELD.OF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_QAngle)), SendPropQAngles(FIELD.OF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(GMOD_EHANDLE)), SendPropEHandle(FIELD.OF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
+		SendPropString(FIELD.OF(nameof(GMOD_String0))),
+		SendPropString(FIELD.OF(nameof(GMOD_String1))),
+		SendPropString(FIELD.OF(nameof(GMOD_String2))),
+		SendPropString(FIELD.OF(nameof(GMOD_String3))),
 
 		// Creation IDs
-		SendPropInt(FIELDOF(nameof(CreationID)), 24),
-		SendPropInt(FIELDOF(nameof(MapCreatedID)), 16),
+		SendPropInt(FIELD.OF(nameof(CreationID)), 24),
+		SendPropInt(FIELD.OF(nameof(MapCreatedID)), 16),
 	]);
 
 	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {

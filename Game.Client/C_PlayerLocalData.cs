@@ -7,12 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using FIELD = Source.FIELD<Game.Client.C_PlayerLocalData>;
 namespace Game.Client;
 
 public class C_PlayerLocalData
 {
 	public static readonly RecvTable DT_Local = new([
-		RecvPropInt(FIELDOF(nameof(HideHUD))),
+		RecvPropInt(FIELD.OF(nameof(HideHUD))),
 	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
 
 	public int HideHUD;

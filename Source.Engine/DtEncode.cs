@@ -553,13 +553,13 @@ public struct PropTypeFns
 		else 
 			targetField = arrayProp.FieldInfo;
 		
-		if (targetField is not ArrayFieldInfo arrayFieldInfo) {
-			if (targetField is not ArrayFieldIndexInfo arrayFieldindexInfo) {
+		if (targetField is not DynamicArrayAccessor arrayFieldInfo) {
+			if (targetField is not DynamicArrayIndexAccessor arrayFieldindexInfo) {
 				Warning("Cannot Array_Decode on a non-ArrayFieldInfo target!\n");
 				Assert(false);
 				return;
 			}
-			arrayFieldInfo = arrayFieldindexInfo.BaseArrayField;
+			arrayFieldInfo = arrayFieldindexInfo.BaseArrayAccessor;
 		}
 
 
@@ -569,7 +569,7 @@ public struct PropTypeFns
 			lengthProxy(decodeInfo.Object, decodeInfo.RecvProxyData.ObjectID, nElements);
 
 		for (subDecodeInfo.RecvProxyData.Element = 0; subDecodeInfo.RecvProxyData.Element < nElements; subDecodeInfo.RecvProxyData.Element++) {
-			var element = arrayFieldInfo.GetIndexFieldInfo(subDecodeInfo.Object!, subDecodeInfo.RecvProxyData.Element);
+			var element = arrayFieldInfo.AtIndex(subDecodeInfo.Object!, subDecodeInfo.RecvProxyData.Element);
 			if(element == null) {
 				Warning($"Invalid element at {subDecodeInfo.RecvProxyData.Element}\n");
 				continue;

@@ -15,6 +15,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+using FIELD = Source.FIELD<Game.Client.C_BaseEntity>;
+
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Game.Client;
@@ -39,14 +41,14 @@ public partial class C_BaseEntity : IClientEntity
 
 
 	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
-		RecvPropInt(FIELDOF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
+		RecvPropInt(FIELD.OF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
 	public static readonly ClientClass CC_AnimTimeMustBeFirst = new ClientClass("AnimTimeMustBeFirst", null, null, DT_AnimTimeMustBeFirst);
 
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
-		RecvPropPredictableId(FIELDOF(nameof(PredictableId))),
-		RecvPropInt(FIELDOF(nameof(IsPlayerSimulated))),
+		RecvPropPredictableId(FIELD.OF(nameof(PredictableId))),
+		RecvPropInt(FIELD.OF(nameof(IsPlayerSimulated))),
 	]);
 	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", null, null, DT_PredictableId);
 
@@ -69,76 +71,76 @@ public partial class C_BaseEntity : IClientEntity
 	public static RecvTable DT_BaseEntity = new([
 		RecvPropDataTable("AnimTimeMustBeFirst", DT_AnimTimeMustBeFirst),
 
-		RecvPropInt(FIELDOF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
-		RecvPropInt(FIELDOF(nameof(InterpolationFrame))),
+		RecvPropInt(FIELD.OF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
+		RecvPropInt(FIELD.OF(nameof(InterpolationFrame))),
 
-		RecvPropVector(FIELDOF(nameof(NetworkOrigin))),
-		RecvPropQAngles(FIELDOF(nameof(NetworkAngles))),
+		RecvPropVector(FIELD.OF(nameof(NetworkOrigin))),
+		RecvPropQAngles(FIELD.OF(nameof(NetworkAngles))),
 
-		RecvPropInt(FIELDOF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
+		RecvPropInt(FIELD.OF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
 
-		RecvPropInt(FIELDOF(nameof(Effects)), 0, RecvProxy_EffectFlags),
-		RecvPropInt(FIELDOF(nameof(RenderMode))),
-		RecvPropInt(FIELDOF(nameof(RenderFX))),
-		RecvPropInt(FIELDOF(nameof(ColorRender))),
-		RecvPropInt(FIELDOF(nameof(TeamNum))),
-		RecvPropInt(FIELDOF(nameof(CollisionGroup))),
-		RecvPropFloat(FIELDOF(nameof(Elasticity))),
-		RecvPropFloat(FIELDOF(nameof(ShadowCastDistance))),
-		RecvPropEHandle(FIELDOF(nameof(OwnerEntity))),
-		RecvPropEHandle(FIELDOF(nameof(EffectEntity))),
-		RecvPropInt(FIELDOF(nameof(MoveParent)), 0, RecvProxy_IntToMoveParent),
-		RecvPropInt(FIELDOF(nameof(ParentAttachment))),
+		RecvPropInt(FIELD.OF(nameof(Effects)), 0, RecvProxy_EffectFlags),
+		RecvPropInt(FIELD.OF(nameof(RenderMode))),
+		RecvPropInt(FIELD.OF(nameof(RenderFX))),
+		RecvPropInt(FIELD.OF(nameof(ColorRender))),
+		RecvPropInt(FIELD.OF(nameof(TeamNum))),
+		RecvPropInt(FIELD.OF(nameof(CollisionGroup))),
+		RecvPropFloat(FIELD.OF(nameof(Elasticity))),
+		RecvPropFloat(FIELD.OF(nameof(ShadowCastDistance))),
+		RecvPropEHandle(FIELD.OF(nameof(OwnerEntity))),
+		RecvPropEHandle(FIELD.OF(nameof(EffectEntity))),
+		RecvPropInt(FIELD.OF(nameof(MoveParent)), 0, RecvProxy_IntToMoveParent),
+		RecvPropInt(FIELD.OF(nameof(ParentAttachment))),
 
-		RecvPropInt(FIELDOF(nameof(MoveType)), 0, RecvProxy_MoveType),
-		RecvPropInt(FIELDOF(nameof(MoveCollide)), 0, RecvProxy_MoveCollide),
-		RecvPropQAngles (FIELDOF(nameof(AngRotation))),
-		RecvPropInt( FIELDOF(nameof( TextureFrameIndex) )),
+		RecvPropInt(FIELD.OF(nameof(MoveType)), 0, RecvProxy_MoveType),
+		RecvPropInt(FIELD.OF(nameof(MoveCollide)), 0, RecvProxy_MoveCollide),
+		RecvPropQAngles (FIELD.OF(nameof(AngRotation))),
+		RecvPropInt( FIELD.OF(nameof( TextureFrameIndex) )),
 		RecvPropDataTable( "predictable_id", DT_PredictableId ),
-		RecvPropInt(FIELDOF(nameof(SimulatedEveryTick))),
-		RecvPropInt(FIELDOF(nameof(AnimatedEveryTick))),
-		RecvPropBool( FIELDOF(nameof( AlternateSorting ))),
+		RecvPropInt(FIELD.OF(nameof(SimulatedEveryTick))),
+		RecvPropInt(FIELD.OF(nameof(AnimatedEveryTick))),
+		RecvPropBool( FIELD.OF(nameof( AlternateSorting ))),
 
-		RecvPropDataTable(nameof(Collision), FIELDOF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELDOF(nameof(Collision)))),
+		RecvPropDataTable(nameof(Collision), FIELD.OF(nameof(Collision)), CollisionProperty.DT_CollisionProperty, 0, RECV_GET_OBJECT_AT_FIELD(FIELD.OF(nameof(Collision)))),
 
 		// gmod specific
-		RecvPropInt(FIELDOF(nameof(TakeDamage))),
-		RecvPropInt(FIELDOF(nameof(RealClassName))),
+		RecvPropInt(FIELD.OF(nameof(TakeDamage))),
+		RecvPropInt(FIELD.OF(nameof(RealClassName))),
 
-		RecvPropInt(FIELDOF(nameof(OverrideMaterial))),
+		RecvPropInt(FIELD.OF(nameof(OverrideMaterial))),
 
-		RecvPropInt(FIELDOF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), PropFlags.Unsigned),
+		RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(OverrideSubMaterials), 0), PropFlags.Unsigned),
 		RecvPropArray2(null, 32, "OverrideSubMaterials"),
 
-		RecvPropInt(FIELDOF(nameof(Health))),
-		RecvPropInt(FIELDOF(nameof(MaxHealth))),
-		RecvPropInt(FIELDOF(nameof(SpawnFlags))),
-		RecvPropInt(FIELDOF(nameof(GModFlags))),
-		RecvPropBool(FIELDOF(nameof(OnFire))),
-		RecvPropFloat(FIELDOF(nameof(CreationTime))),
+		RecvPropInt(FIELD.OF(nameof(Health))),
+		RecvPropInt(FIELD.OF(nameof(MaxHealth))),
+		RecvPropInt(FIELD.OF(nameof(SpawnFlags))),
+		RecvPropInt(FIELD.OF(nameof(GModFlags))),
+		RecvPropBool(FIELD.OF(nameof(OnFire))),
+		RecvPropFloat(FIELD.OF(nameof(CreationTime))),
 
-		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 0)),
-		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 1)),
-		RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(Velocity), 2)),
+		RecvPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 0)),
+		RecvPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 1)),
+		RecvPropFloat(FIELD.OF_ARRAYINDEX(nameof(Velocity), 2)),
 
 		// NW2 table
-		RecvPropGModTable(FIELDOF(nameof(GMOD_DataTable))),
+		RecvPropGModTable(FIELD.OF(nameof(GMOD_DataTable))),
 
 		// Addon exposed data tables
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_bool)), RecvPropBool(FIELDOF_ARRAYINDEX(nameof(GMOD_bool), 0))),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_float)), RecvPropFloat(FIELDOF_ARRAYINDEX(nameof(GMOD_float), 0))),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_int)), RecvPropInt(FIELDOF_ARRAYINDEX(nameof(GMOD_int), 0))),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_Vector)), RecvPropVector(FIELDOF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_QAngle)), RecvPropQAngles(FIELDOF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
-		RecvPropArray3(FIELDOF_ARRAY(nameof(GMOD_EHANDLE)), RecvPropEHandle(FIELDOF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
-		RecvPropString(FIELDOF(nameof(GMOD_String0))),
-		RecvPropString(FIELDOF(nameof(GMOD_String1))),
-		RecvPropString(FIELDOF(nameof(GMOD_String2))),
-		RecvPropString(FIELDOF(nameof(GMOD_String3))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_bool)), RecvPropBool(FIELD.OF_ARRAYINDEX(nameof(GMOD_bool), 0))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_float)), RecvPropFloat(FIELD.OF_ARRAYINDEX(nameof(GMOD_float), 0))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_int)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(GMOD_int), 0))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_Vector)), RecvPropVector(FIELD.OF_ARRAYINDEX(nameof(GMOD_Vector), 0))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_QAngle)), RecvPropQAngles(FIELD.OF_ARRAYINDEX(nameof(GMOD_QAngle), 0))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(GMOD_EHANDLE)), RecvPropEHandle(FIELD.OF_ARRAYINDEX(nameof(GMOD_EHANDLE), 0))),
+		RecvPropString(FIELD.OF(nameof(GMOD_String0))),
+		RecvPropString(FIELD.OF(nameof(GMOD_String1))),
+		RecvPropString(FIELD.OF(nameof(GMOD_String2))),
+		RecvPropString(FIELD.OF(nameof(GMOD_String3))),
 
 		// Creation IDs
-		RecvPropInt(FIELDOF(nameof(CreationID))),
-		RecvPropInt(FIELDOF(nameof(MapCreatedID))),
+		RecvPropInt(FIELD.OF(nameof(CreationID))),
+		RecvPropInt(FIELD.OF(nameof(MapCreatedID))),
 	]);
 
 	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {

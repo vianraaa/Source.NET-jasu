@@ -5,15 +5,17 @@ using Source.Common;
 
 using System.Reflection;
 
+using FIELD = Source.FIELD<Game.Client.C_Team>;
+
 namespace Game.Client;
 
 public class C_Team : C_BaseEntity
 {
 	public static readonly RecvTable DT_Team = new([
-		RecvPropInt( FIELDOF(nameof(TeamNum))),
-		RecvPropInt( FIELDOF(nameof(Score))),
-		RecvPropInt( FIELDOF(nameof(RoundsWon)) ),
-		RecvPropString( FIELDOF(nameof(Teamname))),
+		RecvPropInt( FIELD.OF(nameof(TeamNum))),
+		RecvPropInt( FIELD.OF(nameof(Score))),
+		RecvPropInt( FIELD.OF(nameof(RoundsWon)) ),
+		RecvPropString( FIELD.OF(nameof(Teamname))),
 
 		RecvPropInt( "player_array_element", 0, RecvProxy_PlayerList ),
 		RecvPropArray2(RecvProxyArrayLength_PlayerArray, Constants.MAX_PLAYERS, "player_array")

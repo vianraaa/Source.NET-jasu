@@ -7,17 +7,19 @@ using Source.Common.Engine;
 using System.Reflection;
 
 namespace Game.Server;
+using FIELD = Source.FIELD<BaseCombatCharacter>;
+
 public class BaseCombatCharacter : BaseFlex
 {
 	public static readonly SendTable DT_BCCLocalPlayerExclusive = new([
-		SendPropTime(FIELDOF(nameof(NextAttack))),
+		SendPropTime(FIELD.OF(nameof(NextAttack))),
 	]);
 	public static readonly ServerClass CC_BCCLocalPlayerExclusive = new ServerClass("BCCLocalPlayerExclusive", DT_BCCLocalPlayerExclusive);
 
 	public static readonly SendTable DT_BaseCombatCharacter = new(DT_BaseFlex, [
 		SendPropDataTable( "bcc_localdata", DT_BCCLocalPlayerExclusive, SendProxy_SendBaseCombatCharacterLocalDataTable ),
-		SendPropEHandle(FIELDOF(nameof(ActiveWeapon))),
-		SendPropArray3(FIELDOF_ARRAY(nameof(MyWeapons)), SendPropEHandle( FIELDOF_ARRAY(nameof(MyWeapons)))),
+		SendPropEHandle(FIELD.OF(nameof(ActiveWeapon))),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(MyWeapons)), SendPropEHandle( FIELD.OF_ARRAY(nameof(MyWeapons)))),
 	]);
 
 	public double NextAttack;

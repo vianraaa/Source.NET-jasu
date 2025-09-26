@@ -5,10 +5,12 @@ using Source.Common.Engine;
 using System.Reflection;
 
 namespace Game.Server;
+using FIELD = Source.FIELD<BasePlayer>;
+
 public partial class BasePlayer : BaseCombatCharacter
 {
 	public static readonly SendTable DT_PlayerState = new([
-		SendPropInt(FIELDOF(nameof(DeadFlag)), 1, PropFlags.Unsigned)
+		SendPropInt(FIELD.OF(nameof(DeadFlag)), 1, PropFlags.Unsigned)
 	]); public static readonly ServerClass CC_PlayerState = new("PlayerState", DT_PlayerState);
 
 	
@@ -18,22 +20,22 @@ public partial class BasePlayer : BaseCombatCharacter
 
 	public static readonly SendTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 		SendPropDataTable(nameof(pl), DT_PlayerState, SendProxy_DataTableToDataTable),
-		SendPropEHandle(FIELDOF(nameof(Vehicle))),
-		SendPropEHandle(FIELDOF(nameof(UseEntity))),
-		SendPropInt(FIELDOF(nameof(LifeState)), 3, PropFlags.Unsigned ),
-		SendPropEHandle(FIELDOF(nameof(ColorCorrectionCtrl))), // << gmod specific
-		SendPropFloat(FIELDOF(nameof(MaxSpeed)), 12, PropFlags.RoundDown, 0.0f, 2048.0f ),
-		SendPropInt(FIELDOF(nameof(Flags)), Constants.PLAYER_FLAG_BITS, PropFlags.Unsigned|PropFlags.ChangesOften, SendProxy_CropFlagsToPlayerFlagBitsLength ),
-		SendPropInt(FIELDOF(nameof(ObserverMode)), 3, PropFlags.Unsigned ),
-		SendPropEHandle(FIELDOF(nameof(ObserverTarget))),
-		SendPropInt(FIELDOF(nameof(FOV)), 8, PropFlags.Unsigned ),
-		SendPropInt(FIELDOF(nameof(FOVStart)), 8, PropFlags.Unsigned ),
-		SendPropFloat(FIELDOF(nameof(FOVTime)), 0, PropFlags.NoScale),
-		SendPropFloat(FIELDOF(nameof(DefaultFOV)), 8, PropFlags.Unsigned ),
-		SendPropEHandle(FIELDOF(nameof(ZoomOwner))),
-		// SendPropArray( SendPropEHandle( FIELDOF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
-		SendPropString(FIELDOF(nameof(LastPlaceName))),
-		SendPropBool(FIELDOF(nameof(UseWeaponsInVehicle))),
+		SendPropEHandle(FIELD.OF(nameof(Vehicle))),
+		SendPropEHandle(FIELD.OF(nameof(UseEntity))),
+		SendPropInt(FIELD.OF(nameof(LifeState)), 3, PropFlags.Unsigned ),
+		SendPropEHandle(FIELD.OF(nameof(ColorCorrectionCtrl))), // << gmod specific
+		SendPropFloat(FIELD.OF(nameof(MaxSpeed)), 12, PropFlags.RoundDown, 0.0f, 2048.0f ),
+		SendPropInt(FIELD.OF(nameof(Flags)), Constants.PLAYER_FLAG_BITS, PropFlags.Unsigned|PropFlags.ChangesOften, SendProxy_CropFlagsToPlayerFlagBitsLength ),
+		SendPropInt(FIELD.OF(nameof(ObserverMode)), 3, PropFlags.Unsigned ),
+		SendPropEHandle(FIELD.OF(nameof(ObserverTarget))),
+		SendPropInt(FIELD.OF(nameof(FOV)), 8, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(FOVStart)), 8, PropFlags.Unsigned ),
+		SendPropFloat(FIELD.OF(nameof(FOVTime)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(DefaultFOV)), 8, PropFlags.Unsigned ),
+		SendPropEHandle(FIELD.OF(nameof(ZoomOwner))),
+		// SendPropArray( SendPropEHandle( FIELD.OF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
+		SendPropString(FIELD.OF(nameof(LastPlaceName))),
+		SendPropBool(FIELD.OF(nameof(UseWeaponsInVehicle))),
 		SendPropDataTable( "localdata", DT_LocalPlayerExclusive, SendProxy_SendLocalDataTable),
 	]);
 

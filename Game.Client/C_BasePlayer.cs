@@ -7,13 +7,14 @@ using Source.Common.Client;
 using static Source.Common.Networking.svc_ClassInfo;
 
 using Steamworks;
+using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 
 namespace Game.Client;
 
 public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 {
 	public static readonly RecvTable DT_PlayerState = new([
-		RecvPropInt(FIELDOF(nameof(DeadFlag)))
+		RecvPropInt(FIELD.OF(nameof(DeadFlag)))
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
@@ -21,23 +22,23 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	]); public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
-		RecvPropDataTable(nameof(pl), FIELDOF(nameof(pl)), DT_PlayerState),
-		RecvPropEHandle(FIELDOF(nameof(Vehicle))),
-		RecvPropEHandle(FIELDOF(nameof(UseEntity))),
-		RecvPropInt(FIELDOF(nameof(LifeState))),
-		RecvPropEHandle(FIELDOF(nameof(ColorCorrectionCtrl))), // << gmod specific
-		RecvPropFloat(FIELDOF(nameof(MaxSpeed))),
-		RecvPropInt(FIELDOF(nameof(Flags))),
-		RecvPropInt(FIELDOF(nameof(ObserverMode))),
-		RecvPropEHandle(FIELDOF(nameof(ObserverTarget))),
-		RecvPropInt(FIELDOF(nameof(FOV))),
-		RecvPropInt(FIELDOF(nameof(FOVStart))),
-		RecvPropFloat(FIELDOF(nameof(FOVTime))),
-		RecvPropFloat(FIELDOF(nameof(DefaultFOV))),
-		RecvPropEHandle(FIELDOF(nameof(ZoomOwner))),
-		// SendPropArray( SendPropEHandle( FIELDOF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
-		RecvPropString(FIELDOF(nameof(LastPlaceName))),
-		RecvPropBool(FIELDOF(nameof(UseWeaponsInVehicle))),
+		RecvPropDataTable(nameof(pl), FIELD.OF(nameof(pl)), DT_PlayerState),
+		RecvPropEHandle(FIELD.OF(nameof(Vehicle))),
+		RecvPropEHandle(FIELD.OF(nameof(UseEntity))),
+		RecvPropInt(FIELD.OF(nameof(LifeState))),
+		RecvPropEHandle(FIELD.OF(nameof(ColorCorrectionCtrl))), // << gmod specific
+		RecvPropFloat(FIELD.OF(nameof(MaxSpeed))),
+		RecvPropInt(FIELD.OF(nameof(Flags))),
+		RecvPropInt(FIELD.OF(nameof(ObserverMode))),
+		RecvPropEHandle(FIELD.OF(nameof(ObserverTarget))),
+		RecvPropInt(FIELD.OF(nameof(FOV))),
+		RecvPropInt(FIELD.OF(nameof(FOVStart))),
+		RecvPropFloat(FIELD.OF(nameof(FOVTime))),
+		RecvPropFloat(FIELD.OF(nameof(DefaultFOV))),
+		RecvPropEHandle(FIELD.OF(nameof(ZoomOwner))),
+		// SendPropArray( SendPropEHandle( FIELD.OF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
+		RecvPropString(FIELD.OF(nameof(LastPlaceName))),
+		RecvPropBool(FIELD.OF(nameof(UseWeaponsInVehicle))),
 		RecvPropDataTable("localdata", DT_LocalPlayerExclusive),
 	]); public static readonly new ClientClass ClientClass = new ClientClass("BasePlayer", null, null, DT_BasePlayer);
 
