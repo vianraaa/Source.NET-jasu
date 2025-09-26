@@ -18,6 +18,8 @@ using Source.Common.Hashing;
 using System.Numerics;
 using System.Reflection;
 
+using FIELD = Source.FIELD<Game.Shared.CollisionProperty>;
+
 namespace Game.Shared;
 
 public enum SurroundingBoundsType {
@@ -98,35 +100,35 @@ public class CollisionProperty
 
 #if CLIENT_DLL
 	public static RecvTable DT_CollisionProperty = new([
-		RecvPropVector(FIELDOF(nameof(MinsPreScaled)), 0, RecvProxy_OBBMinsPreScaled),
-		RecvPropVector(FIELDOF(nameof(MaxsPreScaled)), 0, RecvProxy_OBBMaxPreScaled),
-		RecvPropVector(FIELDOF(nameof(Mins)), 0),
-		RecvPropVector(FIELDOF(nameof(Maxs)), 0),
-		RecvPropInt(FIELDOF(nameof(SolidType)), 0, RecvProxy_Solid),
-		RecvPropInt(FIELDOF(nameof(SolidFlags)), 0, RecvProxy_SolidFlags),
-		RecvPropInt(FIELDOF(nameof(SurroundType)), 0, RecvProxy_IntDirtySurround),
-		RecvPropInt(FIELDOF(nameof(TriggerBloat)), 0, RecvProxy_IntDirtySurround),
-		RecvPropVector(FIELDOF(nameof(SpecifiedSurroundingMinsPreScaled)), 0, RecvProxy_VectorDirtySurround),
-		RecvPropVector(FIELDOF(nameof(SpecifiedSurroundingMaxsPreScaled)), 0, RecvProxy_VectorDirtySurround),
-		RecvPropVector(FIELDOF(nameof(SpecifiedSurroundingMins)), 0, RecvProxy_VectorDirtySurround),
-		RecvPropVector(FIELDOF(nameof(SpecifiedSurroundingMaxs)), 0, RecvProxy_VectorDirtySurround),
+		RecvPropVector(FIELD.OF(nameof(MinsPreScaled)), 0, RecvProxy_OBBMinsPreScaled),
+		RecvPropVector(FIELD.OF(nameof(MaxsPreScaled)), 0, RecvProxy_OBBMaxPreScaled),
+		RecvPropVector(FIELD.OF(nameof(Mins)), 0),
+		RecvPropVector(FIELD.OF(nameof(Maxs)), 0),
+		RecvPropInt(FIELD.OF(nameof(SolidType)), 0, RecvProxy_Solid),
+		RecvPropInt(FIELD.OF(nameof(SolidFlags)), 0, RecvProxy_SolidFlags),
+		RecvPropInt(FIELD.OF(nameof(SurroundType)), 0, RecvProxy_IntDirtySurround),
+		RecvPropInt(FIELD.OF(nameof(TriggerBloat)), 0, RecvProxy_IntDirtySurround),
+		RecvPropVector(FIELD.OF(nameof(SpecifiedSurroundingMinsPreScaled)), 0, RecvProxy_VectorDirtySurround),
+		RecvPropVector(FIELD.OF(nameof(SpecifiedSurroundingMaxsPreScaled)), 0, RecvProxy_VectorDirtySurround),
+		RecvPropVector(FIELD.OF(nameof(SpecifiedSurroundingMins)), 0, RecvProxy_VectorDirtySurround),
+		RecvPropVector(FIELD.OF(nameof(SpecifiedSurroundingMaxs)), 0, RecvProxy_VectorDirtySurround),
 	]);
 
 	public static readonly ClientClass CC_CollisionProperty = new ClientClass("CollisionProperty", null, null, DT_CollisionProperty);
 #else
 	public static SendTable DT_CollisionProperty = new([
-		SendPropVector(FIELDOF(nameof(MinsPreScaled)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(MaxsPreScaled)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(Mins)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(Maxs)), 0, PropFlags.NoScale),
-		SendPropInt(FIELDOF(nameof(SolidType)), 3, PropFlags.Unsigned, SendProxy_Solid),
-		SendPropInt(FIELDOF(nameof(SolidFlags)), (int)Source.SolidFlags.MaxBits, PropFlags.Unsigned, SendProxy_SolidFlags),
-		SendPropInt(FIELDOF(nameof(SurroundType)), (int)SurroundingBoundsType.BitCount, PropFlags.Unsigned),
-		SendPropInt(FIELDOF(nameof(TriggerBloat)), 0, PropFlags.Unsigned),
-		SendPropVector(FIELDOF(nameof(SpecifiedSurroundingMinsPreScaled)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(SpecifiedSurroundingMaxsPreScaled)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(SpecifiedSurroundingMins)), 0, PropFlags.NoScale),
-		SendPropVector(FIELDOF(nameof(SpecifiedSurroundingMaxs)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(MinsPreScaled)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(MaxsPreScaled)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(Mins)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(Maxs)), 0, PropFlags.NoScale),
+		SendPropInt(FIELD.OF(nameof(SolidType)), 3, PropFlags.Unsigned, SendProxy_Solid),
+		SendPropInt(FIELD.OF(nameof(SolidFlags)), (int)Source.SolidFlags.MaxBits, PropFlags.Unsigned, SendProxy_SolidFlags),
+		SendPropInt(FIELD.OF(nameof(SurroundType)), (int)SurroundingBoundsType.BitCount, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(TriggerBloat)), 0, PropFlags.Unsigned),
+		SendPropVector(FIELD.OF(nameof(SpecifiedSurroundingMinsPreScaled)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(SpecifiedSurroundingMaxsPreScaled)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(SpecifiedSurroundingMins)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(SpecifiedSurroundingMaxs)), 0, PropFlags.NoScale),
 	]);
 
 

@@ -1,518 +1,602 @@
-﻿using CommunityToolkit.HighPerformance;
+﻿// #define LOGGED_EMIT_ENABLE
 
-using SharpCompress.Common;
+using Source.Common;
 
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq.Expressions;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
-using static Source.Common.Formats.Keyvalues.KeyValues;
-
-namespace Source.Common;
-
-public static class DynamicConversion
+namespace Source.Common
 {
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void CastConvert<From, To>(in From from, ref To to) => DynamicConversion<From, To>.CastConvert(in from, ref to);
-}
+	/// <summary>
+	/// Define how to build IL methods for types.
+	/// </summary>
+	public interface IFieldAccessor
+	{
+		public string Name { get; }
+		public Type DeclaringType { get; }
+		public Type FieldType { get; }
 
-delegate To CastFn<From, To>(in From from);
-public static class DynamicConversion<From, To> {
-	static CastFn<From, To> castFn;
-	static DynamicConversion() {
-		var param = Expression.Parameter(typeof(From));
-		var body = Expression.Convert(param, typeof(To));
-		castFn = Expression.Lambda<CastFn<From, To>>(body, param).Compile();
-	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static void CastConvert(in From from, ref To to) => to = castFn(in from);
-}
-public static class FieldAccess
-{
-	static readonly Dictionary<Type, bool> linearTypeResults = [];
-	internal static bool TypesFieldsAreCompletelyLinear(Type baseFieldType) {
-		if (linearTypeResults.TryGetValue(baseFieldType, out bool ret))
-			return ret;
-
-		var fields = baseFieldType.GetFields((BindingFlags)~0);
-		if (fields.Length == 0)
-			return linearTypeResults[baseFieldType] = true; // What to return here, even
-
-		Type? t = fields[0].FieldType;
-		for (int i = 1; i < fields.Length; i++)
-			if (fields[i].FieldType != t)
-				return linearTypeResults[baseFieldType] = false;
-
-		return linearTypeResults[baseFieldType] = true;
+		public T GetValue<T>(object instance);
+		public bool SetValue<T>(object instance, in T value);
 	}
 
-	
-}
+	file static class ILCast<From, To>
+	{
+		public delegate void DynamicCastFn(in From from, out To to);
+		public static readonly DynamicCastFn Cast;
 
-public interface IFieldILGenerator {
-	public string Name { get; }
-	public void GenerateGet<T>(ILGenerator il);
-	public void GenerateGetRef<T>(ILGenerator il);
-	public void GenerateSet<T>(ILGenerator il);
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T GetValue<T>(IFieldILGenerator self, object instance) => FieldAccess<T>.Getter(self)(instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ref T GetValueRef<T>(IFieldILGenerator self, object instance) => ref FieldAccess<T>.RefGetter(self)(instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool SetValue<T>(IFieldILGenerator self, object instance, in T value) {
-		FieldAccess<T>.Setter(self)(instance, in value);
-		return true;
-	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void CopyStringToField(IFieldILGenerator self, object instance, string? str) => Warning("FieldAccess.CopyStringToField isn't implemented yet\n");
-}
+		static ILCast() {
+			DynamicMethod method = new DynamicMethod($"ILCast<{typeof(From)}, {typeof(To)}", typeof(void), [typeof(From).MakeByRefType(), typeof(To).MakeByRefType()]);
+			ILGenerator generator = method.GetILGenerator();
 
-/// <summary>
-/// Define how to build IL methods for types.
-/// </summary>
-public interface IFieldAccessor
-{
-	public string Name { get; }
-	public bool IsStatic { get; }
-	public Type DeclaringType { get; }
-	public Type FieldType { get; }
+			generator.Emit(OpCodes.Ldarg_1);
+			generator.Emit(OpCodes.Ldarg_0);
 
-	public T GetValue<T>(object instance);
-	public ref T GetValueRef<T>(object instance);
-	public bool SetValue<T>(object instance, in T value);
-	public void CopyStringToField(object instance, string? str);
-}
+			// Try to implicitly cast.
+			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(typeof(From), typeof(To));
+			if (implicitCheck != null) {
+				generator.Emit(OpCodes.Ldobj, typeof(From));
+				generator.Emit(OpCodes.Call, implicitCheck);
+				generator.Emit(OpCodes.Stobj);
+				goto compile;
+			}
 
-public static class FieldAccess<T>
-{
-	public delegate T Get(object o);
-	public delegate ref T GetRef(object o);
-	public delegate void Set(object o, in T v);
+			// Generic value type conversion.
+			Type from = typeof(From), to = typeof(To);
+			if (from.IsPrimitive && to.IsPrimitive) {
+				var convOp = ILAssembler.GetConvOpcode(from, to, out OpCode code, out _);
+				if (convOp) {
+					generator.Emit(OpCodes.Ldobj, from);
+					generator.Emit(code);
+					generator.Emit(OpCodes.Stobj, to);
+					goto compile;
+				}
+				else
+					throw new Exception();
+			}
 
-	internal static readonly Dictionary<IFieldILGenerator, Get> Getters = [];
-	internal static readonly Dictionary<IFieldILGenerator, GetRef> RefGetters = [];
-	internal static readonly Dictionary<IFieldILGenerator, Set> Setters = [];
 
-	public static Get Getter(IFieldILGenerator field) {
-		if (Getters.TryGetValue(field, out var g))
-			return g;
+			// Generic reference type conversion.
+			if (!from.IsValueType && !to.IsValueType) {
+				generator.Emit(OpCodes.Ldind_Ref);
+				if (to != typeof(object))
+					generator.Emit(OpCodes.Castclass, to);
+				generator.Emit(OpCodes.Stind_Ref);
+				goto compile;
+			}
 
-		var method = new DynamicMethod($"get_{field.Name}", typeof(T), [typeof(object)], typeof(FieldAccess<T>).Module, true);
-		var il = method.GetILGenerator();
-		field.GenerateGet<T>(il);
-
-		Getters[field] = g = (Get)method.CreateDelegate(typeof(Get));
-		return g;
-	}
-
-	public static GetRef RefGetter(IFieldILGenerator field) {
-		if (RefGetters.TryGetValue(field, out var g))
-			return g;
-
-		var method = new DynamicMethod(
-			$"refget_{field.Name}",
-			typeof(T).MakeByRefType(),
-			[typeof(object)],
-			typeof(FieldAccess<T>).Module,
-			true
-		);
-
-		var il = method.GetILGenerator();
-		field.GenerateGetRef<T>(il);
-
-		RefGetters[field] = g = (GetRef)method.CreateDelegate(typeof(GetRef));
-		return g;
-	}
-
-	public static Set Setter(IFieldILGenerator field) {
-		if (Setters.TryGetValue(field, out var s))
-			return s;
-
-		var method = new DynamicMethod($"set_{field.Name}", typeof(void), [typeof(object), typeof(T).MakeByRefType()], typeof(FieldAccess<T>).Module, true);
-		var il = method.GetILGenerator();
-		field.GenerateSet<T>(il);
-
-		il.Emit(OpCodes.Ret);
-		Setters[field] = s = (Set)method.CreateDelegate(typeof(Set));
-		return s;
-	}
-}
-
-public enum ArrayFieldType
-{
-	StdArray,
-	InlineArray,
-	Vector3
-}
-
-public class BasicFieldInfo(FieldInfo Field) : IFieldAccessor, IFieldILGenerator
-{
-	public string Name => Field.Name;
-	public bool IsStatic => Field.IsStatic;
-	public Type DeclaringType => Field.DeclaringType!;
-	public Type FieldType => Field.FieldType!;
-
-	public void GenerateGet<T>(ILGenerator il) {
-		if (!IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, DeclaringType);
-			il.Emit(OpCodes.Ldfld, Field);
+			throw new NotImplementedException("You should never get to this point!");
+		compile:
+			generator.Emit(OpCodes.Ret);
+			Cast = method.CreateDelegate<DynamicCastFn>();
 		}
-		else {
-			il.Emit(OpCodes.Ldsfld, Field);
+	}
+
+	file static class ILAccess<T>
+	{
+		public delegate T GetFn(object instance);
+		public delegate void SetFn(object instance, in T value);
+		static readonly Dictionary<object, GetFn> getFns = [];
+		static readonly Dictionary<object, SetFn> setFns = [];
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static GetFn Get(DynamicAccessor accessor) {
+			if (getFns.TryGetValue(accessor, out GetFn? fn))
+				return fn;
+
+			DynamicMethod method = new DynamicMethod($"ILAccess<{typeof(T).Name}>_GetFn", typeof(T), [typeof(object)]);
+			ILGenerator il = method.GetILGenerator();
+
+			il.LoggedEmit(OpCodes.Ldarg_0);
+			if (accessor.TargetType != typeof(object))
+				il.LoggedEmit(OpCodes.Castclass, accessor.TargetType);
+			for (int i = 0, c = accessor.Members.Count; i < c; i++) {
+				MemberInfo member = accessor.Members[i];
+				switch (member) {
+					case FieldInfo field:
+						if (i == c - 1)
+							il.LoggedEmit(OpCodes.Ldfld, field);
+						else
+							il.LoggedEmit(OpCodes.Ldflda, field);
+						break;
+					case IndexInfo index:
+						switch (index.Behavior) {
+							case IndexInfoBehavior.InlineArray:
+								if (index.Index > 0) {
+									// Push the index
+									il.LoggedEmit(OpCodes.Ldc_I4, index.Index);
+									// Push the size of one element
+									il.LoggedEmit(OpCodes.Sizeof, index.ElementType);
+									// Multiply: index * sizeof(element)
+									il.LoggedEmit(OpCodes.Mul);
+									// Add to the base address
+									il.LoggedEmit(OpCodes.Add);
+								}
+
+								if (i == c - 1) {
+									if (index.ElementType.IsValueType && !index.ElementType.IsPrimitive) il.LoggedEmit(OpCodes.Ldobj, index.ElementType);
+									else if (index.ElementType == typeof(sbyte)) il.LoggedEmit(OpCodes.Ldind_I1);
+									else if (index.ElementType == typeof(byte)) il.LoggedEmit(OpCodes.Ldind_U1);
+									else if (index.ElementType == typeof(short)) il.LoggedEmit(OpCodes.Ldind_I2);
+									else if (index.ElementType == typeof(ushort)) il.LoggedEmit(OpCodes.Ldind_U2);
+									else if (index.ElementType == typeof(int)) il.LoggedEmit(OpCodes.Ldind_I4);
+									else if (index.ElementType == typeof(uint)) il.LoggedEmit(OpCodes.Ldind_U4);
+									else if (index.ElementType == typeof(ulong)) il.LoggedEmit(OpCodes.Ldind_I8);
+									else if (index.ElementType == typeof(long)) il.LoggedEmit(OpCodes.Ldind_I8);
+									else if (index.ElementType == typeof(float)) il.LoggedEmit(OpCodes.Ldind_R4);
+									else if (index.ElementType == typeof(double)) il.LoggedEmit(OpCodes.Ldind_R8);
+									else if (index.ElementType.IsClass) {
+										il.LoggedEmit(OpCodes.Ldind_Ref);
+									}
+									else throw new NotSupportedException($"Unsupported element type: {index.ElementType}");
+								}
+
+								break;
+
+							default: throw new Exception(":(");
+						}
+						break;
+					default: throw new NotImplementedException("Cannot support the current member info");
+				}
+			}
+
+			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(accessor.StoringType, typeof(T));
+			if (implicitCheck != null) {
+				il.LoggedEmit(OpCodes.Ldobj, accessor.StoringType);
+				il.LoggedEmit(OpCodes.Call, implicitCheck);
+				il.LoggedEmit(OpCodes.Stobj);
+			}
+			else if (ILAssembler.GetConvOpcode(accessor.StoringType, typeof(T), out OpCode convCode, out _))
+				il.LoggedEmit(convCode);
+
+			else if (typeof(T) != accessor.StoringType)
+				il.LoggedEmit(OpCodes.Castclass, typeof(T));
+
+			il.LoggedEmit(OpCodes.Ret);
+
+			getFns.Add(accessor, fn = method.CreateDelegate<GetFn>());
+			return fn;
 		}
 
-		il.Emit(OpCodes.Ret);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static SetFn? Set(DynamicAccessor accessor) {
+			if (setFns.TryGetValue(accessor, out SetFn? fn))
+				return fn;
+
+			DynamicMethod method = new DynamicMethod($"ILAccess<{typeof(T).Name}>_SetFn", typeof(void), [typeof(object), typeof(T).MakeByRefType()]);
+			ILGenerator il = method.GetILGenerator();
+
+			il.LoggedEmit(OpCodes.Ldarg_0);
+			if (accessor.TargetType != typeof(object))
+				il.LoggedEmit(OpCodes.Castclass, accessor.TargetType);
+			for (int i = 0, c = accessor.Members.Count - 1; i < c; i++) {
+				MemberInfo member = accessor.Members[i];
+				switch (member) {
+					case FieldInfo field:
+						il.LoggedEmit(OpCodes.Ldflda, field);
+
+						break;
+					default: throw new NotImplementedException("Cannot support the current member info");
+				}
+			}
+
+			il.LoggedEmit(OpCodes.Ldarg_1);
+
+			switch (accessor.Members[^1]) {
+				case FieldInfo field:
+					PerformAutocast(accessor, il);
+					il.LoggedEmit(OpCodes.Stfld, field);
+					break;
+				case IndexInfo index:
+					switch (index.Behavior) {
+						case IndexInfoBehavior.InlineArray:
+							if (index.Index > 0) {
+								// Push the index
+								il.LoggedEmit(OpCodes.Ldc_I4, index.Index);
+								// Push the size of one element
+								il.LoggedEmit(OpCodes.Sizeof, index.ElementType);
+								// Multiply: index * sizeof(element)
+								il.LoggedEmit(OpCodes.Mul);
+								// Add to the base address
+								il.LoggedEmit(OpCodes.Add);
+							}
+
+							PerformAutocast(accessor, il);
+
+							if (index.ElementType.IsValueType && !index.ElementType.IsPrimitive)
+								il.LoggedEmit(OpCodes.Stobj, index.ElementType);
+							else if (index.ElementType == typeof(bool)) il.LoggedEmit(OpCodes.Stind_I1);
+							else if (index.ElementType == typeof(sbyte)) il.LoggedEmit(OpCodes.Stind_I1);
+							else if (index.ElementType == typeof(byte)) il.LoggedEmit(OpCodes.Stind_I1);
+							else if (index.ElementType == typeof(short)) il.LoggedEmit(OpCodes.Stind_I2);
+							else if (index.ElementType == typeof(ushort)) il.LoggedEmit(OpCodes.Stind_I2);
+							else if (index.ElementType == typeof(int)) il.LoggedEmit(OpCodes.Stind_I4);
+							else if (index.ElementType == typeof(uint)) il.LoggedEmit(OpCodes.Stind_I4);
+							else if (index.ElementType == typeof(ulong)) il.LoggedEmit(OpCodes.Stind_I8);
+							else if (index.ElementType == typeof(long)) il.LoggedEmit(OpCodes.Stind_I8);
+							else if (index.ElementType == typeof(float)) il.LoggedEmit(OpCodes.Stind_R4);
+							else if (index.ElementType == typeof(double)) il.LoggedEmit(OpCodes.Stind_R8);
+							else if (index.ElementType.IsClass) il.LoggedEmit(OpCodes.Stind_Ref);
+							else throw new NotSupportedException($"Unsupported element type: {index.ElementType}");
+
+							break;
+					}
+					break;
+				default: throw new NotImplementedException("Cannot support the current member info");
+			}
+			il.LoggedEmit(OpCodes.Ret);
+
+			setFns.Add(accessor, fn = method.CreateDelegate<SetFn>());
+			return fn;
+		}
+
+
+		static void PerformAutocast(DynamicAccessor accessor, ILGenerator il) {
+			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(typeof(T), accessor.StoringType);
+			if (implicitCheck != null) {
+				il.LoggedEmit(OpCodes.Ldobj, typeof(T));
+				il.LoggedEmit(OpCodes.Call, implicitCheck);
+			}
+			else if (
+				ILAssembler.GetLoadOpcode(typeof(T), out OpCode loadCode)
+				&& ILAssembler.GetConvOpcode(typeof(T), accessor.StoringType, out OpCode convCode, out bool unsignedInput)
+				) {
+				if (unsignedInput && (convCode == OpCodes.Conv_R4 || convCode == OpCodes.Conv_R8))
+					il.LoggedEmit(OpCodes.Conv_R_Un);
+				else
+					il.LoggedEmit(loadCode);
+				il.LoggedEmit(convCode);
+			}
+		}
+	}
+	public class DynamicArrayInfo(Type containedType, Func<int> length)
+	{
+		public Type ContainedType => containedType;
+		public int Length => length();
 	}
 
-	public void GenerateGetRef<T>(ILGenerator il) {
-		if (!IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			if (DeclaringType!.IsValueType) {
-				il.Emit(OpCodes.Unbox, DeclaringType);
-				il.Emit(OpCodes.Ldflda, Field);
+	public static class DynamicArrayHelp
+	{
+		public static readonly Dictionary<Type, DynamicArrayInfo> AcceptableTypes = new() {
+			{ typeof(Vector3), new(typeof(float), () => 3) }
+		};
+	}
+
+	public class DynamicArrayAccessor : DynamicAccessor
+	{
+		public readonly DynamicArrayIndexAccessor?[] ArrayIndexers;
+		public readonly DynamicArrayInfo Info;
+
+		public int Length => Info.Length;
+
+		public DynamicArrayAccessor(Type targetType, ReadOnlySpan<char> expression) : base(targetType, expression) {
+			var arrayAttr = StoringType.GetCustomAttribute<InlineArrayAttribute>();
+			if (arrayAttr != null) {
+				Info = new(StoringType.GetGenericArguments()[0], () => arrayAttr.Length);
 			}
 			else {
-				il.Emit(OpCodes.Castclass, DeclaringType);
-				il.Emit(OpCodes.Ldflda, Field);
+				if (!DynamicArrayHelp.AcceptableTypes.TryGetValue(StoringType, out Info!))
+					throw new Exception("Uh oh, we need a type def override");
 			}
+
+			ArrayIndexers = new DynamicArrayIndexAccessor?[Info.Length];
 		}
-		else
-			il.Emit(OpCodes.Ldsflda, Field);
 
-		il.Emit(OpCodes.Ret);
-	}
+		public DynamicArrayIndexAccessor? AtIndex(int index) {
+			if (index < 0)
+				return null;
 
-	public void GenerateSet<T>(ILGenerator il) {
-		if (!IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(DeclaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, DeclaringType);
-			il.Emit(OpCodes.Ldarg_1);
+			if (index >= Info.Length)
+				return null;
 
-			if (typeof(T).IsValueType)
-				il.Emit(OpCodes.Ldobj, typeof(T));
-			else
-				il.Emit(OpCodes.Ldind_Ref);
-
-			il.Emit(OpCodes.Stfld, Field);
-		}
-		else {
-			il.Emit(OpCodes.Ldarg_1);
-
-			if (typeof(T).IsValueType)
-				il.Emit(OpCodes.Ldobj, typeof(T));
-			else
-				il.Emit(OpCodes.Ldind_Ref);
-
-			il.Emit(OpCodes.Stsfld, Field);
+			return ArrayIndexers[index] ??= new(this, index);
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
-}
+	public class DynamicArrayIndexAccessor : DynamicAccessor
+	{
+		public readonly DynamicArrayAccessor BaseArrayAccessor;
+		public readonly bool HadNegativeIndex;
 
-public class ArrayFieldIndexInfo : IFieldAccessor, IFieldILGenerator
-{
-	public readonly ArrayFieldInfo BaseArrayField;
-	public readonly Type ElementType;
-	public readonly int Index;
-	public readonly bool NegativeIndex;
-	public readonly string name;
-	public ArrayFieldIndexInfo(ArrayFieldInfo baseArrayField, int index) {
-		if (baseArrayField.Type == ArrayFieldType.InlineArray && Math.Abs(index) >= baseArrayField.Length)
-			throw new IndexOutOfRangeException("Out of range index given the inline array target.");
+		public override int Index { get; }
 
-		BaseArrayField = baseArrayField;
-		ElementType = baseArrayField.ElementType;
-		Index = index;
-		name = $"{BaseArrayField.Name}[{index}]";
-
-		NegativeIndex = index < 0;
-		if (NegativeIndex)
-			Index = -Index;
+		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index) : base(baseArray.TargetType, $"{baseArray.Name}[{index}]") {
+			BaseArrayAccessor = baseArray;
+			Index = Math.Abs(index);
+			HadNegativeIndex = index < 0;
+		}
 	}
 
-	public Type FieldType => ElementType;
-	public Type? DeclaringType => BaseArrayField.DeclaringType;
-	public string Name => name;
-	public bool IsStatic => BaseArrayField.BaseField.IsStatic;
+	public enum IndexInfoBehavior
+	{
+		DirectElement,
+		InlineArray,
+		GenericArrayType
+	}
 
-	public void GenerateGet<T>(ILGenerator il) {
-		var field = BaseArrayField.BaseField;
-		if (!field.IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
-			il.Emit(OpCodes.Ldfld, field);
+	public sealed class IndexInfo : MemberInfo
+	{
+		Type container;
+		MemberInfo containerMember;
+		int index;
+		public Type Container => container;
+		public MemberInfo ContainerMember => containerMember;
+		public IndexInfo(MemberInfo containedField, int index) {
+			containerMember = containedField;
+			container = containedField switch {
+				FieldInfo i => i.FieldType,
+				PropertyInfo i => i.PropertyType,
+				IndexInfo i => i.DeclaringType,
+				_ => throw new NotImplementedException()
+			};
+			this.index = index;
 		}
-		else
-			il.Emit(OpCodes.Ldsfld, field);
 
-		var baseFieldType = field.FieldType;
-		if (baseFieldType.IsArray) {
-			il.Emit(OpCodes.Ldc_I4, Index);
-			il.Emit(OpCodes.Ldelema, ElementType);
+		public override string ToString() {
+			return $"{container}[{index}]";
 		}
-		else if (baseFieldType.IsValueType) {
-			InlineArrayAttribute? attr = baseFieldType.GetCustomAttribute<InlineArrayAttribute>();
-			if (attr != null) {
-				var firstField = baseFieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0];
+		Type? insideType;
+		IndexInfoBehavior behavior;
+		[MemberNotNull(nameof(insideType))]
+		void Process() {
+			insideType = container.GetElementType();
+			if (insideType != null) {
+				behavior = IndexInfoBehavior.DirectElement;
+				return;
+			}
 
-				var tempLocal = il.DeclareLocal(baseFieldType);
-				il.Emit(OpCodes.Stloc, tempLocal);     // Store the inline array struct
-				il.Emit(OpCodes.Ldloca, tempLocal);    // Load address of struct
-				il.Emit(OpCodes.Ldflda, firstField);   // Get address of first element
+			insideType = container.GetCustomAttribute<InlineArrayAttribute>() == null ? null : container.GetFields()[0].FieldType;
+			if (insideType != null) {
+				behavior = IndexInfoBehavior.InlineArray;
+				return;
+			}
 
-				// Manual offset calculation if index > 0
-				if (Index > 0) {
-					// Push the index
-					il.Emit(OpCodes.Ldc_I4, Index);
-					// Push the size of one element
-					il.Emit(OpCodes.Sizeof, ElementType);
-					// Multiply: index * sizeof(element)
-					il.Emit(OpCodes.Mul);
-					// Add to the base address
-					il.Emit(OpCodes.Add);
+			insideType = container.GetGenericArguments().FirstOrDefault();
+			if (insideType != null) {
+				behavior = IndexInfoBehavior.GenericArrayType;
+				return;
+			}
+
+			// :(
+			if (container == typeof(Vector3)) {
+				behavior = IndexInfoBehavior.InlineArray;
+				insideType = typeof(float);
+				return;
+			}
+
+			throw new Exception("Uh oh!");
+		}
+		public int Index => index;
+		public Type ElementType { get { Process(); return insideType; } }
+		public IndexInfoBehavior Behavior { get { Process(); return behavior; } }
+		public override Type DeclaringType => container;
+		public override MemberTypes MemberType => MemberTypes.Custom;
+		public override string Name => throw new NotImplementedException();
+		public override Type ReflectedType => container;
+		public override object[] GetCustomAttributes(bool inherit) => throw new NotImplementedException();
+		public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw new NotImplementedException();
+		public override bool IsDefined(Type attributeType, bool inherit) => throw new NotImplementedException();
+	}
+
+	public class DynamicAccessor : IFieldAccessor
+	{
+		public readonly List<MemberInfo> Members = [];
+
+		Type? buildingTargetType;
+		/// <summary>
+		/// The object target.
+		/// </summary>
+		public readonly Type TargetType;
+		/// <summary>
+		/// The final field/property target.
+		/// </summary>
+		public readonly Type StoringType;
+
+		public virtual int Index => -1;
+
+		public string Name { get; }
+		Type IFieldAccessor.DeclaringType => TargetType;
+		Type IFieldAccessor.FieldType => StoringType;
+
+		void HandleIndex(ReadOnlySpan<char> index) {
+			Members.Add(new IndexInfo(Members.Last(), int.Parse(index)));
+		}
+		void HandleFieldProp(ReadOnlySpan<char> index) {
+			if (index.IsEmpty)
+				return;
+
+			MemberInfo[] memberInfos = buildingTargetType!.GetMember(new string(index), (BindingFlags)~0);
+			foreach (var member in memberInfos) {
+				switch (member) {
+					case FieldInfo field:
+						Members.Add(field);
+						buildingTargetType = field.FieldType;
+						return;
+					case PropertyInfo prop:
+						Members.Add(prop);
+						buildingTargetType = prop.PropertyType;
+						return;
+				}
+			}
+
+			throw new KeyNotFoundException($"Cannot find an appropriate member named '{index}' in the current target type '{buildingTargetType.Name}'. Ensure naming is correct.");
+		}
+		public DynamicAccessor(Type target, Type store, string name) {
+			TargetType = target;
+			StoringType = store;
+			Name = name;
+		}
+		public DynamicAccessor(Type targetType, ReadOnlySpan<char> expression) {
+			Name = new(expression);
+
+			TargetType = targetType;
+			buildingTargetType = targetType;
+			int lastPeriod = 0;
+			for (int i = 0; i < expression.Length + 1; i++) {
+				// Final chance to handle a string index
+				if (i == expression.Length) {
+					ReadOnlySpan<char> index = expression[lastPeriod..i];
+					HandleFieldProp(index);
+					break;
+				}
+				char c = expression[i];
+				if (c == '.') {
+					ReadOnlySpan<char> index = expression[lastPeriod..i];
+					HandleFieldProp(index);
+					lastPeriod = i + 1; // advance past the period for string reading
 				}
 
-				// Load the value from the calculated address
-				il.Emit(OpCodes.Ldobj, ElementType);
-
-				// Box if we're returning object
-				if (typeof(T) == typeof(object) && ElementType.IsValueType) {
-					il.Emit(OpCodes.Box, ElementType);
+				if (c == '[') {
+					ReadOnlySpan<char> index = expression[lastPeriod..i];
+					HandleFieldProp(index);
+					// Start reading until ]
+					string work = "";
+					while (expression[++i] != ']')
+						work += expression[i];
+					HandleIndex(work);
+					lastPeriod = i + 1; // advance past the period for string reading
 				}
 			}
-		}
 
-		il.Emit(OpCodes.Ret);
+			StoringType = Members.Last() switch {
+				FieldInfo f => f.FieldType,
+				PropertyInfo p => p.PropertyType,
+				IndexInfo i => i.ElementType,
+				_ => throw new Exception()
+			};
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public T GetValue<T>(object instance) => ILAccess<T>.Get(this)(instance);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool SetValue<T>(object instance, in T value) {
+			var fn = ILAccess<T>.Set(this);
+			if (fn == null)
+				return false;
+			fn(instance, in value);
+			return true;
+		}
 	}
 
-	public void GenerateGetRef<T>(ILGenerator il) {
-		throw new NotImplementedException();
-	}
-
-	// UNCONFIRMED
-	public void GenerateSet<T>(ILGenerator il) {
-		var field = BaseArrayField.BaseField;
-		if (!field.IsStatic) {
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(field.DeclaringType!.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.DeclaringType);
-			il.Emit(OpCodes.Ldfld, field);
+	public static class ILAssembler
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoggedEmit(this ILGenerator il, OpCode code) {
+#if LOGGED_EMIT_ENABLE
+			Console.WriteLine(code);
+#endif
+			il.Emit(code);
 		}
-		else
-			il.Emit(OpCodes.Ldsfld, field);
-
-		var baseFieldType = field.FieldType;
-		if (baseFieldType.IsArray) {
-			il.Emit(OpCodes.Ldc_I4, Index);
-			il.Emit(OpCodes.Ldarg_1);
-			il.Emit(OpCodes.Stelem, ElementType);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoggedEmit(this ILGenerator il, OpCode code, FieldInfo field) {
+#if LOGGED_EMIT_ENABLE
+			Console.WriteLine($"{code} {field}");
+#endif
+			il.Emit(code, field);
 		}
-		else if (baseFieldType.IsValueType) {
-			InlineArrayAttribute? attr = baseFieldType.GetCustomAttribute<InlineArrayAttribute>();
-			if (attr != null || FieldAccess.TypesFieldsAreCompletelyLinear(baseFieldType)) {
-				var firstField = baseFieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0];
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoggedEmit(this ILGenerator il, OpCode code, MethodInfo method) {
+#if LOGGED_EMIT_ENABLE
+			Console.WriteLine($"{code} {method}");
+#endif
+			il.Emit(code, method);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoggedEmit(this ILGenerator il, OpCode code, Type type) {
+#if LOGGED_EMIT_ENABLE
+			Console.WriteLine($"{code} {type}");
+#endif
+			il.Emit(code, type);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoggedEmit(this ILGenerator il, OpCode code, int v) {
+#if LOGGED_EMIT_ENABLE
+			Console.WriteLine($"{code} {v}");
+#endif
+			il.Emit(code, v);
+		}
+		public static MethodInfo? TryGetImplicitConversion(Type baseType, Type targetType) {
+			return baseType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+				.Where(mi => mi.Name == "op_Implicit" && mi.ReturnType == targetType)
+				.FirstOrDefault(mi => {
+					ParameterInfo? pi = mi.GetParameters().FirstOrDefault();
+					return pi != null && pi.ParameterType == baseType;
+				})
+				??
+				targetType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+				.Where(mi => mi.Name == "op_Implicit" && mi.ReturnType == targetType)
+				.FirstOrDefault(mi => {
+					ParameterInfo? pi = mi.GetParameters().FirstOrDefault();
+					return pi != null && pi.ParameterType == baseType;
+				})
+				;
+		}
 
-				var tempLocal = il.DeclareLocal(baseFieldType);
-				il.Emit(OpCodes.Stloc, tempLocal);     // Store the inline array struct
-				il.Emit(OpCodes.Ldloca, tempLocal);    // Load address of struct
-				il.Emit(OpCodes.Ldflda, firstField);   // Get address of first element
+		public static bool GetLoadOpcode(Type from, out OpCode opcode) {
+			return (opcode = Type.GetTypeCode(from) switch {
+				TypeCode.Byte => OpCodes.Ldind_U1,
+				TypeCode.UInt16 => OpCodes.Ldind_U2,
+				TypeCode.UInt32 => OpCodes.Ldind_U4,
+				TypeCode.UInt64 => OpCodes.Ldind_I8,
+				TypeCode.SByte => OpCodes.Ldind_I1,
+				TypeCode.Int16 => OpCodes.Ldind_I2,
+				TypeCode.Int32 => OpCodes.Ldind_I4,
+				TypeCode.Int64 => OpCodes.Ldind_I8,
+				TypeCode.Single => OpCodes.Ldind_R4,
+				TypeCode.Double => OpCodes.Ldind_R8,
+				_ => OpCodes.Nop
+			}) != OpCodes.Nop;
+		}
+		public static bool GetConvOpcode(Type from, Type to, out OpCode opcode, out bool isUnsignedInput) {
+			opcode = OpCodes.Nop;
+			var fromcode = Type.GetTypeCode(from);
+			isUnsignedInput = fromcode switch {
+				TypeCode.Boolean or TypeCode.Byte or TypeCode.UInt16 or TypeCode.UInt32 or TypeCode.UInt64 => true,
+				_ => false
+			};
+			if (!from.IsPrimitive || !to.IsPrimitive)
+				return false;
 
-				// Manual offset calculation if index > 0
-				if (Index > 0) {
-					// Push the index
-					il.Emit(OpCodes.Ldc_I4, Index);
-					// Push the size of one element
-					il.Emit(OpCodes.Sizeof, ElementType);
-					// Multiply: index * sizeof(element)
-					il.Emit(OpCodes.Mul);
-					// Add to the base address
-					il.Emit(OpCodes.Add);
-				}
+			if (from == to)
+				return false;
 
-				// Store the value from the calculated address
-				il.Emit(OpCodes.Ldarg_1);              // load the value to assign
-				il.Emit(OpCodes.Stobj, ElementType);   // store value into computed address
+			var code = Type.GetTypeCode(to);
+
+			switch (fromcode) {
+				default:
+					opcode = code switch {
+						TypeCode.SByte => OpCodes.Conv_I1,
+						TypeCode.Byte => OpCodes.Conv_U1,
+						TypeCode.Int16 => OpCodes.Conv_I2,
+						TypeCode.UInt16 => OpCodes.Conv_U2,
+						TypeCode.Int32 => OpCodes.Conv_I4,
+						TypeCode.UInt32 => OpCodes.Conv_U4,
+						TypeCode.Int64 => OpCodes.Conv_I8,
+						TypeCode.UInt64 => OpCodes.Conv_U8,
+						TypeCode.Single => OpCodes.Conv_R4,
+						TypeCode.Double => OpCodes.Conv_R8,
+						_ => OpCodes.Nop
+					};
+					break;
 			}
-			else
-				throw new NotImplementedException($"Cannot interpret an array index from the type '{baseFieldType}'.");
+			return opcode != OpCodes.Nop;
 		}
 
-		il.Emit(OpCodes.Ret);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
-}
-public class ArrayFieldInfo : IFieldAccessor, IFieldILGenerator
-{
-	public readonly Dictionary<long, ArrayFieldIndexInfo> FieldAccessors = [];
-
-	public readonly FieldInfo BaseField;
-	public readonly Type ElementType;
-	public readonly int Length;
-	public readonly ArrayFieldType Type;
-	public ArrayFieldInfo(FieldInfo baseField) {
-		if (baseField.FieldType.IsArray) {
-			ElementType = baseField.FieldType.GetElementType()!;
-			Length = -1;
-			Type = ArrayFieldType.StdArray;
-		}
-		else if (baseField.FieldType == typeof(Vector3)) {
-			ElementType = typeof(float);
-			Length = 3;
-			Type = ArrayFieldType.Vector3;
-		}
-		else {
-			var inlineArrayAttr = baseField.FieldType.GetCustomAttribute<InlineArrayAttribute>();
-			if (inlineArrayAttr == null)
-				throw new ArgumentException($"Field {baseField.Name} is not an array or an InlineArray", nameof(baseField));
-
-			ElementType = baseField.FieldType.GetElementType()
-						   ?? baseField.FieldType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)[0]?.FieldType
-						   ?? throw new InvalidOperationException($"Cannot determine InlineArray element type for {baseField.FieldType}");
-			Length = inlineArrayAttr.Length;
-			Type = ArrayFieldType.InlineArray;
-		}
-
-		BaseField = baseField;
-		name = baseField.Name;
-	}
-
-	readonly string name;
-
-	public Type FieldType => BaseField.FieldType;
-	public Type? DeclaringType => BaseField.DeclaringType;
-	public string Name => name;
-	public bool IsStatic => BaseField.IsStatic;
-	// Instance is passed here because in the future we should sanity-check our target field against the 
-	// incoming untrusted index. Although a bad index wouldn't cause pandamonium beyond an out of range exception,
-	// it would be nice to handle it without an exception being raised in the future/being able to Assert for it.
-	public IFieldAccessor? GetIndexFieldInfo(object instance, int index) {
-		if (!FieldAccessors.TryGetValue(index, out ArrayFieldIndexInfo? ret))
-			FieldAccessors[index] = ret = new(this, index);
-
-		return ret;
-	}
-
-	public void GenerateGet<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateGetRef<T>(ILGenerator il) => throw new NotImplementedException();
-	public void GenerateSet<T>(ILGenerator il) => throw new NotImplementedException();
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void IFieldAccessor.CopyStringToField(object instance, string? str) => IFieldILGenerator.CopyStringToField(this, instance, str);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	T IFieldAccessor.GetValue<T>(object instance) => IFieldILGenerator.GetValue<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	ref T IFieldAccessor.GetValueRef<T>(object instance) => ref IFieldILGenerator.GetValueRef<T>(this, instance);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	bool IFieldAccessor.SetValue<T>(object instance, in T value) => IFieldILGenerator.SetValue(this, instance, in value);
-}
-
-
-public delegate Value GetFn<Instance, Value>(Instance instance);
-public delegate void SetFn<Instance, Value>(Instance instance, in Value value);
-public class GetSetAccessor<Instance, Value>(GetFn<Instance, Value> get, SetFn<Instance, Value>? set = null, string? name = null) : IFieldAccessor
-{
-	public string Name => name;
-	public bool IsStatic => false;
-	public Type DeclaringType => typeof(Instance);
-	public Type FieldType => typeof(Value);
-
-	public void CopyStringToField(object instance, string? str) {
-		Warning("CopyStringToField needs work\n");
-	}
-	public ref T GetValueRef<T>(object instance)=> throw new NotImplementedException("There's no good way to do this right now. TODO: If we run into this, consider removing it altogether in favor of get/sets.");
-	public T GetValue<T>(object instance) {
-		Value valueRef = get((Instance)instance);
-		T output = default;
-		DynamicConversion.CastConvert(in valueRef, ref output);
-		return output;
-	}
-	public bool SetValue<T>(object instance, in T value) {
-		if (set == null)
-			return false;
-		Value writeTarget = default;
-		DynamicConversion.CastConvert(in value, ref writeTarget);
-		set((Instance)instance, in writeTarget);
-		return true;
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void DynamicCast<From, To>(in From from, out To to) => ILCast<From, To>.Cast(in from, out to);
 	}
 }
 
-/// <summary>
-/// Various methods that implement field accessors.
-/// </summary>
-public static class FieldAccessReflectionUtils
+namespace Source
 {
-	static FieldInfo baseField(Type? t, string name) {
-		if (t == null)
-			throw new NullReferenceException("This doesnt work as well as we hoped!");
-		return t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-			?? t.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-			?? t.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-			?? throw new KeyNotFoundException($"Could not find a public/private/instance/static field named '{name}' in the type '{t.Name}'.");
-	}
-	public static string ParseNameField(string? name) {
-		ArgumentNullException.ThrowIfNull(name);
-		return name;
-	}
-	public static GetSetAccessor<Instance, Value> FIELDOF<Instance, Value>(GetFn<Instance, Value> get, SetFn<Instance, Value>? set = null, [CallerArgumentExpression(nameof(get))] string? name = null) {
-		return new GetSetAccessor<Instance, Value>(get, set, name);
-	}
-	/// <summary>
-	/// Generic C# <see cref="FieldInfo"/> retrieval.
-	/// </summary>
-	/// <param name="name"></param>
-	/// <returns></returns>
-	/// <exception cref="NullReferenceException"></exception>
-	/// <exception cref="KeyNotFoundException"></exception>
-	public static BasicFieldInfo FIELDOF(string name) {
-		Type? t = WhoCalledMe(2);
-		return new BasicFieldInfo(baseField(t, name));
-	}
-	/// <summary>
-	/// A field representing an array.
-	/// </summary>
-	/// <param name="name"></param>
-	/// <returns></returns>
-	/// <exception cref="NullReferenceException"></exception>
-	/// <exception cref="KeyNotFoundException"></exception>
-	public static ArrayFieldInfo FIELDOF_ARRAY(string name) {
-		Type? t = WhoCalledMe(2);
-		return new ArrayFieldInfo(baseField(t, name));
-	}
-	/// <summary>
-	/// A field representing an array - but also specifying the index of the array.
-	/// </summary>
-	/// <param name="name"></param>
-	/// <param name="index"></param>
-	/// <returns></returns>
-	/// <exception cref="NullReferenceException"></exception>
-	/// <exception cref="KeyNotFoundException"></exception>
-	public static ArrayFieldIndexInfo FIELDOF_ARRAYINDEX(string name, int index) {
-		Type? t = WhoCalledMe(2);
-		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), index);
-	}
-	public static ArrayFieldIndexInfo FIELDOF_VECTORELEM(string name, int index) {
-		Type? t = WhoCalledMe(2);
-		return new ArrayFieldIndexInfo(new ArrayFieldInfo(baseField(t, name)), -index);
+	public static class FIELD<T>
+	{
+		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
+		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
+		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index);
+		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), -index);
 	}
 }

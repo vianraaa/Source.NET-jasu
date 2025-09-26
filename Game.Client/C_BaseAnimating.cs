@@ -7,52 +7,54 @@ using Source.Common.Engine;
 using System.Numerics;
 using System.Reflection;
 
+using FIELD = Source.FIELD<Game.Client.C_BaseAnimating>;
+
 namespace Game.Client;
 
 public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 {
 	public static readonly RecvTable DT_ServerAnimationData = new([
-		RecvPropFloat(FIELDOF(nameof(Cycle))),
+		RecvPropFloat(FIELD.OF(nameof(Cycle))),
 	]);
 	public static readonly ClientClass CC_ServerAnimationData = new ClientClass("ServerAnimationData", null, null, DT_ServerAnimationData);
 	public static readonly RecvTable DT_BaseAnimating = new(DT_BaseEntity, [
-		RecvPropInt( FIELDOF(nameof(ForceBone))),
-		RecvPropVector( FIELDOF(nameof(Force))),
+		RecvPropInt( FIELD.OF(nameof(ForceBone))),
+		RecvPropVector( FIELD.OF(nameof(Force))),
 
-		RecvPropInt( FIELDOF(nameof(Skin))),
-		RecvPropInt( FIELDOF(nameof(Body))),
+		RecvPropInt( FIELD.OF(nameof(Skin))),
+		RecvPropInt( FIELD.OF(nameof(Body))),
 
-		RecvPropInt( FIELDOF(nameof(HitboxSet))),
+		RecvPropInt( FIELD.OF(nameof(HitboxSet))),
 
-		RecvPropFloat( FIELDOF(nameof(ModelScale))),
+		RecvPropFloat( FIELD.OF(nameof(ModelScale))),
 
-		RecvPropArray3( FIELDOF_ARRAY(nameof(PoseParameter)), RecvPropFloat(null!)),
+		RecvPropArray3( FIELD.OF_ARRAY(nameof(PoseParameter)), RecvPropFloat(null!)),
 
-		RecvPropInt( FIELDOF(nameof(Sequence))),
-		RecvPropFloat( FIELDOF(nameof(PlaybackRate))),
+		RecvPropInt( FIELD.OF(nameof(Sequence))),
+		RecvPropFloat( FIELD.OF(nameof(PlaybackRate))),
 
-		RecvPropArray3(FIELDOF_ARRAY(nameof(EncodedController)), RecvPropFloat(null!) ),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(EncodedController)), RecvPropFloat(null!) ),
 
-		RecvPropInt( FIELDOF(nameof( ClientSideAnimation ))),
-		RecvPropInt( FIELDOF(nameof( ClientSideFrameReset ))),
+		RecvPropInt( FIELD.OF(nameof( ClientSideAnimation ))),
+		RecvPropInt( FIELD.OF(nameof( ClientSideFrameReset ))),
 
-		RecvPropInt( FIELDOF(nameof( NewSequenceParity) )),
-		RecvPropInt( FIELDOF(nameof( ResetEventsParity ))),
-		RecvPropInt( FIELDOF(nameof( MuzzleFlashParity ))),
+		RecvPropInt( FIELD.OF(nameof( NewSequenceParity) )),
+		RecvPropInt( FIELD.OF(nameof( ResetEventsParity ))),
+		RecvPropInt( FIELD.OF(nameof( MuzzleFlashParity ))),
 
-		RecvPropEHandle( FIELDOF(nameof( LightingOrigin )) ),
-		RecvPropEHandle( FIELDOF(nameof( LightingOriginRelative )) ),
+		RecvPropEHandle( FIELD.OF(nameof( LightingOrigin )) ),
+		RecvPropEHandle( FIELD.OF(nameof( LightingOriginRelative )) ),
 
 		RecvPropDataTable( "serveranimdata", DT_ServerAnimationData ),
 
-		RecvPropFloat( FIELDOF(nameof(FadeMinDist) )),
-		RecvPropFloat( FIELDOF(nameof(FadeMaxDist ))),
-		RecvPropFloat( FIELDOF(nameof(FadeScale ))),
+		RecvPropFloat( FIELD.OF(nameof(FadeMinDist) )),
+		RecvPropFloat( FIELD.OF(nameof(FadeMaxDist ))),
+		RecvPropFloat( FIELD.OF(nameof(FadeScale ))),
 
 		// Gmod specific
-		RecvPropEHandle(FIELDOF(nameof(BoneManipulator))),
-		RecvPropEHandle(FIELDOF(nameof(FlexManipulator))),
-		RecvPropVector(FIELDOF(nameof(OverrideViewTarget))),
+		RecvPropEHandle(FIELD.OF(nameof(BoneManipulator))),
+		RecvPropEHandle(FIELD.OF(nameof(FlexManipulator))),
+		RecvPropVector(FIELD.OF(nameof(OverrideViewTarget))),
 	]);
 
 	private static void RecvProxy_Sequence(ref readonly RecvProxyData data, object instance, FieldInfo field) {

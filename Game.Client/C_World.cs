@@ -11,22 +11,24 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+using FIELD = Source.FIELD<Game.Client.C_World>;
+
 namespace Game.Client;
 
 [LinkEntityToClass(LocalName = "player")]
 public class C_World : C_BaseEntity
 {
 	public static readonly RecvTable DT_World = new(DT_BaseEntity, [
-		RecvPropFloat(FIELDOF(nameof(WaveHeight))),
-		RecvPropVector(FIELDOF(nameof(WorldMins))),
-		RecvPropVector(FIELDOF(nameof(WorldMaxs))),
-		RecvPropInt(FIELDOF(nameof(StartDark))),
-		RecvPropFloat(FIELDOF(nameof(MaxOccludeeArea))),
-		RecvPropFloat(FIELDOF(nameof(MinOccluderArea))),
-		RecvPropFloat(FIELDOF(nameof(MaxPropScreenSpaceWidth))),
-		RecvPropFloat(FIELDOF(nameof(MinPropScreenSpaceWidth))),
-		RecvPropString(FIELDOF(nameof(DetailSpriteMaterial))),
-		RecvPropInt(FIELDOF(nameof(ColdWorld))),
+		RecvPropFloat(FIELD.OF(nameof(WaveHeight))),
+		RecvPropVector(FIELD.OF(nameof(WorldMins))),
+		RecvPropVector(FIELD.OF(nameof(WorldMaxs))),
+		RecvPropInt(FIELD.OF(nameof(StartDark))),
+		RecvPropFloat(FIELD.OF(nameof(MaxOccludeeArea))),
+		RecvPropFloat(FIELD.OF(nameof(MinOccluderArea))),
+		RecvPropFloat(FIELD.OF(nameof(MaxPropScreenSpaceWidth))),
+		RecvPropFloat(FIELD.OF(nameof(MinPropScreenSpaceWidth))),
+		RecvPropString(FIELD.OF(nameof(DetailSpriteMaterial))),
+		RecvPropInt(FIELD.OF(nameof(ColdWorld))),
 	]);
 
 	public static new readonly ClientClass ClientClass = new ClientClass("World", null, null, DT_World)

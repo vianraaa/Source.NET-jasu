@@ -100,7 +100,7 @@ public static class SendPropHelpers
 	public static SendProp SendPropArray2(ArrayLengthSendProxyFn proxyFn, int elementCount, ReadOnlySpan<char> arrayName) {
 		return InternalSendPropArray(elementCount, arrayName, proxyFn);
 	}
-	public static SendProp SendPropArray3(ArrayFieldInfo field, SendProp arrayProp, SendTableProxyFn? proxyFn = null) {
+	public static SendProp SendPropArray3(DynamicArrayAccessor field, SendProp arrayProp, SendTableProxyFn? proxyFn = null) {
 		proxyFn ??= SendProxy_DataTableToDataTable;
 
 		SendProp ret = new();
@@ -121,7 +121,7 @@ public static class SendPropHelpers
 
 		for (int i = 0; i < elements; i++) {
 			props[i] = arrayProp.Copy();
-			props[i].FieldInfo = new ArrayFieldIndexInfo(field, i);
+			props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
 			props[i].NameOverride = ElementNames[i];
 			props[i].SetParentArrayPropName(field.Name);
 		}
