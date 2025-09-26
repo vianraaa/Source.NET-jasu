@@ -1,6 +1,7 @@
 ﻿// #define LOGGED_EMIT_ENABLE
 
 using Source.Common;
+using Source.Common.Mathematics;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
@@ -264,7 +265,8 @@ namespace Source.Common
 	public static class DynamicArrayHelp
 	{
 		public static readonly Dictionary<Type, DynamicArrayInfo> AcceptableTypes = new() {
-			{ typeof(Vector3), new(typeof(float), () => 3) }
+			{ typeof(Vector3), new(typeof(float), () => 3) },
+			{ typeof(QAngle), new(typeof(float), () => 3) },
 		};
 	}
 
@@ -363,10 +365,9 @@ namespace Source.Common
 				return;
 			}
 
-			// :(
-			if (container == typeof(Vector3)) {
+			if (DynamicArrayHelp.AcceptableTypes.TryGetValue(container, out var info)) {
 				behavior = IndexInfoBehavior.InlineArray;
-				insideType = typeof(float);
+				insideType = info!.ContainedType;
 				return;
 			}
 
