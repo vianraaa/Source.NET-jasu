@@ -17,8 +17,8 @@ using FIELD = FIELD<PlayerLocalData>;
 public class PlayerLocalData
 {
 	public static readonly SendTable DT_Local = new([
-		SendPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), SendPropInt(FIELD.OF_ARRAY(nameof(AreaBits)), 8, PropFlags.Unsigned)),
-		SendPropArray3(FIELD.OF_ARRAY(nameof(AreaPortalBits)), SendPropInt(FIELD.OF_ARRAY(nameof(AreaPortalBits)), 8, PropFlags.Unsigned)),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), SendPropInt(FIELD.OF_ARRAYINDEX(nameof(AreaBits)), 8, PropFlags.Unsigned)),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(AreaPortalBits)), SendPropInt(FIELD.OF_ARRAYINDEX(nameof(AreaPortalBits)), 8, PropFlags.Unsigned)),
 		SendPropInt(FIELD.OF(nameof(HideHUD)), (int)HideHudBits.BitCount, PropFlags.Unsigned),
 		SendPropFloat(FIELD.OF(nameof(FOVRate)), 0, PropFlags.NoScale ),
 		SendPropInt(FIELD.OF(nameof(Ducked)),   1, PropFlags.Unsigned ),

@@ -60,5 +60,5 @@ public struct AudioParams()
 	public InlineArrayNumLocalAudioSounds<Vector3> LocalSound;
 	public int SoundscapeIndex;
 	public int LocalBits;
-	public EHANDLE handle = new();
+	public EHANDLE Ent = new();
 }

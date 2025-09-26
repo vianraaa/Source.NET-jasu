@@ -597,7 +597,7 @@ namespace Source
 	{
 		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
-		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index);
+		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index = 0) => new(OF_ARRAY(expression), index);
 		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), -index);
 	}
 }

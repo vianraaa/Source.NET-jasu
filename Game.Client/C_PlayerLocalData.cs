@@ -16,8 +16,8 @@ using FIELD = FIELD<C_PlayerLocalData>;
 public class C_PlayerLocalData
 {
 	public static readonly RecvTable DT_Local = new([
-		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), RecvPropInt(FIELD.OF_ARRAY(nameof(AreaBits)))),
-		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaPortalBits)), RecvPropInt(FIELD.OF_ARRAY(nameof(AreaPortalBits)))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(AreaBits)))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaPortalBits)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(AreaPortalBits)))),
 		RecvPropInt(FIELD.OF(nameof(HideHUD))),
 		RecvPropFloat(FIELD.OF(nameof(FOVRate))),
 		RecvPropInt(FIELD.OF(nameof(Ducked))),
