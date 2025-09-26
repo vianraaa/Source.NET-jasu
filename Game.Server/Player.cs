@@ -1,10 +1,14 @@
 ﻿using Source;
 using Source.Common;
 using Source.Common.Engine;
+using Source.Common.Mathematics;
 
+using System.Numerics;
 using System.Reflection;
 
 namespace Game.Server;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 using FIELD = Source.FIELD<BasePlayer>;
 
 public partial class BasePlayer : BaseCombatCharacter
@@ -15,7 +19,26 @@ public partial class BasePlayer : BaseCombatCharacter
 
 	
 	public static readonly SendTable DT_LocalPlayerExclusive = new([
-		SendPropDataTable(nameof(Local), PlayerLocalData.DT_Local)
+		SendPropDataTable(nameof(Local), PlayerLocalData.DT_Local),
+		SendPropFloat(FIELD.OF(nameof(Friction)), 8, PropFlags.RoundDown, 0.0f, 4.0f),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(Ammo)), SendPropInt( FIELD.OF_ARRAYINDEX(nameof(Ammo)), -1, PropFlags.VarInt | PropFlags.Unsigned)),
+		SendPropInt(FIELD.OF(nameof(OnTarget)), 2, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(TickBase)), -1, PropFlags.ChangesOften),
+		SendPropInt(FIELD.OF(nameof(NextThinkTick))),
+		SendPropEHandle(FIELD.OF(nameof(LastWeapon))),
+		SendPropEHandle(FIELD.OF(nameof(GroundEntity)), PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 0), 32, PropFlags.NoScale|PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 1), 32, PropFlags.NoScale|PropFlags.ChangesOften),
+		SendPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 2), 32, PropFlags.NoScale|PropFlags.ChangesOften),
+		SendPropVector(FIELD.OF(nameof(BaseVelocity)), 20, 0, -1000, 1000),
+		SendPropEHandle(FIELD.OF(nameof(ConstraintEntity))),
+		SendPropVector(FIELD.OF(nameof(ConstraintCenter)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(ConstraintRadius)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(ConstraintWidth)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(ConstraintSpeedFactor)), 0, PropFlags.NoScale),
+		SendPropFloat(FIELD.OF(nameof(DeathTime)), 0, PropFlags.NoScale),
+		SendPropInt(FIELD.OF(nameof(WaterLevel)), 2, PropFlags.Unsigned),
+		SendPropFloat(FIELD.OF(nameof(LaggedMovementValue)), 0, PropFlags.NoScale),
 	]); public static readonly ServerClass PlayerExclusive = new("LocalPlayerExclusive", DT_LocalPlayerExclusive);
 
 	public static readonly SendTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
@@ -39,22 +62,7 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropDataTable( "localdata", DT_LocalPlayerExclusive, SendProxy_SendLocalDataTable),
 	]);
 
-	readonly EHANDLE Vehicle = new();
-	readonly EHANDLE UseEntity = new();
-	readonly EHANDLE ObserverTarget = new();
-	readonly EHANDLE ZoomOwner = new();
-	int LifeState;
-	float MaxSpeed;
-	int Flags;
-	int ObserverMode;
-	int FOV;
-	int FOVStart;
-	float FOVTime;
-	float DefaultFOV;
-	InlineArray18<char> LastPlaceName;
-	readonly EHANDLE ColorCorrectionCtrl = new();
-	bool UseWeaponsInVehicle;
-
+	
 	public static void SendProxy_CropFlagsToPlayerFlagBitsLength(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
@@ -68,4 +76,28 @@ public partial class BasePlayer : BaseCombatCharacter
 	bool DeadFlag;
 	readonly PlayerState pl = new();
 	readonly PlayerLocalData Local = new();
+	readonly EHANDLE Vehicle = new();
+	readonly EHANDLE UseEntity = new();
+	readonly EHANDLE ObserverTarget = new();
+	readonly EHANDLE ZoomOwner = new();
+	readonly EHANDLE ConstraintEntity = new();
+	float MaxSpeed;
+	int Flags;
+	int ObserverMode;
+	int FOV;
+	int TickBase;
+	int FOVStart;
+	float FOVTime;
+	float DefaultFOV;
+	Vector3 ConstraintCenter;
+	float ConstraintRadius;
+	float ConstraintWidth;
+	float ConstraintSpeedFactor;
+	InlineArray18<char> LastPlaceName;
+	readonly EHANDLE ColorCorrectionCtrl = new();
+	bool UseWeaponsInVehicle;
+	public bool OnTarget;
+	public double DeathTime;
+	public double LaggedMovementValue;
+	readonly EHANDLE LastWeapon = new();
 }

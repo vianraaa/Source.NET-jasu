@@ -1,7 +1,11 @@
 ﻿using Source;
 using Source.Common;
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System;
+
 using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
+using System.Numerics;
 
 namespace Game.Client;
 
@@ -12,7 +16,26 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
-		RecvPropDataTable(nameof(Local), C_PlayerLocalData.DT_Local)
+		RecvPropDataTable(nameof(Local), FIELD.OF(nameof(Local)), C_PlayerLocalData.DT_Local),
+		RecvPropFloat(FIELD.OF(nameof(Friction))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(Ammo)), RecvPropInt( FIELD.OF_ARRAYINDEX(nameof(Ammo)))),
+		RecvPropInt(FIELD.OF(nameof(OnTarget))),
+		RecvPropInt(FIELD.OF(nameof(TickBase))),
+		RecvPropInt(FIELD.OF(nameof(NextThinkTick))),
+		RecvPropEHandle(FIELD.OF(nameof(LastWeapon))),
+		RecvPropEHandle(FIELD.OF(nameof(GroundEntity))),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 1)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(Velocity), 2)),
+		RecvPropVector(FIELD.OF(nameof(BaseVelocity))),
+		RecvPropEHandle(FIELD.OF(nameof(ConstraintEntity))),
+		RecvPropVector(FIELD.OF(nameof(ConstraintCenter))),
+		RecvPropFloat(FIELD.OF(nameof(ConstraintRadius))),
+		RecvPropFloat(FIELD.OF(nameof(ConstraintWidth))),
+		RecvPropFloat(FIELD.OF(nameof(ConstraintSpeedFactor))),
+		RecvPropFloat(FIELD.OF(nameof(DeathTime))),
+		RecvPropInt(FIELD.OF(nameof(WaterLevel))),
+		RecvPropFloat(FIELD.OF(nameof(LaggedMovementValue))),
 	]); public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
@@ -36,22 +59,6 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropDataTable("localdata", DT_LocalPlayerExclusive),
 	]); public static readonly new ClientClass ClientClass = new ClientClass("BasePlayer", null, null, DT_BasePlayer);
 
-	readonly EHANDLE Vehicle = new();
-	readonly EHANDLE UseEntity = new();
-	readonly EHANDLE ObserverTarget = new();
-	readonly EHANDLE ZoomOwner = new();
-	int LifeState;
-	float MaxSpeed;
-	int Flags;
-	int ObserverMode;
-	int FOV;
-	int FOVStart;
-	float FOVTime;
-	float DefaultFOV;
-	InlineArray18<char> LastPlaceName;
-	readonly EHANDLE ColorCorrectionCtrl = new();
-	bool UseWeaponsInVehicle;
-	readonly PlayerState pl = new();
 
 	static C_BasePlayer? localPlayer;
 	internal static C_BasePlayer? GetLocalPlayer() => localPlayer;
@@ -79,6 +86,31 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		base.PostDataUpdate(updateType);
 	}
 
-	public bool DeadFlag;
+	bool DeadFlag;
+	readonly PlayerState pl = new();
 	readonly C_PlayerLocalData Local = new();
+	readonly EHANDLE Vehicle = new();
+	readonly EHANDLE UseEntity = new();
+	readonly EHANDLE ObserverTarget = new();
+	readonly EHANDLE ZoomOwner = new();
+	readonly EHANDLE ConstraintEntity = new();
+	float MaxSpeed;
+	int Flags;
+	int ObserverMode;
+	int FOV;
+	int TickBase;
+	int FOVStart;
+	float FOVTime;
+	float DefaultFOV;
+	Vector3 ConstraintCenter;
+	float ConstraintRadius;
+	float ConstraintWidth;
+	float ConstraintSpeedFactor;
+	InlineArray18<char> LastPlaceName;
+	readonly EHANDLE ColorCorrectionCtrl = new();
+	bool UseWeaponsInVehicle;
+	public bool OnTarget;
+	public double DeathTime;
+	public double LaggedMovementValue;
+	readonly EHANDLE LastWeapon = new();
 }

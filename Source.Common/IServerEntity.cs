@@ -12,5 +12,4 @@ public interface IServerEntity : IServerUnknown
 public interface IServerUnknown : IHandleEntity {
 	ICollideable? GetCollideable();
 	IServerNetworkable? GetNetworkable();
-	BaseEntity? GetBaseEntity();
 }

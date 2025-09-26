@@ -151,6 +151,12 @@ public partial class BaseEntity : IServerEntity
 	public readonly EHANDLE OwnerEntity = new();
 	public readonly EHANDLE EffectEntity = new();
 	public readonly EHANDLE MoveParent = new();
+	public readonly EHANDLE GroundEntity = new();
+
+	public int LifeState;
+	public Vector3 BaseVelocity;
+	public int NextThinkTick;
+	public byte WaterLevel;
 
 	InlineArray32<bool> GMOD_bool;
 	InlineArray32<float> GMOD_float;
@@ -174,11 +180,7 @@ public partial class BaseEntity : IServerEntity
 	byte InterpolationFrame;
 	int ModelIndex;
 	CollisionProperty Collision = new();
-
-
-	public Source.Common.Server.BaseEntity? GetBaseEntity() {
-		throw new NotImplementedException();
-	}
+	public float Friction;
 
 	public ICollideable? GetCollideable() {
 		throw new NotImplementedException();

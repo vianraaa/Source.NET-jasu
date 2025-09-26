@@ -25,6 +25,7 @@ public class BaseCombatCharacter : BaseFlex
 	public double NextAttack;
 	public readonly EHANDLE ActiveWeapon = new();
 	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons = new();
+	public int Ammo;
 
 	private static object? SendProxy_SendBaseCombatCharacterLocalDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();

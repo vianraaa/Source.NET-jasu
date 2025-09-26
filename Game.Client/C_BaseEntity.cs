@@ -199,55 +199,59 @@ public partial class C_BaseEntity : IClientEntity
 	public Vector3 Velocity;
 	public int CreationID;
 	public int MapCreatedID;
+	public float Friction;
 
 	public CollisionProperty Collision = new();
 
-	int Effects;
-	byte RenderMode;
-	byte RenderFX;
-	byte RenderFXBlend;
-	Color ColorRender;
-	int CollisionGroup;
-	float Elasticity;
-	float ShadowCastDistance;
-	byte OldRenderMode;
+	public int Effects;
+	public byte RenderMode;
+	public byte RenderFX;
+	public byte RenderFXBlend;
+	public Color ColorRender;
+	public int CollisionGroup;
+	public float Elasticity;
+	public float ShadowCastDistance;
+	public byte OldRenderMode;
 
-	InlineArray32<bool> GMOD_bool;
-	InlineArray32<float> GMOD_float;
-	InlineArray32<int> GMOD_int;
-	InlineArray32<Vector3> GMOD_Vector;
-	InlineArray32<QAngle> GMOD_QAngle;
-	InlineArrayNew32<EHANDLE> GMOD_EHANDLE = new(); 
-	InlineArray512<char> GMOD_String0;
-	InlineArray512<char> GMOD_String1;
-	InlineArray512<char> GMOD_String2;
-	InlineArray512<char> GMOD_String3;
+	public InlineArray32<bool> GMOD_bool;
+	public InlineArray32<float> GMOD_float;
+	public InlineArray32<int> GMOD_int;
+	public InlineArray32<Vector3> GMOD_Vector;
+	public InlineArray32<QAngle> GMOD_QAngle;
+	public InlineArrayNew32<EHANDLE> GMOD_EHANDLE = new(); 
+	public InlineArray512<char> GMOD_String0;
+	public InlineArray512<char> GMOD_String1;
+	public InlineArray512<char> GMOD_String2;
+	public InlineArray512<char> GMOD_String3;
 
 	public readonly GModTable GMOD_DataTable = new();
 
 	public double Speed;
 	public int TeamNum;
 
-	EHANDLE OwnerEntity = new();
-	EHANDLE EffectEntity = new();
+	public readonly EHANDLE OwnerEntity = new();
+	public readonly EHANDLE EffectEntity = new();
+	public readonly EHANDLE GroundEntity = new();
+	public int LifeState;
+	public Vector3 BaseVelocity;
+	public int NextThinkTick;
+	public byte WaterLevel;
 
+	public long CreationTick;
 
-	long CreationTick;
+	public bool OldShouldDraw;
 
-	bool OldShouldDraw;
+	public Vector3 AbsOrigin;
+	public QAngle AngAbsRotation;
+	public Vector3 OldOrigin;
+	public QAngle OldAngRotation;
 
-	float Friction;
-	Vector3 AbsOrigin;
-	QAngle AngAbsRotation;
-	Vector3 OldOrigin;
-	QAngle OldAngRotation;
+	public Matrix4x4 CoordinateFrame;
+	public Vector3 NetworkOrigin;
+	public QAngle NetworkAngles;
 
-	Matrix4x4 CoordinateFrame;
-	Vector3 NetworkOrigin;
-	QAngle NetworkAngles;
-
-	Handle<C_BasePlayer> PlayerSimulationOwner = new();
-	int DataChangeEventRef;
+	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
+	public int DataChangeEventRef;
 
 	public void ClientThink() {
 		throw new NotImplementedException();
