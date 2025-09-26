@@ -121,7 +121,7 @@ public static class SendPropHelpers
 
 		for (int i = 0; i < elements; i++) {
 			props[i] = arrayProp.Copy();
-			// TODO SUPER IMPORTANT TODO ASAP props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
+			props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
 			props[i].NameOverride = ElementNames[i];
 			props[i].SetParentArrayPropName(field.Name);
 		}

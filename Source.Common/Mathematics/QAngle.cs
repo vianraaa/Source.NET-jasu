@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
 namespace Source.Common.Mathematics;
@@ -9,6 +10,7 @@ public struct AddAngle
 	public double StartTime;
 }
 
+[StructLayout(LayoutKind.Sequential)]
 public struct QAngle
 {
 	public float X, Y, Z;
@@ -35,6 +37,9 @@ public struct QAngle
 		Y = vec.Y;
 		Z = vec.Z;
 	}
+
+	public static implicit operator Vector3(QAngle angle) => new(angle.X, angle.Y, angle.Z);
+	public static implicit operator QAngle(Vector3 vector) => new(vector);
 
 	public void Init() {
 		X = 0;

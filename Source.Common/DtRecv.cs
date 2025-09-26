@@ -2,6 +2,7 @@
 
 using Source;
 using Source.Common;
+using Source.Common.Mathematics;
 
 using System;
 using System.Collections;
@@ -21,11 +22,11 @@ public delegate void ArrayLengthRecvProxyFn(object instance, int objectID, int c
 public static class RecvPropHelpers
 {
 	public static void RecvProxy_FloatToFloat(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValue<float>(instance, data.Value.Float);
+		field.SetValue(instance, data.Value.Float);
 	}
 
 	public static void RecvProxy_VectorToVector(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		field.SetValue<Vector3>(instance, data.Value.Vector);
+		field.SetValue(instance, data.Value.Vector);
 	}
 
 	public static void RecvProxy_VectorToVectorXY(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
@@ -267,7 +268,7 @@ public static class RecvPropHelpers
 
 		for (int i = 0; i < elements; i++) {
 			props[i] = arrayProp.Copy();
-			// TODO SUPER TODO IMPORTANT props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
+			props[i].FieldInfo = new DynamicArrayIndexAccessor(field, i);
 			props[i].NameOverride = ClientElementNames[i];
 			props[i].SetParentArrayPropName(field.Name);
 		}
