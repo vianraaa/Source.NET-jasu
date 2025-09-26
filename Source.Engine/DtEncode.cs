@@ -569,7 +569,7 @@ public struct PropTypeFns
 			lengthProxy(decodeInfo.Object, decodeInfo.RecvProxyData.ObjectID, nElements);
 
 		for (subDecodeInfo.RecvProxyData.Element = 0; subDecodeInfo.RecvProxyData.Element < nElements; subDecodeInfo.RecvProxyData.Element++) {
-			var element = arrayFieldInfo.AtIndex(subDecodeInfo.Object!, subDecodeInfo.RecvProxyData.Element);
+			var element = arrayFieldInfo.AtIndex(subDecodeInfo.RecvProxyData.Element);
 			if(element == null) {
 				Warning($"Invalid element at {subDecodeInfo.RecvProxyData.Element}\n");
 				continue;

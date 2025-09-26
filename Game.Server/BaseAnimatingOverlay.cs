@@ -3,8 +3,8 @@
 using Source.Common;
 
 namespace Game.Server;
-using FIELD_AL = Source.FIELD< AnimationLayer>;
-using FIELD_BAO = Source.FIELD<AnimationLayer>;
+using FIELD_AL = Source.FIELD<AnimationLayer>;
+using FIELD_BAO = Source.FIELD<BaseAnimatingOverlay>;
 
 public class AnimationLayer
 {

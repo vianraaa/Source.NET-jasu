@@ -88,8 +88,8 @@ namespace Source.Common
 	{
 		public delegate T GetFn(object instance);
 		public delegate void SetFn(object instance, in T value);
-		static readonly ConditionalWeakTable<DynamicAccessor, GetFn> getFns = [];
-		static readonly ConditionalWeakTable<DynamicAccessor, SetFn> setFns = [];
+		static readonly Dictionary<object, GetFn> getFns = [];
+		static readonly Dictionary<object, SetFn> setFns = [];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static GetFn Get(DynamicAccessor accessor) {
@@ -116,7 +116,6 @@ namespace Source.Common
 				}
 			}
 
-
 			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(accessor.StoringType, typeof(T));
 			if (implicitCheck != null) {
 				il.Emit(OpCodes.Ldobj, accessor.StoringType);
@@ -134,7 +133,7 @@ namespace Source.Common
 
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static SetFn Set(DynamicAccessor accessor) {
+		public static SetFn? Set(DynamicAccessor accessor) {
 			if (setFns.TryGetValue(accessor, out SetFn? fn))
 				return fn;
 
@@ -155,6 +154,11 @@ namespace Source.Common
 				}
 			}
 
+			switch (accessor.Members[^1]) {
+				case IndexMemberInfo index:
+					il.LoggedEmit(OpCodes.Ldc_I4, index.Accessor.Index);
+					break;
+			}
 			il.LoggedEmit(OpCodes.Ldarg_1);
 
 			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(typeof(T), accessor.StoringType);
@@ -173,9 +177,18 @@ namespace Source.Common
 					il.LoggedEmit(loadCode);
 				il.LoggedEmit(convCode);
 			}
+
 			switch (accessor.Members[^1]) {
 				case FieldInfo field:
 					il.LoggedEmit(OpCodes.Stfld, field);
+					break;
+				case IndexMemberInfo index:
+					Type container = index.ContainerType;
+					PropertyInfo? indexer = container.GetProperty("Item", BindingFlags.Instance | BindingFlags.Public);
+					if(indexer != null) {
+						il.LoggedEmit(OpCodes.Constrained, container);
+						il.EmitCall(OpCodes.Call, indexer.GetSetMethod()!, null);
+					}
 					break;
 				default: throw new NotImplementedException("Cannot support the current member info");
 			}
@@ -186,24 +199,91 @@ namespace Source.Common
 		}
 	}
 
+	public class DynamicArrayInfo(Type containedType, Func<int> length) {
+		public Type ContainedType => containedType;
+		public int Length => length();
+	}
+
+	public static class DynamicArrayHelp {
+		public static readonly Dictionary<Type, DynamicArrayInfo> AcceptableTypes = new() {
+			{ typeof(Vector3), new(typeof(float), () => 3) }
+		};
+	}
 
 	public class DynamicArrayAccessor : DynamicAccessor
 	{
-		public readonly int Length;
+		public readonly DynamicArrayIndexAccessor?[] ArrayIndexers;
+		public readonly DynamicArrayInfo Info;
+
+		public int Length => Info.Length;
+
 		public DynamicArrayAccessor(Type targetType, ReadOnlySpan<char> expression) : base(targetType, expression) {
-			throw new NotImplementedException();
+			var arrayAttr = StoringType.GetCustomAttribute<InlineArrayAttribute>();
+			if(arrayAttr != null) {
+				Info = new(StoringType.GetGenericArguments()[0], () => arrayAttr.Length);
+			}
+			else {
+				if (!DynamicArrayHelp.AcceptableTypes.TryGetValue(StoringType, out Info!)) 
+					throw new Exception("Uh oh, we need a type def override");
+			}
+
+			ArrayIndexers = new DynamicArrayIndexAccessor?[Info.Length];
 		}
-		public DynamicArrayIndexAccessor AtIndex(object instance, int index) {
-			throw new NotImplementedException();
+
+		public DynamicArrayIndexAccessor? AtIndex(int index) {
+			if (index < 0)
+				return null;
+
+			if (index >= Info.Length)
+				return null;
+
+			return ArrayIndexers[index] ??= new(this, index);
 		}
 	}
+
 	public class DynamicArrayIndexAccessor : DynamicAccessor
 	{
 		public readonly DynamicArrayAccessor BaseArrayAccessor;
 		public readonly bool HadNegativeIndex;
-		public readonly int Index;
 
-		public DynamicArrayIndexAccessor(Type targetType, ReadOnlySpan<char> expression, int index) : base(targetType, expression) {
+		public override int Index { get; }
+
+		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index) : base(baseArray.TargetType, baseArray.Info.ContainedType, $"{baseArray.Name}[{index}]") {
+			BaseArrayAccessor = baseArray;
+			Index = Math.Abs(index);
+			HadNegativeIndex = index < 0;
+
+			FieldType = baseArray.Info.ContainedType;
+			Members.AddRange(baseArray.Members);
+			Members.Add(new IndexMemberInfo(this));
+		}
+
+		public Type DeclaringType => BaseArrayAccessor.TargetType;
+
+		public Type FieldType { get; }
+	}
+
+	public sealed class IndexMemberInfo(DynamicArrayIndexAccessor accessor) : MemberInfo
+	{
+		public Type ContainerType => accessor.BaseArrayAccessor.StoringType;
+		public DynamicArrayIndexAccessor Accessor => accessor;
+		public override Type? DeclaringType => throw new NotImplementedException();
+
+		public override MemberTypes MemberType => throw new NotImplementedException();
+
+		public override string Name => throw new NotImplementedException();
+
+		public override Type? ReflectedType => throw new NotImplementedException();
+
+		public override object[] GetCustomAttributes(bool inherit) {
+			throw new NotImplementedException();
+		}
+
+		public override object[] GetCustomAttributes(Type attributeType, bool inherit) {
+			throw new NotImplementedException();
+		}
+
+		public override bool IsDefined(Type attributeType, bool inherit) {
 			throw new NotImplementedException();
 		}
 	}
@@ -212,20 +292,27 @@ namespace Source.Common
 	{
 		public readonly List<MemberInfo> Members = [];
 
-		Type buildingTargetType;
+		Type? buildingTargetType;
+		/// <summary>
+		/// The object target.
+		/// </summary>
 		public readonly Type TargetType;
+		/// <summary>
+		/// The final field/property target.
+		/// </summary>
 		public readonly Type StoringType;
+
+		public virtual int Index => -1;
 
 		public string Name { get; }
 		Type IFieldAccessor.DeclaringType => TargetType;
-
-		Type IFieldAccessor.FieldType => throw new NotImplementedException();
+		Type IFieldAccessor.FieldType => StoringType;
 
 		void HandleIndex(ReadOnlySpan<char> index) {
 			if (index.IsEmpty)
 				return;
 
-			MemberInfo[] memberInfos = buildingTargetType.GetMember(new string(index), (BindingFlags)~0);
+			MemberInfo[] memberInfos = buildingTargetType!.GetMember(new string(index), (BindingFlags)~0);
 			foreach (var member in memberInfos) {
 				switch (member) {
 					case FieldInfo field:
@@ -240,6 +327,11 @@ namespace Source.Common
 			}
 
 			throw new KeyNotFoundException($"Cannot find an appropriate member named '{index}' in the current target type '{buildingTargetType.Name}'. Ensure naming is correct.");
+		}
+		public DynamicAccessor(Type target, Type store, string name) {
+			TargetType = target;
+			StoringType = store;
+			Name = name;
 		}
 		public DynamicAccessor(Type targetType, ReadOnlySpan<char> expression) {
 			Name = new(expression);
@@ -269,10 +361,12 @@ namespace Source.Common
 			};
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public T GetValue<T>(object instance) => ILAccess<T>.Get(this)(instance);
-		[MethodImpl(MethodImplOptions.AggressiveInlining)] public void SetValue<T>(object instance, in T value) => ILAccess<T>.Set(this)(instance, in value);
-
-		bool IFieldAccessor.SetValue<T>(object instance, in T value) {
-			throw new NotImplementedException();
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public bool SetValue<T>(object instance, in T value) {
+			var fn = ILAccess<T>.Set(this);
+			if (fn == null)
+				return false;
+			fn(instance, in value);
+			return true;
 		}
 	}
 
@@ -293,6 +387,10 @@ namespace Source.Common
 		public static void LoggedEmit(this ILGenerator il, OpCode code, Type type) {
 			Console.WriteLine($"{code} {type}");
 			il.Emit(code, type);
+		}
+		public static void LoggedEmit(this ILGenerator il, OpCode code, int v) {
+			Console.WriteLine($"{code} {v}");
+			il.Emit(code, v);
 		}
 		public static MethodInfo? TryGetImplicitConversion(Type baseType, Type targetType) {
 			return baseType.GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -364,7 +462,7 @@ namespace Source
 	{
 		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
-		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index) => new(typeof(T), expression, index);
-		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(typeof(T), expression, -index);
+		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index);
+		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), -index);
 	}
 }
