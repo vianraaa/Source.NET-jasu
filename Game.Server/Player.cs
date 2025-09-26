@@ -34,7 +34,6 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropFloat(FIELD.OF(nameof(ConstraintWidth)), 0, PropFlags.NoScale),
 		SendPropFloat(FIELD.OF(nameof(ConstraintSpeedFactor)), 0, PropFlags.NoScale),
 		SendPropFloat(FIELD.OF(nameof(DeathTime)), 0, PropFlags.NoScale),
-		SendPropInt(FIELD.OF(nameof(WaterLevel)), 2, PropFlags.Unsigned),
 		SendPropFloat(FIELD.OF(nameof(LaggedMovementValue)), 0, PropFlags.NoScale),
 		SendPropEHandle(FIELD.OF(nameof(TonemapController))),
 		SendPropEHandle(FIELD.OF(nameof(ViewEntity))),

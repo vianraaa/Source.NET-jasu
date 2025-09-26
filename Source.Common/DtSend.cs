@@ -457,7 +457,7 @@ public static class SendPropHelpers
 	}
 }
 
-[DebuggerDisplay("SendProp<{Type}> {NameOverride ?? FieldInfo.Name} [{Flags,ac}]")]
+[DebuggerDisplay("SendProp<{Type}> {GetName()} [{Flags,ac}]")]
 public class SendProp : IDataTableProp
 {
 	public RecvProp? MatchingRecvProp;
@@ -523,7 +523,7 @@ public class SendProp : IDataTableProp
 
 	public PropFlags GetFlags() => Flags;
 
-	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo.Name;
+	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo?.Name ?? "<??UNNAMED??>";
 
 	public int GetNumElements() => Elements;
 

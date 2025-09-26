@@ -321,7 +321,7 @@ public static class RecvPropHelpers
 }
 
 
-[DebuggerDisplay("RecvProp<{RecvType}> {FieldInfo.Name} [{Flags,ac}]")]
+[DebuggerDisplay("RecvProp<{RecvType}> {GetName()} [{Flags,ac}]")]
 public class RecvProp : IDataTableProp
 {
 	public IFieldAccessor FieldInfo;
@@ -355,7 +355,7 @@ public class RecvProp : IDataTableProp
 	public DataTableRecvVarProxyFn GetDataTableProxyFn() => DataTableProxyFn;
 	public void SetDataTableProxyFn(DataTableRecvVarProxyFn fn) => DataTableProxyFn = fn;
 
-	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo.Name;
+	public ReadOnlySpan<char> GetName() => NameOverride ?? FieldInfo?.Name ?? "<??UNNAMED??>";
 
 	public bool IsSigned() => (Flags & PropFlags.Unsigned) == 0;
 	public bool IsExcludeProp() => (Flags & PropFlags.Exclude) != 0;

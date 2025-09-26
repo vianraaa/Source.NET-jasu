@@ -31,7 +31,6 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropFloat(FIELD.OF(nameof(ConstraintWidth))),
 		RecvPropFloat(FIELD.OF(nameof(ConstraintSpeedFactor))),
 		RecvPropFloat(FIELD.OF(nameof(DeathTime))),
-		RecvPropInt(FIELD.OF(nameof(WaterLevel))),
 		RecvPropFloat(FIELD.OF(nameof(LaggedMovementValue))),
 		RecvPropEHandle(FIELD.OF(nameof(TonemapController))),
 		RecvPropEHandle(FIELD.OF(nameof(ViewEntity))),
