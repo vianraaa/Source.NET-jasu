@@ -23,5 +23,5 @@ public partial class C_BaseCombatCharacter : C_BaseFlex
 	public double NextAttack;
 	public readonly EHANDLE ActiveWeapon = new();
 	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons = new();
-	public int Ammo;
+	public InlineArrayMaxAmmoSlots<int> Ammo;
 }

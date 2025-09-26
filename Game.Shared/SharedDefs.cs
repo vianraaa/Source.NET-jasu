@@ -23,6 +23,7 @@ public static class SharedDefs
 	public const int NUM_AUDIO_LOCAL_SOUNDS = 8;
 
 	public const int MAX_SUIT_DEVICES = 3;
+	public const int MAX_AMMO_SLOTS = 32;
 }
 
 
@@ -46,6 +47,7 @@ public enum HideHudBits
 
 
 [InlineArray(NUM_AUDIO_LOCAL_SOUNDS)] public struct InlineArrayNumLocalAudioSounds<T> { public T item; }
+[InlineArray(MAX_AMMO_SLOTS)] public struct InlineArrayMaxAmmoSlots<T> { public T item; }
 
 [InlineArray(MAX_WEAPONS)]
 public struct InlineArrayNewMaxWeapons<T> where T : new()
