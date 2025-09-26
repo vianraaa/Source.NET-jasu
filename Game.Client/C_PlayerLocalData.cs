@@ -1,4 +1,7 @@
-﻿using Source.Common;
+﻿using Game.Shared;
+
+using Source;
+using Source.Common;
 using Source.Common.Mathematics;
 
 using System;
@@ -7,16 +10,62 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using FIELD = Source.FIELD<Game.Client.C_PlayerLocalData>;
 namespace Game.Client;
+using FIELD = FIELD<C_PlayerLocalData>;
 
 public class C_PlayerLocalData
 {
 	public static readonly RecvTable DT_Local = new([
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), RecvPropInt(FIELD.OF_ARRAY(nameof(AreaBits)))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaPortalBits)), RecvPropInt(FIELD.OF_ARRAY(nameof(AreaPortalBits)))),
 		RecvPropInt(FIELD.OF(nameof(HideHUD))),
+		RecvPropFloat(FIELD.OF(nameof(FOVRate))),
+		RecvPropInt(FIELD.OF(nameof(Ducked))),
+		RecvPropInt(FIELD.OF(nameof(Ducking))),
+		RecvPropInt(FIELD.OF(nameof(InDuckJump))),
+		RecvPropFloat(FIELD.OF(nameof(DuckTime))),
+		RecvPropFloat(FIELD.OF(nameof(DuckJumpTime))),
+		RecvPropFloat(FIELD.OF(nameof(JumpTime))),
+		RecvPropFloat(FIELD.OF(nameof(FallVelocity))),
+		RecvPropVector(FIELD.OF(nameof(PunchAngle))),
+		RecvPropVector(FIELD.OF(nameof(PunchAngleVel))),
+		RecvPropInt(FIELD.OF(nameof(DrawViewmodel))),
+		RecvPropInt(FIELD.OF(nameof(WearingSuit))),
+		RecvPropBool(FIELD.OF(nameof(Poisoned))),
+		RecvPropFloat(FIELD.OF(nameof(StepSize))),
+		RecvPropInt(FIELD.OF(nameof(AllowAutoMovement))),
+
+		RecvPropInt(FIELD.OF("Skybox3D.Scale")),
+		RecvPropVector(FIELD.OF("Skybox3D.Origin")),
+		RecvPropInt(FIELD.OF("Skybox3D.Area")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.Enable")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.Blend")),
+		RecvPropVector(FIELD.OF("Skybox3D.Fog.dirPrimary")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorPrimary")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorSecondary")),
+		RecvPropFloat(FIELD.OF("Skybox3D.Fog.Start")),
+		RecvPropFloat(FIELD.OF("Skybox3D.Fog.End")),
+		RecvPropFloat(FIELD.OF("Skybox3D.Fog.MaxDensity")),
+
+		RecvPropEHandle( FIELD.OF("PlayerFog.Ctrl")),
+
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 0)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 1)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 2)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 3)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 4)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 5)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 6)),
+		RecvPropVector(FIELD.OF_ARRAYINDEX("Audio.LocalSound", 7)),
+		RecvPropInt(FIELD.OF("Audio.SoundscapeIndex")),
+		RecvPropInt(FIELD.OF("Audio.LocalBits")),
+		RecvPropEHandle( FIELD.OF("Audio.Ent")),
 	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
 
-	public int HideHUD;
+	// TODO: NETWORK VARS!!!!!
+	public InlineArrayMaxAreaStateBytes<byte> AreaBits;
+	public InlineArrayMaxAreaPortalStateBytes<byte> AreaPortalBits;
+	public bool HideHUD;
 	public float FOVRate;
 	public bool Ducked;
 	public bool Ducking;
@@ -36,4 +85,8 @@ public class C_PlayerLocalData
 	public bool StepSize;
 	public bool AllowAutoMovement;
 	public bool SlowMovement;
+
+	public Sky3DParams Skybox3D = new();
+	public FogPlayerParams PlayerFog = new();
+	public AudioParams Audio = new();
 }
