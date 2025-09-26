@@ -119,6 +119,7 @@ namespace Source.Common
 
 								if (i == c - 1) {
 									if (index.ElementType.IsValueType && !index.ElementType.IsPrimitive) il.LoggedEmit(OpCodes.Ldobj, index.ElementType);
+									else if (index.ElementType == typeof(bool)) il.LoggedEmit(OpCodes.Ldind_I1);
 									else if (index.ElementType == typeof(sbyte)) il.LoggedEmit(OpCodes.Ldind_I1);
 									else if (index.ElementType == typeof(byte)) il.LoggedEmit(OpCodes.Ldind_U1);
 									else if (index.ElementType == typeof(short)) il.LoggedEmit(OpCodes.Ldind_I2);

@@ -1,12 +1,6 @@
-﻿using Game.Client.GarrysMod;
-using Game.Client.HL2MP;
-
-using Source;
+﻿using Source;
 using Source.Common;
-using Source.Common.Client;
-using static Source.Common.Networking.svc_ClassInfo;
 
-using Steamworks;
 using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 
 namespace Game.Client;
