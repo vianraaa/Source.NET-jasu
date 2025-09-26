@@ -23,7 +23,7 @@ public class C_HL2PlayerLocalData {
 		RecvPropBool(FIELD.OF(nameof(DisplayReticle))),
 		RecvPropBool(FIELD.OF(nameof(StickyAutoAim))),
 		RecvPropBool(FIELD.OF(nameof(AutoAimTarget))),
-	]);
+	]); public static readonly ClientClass CC_Local = new ClientClass("HL2Local", null, null, DT_HL2Local);
 
 	public float SuitPower;
 	public bool Zooming;

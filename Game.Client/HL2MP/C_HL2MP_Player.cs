@@ -1,17 +1,24 @@
 ﻿using Game.Client.HL2;
 using Game.Shared;
 
+using Source;
 using Source.Common;
 using Source.Common.Mathematics;
 
 namespace Game.Client.HL2MP;
+using FIELD = FIELD<C_HL2MP_Player>;
 
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
 	public static readonly RecvTable DT_HL2MP_Player = new(DT_BasePlayer, [
-
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1)),
+		RecvPropEHandle(FIELD.OF(nameof(Ragdoll))),
+		RecvPropInt(FIELD.OF(nameof(SpawnInterpCounter))),
+		RecvPropInt(FIELD.OF(nameof(PlayerSoundType))),
+		RecvPropBool(FIELD.OF(nameof(IsWalking)))
 	]);
-	public static readonly ClientClass ClientClass = new ClientClass("HL2MP_Player", null, null, DT_HL2MP_Player)
+	public static readonly new ClientClass ClientClass = new ClientClass("HL2MP_Player", null, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
 	public QAngle EyeAngles;

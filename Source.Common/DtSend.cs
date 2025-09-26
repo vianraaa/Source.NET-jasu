@@ -405,6 +405,14 @@ public static class SendPropHelpers
 		return ret;
 	}
 
+	public static SendProp SendPropExclude(string dataTableName, string propName) {
+		SendProp ret = new();
+		ret.SetFlags(PropFlags.Exclude);
+		ret.ExcludeDTName = dataTableName;
+		ret.NameOverride = propName;
+		return ret;
+	}
+
 	private static void SendProxy_UtlVectorLength(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		throw new NotImplementedException();
 	}
