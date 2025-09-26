@@ -40,12 +40,16 @@ public class C_PlayerLocalData
 		RecvPropInt(FIELD.OF("Skybox3D.Area")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.Enable")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.Blend")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.Radial")),
 		RecvPropVector(FIELD.OF("Skybox3D.Fog.DirPrimary")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorPrimary")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorSecondary")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorPrimaryHDR")),
+		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorSecondaryHDR")),
 		RecvPropFloat(FIELD.OF("Skybox3D.Fog.Start")),
 		RecvPropFloat(FIELD.OF("Skybox3D.Fog.End")),
 		RecvPropFloat(FIELD.OF("Skybox3D.Fog.MaxDensity")),
+		RecvPropFloat(FIELD.OF("Skybox3D.Fog.HDRColorScale")),
 
 		RecvPropEHandle( FIELD.OF("PlayerFog.Ctrl")),
 

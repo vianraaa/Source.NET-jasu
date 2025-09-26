@@ -15,6 +15,8 @@ public struct FogParams()
 	public Vector3 DirPrimary;
 	public Color ColorPrimary;
 	public Color ColorSecondary;
+	public Color ColorPrimaryHDR;
+	public Color ColorSecondaryHDR;
 	public Color ColorPrimaryLerpTo;
 	public Color ColorSecondaryLerpTo;
 	public float Start;
@@ -27,6 +29,8 @@ public struct FogParams()
 	public float Duration;
 	public bool Enable;
 	public bool Blend;
+	public bool Radial;
+	public float HDRColorScale;
 }
 
 
