@@ -41,7 +41,7 @@ public class PlayerLocalData
 		SendPropInt(FIELD.OF("Skybox3D.Area"), 8, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF("Skybox3D.Fog.Enable"), 1, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF("Skybox3D.Fog.Blend"), 1, PropFlags.Unsigned),
-		SendPropVector(FIELD.OF("Skybox3D.Fog.dirPrimary"), -1, PropFlags.Coord),
+		SendPropVector(FIELD.OF("Skybox3D.Fog.DirPrimary"), -1, PropFlags.Coord),
 		SendPropInt(FIELD.OF("Skybox3D.Fog.ColorPrimary"), 32, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF("Skybox3D.Fog.ColorSecondary"), 32, PropFlags.Unsigned),
 		SendPropFloat(FIELD.OF("Skybox3D.Fog.Start"), 0, PropFlags.NoScale),

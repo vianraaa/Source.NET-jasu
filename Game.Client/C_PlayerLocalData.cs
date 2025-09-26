@@ -40,7 +40,7 @@ public class C_PlayerLocalData
 		RecvPropInt(FIELD.OF("Skybox3D.Area")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.Enable")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.Blend")),
-		RecvPropVector(FIELD.OF("Skybox3D.Fog.dirPrimary")),
+		RecvPropVector(FIELD.OF("Skybox3D.Fog.DirPrimary")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorPrimary")),
 		RecvPropInt(FIELD.OF("Skybox3D.Fog.ColorSecondary")),
 		RecvPropFloat(FIELD.OF("Skybox3D.Fog.Start")),
