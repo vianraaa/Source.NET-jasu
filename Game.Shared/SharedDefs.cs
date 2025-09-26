@@ -21,6 +21,8 @@ public static class SharedDefs
 	public const int MAX_WEAPONS = 256;
 
 	public const int NUM_AUDIO_LOCAL_SOUNDS = 8;
+
+	public const int MAX_SUIT_DEVICES = 3;
 }
 
 
