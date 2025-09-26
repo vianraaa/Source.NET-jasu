@@ -23,7 +23,7 @@ public static class SharedDefs
 	public const int NUM_AUDIO_LOCAL_SOUNDS = 8;
 
 	public const int MAX_SUIT_DEVICES = 3;
-	public const int MAX_AMMO_SLOTS = 32;
+	public const int MAX_AMMO_SLOTS = 256;
 }
 
 

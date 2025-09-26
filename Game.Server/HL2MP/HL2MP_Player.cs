@@ -19,6 +19,8 @@ public class HL2MP_Player : HL2_Player {
 
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PoseParameter)),
 		SendPropExclude(nameof(DT_BaseFlex), nameof(ViewTarget)),
+		SendPropExclude(nameof(DT_ServerAnimationData), nameof(Cycle)),
+		SendPropExclude(nameof(DT_AnimTimeMustBeFirst), nameof(AnimTime)),
 	]);
 	public static new readonly ServerClass ServerClass = new ServerClass("HL2MP_Player", DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);

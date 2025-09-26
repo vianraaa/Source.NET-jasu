@@ -40,6 +40,10 @@ public static class RecvPropHelpers
 		outInstance = instance;
 	}
 
+	public static void DataTableRecvProxy_PointerDataTable(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
+		outInstance = fieldInfo.GetValue<object>(instance ?? throw new NullReferenceException());
+	}
+
 	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((sbyte)data.Value.Int));
 	public static void RecvProxy_Int32ToInt16(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((short)data.Value.Int));
 	public static void RecvProxy_Int32ToInt32(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked(data.Value.Int));
@@ -317,7 +321,7 @@ public static class RecvPropHelpers
 }
 
 
-[DebuggerDisplay("RecvProp<{RecvType}> {NameOverride ?? FieldInfo.Name} [{Flags,ac}]")]
+[DebuggerDisplay("RecvProp<{RecvType}> {FieldInfo.Name} [{Flags,ac}]")]
 public class RecvProp : IDataTableProp
 {
 	public IFieldAccessor FieldInfo;
