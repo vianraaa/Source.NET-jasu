@@ -57,7 +57,7 @@ public class Prediction : IPrediction
 	}
 
 	public void PreEntityPacketReceived(int commandsAcknowledged, int currentWorldUpdatePacket) {
-		throw new NotImplementedException();
+
 	}
 
 	public void SetLocalViewAngles(in QAngle ang) {

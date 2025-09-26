@@ -24,7 +24,7 @@ public class PlayerLocalData
 		SendPropInt(FIELD.OF(nameof(Ducked)), 1, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF(nameof(Ducking)), 1, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF(nameof(InDuckJump)), 1, PropFlags.Unsigned),
-		SendPropFloat(FIELD.OF(nameof(DuckTime)), 12, PropFlags.ChangesOften, 0.0f, 2048.0f),
+		SendPropFloat(FIELD.OF(nameof(DuckTime)), 12, PropFlags.RoundDown | PropFlags.ChangesOften, 0.0f, 2048.0f),
 		SendPropFloat(FIELD.OF(nameof(DuckJumpTime)), 12, PropFlags.RoundDown, 0.0f, 2048.0f),
 		SendPropFloat(FIELD.OF(nameof(JumpTime)), 12, PropFlags.RoundDown, 0.0f, 2048.0f),
 		SendPropFloat(FIELD.OF(nameof(FallVelocity)), 32, PropFlags.NoScale | PropFlags.ChangesOften, -4096.0f, 4096.0f),

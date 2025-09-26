@@ -49,7 +49,8 @@ public static class BitVecBase
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public static byte ByteMask(int bit) => (byte)(1 << (bit % 8));
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IsBitSet(this Span<byte> bytes, int bit) {
-		byte b = bytes[bit >> 3];
+		int byteIndex = bit >> 3;
+		byte b = bytes[byteIndex];
 		return (b & ByteMask(bit)) != 0;
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

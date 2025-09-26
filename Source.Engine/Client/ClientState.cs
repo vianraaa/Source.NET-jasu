@@ -14,6 +14,7 @@ using Source.GUI.Controls;
 
 using Steamworks;
 
+using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 
@@ -547,8 +548,32 @@ public class ClientState : BaseClientState
 			ClientFramePool.Free(frame);
 	}
 
-	internal ClientFrame? GetClientFrame(int deltaFrom) {
-		throw new NotImplementedException();
+	public ClientFrame? GetClientFrame(int tick, bool exact = true) {
+		if (tick < 0)
+			return null;
+
+		ClientFrame? frame = Frames;
+		ClientFrame? lastFrame = frame;
+
+		while (frame != null) {
+			if (frame.TickCount>= tick) {
+				if (frame.TickCount == tick)
+					return frame;
+
+				if (exact)
+					return null;
+
+				return lastFrame;
+			}
+
+			lastFrame = frame;
+			frame = frame.Next;
+		}
+
+		if (exact)
+			return null;
+
+		return lastFrame;
 	}
 
 	ClientFrame? Frames;
