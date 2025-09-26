@@ -36,6 +36,9 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropFloat(FIELD.OF(nameof(DeathTime)), 0, PropFlags.NoScale),
 		SendPropInt(FIELD.OF(nameof(WaterLevel)), 2, PropFlags.Unsigned),
 		SendPropFloat(FIELD.OF(nameof(LaggedMovementValue)), 0, PropFlags.NoScale),
+		SendPropEHandle(FIELD.OF(nameof(TonemapController))),
+		SendPropEHandle(FIELD.OF(nameof(ViewEntity))),
+		SendPropBool(FIELD.OF(nameof(DisableWorldClicking))),
 	]); public static readonly ServerClass PlayerExclusive = new("LocalPlayerExclusive", DT_LocalPlayerExclusive);
 
 	public static readonly SendTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
@@ -81,6 +84,9 @@ public partial class BasePlayer : BaseCombatCharacter
 	readonly EHANDLE ObserverTarget = new();
 	readonly EHANDLE ZoomOwner = new();
 	readonly EHANDLE ConstraintEntity = new();
+	readonly EHANDLE TonemapController = new();
+	readonly EHANDLE ViewEntity = new();
+	bool DisableWorldClicking;
 	float MaxSpeed;
 	int Flags;
 	int ObserverMode;

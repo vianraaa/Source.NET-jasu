@@ -33,6 +33,9 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropFloat(FIELD.OF(nameof(DeathTime))),
 		RecvPropInt(FIELD.OF(nameof(WaterLevel))),
 		RecvPropFloat(FIELD.OF(nameof(LaggedMovementValue))),
+		RecvPropEHandle(FIELD.OF(nameof(TonemapController))),
+		RecvPropEHandle(FIELD.OF(nameof(ViewEntity))),
+		RecvPropBool(FIELD.OF(nameof(DisableWorldClicking))),
 	]);
 
 	private static void RecvProxy_LocalVelocityX(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
@@ -105,6 +108,9 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	readonly EHANDLE ObserverTarget = new();
 	readonly EHANDLE ZoomOwner = new();
 	readonly EHANDLE ConstraintEntity = new();
+	readonly EHANDLE TonemapController = new();
+	readonly EHANDLE ViewEntity = new();
+	bool DisableWorldClicking;
 	float MaxSpeed;
 	int Flags;
 	int ObserverMode;
