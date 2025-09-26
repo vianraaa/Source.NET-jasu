@@ -412,7 +412,7 @@ namespace Source.Common
 			if (index.IsEmpty)
 				return;
 
-			MemberInfo[] memberInfos = buildingTargetType!.GetMember(new string(index), (BindingFlags)~0);
+			MemberInfo[] memberInfos = buildingTargetType!.GetMember(new string(index), BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
 			foreach (var member in memberInfos) {
 				switch (member) {
 					case FieldInfo field:
