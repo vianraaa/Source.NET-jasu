@@ -73,7 +73,7 @@ public static class BitVecBase
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int FindNextSetBit(this Span<byte> bytes, int startBit) {
-		while (!IsBitSet(bytes, startBit))
+		while ((startBit >> 3) < bytes.Length && !IsBitSet(bytes, startBit))
 			startBit++;
 		return startBit;
 	}
