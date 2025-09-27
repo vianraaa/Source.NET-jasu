@@ -120,7 +120,7 @@ public struct PropTypeFns
 		if ((flags & PropFlags.Coord) != 0)
 			return inBuffer.ReadBitCoord();
 		else if ((flags & (PropFlags.CoordMP | PropFlags.CoordMPLowPrecision | PropFlags.CoordMPIntegral)) != 0)
-			return inBuffer.ReadBitCoordMP((((int)flags >> 15) & 1) != 0, (((int)flags >> 14) & 1) != 0);
+			return inBuffer.ReadBitCoordMP((flags & PropFlags.CoordMPIntegral) != 0, (flags & PropFlags.CoordMPLowPrecision) != 0);
 		else if ((flags & PropFlags.NoScale) != 0)
 			return inBuffer.ReadBitFloat();
 		else if ((flags & PropFlags.Normal) != 0)
