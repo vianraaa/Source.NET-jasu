@@ -235,9 +235,9 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 				decodeInfo.FieldInfo = null;
 
 			if (recvProp?.GetParentArrayPropName() != null)
-				DevMsg($"Decoding {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+				DevMsg($"Decoding [{iProp}] {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
 			else
-				DevMsg($"Decoding {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+				DevMsg($"Decoding [{iProp}] {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
 
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
