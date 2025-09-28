@@ -8,7 +8,8 @@ namespace Game.Client;
 public partial class C_BaseCombatWeapon : C_BaseAnimating
 {
 	public static C_BaseCombatWeapon? GetActiveWeapon() {
-		C_BasePlayer player = C_BasePlayer.GetLocalPlayer();
+		C_BasePlayer? player = C_BasePlayer.GetLocalPlayer();
+		return player?.GetActiveWeapon();
 	}
 
 	public static readonly RecvTable DT_BaseCombatWeapon = new(DT_BaseAnimating, [

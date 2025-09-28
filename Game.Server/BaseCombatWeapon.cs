@@ -4,7 +4,7 @@ using Source.Common;
 
 namespace Game.Server;
 using FIELD = Source.FIELD<Game.Server.BaseCombatWeapon>;
-public class BaseCombatWeapon : BaseAnimating
+public partial class BaseCombatWeapon : BaseAnimating
 {
 	public static readonly SendTable DT_BaseCombatWeapon = new(DT_BaseAnimating, [
 

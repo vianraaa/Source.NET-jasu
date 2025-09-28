@@ -19,7 +19,7 @@ public partial class
 		CalcPlayerView(ref eyeOrigin, ref eyeAngles, ref fov); // << TODO: There is a lot more logic here for observers, vehicles, etc!
 	}
 
-	internal C_BaseCombatWeapon? GetActiveWeapon() {
+	public BaseCombatWeapon? GetActiveWeapon() {
 		throw new NotImplementedException();
 	}
 
