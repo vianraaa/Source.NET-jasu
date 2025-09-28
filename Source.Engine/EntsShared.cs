@@ -24,11 +24,17 @@ public class EntityInfo {
 		if (From != null) {
 			OldEntity = From.TransmitEntity.FindNextSetBit(OldEntity + 1);
 
-			if (OldEntity < 0) 
+			if (OldEntity < 0)
 				OldEntity = int.MaxValue;
 		}
-		else 
+		else
 			OldEntity = int.MaxValue;
+	}
+
+	public void NextNewEntity() {
+		NewEntity = To!.TransmitEntity.FindNextSetBit(NewEntity + 1);
+		if (NewEntity < 0)
+			NewEntity = int.MaxValue;
 	}
 }
 

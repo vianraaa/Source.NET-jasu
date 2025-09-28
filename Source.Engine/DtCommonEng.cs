@@ -158,6 +158,7 @@ public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBase
 		state.ServerClasses = new C_ServerClassInfo[state.NumServerClasses];
 
 		for (ServerClass? svclass = classes; svclass != null; svclass = svclass.Next) {
+			state.ServerClasses[svclass.ClassID] = new();
 			state.ServerClasses[svclass.ClassID].ClassName = svclass.NetworkName;
 			state.ServerClasses[svclass.ClassID].DatatableName = new(svclass.Table.GetName());
 		}

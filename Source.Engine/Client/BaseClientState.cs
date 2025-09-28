@@ -27,11 +27,11 @@ using GameServer = Source.Engine.Server.GameServer;
 
 namespace Source.Engine.Client;
 
-public struct C_ServerClassInfo {
+public class C_ServerClassInfo() {
 	public ClientClass? ClientClass;
 	public string? ClassName;
 	public string? DatatableName;
-	public int InstanceBaselineIndex;
+	public int InstanceBaselineIndex = INetworkStringTable.INVALID_STRING_INDEX;
 }
 
 /// <summary>
@@ -114,7 +114,7 @@ public abstract class BaseClientState(
 	public bool GetClassBaseline(int iClass, out byte[]? fromData, out int fromBits) {
 		ErrorIfNot( iClass >= 0 && iClass < ServerClasses.Length, $"GetDynamicBaseline: invalid class index '{iClass}'");
 
-		C_ServerClassInfo pInfo = ServerClasses[iClass];
+		C_ServerClassInfo pInfo = ServerClasses[iClass] ??= new();
 
 		INetworkStringTable? pBaselineTable = GetStringTable(Protocol.INSTANCE_BASELINE_TABLENAME);
 
@@ -124,7 +124,7 @@ public abstract class BaseClientState(
 			Span<char> str = stackalloc char[64];
 			sprintf(str, "%d", iClass);
 
-			pInfo.InstanceBaselineIndex = pBaselineTable.FindStringIndex(str);
+			pInfo.InstanceBaselineIndex = pBaselineTable.FindStringIndex(str.SliceNullTerminatedString());
 
 			if (pInfo.InstanceBaselineIndex == INetworkStringTable.INVALID_STRING_INDEX) {
 				for (int i = 0; i < pBaselineTable.GetNumStrings(); ++i) 
@@ -394,6 +394,7 @@ public abstract class BaseClientState(
 				Host.EndGame(true, $"ProcessClassInfo: invalid class index ({svclass.ClassID}).\n");
 				return false;
 			}
+			ServerClasses[i] = new();
 		}
 
 		return true;
@@ -765,8 +766,8 @@ public abstract class BaseClientState(
 
 	public virtual bool LinkClasses() {
 		for (int i = 0; i < NumServerClasses; i++) {
-			ref C_ServerClassInfo serverClass = ref ServerClasses[i];
-			if (string.IsNullOrEmpty(serverClass.DatatableName))
+			C_ServerClassInfo serverClass = ServerClasses[i];
+			if (serverClass == null || string.IsNullOrEmpty(serverClass.DatatableName))
 				continue;
 
 			serverClass.ClientClass = FindClientClass(serverClass.ClassName);

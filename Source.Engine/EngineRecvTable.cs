@@ -4,6 +4,7 @@ using Source.Common.Bitbuffers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
@@ -81,12 +82,20 @@ public struct DeltaBitsWriter : IDisposable
 
 	public void WritePropIndex(int prop) {
 		Assert(prop >= 0 && prop < Constants.MAX_DATATABLE_PROPS);
-		uint diff = (uint)(prop - LastProp);
+
+		int diff = prop - LastProp;
 		LastProp = prop;
 		Assert(diff > 0 && diff <= Constants.MAX_DATATABLE_PROPS);
-		int n = ((diff < 0x11u) ? -1 : 0) + ((diff < 0x101u) ? -1 : 0);
-		buf!.WriteUBitLong((uint)(diff * 8 - 8 + 4 + n * 2 + 1), 8 + n * 4 + 4 + 2 + 1);
+
+		Debug.Assert(Constants.MAX_DATATABLE_PROPS <= 0x1000);
+
+		int n = ((diff < 0x11) ? -1 : 0) + ((diff < 0x101) ? -1 : 0);
+		uint value = (uint)(diff * 8 - 8 + 4 + n * 2 + 1);
+		int numBits = 8 + n * 4 + 4 + 2 + 1;
+
+		buf!.WriteUBitLong(value, numBits);
 	}
+
 
 	public readonly void Dispose() {
 		buf!.WriteOneBit(0);

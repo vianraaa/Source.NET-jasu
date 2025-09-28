@@ -452,7 +452,7 @@ public class CL(IServiceProvider services, Net Net,
 			return;
 		}
 
-		ClientClass? pClass = cl.ServerClasses[iClass].ClientClass;
+		ClientClass? pClass = cl.ServerClasses[iClass]?.ClientClass;
 		bool bNew = false;
 		if (ent != null) {
 			if (ent.GetIClientUnknown()!.GetRefEHandle()!.GetSerialNumber() != iSerialNum) {
@@ -464,7 +464,7 @@ public class CL(IServiceProvider services, Net Net,
 		if (ent == null) {
 			ent = CreateDLLEntity(u.NewEntity, iClass, iSerialNum);
 			if (ent == null) {
-				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass].ClientClass?.NetworkName ?? "";
+				ReadOnlySpan<char> networkName = cl.ServerClasses[iClass]?.ClientClass?.NetworkName ?? "";
 				clientDLL.ErrorCreatingEntity(u.NewEntity, iClass, iSerialNum);
 				Host.Error($"CL.CopyNewEntity: Error creating entity {networkName}({u.NewEntity})\n");
 				return;
@@ -488,7 +488,7 @@ public class CL(IServiceProvider services, Net Net,
 			fromBits = baseline.GetNumBits();
 		}
 		else {
-			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits) != null, $"CL.CopyNewEntity: GetClassBaseline({iClass}) failed.");
+			ErrorIfNot(cl.GetClassBaseline(iClass, out fromData, out fromBits), $"CL.CopyNewEntity: GetClassBaseline({iClass}) failed.");
 			fromBits *= 8;
 		}
 
@@ -542,7 +542,7 @@ public class CL(IServiceProvider services, Net Net,
 
 	private IClientNetworkable? CreateDLLEntity(int iEnt, int iClass, int iSerialNum) {
 		ClientClass? clientClass;
-		if ((clientClass = cl.ServerClasses[iClass].ClientClass) != null) {
+		if ((clientClass = cl.ServerClasses[iClass]?.ClientClass) != null) {
 			if (!cl.IsActive()) {
 				Common.TimestampedLog($"cl:  create '{clientClass.NetworkName}'\n");
 
