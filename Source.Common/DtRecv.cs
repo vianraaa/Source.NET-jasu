@@ -242,7 +242,8 @@ public static class RecvPropHelpers
 	}
 
 	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		throw new NotImplementedException();
+		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)data.RecvProp.GetExtraData()!;
+		extra.ResizeFn(instance, field.GetValue<object>(instance), data.Value.Int);
 	}
 
 	static readonly string[] ClientElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);
