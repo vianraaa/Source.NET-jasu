@@ -335,7 +335,7 @@ public unsafe class bf_read : BitBuffer
 
 		float multiply = ReadBitCoordMP_mul_table[((flags & ReadBitCoordMPFlags.SIGN) != 0 ? 1 : 0) + (bLowPrecision ? 1u : 0u) * 2];
 
-		uint bits = ReadUBitLong(ReadBitCoordMP_numbits_table[((flags & ReadBitCoordMPFlags.INBOUNDS) != 0 || (flags & ReadBitCoordMPFlags.INTVAL) != 0 ? 1u : 0u) + (bLowPrecision ? 1u : 0u) * 4]);
+		uint bits = ReadUBitLong(ReadBitCoordMP_numbits_table[((uint)(flags & (ReadBitCoordMPFlags.INBOUNDS | ReadBitCoordMPFlags.INTVAL))) + (bLowPrecision ? 4u : 0u)]);
 
 		if ((flags & ReadBitCoordMPFlags.INTVAL) != 0) {
 			// Shuffle the bits to remap the integer portion from [0,N] to [1,N+1]
@@ -370,7 +370,7 @@ public unsafe class bf_read : BitBuffer
 			bits = fracbits | intbits;
 		}
 
-		return bits * multiply;
+		return (int)bits * multiply;
 	}
 
 	static int[] ReadBitCoordBits_numbits_table =
