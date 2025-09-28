@@ -40,11 +40,9 @@ public class ServerClass
 	public static ServerClass New(SendTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameof = null)
 		=> new(nameof?.Replace("DT_", ""), recvTable);
 
-	ServerClass(ReadOnlySpan<char> networkName, SendTable table, [CallerArgumentExpression(nameof(table))] string? nameOfTable = null) {
+	ServerClass(ReadOnlySpan<char> networkName, SendTable table) {
 		NetworkName = new(networkName);
 		Table = table;
-		if (nameOfTable != null)
-			table.NetTableName = nameOfTable;
 
 		Next = Head;
 		Head = this;

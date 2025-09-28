@@ -87,16 +87,11 @@ public class ClientClass
 		return this;
 	}
 
-	ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, int addSkipframes = 0, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
+	ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, int addSkipframes = 0) {
 		CreateFn = createFn;
 		CreateEventFn = createEventFn;
 		NetworkName = new(networkName);
 		RecvTable = recvTable;
-
-
-		if (nameOfTable != null)
-			recvTable.NetTableName = nameOfTable;
-
 		Next = Head;
 		Head = this;
 		ClassID = -1;
