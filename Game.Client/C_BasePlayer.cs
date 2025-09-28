@@ -6,6 +6,7 @@ using System;
 
 using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 using System.Numerics;
+using Game.Shared;
 
 namespace Game.Client;
 
@@ -66,7 +67,10 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropFloat(FIELD.OF(nameof(FOVTime))),
 		RecvPropFloat(FIELD.OF(nameof(DefaultFOV))),
 		RecvPropEHandle(FIELD.OF(nameof(ZoomOwner))),
-		// SendPropArray( SendPropEHandle( FIELD.OF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
+
+		RecvPropEHandle(FIELD.OF_ARRAYINDEX(nameof(ViewModel), 0)),
+		RecvPropArray(FIELD.OF_ARRAY(nameof(ViewModel))),
+
 		RecvPropString(FIELD.OF(nameof(LastPlaceName))),
 		RecvPropBool(FIELD.OF(nameof(UseWeaponsInVehicle))),
 		RecvPropDataTable("localdata", DT_LocalPlayerExclusive),
@@ -109,6 +113,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	readonly EHANDLE ConstraintEntity = new();
 	readonly EHANDLE TonemapController = new();
 	readonly EHANDLE ViewEntity = new();
+	InlineArrayNewMaxViewmodels<EHANDLE> ViewModel = new(); 
 	bool DisableWorldClicking;
 	float MaxSpeed;
 	int Flags;

@@ -1,6 +1,7 @@
 ﻿using Game.Client.GarrysMod;
 using Game.Shared;
 
+using Source;
 using Source.Common;
 
 using FIELD = Source.FIELD<Game.Client.C_BaseCombatCharacter>;
@@ -17,6 +18,7 @@ public partial class C_BaseCombatCharacter : C_BaseFlex
 		RecvPropDataTable( "bcc_localdata", DT_BCCLocalPlayerExclusive ),
 		RecvPropEHandle(FIELD.OF(nameof(ActiveWeapon))),
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(MyWeapons)), RecvPropEHandle( FIELD.OF_ARRAY(nameof(MyWeapons)))),
+		RecvPropInt(FIELD.OF(nameof(BloodColor)))
 	]);
 	public static readonly new ClientClass ClientClass = new ClientClass("BaseCombatCharacter", null, null, DT_BaseCombatCharacter).WithManualClassID(StaticClassIndices.CBaseCombatCharacter);
 
@@ -24,4 +26,5 @@ public partial class C_BaseCombatCharacter : C_BaseFlex
 	public readonly EHANDLE ActiveWeapon = new();
 	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons = new();
 	public InlineArrayMaxAmmoSlots<int> Ammo;
+	public Color BloodColor;
 }

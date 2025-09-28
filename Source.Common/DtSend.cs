@@ -97,6 +97,17 @@ public static class SendPropHelpers
 	/// <summary>
 	/// Requires a variable template directly above the call!
 	/// </summary>
+	public static SendProp SendPropArray(DynamicArrayAccessor accessor) {
+		return SendPropVariableLengthArray(accessor);
+	}
+
+	private static SendProp SendPropVariableLengthArray(DynamicArrayAccessor accessor) {
+		return InternalSendPropArray(accessor.Length, accessor.Name, null);
+	}
+
+	/// <summary>
+	/// Requires a variable template directly above the call!
+	/// </summary>
 	public static SendProp SendPropArray2(ArrayLengthSendProxyFn proxyFn, int elementCount, ReadOnlySpan<char> arrayName) {
 		return InternalSendPropArray(elementCount, arrayName, proxyFn);
 	}

@@ -16,7 +16,7 @@ public static class SharedDefs
 	public const int NOINTERP_PARITY_MAX_BITS = 2;
 	public const int ANIMATION_CYCLE_BITS = 15;
 
-	public const int MAX_VIEWMODELS = 2;
+	public const int MAX_VIEWMODELS = 3;
 	public const int MAX_BEAM_ENTS = 10;
 	public const int MAX_WEAPONS = 256;
 
@@ -54,4 +54,12 @@ public struct InlineArrayNewMaxWeapons<T> where T : new()
 {
 	public T item;
 	public InlineArrayNewMaxWeapons() { for (int i = 0; i < MAX_WEAPONS; i++) this[i] = new(); }
+}
+
+
+[InlineArray(MAX_VIEWMODELS)]
+public struct InlineArrayNewMaxViewmodels<T> where T : new()
+{
+	public T item;
+	public InlineArrayNewMaxViewmodels() { for (int i = 0; i < MAX_VIEWMODELS; i++) this[i] = new(); }
 }

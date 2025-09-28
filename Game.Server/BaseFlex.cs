@@ -19,6 +19,7 @@ public class BaseFlex : BaseAnimatingOverlay {
 		SendPropFloat   ( FIELD.OF_VECTORELEM(nameof(ViewOffset), 2), 0, PropFlags.NoScale ),
 
 		SendPropVector  ( FIELD.OF(nameof(Lean)), -1, PropFlags.Coord ),
+		SendPropVector  ( FIELD.OF(nameof(Shift)), -1, PropFlags.Coord ),
 	]);
 	public static readonly new ServerClass ServerClass = new ServerClass("BaseFlex", DT_BaseFlex).WithManualClassID(StaticClassIndices.CBaseFlex);
 
@@ -27,4 +28,5 @@ public class BaseFlex : BaseAnimatingOverlay {
 	public Vector3 ViewTarget;
 	public Vector3 ViewOffset;
 	public Vector3 Lean;
+	public Vector3 Shift;
 }

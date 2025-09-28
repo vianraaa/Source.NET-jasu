@@ -1,4 +1,6 @@
-﻿using Source;
+﻿using Game.Shared;
+
+using Source;
 using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Mathematics;
@@ -20,14 +22,14 @@ public partial class BasePlayer : BaseCombatCharacter
 	
 	public static readonly SendTable DT_LocalPlayerExclusive = new([
 		SendPropDataTable(nameof(Local), PlayerLocalData.DT_Local),
-		SendPropFloat(FIELD.OF(nameof(Friction)), 8, PropFlags.RoundDown, 0.0f, 4.0f),
-		SendPropArray3(FIELD.OF_ARRAY(nameof(Ammo)), SendPropInt( FIELD.OF_ARRAYINDEX(nameof(Ammo)), -1, PropFlags.VarInt | PropFlags.Unsigned)),
+		SendPropFloat(FIELD.OF(nameof(Friction)), 0, PropFlags.NoScale | PropFlags.RoundDown, 0.0f, 4.0f),
+		SendPropArray3(FIELD.OF_ARRAY(nameof(Ammo)), SendPropInt( FIELD.OF_ARRAYINDEX(nameof(Ammo)), 16, PropFlags.Unsigned)),
 		SendPropInt(FIELD.OF(nameof(OnTarget)), 2, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF(nameof(TickBase)), -1, PropFlags.ChangesOften),
 		SendPropInt(FIELD.OF(nameof(NextThinkTick))),
 		SendPropEHandle(FIELD.OF(nameof(LastWeapon))),
 		SendPropEHandle(FIELD.OF(nameof(GroundEntity)), PropFlags.ChangesOften),
-		SendPropVector(FIELD.OF(nameof(BaseVelocity)), 20, 0, -1000, 1000),
+		SendPropVector(FIELD.OF(nameof(BaseVelocity)), 0, PropFlags.NoScale),
 		SendPropEHandle(FIELD.OF(nameof(ConstraintEntity))),
 		SendPropVector(FIELD.OF(nameof(ConstraintCenter)), 0, PropFlags.NoScale),
 		SendPropFloat(FIELD.OF(nameof(ConstraintRadius)), 0, PropFlags.NoScale),
@@ -47,15 +49,18 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropInt(FIELD.OF(nameof(LifeState)), 3, PropFlags.Unsigned ),
 		SendPropEHandle(FIELD.OF(nameof(ColorCorrectionCtrl))), // << gmod specific
 		SendPropFloat(FIELD.OF(nameof(MaxSpeed)), 12, PropFlags.RoundDown, 0.0f, 2048.0f ),
-		SendPropInt(FIELD.OF(nameof(Flags)), Constants.PLAYER_FLAG_BITS, PropFlags.Unsigned|PropFlags.ChangesOften, SendProxy_CropFlagsToPlayerFlagBitsLength ),
-		SendPropInt(FIELD.OF(nameof(ObserverMode)), 3, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(Flags)), Constants.PLAYER_FLAG_BITS, PropFlags.Unsigned|PropFlags.ChangesOften, SendProxy_CropFlagsToPlayerFlagBitsLength),
+		SendPropInt(FIELD.OF(nameof(ObserverMode)), 3, PropFlags.Unsigned),
 		SendPropEHandle(FIELD.OF(nameof(ObserverTarget))),
-		SendPropInt(FIELD.OF(nameof(FOV)), 8, PropFlags.Unsigned ),
-		SendPropInt(FIELD.OF(nameof(FOVStart)), 8, PropFlags.Unsigned ),
+		SendPropInt(FIELD.OF(nameof(FOV)), 8, PropFlags.Unsigned),
+		SendPropInt(FIELD.OF(nameof(FOVStart)), 8, PropFlags.Unsigned),
 		SendPropFloat(FIELD.OF(nameof(FOVTime)), 0, PropFlags.NoScale),
-		SendPropFloat(FIELD.OF(nameof(DefaultFOV)), 8, PropFlags.Unsigned ),
+		SendPropFloat(FIELD.OF(nameof(DefaultFOV)), 8, PropFlags.Unsigned),
 		SendPropEHandle(FIELD.OF(nameof(ZoomOwner))),
-		// SendPropArray( SendPropEHandle( FIELD.OF_ARRAYINDEX(nameof(ViewModel), 1) ), ViewModel ), << todo
+
+		SendPropEHandle(FIELD.OF_ARRAYINDEX(nameof(ViewModel), 0)),
+		SendPropArray(FIELD.OF_ARRAY(nameof(ViewModel))),
+
 		SendPropString(FIELD.OF(nameof(LastPlaceName))),
 		SendPropBool(FIELD.OF(nameof(UseWeaponsInVehicle))),
 		SendPropDataTable( "localdata", DT_LocalPlayerExclusive, SendProxy_SendLocalDataTable),
@@ -85,6 +90,7 @@ public partial class BasePlayer : BaseCombatCharacter
 	readonly EHANDLE ConstraintEntity = new();
 	readonly EHANDLE TonemapController = new();
 	readonly EHANDLE ViewEntity = new();
+	InlineArrayNewMaxViewmodels<EHANDLE> ViewModel = new(); 
 	bool DisableWorldClicking;
 	float MaxSpeed;
 	int Flags;

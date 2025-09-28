@@ -20,12 +20,14 @@ public class BaseCombatCharacter : BaseFlex
 		SendPropDataTable( "bcc_localdata", DT_BCCLocalPlayerExclusive, SendProxy_SendBaseCombatCharacterLocalDataTable ),
 		SendPropEHandle(FIELD.OF(nameof(ActiveWeapon))),
 		SendPropArray3(FIELD.OF_ARRAY(nameof(MyWeapons)), SendPropEHandle( FIELD.OF_ARRAY(nameof(MyWeapons)))),
+		SendPropInt(FIELD.OF(nameof(BloodColor)), 32, 0)
 	]);
 
 	public double NextAttack;
 	public readonly EHANDLE ActiveWeapon = new();
 	public InlineArrayNewMaxWeapons<EHANDLE> MyWeapons = new();
 	public InlineArrayMaxAmmoSlots<int> Ammo;
+	public Color BloodColor;
 
 	private static object? SendProxy_SendBaseCombatCharacterLocalDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
 		throw new NotImplementedException();

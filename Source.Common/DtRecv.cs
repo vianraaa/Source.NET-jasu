@@ -41,7 +41,7 @@ public static class RecvPropHelpers
 	}
 
 	public static void DataTableRecvProxy_PointerDataTable(RecvProp prop, out object? outInstance, object? instance, IFieldAccessor fieldInfo, int objectID) {
-		outInstance = fieldInfo.GetValue<object>(instance ?? throw new NullReferenceException());
+		outInstance = fieldInfo?.GetValue<object>(instance ?? throw new NullReferenceException());
 	}
 
 	public static void RecvProxy_Int32ToInt8(ref readonly RecvProxyData data, object instance, IFieldAccessor field) => field.SetValue(instance, unchecked((sbyte)data.Value.Int));
@@ -132,6 +132,15 @@ public static class RecvPropHelpers
 
 		return ret;
 	}
+
+	public static RecvProp RecvPropArray(DynamicArrayAccessor accessor) {
+		return RecvPropVariableLengthArray(null, accessor);
+	}
+
+	private static RecvProp RecvPropVariableLengthArray(ArrayLengthRecvProxyFn? fn, DynamicArrayAccessor accessor) {
+		return InternalRecvPropArray(accessor.Length, accessor.Name, null);
+	}
+
 	public static RecvProp RecvPropString(IFieldAccessor field, int bufferSize = -1, PropFlags flags = 0, RecvVarProxyFn? proxyFn = null) {
 		RecvProp ret = new();
 		proxyFn ??= RecvProxy_StringToString;
