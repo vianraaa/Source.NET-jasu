@@ -14,7 +14,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 {
 	public static readonly RecvTable DT_PlayerState = new([
 		RecvPropInt(FIELD.OF(nameof(DeadFlag)))
-	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
+	]); public static readonly ClientClass CC_PlayerState = ClientClass.New(DT_PlayerState);
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
 		RecvPropDataTable(nameof(Local), FIELD.OF(nameof(Local)), C_PlayerLocalData.DT_Local, 0, DataTableRecvProxy_PointerDataTable),
@@ -50,7 +50,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		throw new NotImplementedException();
 	}
 
-	public static readonly ClientClass CC_LocalPlayerExclusive = new ClientClass("LocalPlayerExclusive", null, null, DT_LocalPlayerExclusive);
+	public static readonly ClientClass CC_LocalPlayerExclusive = ClientClass.New(DT_LocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 		RecvPropDataTable(nameof(pl), FIELD.OF(nameof(pl)), DT_PlayerState),
@@ -74,7 +74,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropString(FIELD.OF(nameof(LastPlaceName))),
 		RecvPropBool(FIELD.OF(nameof(UseWeaponsInVehicle))),
 		RecvPropDataTable("localdata", DT_LocalPlayerExclusive),
-	]); public static readonly new ClientClass ClientClass = new ClientClass("BasePlayer", null, null, DT_BasePlayer);
+	]); public static readonly new ClientClass ClientClass = ClientClass.New(DT_BasePlayer).WithManualClassID(StaticClassIndices.CBasePlayer).WithAutoEntityCreateFn<C_BaseCombatCharacter>();
 
 
 	static C_BasePlayer? localPlayer;

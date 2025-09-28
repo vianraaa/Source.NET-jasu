@@ -24,7 +24,7 @@ public partial class C_BaseFlex : C_BaseAnimatingOverlay, IHasLocalToGlobalFlexS
 		RecvPropVector  ( FIELD.OF(nameof(Lean))),
 		RecvPropVector  ( FIELD.OF(nameof(Shift))),
 	]);
-	public static readonly new ClientClass ClientClass = new ClientClass("BaseFlex", null, null, DT_BaseFlex).WithManualClassID(StaticClassIndices.CBaseFlex);
+	public static readonly new ClientClass ClientClass = ClientClass.New("BaseFlex", null, null, DT_BaseFlex).WithManualClassID(StaticClassIndices.CBaseFlex).WithAutoEntityCreateFn<C_BaseFlex>();
 	public InlineArray96<float> FlexWeight;
 	public int BlinkToggle;
 	public Vector3 ViewTarget;

@@ -19,7 +19,7 @@ public class BaseAnimating : BaseEntity
 	public static readonly SendTable DT_ServerAnimationData = new([
 		SendPropFloat(FIELD.OF(nameof(Cycle)), ANIMATION_CYCLE_BITS, PropFlags.ChangesOften|PropFlags.RoundDown, -1.0f, 1.0f)
 	]);
-	public static readonly ServerClass CC_ServerAnimationData = new ServerClass("ServerAnimationData", DT_ServerAnimationData);
+	public static readonly ServerClass CC_ServerAnimationData = ServerClass.New("ServerAnimationData", DT_ServerAnimationData);
 	public static readonly SendTable DT_BaseAnimating = new(DT_BaseEntity, [
 		SendPropInt( FIELD.OF(nameof(ForceBone)), 8, 0 ),
 		SendPropVector( FIELD.OF(nameof(Force)), 0, PropFlags.NoScale ),
@@ -59,7 +59,7 @@ public class BaseAnimating : BaseEntity
 		SendPropEHandle(FIELD.OF(nameof(FlexManipulator))),
 		SendPropVector(FIELD.OF(nameof(OverrideViewTarget)), 0, PropFlags.NoScale),
 	]);
-	public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimating", DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
+	public static readonly new ServerClass ServerClass = ServerClass.New(DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
 
 	public int ForceBone;
 	public Vector3 Force;

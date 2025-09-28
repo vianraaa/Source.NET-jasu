@@ -35,8 +35,8 @@ public class C_GMOD_Player : C_HL2MP_Player
 		RecvPropFloat(FIELD.OF(nameof(Gravity))),
 		RecvPropBool(FIELD.OF(nameof(SprintEnabled))),
 	]);
-	public static readonly new ClientClass ClientClass = new ClientClass("GMOD_Player", null, null, DT_GMOD_Player)
-															.WithManualClassID(StaticClassIndices.CGMOD_Player);
+	public static readonly new ClientClass ClientClass = ClientClass.New("GMOD_Player", null, null, DT_GMOD_Player)
+															.WithManualClassID(StaticClassIndices.CGMOD_Player).WithAutoEntityCreateFn<C_GMOD_Player>();
 
 	public int GModPlayerFlags;
 	public readonly EHANDLE HoveredWidget = new();

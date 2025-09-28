@@ -16,7 +16,7 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 	public static readonly RecvTable DT_ServerAnimationData = new([
 		RecvPropFloat(FIELD.OF(nameof(Cycle))),
 	]);
-	public static readonly ClientClass CC_ServerAnimationData = new ClientClass("ServerAnimationData", null, null, DT_ServerAnimationData);
+	public static readonly ClientClass CC_ServerAnimationData = ClientClass.New(DT_ServerAnimationData);
 	public static readonly RecvTable DT_BaseAnimating = new(DT_BaseEntity, [
 		RecvPropInt( FIELD.OF(nameof(ForceBone))),
 		RecvPropVector( FIELD.OF(nameof(Force))),
@@ -61,7 +61,7 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 		throw new NotImplementedException();
 	}
 
-	public static readonly new ClientClass ClientClass = new ClientClass("BaseAnimating", null, null, DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating);
+	public static readonly new ClientClass ClientClass = ClientClass.New(DT_BaseAnimating).WithManualClassID(StaticClassIndices.CBaseAnimating).WithAutoEntityCreateFn<C_BaseAnimating>();
 
 	public void OnModelLoadComplete(Model model) {
 		throw new NotImplementedException();

@@ -23,7 +23,7 @@ public class HL2PlayerLocalData {
 		SendPropBool(FIELD.OF(nameof(DisplayReticle))),
 		SendPropBool(FIELD.OF(nameof(StickyAutoAim))),
 		SendPropBool(FIELD.OF(nameof(AutoAimTarget))),
-	]); public static readonly ServerClass SC_Local = new ServerClass("HL2Local", DT_HL2Local);
+	]); public static readonly ServerClass SC_Local = ServerClass.New(DT_HL2Local);
 
 	public float SuitPower;
 	public bool Zooming;

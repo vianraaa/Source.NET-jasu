@@ -34,7 +34,13 @@ public class ServerClass
 	public ServerClass? Next;
 	public int ClassID;
 	public int InstanceBaselineIndex;
-	public ServerClass(ReadOnlySpan<char> networkName, SendTable table, [CallerArgumentExpression(nameof(table))] string? nameOfTable = null) {
+
+	public static ServerClass New(ReadOnlySpan<char> networkName, SendTable recvTable)
+		=> new(networkName, recvTable);
+	public static ServerClass New(SendTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameof = null)
+		=> new(nameof?.Replace("DT_", ""), recvTable);
+
+	ServerClass(ReadOnlySpan<char> networkName, SendTable table, [CallerArgumentExpression(nameof(table))] string? nameOfTable = null) {
 		NetworkName = new(networkName);
 		Table = table;
 		if (nameOfTable != null)

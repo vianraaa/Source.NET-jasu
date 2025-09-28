@@ -17,7 +17,7 @@ public partial class BasePlayer : BaseCombatCharacter
 {
 	public static readonly SendTable DT_PlayerState = new([
 		SendPropInt(FIELD.OF(nameof(DeadFlag)), 1, PropFlags.Unsigned)
-	]); public static readonly ServerClass CC_PlayerState = new("PlayerState", DT_PlayerState);
+	]); public static readonly ServerClass CC_PlayerState = ServerClass.New(DT_PlayerState);
 
 	
 	public static readonly SendTable DT_LocalPlayerExclusive = new([
@@ -40,7 +40,7 @@ public partial class BasePlayer : BaseCombatCharacter
 		SendPropEHandle(FIELD.OF(nameof(TonemapController))),
 		SendPropEHandle(FIELD.OF(nameof(ViewEntity))),
 		SendPropBool(FIELD.OF(nameof(DisableWorldClicking))),
-	]); public static readonly ServerClass PlayerExclusive = new("LocalPlayerExclusive", DT_LocalPlayerExclusive);
+	]); public static readonly ServerClass PlayerExclusive = ServerClass.New(DT_LocalPlayerExclusive);
 
 	public static readonly SendTable DT_BasePlayer = new(DT_BaseCombatCharacter, [
 		SendPropDataTable(nameof(pl), DT_PlayerState, SendProxy_DataTableToDataTable),
@@ -78,7 +78,7 @@ public partial class BasePlayer : BaseCombatCharacter
 		throw new NotImplementedException();
 	}
 
-	public static readonly new ServerClass ServerClass = new ServerClass("BasePlayer", DT_BasePlayer);
+	public static readonly new ServerClass ServerClass = ServerClass.New(DT_BasePlayer);
 
 	bool DeadFlag;
 	readonly PlayerState pl = new();

@@ -17,7 +17,7 @@ public class AnimationLayer
 		SendPropFloat(FIELD_AL.OF(nameof(PrevCycle)), ANIMATION_CYCLE_BITS, PropFlags.RoundDown, 0.0f, 1.0f),
 		SendPropFloat(FIELD_AL.OF(nameof(Weight)), WEIGHT_BITS, 0, 0.0f, 1.0f),
 		SendPropInt(FIELD_AL.OF(nameof(Order)), ORDER_BITS, PropFlags.Unsigned),
-	]); public static readonly ServerClass ServerClass = new ServerClass("AnimationLayer", DT_AnimationLayer);
+	]); public static readonly ServerClass ServerClass = ServerClass.New(DT_AnimationLayer);
 
 	public int Sequence;
 	public float Cycle;
@@ -32,11 +32,11 @@ public class BaseAnimatingOverlay : BaseAnimating
 
 	public static readonly SendTable DT_OverlayVars = new([
 		SendPropList(FIELD_BAO.OF(nameof(AnimOverlay)), MAX_OVERLAYS, SendPropDataTable(null, AnimationLayer.DT_AnimationLayer))
-	]); public static readonly ServerClass SC_OverlayVars = new ServerClass("OverlayVars", DT_OverlayVars);
+	]); public static readonly ServerClass SC_OverlayVars = ServerClass.New(DT_OverlayVars);
 
 	public static readonly SendTable DT_BaseAnimatingOverlay = new(DT_BaseAnimating, [
 		SendPropDataTable("overlay_vars", DT_OverlayVars)
-	]); public static readonly new ServerClass ServerClass = new ServerClass("BaseAnimatingOverlay", DT_BaseAnimatingOverlay).WithManualClassID(StaticClassIndices.CBaseAnimatingOverlay);
+	]); public static readonly new ServerClass ServerClass = ServerClass.New(DT_BaseAnimatingOverlay).WithManualClassID(StaticClassIndices.CBaseAnimatingOverlay);
 
 	readonly List<AnimationLayer> AnimOverlay = [];
 }

@@ -12,7 +12,7 @@ public partial class C_BaseCombatCharacter : C_BaseFlex
 	public static readonly RecvTable DT_BCCLocalPlayerExclusive = new([
 		RecvPropTime(FIELD.OF(nameof(NextAttack))),
 	]);
-	public static readonly ClientClass CC_BCCLocalPlayerExclusive = new ClientClass("BCCLocalPlayerExclusive", null, null, DT_BCCLocalPlayerExclusive);
+	public static readonly ClientClass CC_BCCLocalPlayerExclusive = ClientClass.New(DT_BCCLocalPlayerExclusive);
 
 	public static readonly RecvTable DT_BaseCombatCharacter = new(DT_BaseFlex, [
 		RecvPropDataTable( "bcc_localdata", DT_BCCLocalPlayerExclusive ),
@@ -20,7 +20,7 @@ public partial class C_BaseCombatCharacter : C_BaseFlex
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(MyWeapons)), RecvPropEHandle( FIELD.OF_ARRAY(nameof(MyWeapons)))),
 		RecvPropInt(FIELD.OF(nameof(BloodColor)))
 	]);
-	public static readonly new ClientClass ClientClass = new ClientClass("BaseCombatCharacter", null, null, DT_BaseCombatCharacter).WithManualClassID(StaticClassIndices.CBaseCombatCharacter);
+	public static readonly new ClientClass ClientClass = ClientClass.New(DT_BaseCombatCharacter).WithManualClassID(StaticClassIndices.CBaseCombatCharacter).WithAutoEntityCreateFn<C_BaseCombatCharacter>();
 
 	public double NextAttack;
 	public readonly EHANDLE ActiveWeapon = new();

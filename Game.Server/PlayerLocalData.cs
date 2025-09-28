@@ -74,7 +74,7 @@ public class PlayerLocalData
 		SendPropFloat(FIELD.OF(nameof(DuckSpeed))),
 		SendPropFloat(FIELD.OF(nameof(UnDuckSpeed))),
 		SendPropBool(FIELD.OF(nameof(DuckToggled))),
-	]); public static readonly ServerClass CC_Local = new("Local", DT_Local);
+	]); public static readonly ServerClass CC_Local = ServerClass.New(DT_Local);
 
 	public float SprintSpeed;
 	public float WalkSpeed;

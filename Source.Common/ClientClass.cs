@@ -31,16 +31,23 @@ public class ClientClass
 {
 	public static ClientClass? Head;
 
-	public CreateClientClassFn CreateFn;
+	public CreateClientClassFn? CreateFn;
 	public CreateEventFn? CreateEventFn;
 	public string? NetworkName;
 	public RecvTable? RecvTable;
 	public ClientClass? Next;
 	public int ClassID;
 
-	public ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
-		if (createFn == null) {
-			Type t = WhoCalledMe(skipFrames: 2) ?? throw new NullReferenceException("This doesnt work as well as we hoped!");
+	public static ClientClass New(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable)
+		=> new(networkName, createFn, createEventFn, recvTable);
+	public static ClientClass New(ReadOnlySpan<char> networkName, RecvTable recvTable)
+		=> new(networkName, null, null, recvTable);
+	public static ClientClass New(RecvTable recvTable, [CallerArgumentExpression(nameof(recvTable))] string? nameof = null)
+		=> new(nameof?.Replace("DT_", ""), null, null, recvTable);
+
+	public ClientClass WithAutoEntityCreateFn<T>() where T : new() {
+		if (CreateFn == null) {
+			Type t = typeof(T);
 			if (t.IsAssignableTo(typeof(IClientEntity))) {
 				DynamicMethod method = new DynamicMethod($"CreateObjectDynImpl_{t.Name}", typeof(IClientNetworkable), [typeof(int), typeof(int)]);
 				ILGenerator il = method.GetILGenerator();
@@ -72,12 +79,15 @@ public class ClientClass
 				il.MarkLabel(returnObj);
 				il.Emit(OpCodes.Ret);
 
-				createFn = method.CreateDelegate<CreateClientClassFn>();
+				CreateFn = method.CreateDelegate<CreateClientClassFn>();
 			}
 			else
-				createFn = (_, _) => throw new NotImplementedException("ClientClass did not define how to create this object");
+				CreateFn = (_, _) => throw new NotImplementedException("ClientClass did not define how to create this object");
 		}
+		return this;
+	}
 
+	ClientClass(ReadOnlySpan<char> networkName, CreateClientClassFn? createFn, CreateEventFn? createEventFn, RecvTable recvTable, int addSkipframes = 0, [CallerArgumentExpression(nameof(recvTable))] string? nameOfTable = null) {
 		CreateFn = createFn;
 		CreateEventFn = createEventFn;
 		NetworkName = new(networkName);
@@ -93,13 +103,4 @@ public class ClientClass
 	}
 
 	public ReadOnlySpan<char> GetName() => NetworkName;
-}
-
-
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class ImplementClientClassAttribute : Attribute
-{
-	public required string ClientClassName;
-	public required string RecvTable;
-	public required string ServerClassName;
 }

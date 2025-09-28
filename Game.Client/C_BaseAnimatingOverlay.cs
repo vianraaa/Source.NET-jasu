@@ -15,7 +15,7 @@ public class C_AnimationLayer
 		RecvPropFloat(FIELD_AL.OF(nameof(PrevCycle))),
 		RecvPropFloat(FIELD_AL.OF(nameof(Weight))),
 		RecvPropInt(FIELD_AL.OF(nameof(Order))),
-	]); public static readonly ClientClass ClientClass = new ClientClass("Client", null, null, DT_AnimationLayer).WithManualClassID(StaticClassIndices.CBaseAnimatingOverlay);
+	]); public static readonly ClientClass ClientClass = ClientClass.New(DT_AnimationLayer);
 
 	public int Sequence;
 	public float Cycle;
@@ -36,11 +36,11 @@ public partial class C_BaseAnimatingOverlay : C_BaseAnimating {
 		throw new NotImplementedException();
 	}
 
-	public static readonly ClientClass CC_OverlayVars = new ClientClass("OverlayVars", null, null, DT_OverlayVars);
+	public static readonly ClientClass CC_OverlayVars = ClientClass.New(DT_OverlayVars);
 
 	public static readonly RecvTable DT_BaseAnimatingOverlay = new(DT_BaseAnimating, [
 		RecvPropDataTable("overlay_vars", DT_OverlayVars)
-	]); public static readonly new ClientClass ClientClass = new ClientClass("BaseAnimatingOverlay", null, null, DT_BaseAnimatingOverlay);
+	]); public static readonly new ClientClass ClientClass = ClientClass.New(DT_BaseAnimatingOverlay);
 
 	readonly List<C_AnimationLayer> AnimOverlay = [];
 }

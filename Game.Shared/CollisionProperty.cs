@@ -114,7 +114,7 @@ public class CollisionProperty
 		RecvPropVector(FIELD.OF(nameof(SpecifiedSurroundingMaxs)), 0, RecvProxy_VectorDirtySurround),
 	]);
 
-	public static readonly ClientClass CC_CollisionProperty = new ClientClass("CollisionProperty", null, null, DT_CollisionProperty);
+	public static readonly ClientClass CC_CollisionProperty = ClientClass.New(DT_CollisionProperty);
 #else
 	public static SendTable DT_CollisionProperty = new([
 		SendPropVector(FIELD.OF(nameof(MinsPreScaled)), 0, PropFlags.NoScale),
@@ -132,7 +132,6 @@ public class CollisionProperty
 	]);
 
 
-	public static readonly ServerClass CC_CollisionProperty = new ServerClass("CollisionProperty", DT_CollisionProperty)
-																		.WithManualClassID(StaticClassIndices.CBaseEntity);
+	public static readonly ServerClass CC_CollisionProperty = ServerClass.New(DT_CollisionProperty);
 #endif
 }
