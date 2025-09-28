@@ -1,4 +1,5 @@
 ﻿using Source.Common;
+using Source.Common.Audio;
 using Source.Common.Bitbuffers;
 
 using System;
@@ -204,15 +205,22 @@ public class ClientDatatableStack : DatatableStack
 [EngineComponent]
 public class EngineRecvTable(DtCommonEng DtCommonEng)
 {
+	bool NewTable(RecvTable table) {
+		if (table.IsInMainList())
+			return false;
+
+		table.SetInMainList(true);
+		DtCommonEng.RecvTables.AddLast(table);
+
+		return true;
+	}
 	public bool Init(Span<RecvTable> tables) {
 		foreach (var table in tables) {
+			NewTable(table);
 			PropVisitor<RecvTable, RecvProp> visitor = new(table);
 			foreach (var subTable in visitor) {
-				if (subTable.Key.IsInMainList())
+				if (!NewTable(subTable.Key))
 					continue;
-
-				subTable.Key.SetInMainList(true);
-				DtCommonEng.RecvTables.AddLast(subTable.Key);
 			}
 		}
 

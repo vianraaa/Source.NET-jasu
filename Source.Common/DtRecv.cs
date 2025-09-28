@@ -593,6 +593,7 @@ public class SendNode
 	public ushort RecursiveProxyIndex;
 }
 
+[DebuggerDisplay("RecvTable '{NetTableName}'")]
 public class RecvTable : IEnumerable<RecvProp>, IDataTableBase<RecvProp>
 {
 	public RecvTable() { }

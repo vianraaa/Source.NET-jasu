@@ -616,6 +616,7 @@ public class SendProp : IDataTableProp
 	public void SetExtraData(object? data) => ExtraData = data;
 }
 
+[DebuggerDisplay("SendTable '{NetTableName}'")]
 public class SendTable : IEnumerable<SendProp>, IDataTableBase<SendProp>
 {
 	public SendTable() { }
