@@ -17,12 +17,10 @@ public class C_PlayerResource : C_BaseEntity
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Team)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Team), 0))),
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Alive)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Alive), 0))),
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Health)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Health), 0))),
-		RecvPropArray3(FIELD.OF_ARRAY(nameof(AccountID)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(AccountID)))),
-		RecvPropArray3(FIELD.OF_ARRAY(nameof(Valid)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Valid)))),
+		RecvPropArray3(FIELD.OF_ARRAY(nameof(Armor)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Armor)))),
 	]);
 	public static readonly new ClientClass ClientClass = new ClientClass("PlayerResource", null, null, DT_PlayerResource).WithManualClassID(StaticClassIndices.CPlayerResource);
 
-	InlineArrayMaxPlayersPlusOne<string> Name = new();
 	InlineArrayMaxPlayersPlusOne<int> Ping = new();
 	InlineArrayMaxPlayersPlusOne<int> Score = new();
 	InlineArrayMaxPlayersPlusOne<int> Deaths = new();
@@ -30,8 +28,5 @@ public class C_PlayerResource : C_BaseEntity
 	InlineArrayMaxPlayersPlusOne<int> Team = new();
 	InlineArrayMaxPlayersPlusOne<bool> Alive = new();
 	new InlineArrayMaxPlayersPlusOne<int> Health = new();
-	InlineArrayMaxPlayersPlusOne<Color> Colors = new();
-	InlineArrayMaxPlayersPlusOne<uint> AccountID = new();
-	InlineArrayMaxPlayersPlusOne<bool> Valid = new();
-	InlineArrayMaxPlayersPlusOne<string> UnconnectedName = new();
+	InlineArrayMaxPlayersPlusOne<int> Armor = new();
 }
