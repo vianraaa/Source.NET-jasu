@@ -237,6 +237,8 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		"DT_GMODGameRulesProxy".Hash(),
 		"DT_EnvTonemapController".Hash(),
 		"DT_PredictedViewModel".Hash(),
+		"DT_WeaponSWEP".Hash(),
+		"DT_SENT_Point".Hash(),
 	];
 
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
