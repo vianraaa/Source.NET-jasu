@@ -1,6 +1,6 @@
 ﻿#if CLIENT_DLL
 global using BaseCombatWeapon = Game.Client.C_BaseCombatWeapon;
-#else
+#elif GAME_DLL
 global using BaseCombatWeapon = Game.Server.BaseCombatWeapon;
 #endif
 
@@ -31,16 +31,22 @@ using Class =
 #else
 	ServerClass;
 #endif
-
+#if CLIENT_DLL || GAME_DLL
 using FIELD = Source.FIELD<BaseCombatWeapon>;
+#endif
 
 public partial class
 #if CLIENT_DLL
     C_BaseCombatWeapon : C_BaseAnimating
-#else
+#elif GAME_DLL
 	BaseCombatWeapon : BaseAnimating
+#else
+	SHUT_UP_ABOUT_GAME_SHARED_INTELLISENSE
 #endif
 {
+#if !CLIENT_DLL && !GAME_DLL // God intellisense is annoying me. Fixme when we can get Intellisense to shut up about Game.Shared (it never gets built)
+	public static readonly Table DT_BaseAnimating = new();
+#endif
 	public static readonly Table DT_LocalWeaponData = new([
 #if CLIENT_DLL
 		RecvPropIntWithMinusOneFlag(FIELD.OF(nameof(Clip1))),
@@ -49,7 +55,7 @@ public partial class
 		RecvPropInt(FIELD.OF(nameof(SecondaryAmmoType))),
 		RecvPropInt(FIELD.OF(nameof(ViewModelIndex))),
 		RecvPropInt(FIELD.OF(nameof(FlipViewModel))),
-#else
+#elif GAME_DLL
 		SendPropIntWithMinusOneFlag(FIELD.OF(nameof(Clip1)), 16),
 		SendPropIntWithMinusOneFlag(FIELD.OF(nameof(Clip1)), 16),
 		SendPropInt(FIELD.OF(nameof(PrimaryAmmoType)), 8),
@@ -65,7 +71,7 @@ public partial class
 		RecvPropTime(FIELD.OF(nameof(NextSecondaryAttack))),
 		RecvPropInt(FIELD.OF(nameof(NextThinkTick))),
 		RecvPropTime(FIELD.OF(nameof(TimeWeaponIdle))),
-#else
+#elif GAME_DLL
 		SendPropTime(FIELD.OF(nameof(NextPrimaryAttack))),
 		SendPropTime(FIELD.OF(nameof(NextSecondaryAttack))),
 		SendPropInt(FIELD.OF(nameof(NextThinkTick))),
@@ -81,7 +87,7 @@ public partial class
 		RecvPropInt(FIELD.OF(nameof(WorldModelIndex))),
 		RecvPropInt(FIELD.OF(nameof(State)), 0, RecvProxy_WeaponState),
 		RecvPropEHandle(FIELD.OF(nameof(Owner))),
-#else
+#elif GAME_DLL
 		SendPropDataTable("LocalWeaponData", DT_LocalWeaponData, SendProxy_SendLocalWeaponDataTable),
 		SendPropDataTable("LocalActiveWeaponData", DT_LocalActiveWeaponData, SendProxy_SendActiveLocalWeaponDataTable ),
 		SendPropModelIndex(FIELD.OF(nameof(ViewModelIndex))),
@@ -93,7 +99,9 @@ public partial class
 
 #if CLIENT_DLL
 	private static void RecvProxy_WeaponState(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		throw new NotImplementedException();
+		BaseCombatWeapon weapon = (BaseCombatWeapon)instance;
+		weapon.State = data.Value.Int;
+		// weapon.UpdateVisibility();
 	}
 #else
 

@@ -168,6 +168,7 @@ namespace Source;
 
 // Very specialized uses
 [InlineArray(Constants.MAX_EDICTS)] public struct InlineArrayMaxEdicts<T> { public T item; }
+[InlineArray(MAX_PATH)] public struct InlineArrayMaxPath<T> { public T item; }
 [InlineArray(Constants.MAX_PACKEDENTITY_DATA)] public struct InlineArrayMaxPackedEntityData<T> { public T item; }
 [InlineArray(Constants.NUM_ENT_ENTRIES)] public struct InlineArrayNumEntEntries<T> { public T item; }
 [InlineArray(Protocol.STEAM_KEYSIZE)] public struct InlineArraySteamKeysize<T> { public T item; }

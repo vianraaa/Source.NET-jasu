@@ -1,4 +1,5 @@
-﻿global using static Game.
+﻿#if CLIENT_DLL || GAME_DLL
+global using static Game.
 #if CLIENT_DLL
 Client
 #else
@@ -8,11 +9,31 @@ Server
 
 #if CLIENT_DLL
 global using SharedBaseEntity = Game.Client.C_BaseEntity;
+using Source.Common;
+using Source;
 namespace Game.Client;
 #else
 global using SharedBaseEntity = Game.Server.BaseEntity;
+using Source.Common;
+using Source;
 namespace Game.Server;
 #endif
+
+using Table =
+#if CLIENT_DLL
+    RecvTable;
+#else
+	SendTable;
+#endif
+
+using Class =
+#if CLIENT_DLL
+    ClientClass;
+#else
+	ServerClass;
+#endif
+
+using FIELD = Source.FIELD<BaseCombatWeapon>;
 
 public static class SharedBaseEntityConstants
 {
@@ -53,6 +74,16 @@ public partial class
 	BaseEntity
 #endif
 {
-
+	// TODO FIXME REVIEW: SHOULD THIS ACTUALLY GO HERE?
+	public static Table DT_ScriptedEntity = new(nameof(DT_ScriptedEntity), [
+#if CLIENT_DLL
+		RecvPropString(FIELD.OF(nameof(ScriptName)))
+#elif GAME_DLL
+		SendPropString(FIELD.OF(nameof(ScriptName)))
+#endif
+	]);
+	public static readonly Class CC_ScriptedEntity = new("ScriptedEntity", DT_ScriptedEntity);
+	public InlineArrayMaxPath<char> ScriptName;
 }
 
+#endif
