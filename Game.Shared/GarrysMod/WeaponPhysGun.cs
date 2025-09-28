@@ -51,7 +51,7 @@ public partial class
 #else
 		ServerClass
 #endif
-		= new Class("WeaponSWEP", DT_WeaponPhysGun).WithManualClassID(StaticClassIndices.CWeaponPhysGun);
+		= new Class("WeaponPhysGun", DT_WeaponPhysGun).WithManualClassID(StaticClassIndices.CWeaponPhysGun);
 
 	public readonly EHANDLE PhysBeam = new();
 	public Vector3 HitPosLocal;
