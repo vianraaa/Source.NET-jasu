@@ -5,6 +5,7 @@ global using EHANDLE = Source.Common.BaseHandle; // < Intellisense compatibility
 global using static Game.Shared.SharedDefs;
 
 using System.Runtime.CompilerServices;
+using Source;
 
 namespace Game.Shared;
 
@@ -48,6 +49,8 @@ public enum HideHudBits
 
 [InlineArray(NUM_AUDIO_LOCAL_SOUNDS)] public struct InlineArrayNumLocalAudioSounds<T> { public T item; }
 [InlineArray(MAX_AMMO_SLOTS)] public struct InlineArrayMaxAmmoSlots<T> { public T item; }
+[InlineArray(Constants.MAX_PLAYERS)] public struct InlineArrayMaxPlayers<T> { public T item; }
+[InlineArray(Constants.MAX_PLAYERS + 1)] public struct InlineArrayMaxPlayersPlusOne<T> { public T item; }
 
 [InlineArray(MAX_WEAPONS)]
 public struct InlineArrayNewMaxWeapons<T> where T : new()
@@ -62,4 +65,17 @@ public struct InlineArrayNewMaxViewmodels<T> where T : new()
 {
 	public T item;
 	public InlineArrayNewMaxViewmodels() { for (int i = 0; i < MAX_VIEWMODELS; i++) this[i] = new(); }
+}
+[InlineArray(Constants.MAX_PLAYERS)]
+public struct InlineArrayNewMaxPlayers<T> where T : new()
+{
+	public T item;
+	public InlineArrayNewMaxPlayers() { for (int i = 0; i < MAX_VIEWMODELS; i++) this[i] = new(); }
+}
+
+[InlineArray(Constants.MAX_PLAYERS + 1)]
+public struct InlineArrayNewMaxPlayersPlus1<T> where T : new()
+{
+	public T item;
+	public InlineArrayNewMaxPlayersPlus1() { for (int i = 0; i < MAX_VIEWMODELS; i++) this[i] = new(); }
 }
