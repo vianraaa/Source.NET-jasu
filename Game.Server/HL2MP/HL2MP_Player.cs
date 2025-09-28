@@ -26,6 +26,7 @@ public class HL2MP_Player : HL2_Player
 
 	]); public static readonly ServerClass SC_HL2MPNonLocalPlayerExclusive = new ServerClass("HL2MPNonLocalPlayerExclusive", DT_HL2MPNonLocalPlayerExclusive);
 
+
 	public static readonly SendTable DT_HL2MP_Player = new(DT_HL2_Player, [
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PoseParameter)),
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PlaybackRate)),
