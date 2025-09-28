@@ -227,6 +227,16 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		return true;
 	}
 
+	// A hashset of datatables that don't need decode prints.
+	// In the future, this should be made a whitelist of some sort which is enabled
+	// at compile time. But for right now during indev this is fine.
+	static readonly HashSet<ulong> OKDatatables = [
+		"DT_World".Hash(),
+		"DT_GMOD_Player".Hash(),
+		"DT_PlayerResource".Hash(),
+		"DT_GMODGameRulesProxy".Hash(),
+	];
+
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
 		RecvDecoder? decoder = table.Decoder;
 		ErrorIfNot(decoder != null, $"RecvTable_Decode: table '{table.GetName()}' missing a decoder.");
@@ -251,10 +261,11 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			else
 				decodeInfo.FieldInfo = null;
 
-			if (recvProp?.GetParentArrayPropName() != null)
-				DevMsg($"Decoding [{iProp}] {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
-			else
-				DevMsg($"Decoding [{iProp}] {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+			if (!OKDatatables.Contains(table.GetName().Hash()))
+				if (recvProp?.GetParentArrayPropName() != null)
+					DevMsg($"Decoding [{iProp}] {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+				else
+					DevMsg($"Decoding [{iProp}] {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
 
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
