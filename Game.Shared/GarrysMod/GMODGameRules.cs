@@ -37,8 +37,8 @@ public class
 #else
 		SendPropFloat(FIELD<GMODGameRules>.OF("TimeScale"), 0, PropFlags.NoScale, 0, 0),
 		SendPropInt(FIELD<GMODGameRules>.OF("SkillLevel"), 32, 0)
-	]);
 #endif
+	]);
 
 	public static readonly
 	#if CLIENT_DLL
@@ -48,7 +48,7 @@ public class
 #endif
 		DT_GMODGameRulesProxy = new(DT_GameRulesProxy, [
 #if CLIENT_DLL
-			RecvPropDataTable(nameof(gmod_gamerules_data), FIELD.OF(nameof(gmod_gamerules_data)), DT_GMODRules, DataTableRecvProxy_PointerDataTable)
+			RecvPropDataTable(nameof(gmod_gamerules_data), FIELD.OF(nameof(gmod_gamerules_data)), DT_GMODRules, 0, DataTableRecvProxy_PointerDataTable)
 #else
 			SendPropDataTable(nameof(gmod_gamerules_data), DT_GMODRules)
 #endif
@@ -65,7 +65,7 @@ public class
 
 public class
 #if CLIENT_DLL
-	C_GameRules
+	C_GMODGameRules
 #else
 	GMODGameRules
 #endif
