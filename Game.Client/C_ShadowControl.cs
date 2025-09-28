@@ -11,7 +11,6 @@ using FIELD = Source.FIELD<C_ShadowControl>;
 
 public class C_ShadowControl : C_BaseEntity
 {
-	public FogParams Fog;
 	public static readonly RecvTable DT_ShadowControl = new([
 		RecvPropVector(FIELD.OF(nameof(ShadowDirection))),
 		RecvPropInt(FIELD.OF(nameof(ShadowColor))),

@@ -10,7 +10,6 @@ using FIELD = Source.FIELD<ShadowControl>;
 
 public class ShadowControl : BaseEntity
 {
-	public FogParams Fog;
 	public static readonly SendTable DT_ShadowControl = new([
 		SendPropVector(FIELD.OF(nameof(ShadowDirection)), -1, PropFlags.NoScale),
 		SendPropInt(FIELD.OF(nameof(ShadowColor)), 32, PropFlags.Unsigned),

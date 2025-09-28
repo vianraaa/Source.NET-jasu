@@ -35,11 +35,15 @@ public static class SendProxy
 	public static SendProp SendPropIntWithMinusOneFlag(IFieldAccessor field, int bits, SendVarProxyFn? proxyFn = null)
 		=> SendPropInt(field, bits, PropFlags.Unsigned, proxyFn ?? SendProxy_IntAddOne);
 
-	private static void SendProxy_IntAddOne(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+	public static void SendProxy_IntAddOne(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		outData.Int = field.GetValue<int>(instance) + 1;
 	}
 
-	private static void SendProxy_EHandleToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+	public static void SendProxy_Color32ToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+		outData.Int = field.GetValue<Color>(instance).GetRawColor();
+	}
+
+	public static void SendProxy_EHandleToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		BaseHandle? handle = field.GetValue<BaseHandle?>(instance);
 		if (handle != null && handle.Get() != null) {
 			int iSerialNum = handle.GetSerialNumber() & ((1 << Constants.NUM_NETWORKED_EHANDLE_SERIAL_NUMBER_BITS) - 1);
