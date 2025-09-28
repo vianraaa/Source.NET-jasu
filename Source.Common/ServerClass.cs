@@ -44,9 +44,4 @@ public class ServerClass
 		Head = this;
 
 	}
-
-	public ServerClass WithManualClassID(int classID) {
-		ClassID = classID;
-		return this;
-	}
 }

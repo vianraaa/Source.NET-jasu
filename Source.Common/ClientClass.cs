@@ -93,10 +93,6 @@ public class ClientClass
 	}
 
 	public ReadOnlySpan<char> GetName() => NetworkName;
-	public ClientClass WithManualClassID(int classID) {
-		ClassID = classID;
-		return this;
-	}
 }
 
 

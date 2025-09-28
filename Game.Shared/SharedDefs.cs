@@ -6,6 +6,8 @@ global using static Game.Shared.SharedDefs;
 
 using System.Runtime.CompilerServices;
 using Source;
+using Source.Common;
+using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Game.Shared;
 
@@ -25,6 +27,16 @@ public static class SharedDefs
 
 	public const int MAX_SUIT_DEVICES = 3;
 	public const int MAX_AMMO_SLOTS = 256;
+
+	public static ClientClass WithManualClassID(this ClientClass clientClass, StaticClassIndices classID) {
+		clientClass.ClassID = (int)classID;
+		return clientClass;
+	}
+
+	public static ServerClass WithManualClassID(this ServerClass clientClass, StaticClassIndices classID) {
+		clientClass.ClassID = (int)classID;
+		return clientClass;
+	}
 }
 
 

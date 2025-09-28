@@ -1,6 +1,7 @@
 ﻿namespace Game.Server;
 
 using Game.Client;
+using Game.Shared;
 
 using Source.Common;
 
@@ -16,7 +17,7 @@ public class C_EnvTonemapController : C_BaseEntity
 		RecvPropFloat(FIELD.OF(nameof(CustomAutoExposureMax))),
 		RecvPropFloat(FIELD.OF(nameof(CustomBloomScale))),
 		RecvPropFloat(FIELD.OF(nameof(CustomBloomScaleMinimum))),
-	]); public static readonly new ClientClass ClientClass = new ClientClass("EnvTonemapController", null, null, DT_EnvTonemapController);
+	]); public static readonly new ClientClass ClientClass = new ClientClass("EnvTonemapController", null, null, DT_EnvTonemapController).WithManualClassID(StaticClassIndices.CEnvTonemapController);
 
 	public bool UseCustomAutoExposureMin;
 	public bool UseCustomAutoExposureMax;
