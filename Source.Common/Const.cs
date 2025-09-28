@@ -256,7 +256,7 @@ public static class Constants
 	public const int MAX_PACKEDENTITY_DATA = 16384;
 	public const int MAX_PACKEDENTITY_PROPS = 4096;
 
-	public const int ABSOLUTE_PLAYER_LIMIT = 255;
+	public const int ABSOLUTE_PLAYER_LIMIT = 128;
 	public const int ABSOLUTE_PLAYER_LIMIT_DW = ((ABSOLUTE_PLAYER_LIMIT / 32) + 1);
 	public const int MAX_PLAYERS = ABSOLUTE_PLAYER_LIMIT;
 	public const int VOICE_MAX_PLAYERS = MAX_PLAYERS;
