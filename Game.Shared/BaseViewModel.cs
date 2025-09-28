@@ -53,7 +53,7 @@ public class
 			RecvPropInt(FIELD.OF(nameof(ResetEventsParity))),
 			RecvPropInt(FIELD.OF(nameof(MuzzleFlashParity))),
 			
-			RecvPropFloat(FIELD.OF_ARRAY(nameof(PoseParameter))),
+			RecvPropFloat(FIELD.OF_ARRAYINDEX(nameof(PoseParameter), 0)),
 			RecvPropArray(FIELD.OF_ARRAY(nameof(PoseParameter))),
 #else
 			SendPropModelIndex(FIELD.OF(nameof(ModelIndex))),
@@ -71,7 +71,7 @@ public class
 			SendPropInt(FIELD.OF(nameof(ResetEventsParity)), (int)EntityEffects.ParityBits, PropFlags.Unsigned ),
 			SendPropInt(FIELD.OF(nameof(MuzzleFlashParity)), (int)EntityEffects.MuzzleflashBits, PropFlags.Unsigned ),
 
-			SendPropFloat(FIELD.OF_ARRAY(nameof(PoseParameter)), 8, 0, 0.0f, 1.0f),
+			SendPropFloat(FIELD.OF_ARRAYINDEX(nameof(PoseParameter), 0), 8, 0, 0.0f, 1.0f),
 			SendPropArray(FIELD.OF_ARRAY(nameof(PoseParameter))),
 #endif
 		]);
