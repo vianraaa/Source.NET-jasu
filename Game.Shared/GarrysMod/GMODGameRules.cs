@@ -30,7 +30,7 @@ public class
 #else
 		SendTable
 #endif
-	DT_GMODRules = new([
+	DT_GMODRules = new(nameof(DT_GMODRules), [
 #if CLIENT_DLL
 		RecvPropFloat(FIELD<GMODGameRules>.OF("TimeScale")),
 		RecvPropInt(FIELD<GMODGameRules>.OF("SkillLevel"))
