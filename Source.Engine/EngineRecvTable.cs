@@ -313,11 +313,6 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 
 			deltaBitsWriter.WritePropIndex((int)newProp);
 			var prop = decoder.GetSendProp((int)newProp);
-			if (!prop.GetParentArrayPropName().IsEmpty)
-				DevMsg($"Delta-merging [{newProp}] {table.GetName()}/{prop.GetParentArrayPropName()}/{(prop != null ? prop.GetName() : "<NULL NAME>")} for {objectID}\n");
-			else
-				DevMsg($"Delta-merging [{newProp}] {table.GetName()}/{(prop != null ? prop.GetName() : "<NULL NAME>")} for {objectID}\n");
-
 			newStateReader.CopyPropData(deltaBitsWriter.GetBitBuf(), prop);
 
 			if (changedProps != null)
