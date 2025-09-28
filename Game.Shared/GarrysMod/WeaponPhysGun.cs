@@ -36,11 +36,11 @@ public partial class
 	public static readonly Table DT_WeaponPhysGun = new(DT_BaseHL2MPCombatWeapon, [
 #if CLIENT_DLL
 		RecvPropEHandle(FIELD.OF(nameof(PhysBeam))),
-		RecvPropVector(FIELD.OF(nameof(PhysBeam))),
+		RecvPropVector(FIELD.OF(nameof(HitPosLocal))),
 		RecvPropEHandle(FIELD.OF(nameof(GrabbedEntity)))
 #elif GAME_DLL
 		SendPropEHandle(FIELD.OF(nameof(PhysBeam))),
-		SendPropVector(FIELD.OF(nameof(PhysBeam)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD.OF(nameof(HitPosLocal)), 0, PropFlags.NoScale),
 		SendPropEHandle(FIELD.OF(nameof(GrabbedEntity)))
 #endif
 	]);
