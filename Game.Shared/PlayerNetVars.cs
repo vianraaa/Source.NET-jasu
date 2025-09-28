@@ -25,8 +25,9 @@ public struct FogParams()
 	public float MaxDensity;
 	public float StartLerpTo;
 	public float EndLerpTo;
-	public float LerpTime;
-	public float Duration;
+	public float MaxDensityLerpTo;
+	public TimeUnit_t LerpTime;
+	public TimeUnit_t Duration;
 	public bool Enable;
 	public bool Blend;
 	public bool Radial;
