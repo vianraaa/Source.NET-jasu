@@ -19,7 +19,7 @@ public static class SendProxy
 		PredictableId? pId = field.GetValue<PredictableId?>(instance);
 		if (pId != null)
 			outData.Int = pId.GetRaw();
-		else 
+		else
 			outData.Int = 0;
 	}
 
@@ -31,6 +31,12 @@ public static class SendProxy
 	}
 	public static SendProp SendPropEHandle(IFieldAccessor field, PropFlags flags = 0, SendVarProxyFn? proxyFn = null) {
 		return SendPropInt(field, Constants.NUM_NETWORKED_EHANDLE_BITS, PropFlags.Unsigned | flags, proxyFn ?? SendProxy_EHandleToInt);
+	}
+	public static SendProp SendPropIntWithMinusOneFlag(IFieldAccessor field, int bits, SendVarProxyFn? proxyFn = null)
+		=> SendPropInt(field, bits, PropFlags.Unsigned, proxyFn ?? SendProxy_IntAddOne);
+
+	private static void SendProxy_IntAddOne(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
+		outData.Int = field.GetValue<int>(instance) + 1;
 	}
 
 	private static void SendProxy_EHandleToInt(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
