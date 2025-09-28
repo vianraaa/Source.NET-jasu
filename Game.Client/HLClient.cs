@@ -177,6 +177,6 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 		Msg($"        Entity ID: {entityIdx}\n");
 		Msg($"    Entity Serial: {serialNumber}\n");
 		Msg($"         Class ID: {classIdx}\n");
-		Msg($"     Class Lookup: {typeof(StaticClassIndices).GetFields().Where(x => x.GetValue(null) is int i && i == classIdx).FirstOrDefault()?.Name ?? "Failed"}\n");
+		Msg($"     Class Lookup: {Enum.GetName((StaticClassIndices)classIdx) ?? "Failed"}\n");
 	}
 }
