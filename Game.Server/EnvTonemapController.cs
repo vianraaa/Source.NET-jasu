@@ -16,7 +16,7 @@ public class EnvTonemapController : PointEntity
 		SendPropFloat(FIELD.OF(nameof(CustomAutoExposureMax)), 0, PropFlags.NoScale, 0, 0),
 		SendPropFloat(FIELD.OF(nameof(CustomBloomScale)), 0, PropFlags.NoScale, 0, 0),
 		SendPropFloat(FIELD.OF(nameof(CustomBloomScaleMinimum)), 0, PropFlags.NoScale, 0, 0),
-	]); public static readonly new ServerClass ServerClass = ServerClass.New(DT_EnvTonemapController).WithManualClassID(StaticClassIndices.CEnvTonemapController);
+	]); public static readonly new ServerClass ServerClass = new ServerClass("EnvTonemapController", DT_EnvTonemapController).WithManualClassID(StaticClassIndices.CEnvTonemapController);
 
 	public bool UseCustomAutoExposureMin;
 	public bool UseCustomAutoExposureMax;

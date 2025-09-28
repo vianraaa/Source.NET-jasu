@@ -11,4 +11,10 @@ public partial class C_BaseCombatWeapon : C_BaseAnimating
 		C_BasePlayer? player = C_BasePlayer.GetLocalPlayer();
 		return player?.GetActiveWeapon();
 	}
+
+	public static readonly RecvTable DT_BaseCombatWeapon = new(DT_BaseAnimating, [
+		
+	]);
+
+	public static readonly new ClientClass ClientClass = new ClientClass("BaseCombatWeapon", null, null, DT_BaseCombatWeapon).WithManualClassID(StaticClassIndices.CBaseCombatWeapon);
 }

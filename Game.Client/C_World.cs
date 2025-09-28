@@ -31,7 +31,7 @@ public class C_World : C_BaseEntity
 		RecvPropInt(FIELD.OF(nameof(ColdWorld))),
 	]);
 
-	public static new readonly ClientClass ClientClass = ClientClass.New("World", null, null, DT_World)
+	public static new readonly ClientClass ClientClass = new ClientClass("World", null, null, DT_World)
 																		.WithManualClassID(StaticClassIndices.CWorld);
 
 

@@ -171,7 +171,8 @@ public partial class BaseEntity : IServerEntity
 	InlineArray512<char> GMOD_String3;
 
 
-	public static readonly ServerClass ServerClass = ServerClass.New("BaseEntity", DT_BaseEntity).WithManualClassID(StaticClassIndices.CBaseEntity);
+	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
+																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public float AnimTime;
 	public float SimulationTime;

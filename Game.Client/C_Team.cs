@@ -29,7 +29,7 @@ public class C_Team : C_BaseEntity
 
 	}
 
-	public static readonly new ClientClass ClientClass = ClientClass.New("Team", null, null, DT_Team).WithManualClassID(StaticClassIndices.CTeam);
+	public static readonly new ClientClass ClientClass = new ClientClass("Team", null, null, DT_Team).WithManualClassID(StaticClassIndices.CTeam);
 
 	public readonly List<int> Players = [];
 	public InlineArray32<char> Teamname;

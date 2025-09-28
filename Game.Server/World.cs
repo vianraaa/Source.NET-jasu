@@ -26,8 +26,8 @@ public class World : BaseEntity
 		SendPropInt(FIELD.OF(nameof(ColdWorld)), 1, PropFlags.Unsigned),
 	]);
 
-	public static readonly new ServerClass ServerClass = ServerClass.New(DT_World).WithManualClassID(StaticClassIndices.CWorld);
-
+	public static readonly new ServerClass ServerClass = new ServerClass("World", DT_World)
+																		.WithManualClassID(StaticClassIndices.CWorld);
 	float WaveHeight;
 	Vector3 WorldMins;
 	Vector3 WorldMaxs;

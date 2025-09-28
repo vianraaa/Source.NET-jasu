@@ -74,7 +74,7 @@ public class C_PlayerLocalData
 		RecvPropFloat(FIELD.OF(nameof(DuckSpeed))),
 		RecvPropFloat(FIELD.OF(nameof(UnDuckSpeed))),
 		RecvPropBool(FIELD.OF(nameof(DuckToggled))),
-	]); public static readonly ClientClass CC_Local = ClientClass.New("Local", null, null, DT_Local);
+	]); public static readonly ClientClass CC_Local = new ClientClass("Local", null, null, DT_Local);
 
 	public float SprintSpeed;
 	public float WalkSpeed;

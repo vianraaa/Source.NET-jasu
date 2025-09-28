@@ -76,10 +76,10 @@ public class
 #endif
 		]);
 #if CLIENT_DLL
-	public static readonly new ClientClass ClientClass = ClientClass.New(DT_BaseViewModel).WithManualClassID(StaticClassIndices.CBaseViewModel);
+	public static readonly new ClientClass ClientClass = new ClientClass("BaseViewModel", null, null, DT_BaseViewModel).WithManualClassID(StaticClassIndices.CBaseViewModel);
 #else
 #pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
-	public static readonly new ServerClass ServerClass = ServerClass.New(DT_BaseViewModel).WithManualClassID(StaticClassIndices.CBaseViewModel);
+	public static readonly new ServerClass ServerClass = new ServerClass("BaseViewModel", DT_BaseViewModel).WithManualClassID(StaticClassIndices.CBaseViewModel);
 #pragma warning restore CS0109 // Member does not hide an inherited member; new keyword is not required
 #endif
 	public int ViewModelIndex;

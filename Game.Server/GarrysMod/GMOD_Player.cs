@@ -34,7 +34,7 @@ public class GMOD_Player : HL2MP_Player
 		SendPropFloat(FIELD.OF(nameof(Gravity)), 0, PropFlags.NoScale),
 		SendPropBool(FIELD.OF(nameof(SprintEnabled))),
 	]);
-	public static readonly new ServerClass ServerClass = ServerClass.New("GMOD_Player", DT_GMOD_Player)
+	public static readonly new ServerClass ServerClass = new ServerClass("GMOD_Player", DT_GMOD_Player)
 															.WithManualClassID(StaticClassIndices.CGMOD_Player);
 
 	public int GModPlayerFlags;

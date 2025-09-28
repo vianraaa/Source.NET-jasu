@@ -21,7 +21,7 @@ public class BaseFlex : BaseAnimatingOverlay {
 		SendPropVector  ( FIELD.OF(nameof(Lean)), -1, PropFlags.Coord ),
 		SendPropVector  ( FIELD.OF(nameof(Shift)), -1, PropFlags.Coord ),
 	]);
-	public static readonly new ServerClass ServerClass = ServerClass.New(DT_BaseFlex).WithManualClassID(StaticClassIndices.CBaseFlex);
+	public static readonly new ServerClass ServerClass = new ServerClass("BaseFlex", DT_BaseFlex).WithManualClassID(StaticClassIndices.CBaseFlex);
 
 	public InlineArray96<float> FlexWeight;
 	public int BlinkToggle;

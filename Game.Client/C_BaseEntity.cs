@@ -43,14 +43,14 @@ public partial class C_BaseEntity : IClientEntity
 	public static RecvTable DT_AnimTimeMustBeFirst = new(nameof(DT_AnimTimeMustBeFirst), [
 		RecvPropInt(FIELD.OF(nameof(AnimTime)), 0, RecvProxy_AnimTime),
 	]);
-	public static readonly ClientClass CC_AnimTimeMustBeFirst = ClientClass.New("AnimTimeMustBeFirst", null, null, DT_AnimTimeMustBeFirst);
+	public static readonly ClientClass CC_AnimTimeMustBeFirst = new ClientClass("AnimTimeMustBeFirst", null, null, DT_AnimTimeMustBeFirst);
 
 
 	public static RecvTable DT_PredictableId = new(nameof(DT_PredictableId), [
 		RecvPropPredictableId(FIELD.OF(nameof(PredictableId))),
 		RecvPropInt(FIELD.OF(nameof(IsPlayerSimulated))),
 	]);
-	public static readonly ClientClass CC_PredictableId = ClientClass.New("PredictableId", null, null, DT_PredictableId);
+	public static readonly ClientClass CC_PredictableId = new ClientClass("PredictableId", null, null, DT_PredictableId);
 
 	private static void RecvProxy_SimulationTime(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		C_BaseEntity entity = (C_BaseEntity)instance;
@@ -155,7 +155,8 @@ public partial class C_BaseEntity : IClientEntity
 		Warning("RecvProxy_MoveType not implemented yet\n");
 	}
 
-	public static readonly ClientClass ClientClass = ClientClass.New("BaseEntity", null, null, DT_BaseEntity).WithManualClassID(StaticClassIndices.CBaseEntity).WithAutoEntityCreateFn<C_BaseEntity>();
+	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)
+																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
 	public int Index;
 

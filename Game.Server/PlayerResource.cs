@@ -19,7 +19,7 @@ public class PlayerResource : BaseEntity
 		SendPropArray3(FIELD.OF_ARRAY(nameof(Health)), SendPropInt(FIELD.OF_ARRAYINDEX(nameof(Health), 0), 32, PropFlags.VarInt | PropFlags.Unsigned | PropFlags.Normal ) ),
 		SendPropArray3(FIELD.OF_ARRAY(nameof(Armor)), SendPropInt(FIELD.OF_ARRAYINDEX(nameof(Health), 0), 32, PropFlags.Unsigned) ),
 	]);
-	public static readonly new ServerClass ServerClass = ServerClass.New("PlayerResource", DT_PlayerResource).WithManualClassID(StaticClassIndices.CPlayerResource);
+	public static readonly new ServerClass ServerClass = new ServerClass("PlayerResource", DT_PlayerResource).WithManualClassID(StaticClassIndices.CPlayerResource);
 
 	InlineArrayMaxPlayersPlusOne<int> Ping = new();
 	InlineArrayMaxPlayersPlusOne<int> Score = new();

@@ -19,7 +19,7 @@ public class C_PlayerResource : C_BaseEntity
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Health)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Health), 0))),
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Armor)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(Armor)))),
 	]);
-	public static readonly new ClientClass ClientClass = ClientClass.New("PlayerResource", null, null, DT_PlayerResource).WithManualClassID(StaticClassIndices.CPlayerResource).WithAutoEntityCreateFn<C_PlayerResource>();
+	public static readonly new ClientClass ClientClass = new ClientClass("PlayerResource", null, null, DT_PlayerResource).WithManualClassID(StaticClassIndices.CPlayerResource);
 
 	InlineArrayMaxPlayersPlusOne<int> Ping = new();
 	InlineArrayMaxPlayersPlusOne<int> Score = new();
