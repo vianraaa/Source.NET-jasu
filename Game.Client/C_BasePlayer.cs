@@ -78,7 +78,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 
 
 	static C_BasePlayer? localPlayer;
-	internal static C_BasePlayer? GetLocalPlayer() => localPlayer;
+	public static C_BasePlayer? GetLocalPlayer() => localPlayer;
 
 	public void FireGameEvent(IGameEvent ev) {
 		throw new NotImplementedException();
