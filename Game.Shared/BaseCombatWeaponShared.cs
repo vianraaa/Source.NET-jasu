@@ -8,6 +8,9 @@ using Source.Common.Mathematics;
 using Source.Common;
 using System.Numerics;
 using Game.Shared;
+using Microsoft.VisualBasic;
+using Source.Common.Engine;
+
 
 #if CLIENT_DLL
 namespace Game.Client;
@@ -58,28 +61,69 @@ public partial class
 
 	public static readonly Table DT_LocalActiveWeaponData = new([
 #if CLIENT_DLL
-
+		RecvPropTime(FIELD.OF(nameof(NextPrimaryAttack))),
+		RecvPropTime(FIELD.OF(nameof(NextSecondaryAttack))),
+		RecvPropInt(FIELD.OF(nameof(NextThinkTick))),
+		RecvPropTime(FIELD.OF(nameof(TimeWeaponIdle))),
 #else
-
+		SendPropTime(FIELD.OF(nameof(NextPrimaryAttack))),
+		SendPropTime(FIELD.OF(nameof(NextSecondaryAttack))),
+		SendPropInt(FIELD.OF(nameof(NextThinkTick))),
+		SendPropTime(FIELD.OF(nameof(TimeWeaponIdle))),
 #endif
 	]); public static readonly Class SC_LocalActiveWeaponData = new Class("LocalActiveWeaponData", DT_LocalActiveWeaponData);
 
 	public static readonly Table DT_BaseCombatWeapon = new(DT_BaseAnimating, [
 #if CLIENT_DLL
+		RecvPropDataTable("LocalWeaponData", DT_LocalWeaponData),
+		RecvPropDataTable("LocalActiveWeaponData", DT_LocalActiveWeaponData),
+		RecvPropInt(FIELD.OF(nameof(ViewModelIndex))),
+		RecvPropInt(FIELD.OF(nameof(WorldModelIndex))),
+		RecvPropInt(FIELD.OF(nameof(State)), 0, RecvProxy_WeaponState),
+		RecvPropEHandle(FIELD.OF(nameof(Owner))),
+#else
+		SendPropDataTable("LocalWeaponData", DT_LocalWeaponData, SendProxy_SendLocalWeaponDataTable),
+		SendPropDataTable("LocalActiveWeaponData", DT_LocalActiveWeaponData, SendProxy_SendActiveLocalWeaponDataTable ),
+		SendPropModelIndex(FIELD.OF(nameof(ViewModelIndex))),
+		SendPropModelIndex(FIELD.OF(nameof(WorldModelIndex))),
+		SendPropInt(FIELD.OF(nameof(State)), 8, PropFlags.Unsigned),
+		SendPropEHandle(FIELD.OF(nameof(Owner))),
+#endif
+	]);
 
+#if CLIENT_DLL
+	private static void RecvProxy_WeaponState(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
+		throw new NotImplementedException();
+	}
 #else
 
+	private static object? SendProxy_SendLocalWeaponDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
+	private static object? SendProxy_SendActiveLocalWeaponDataTable(SendProp prop, object instance, IFieldAccessor data, SendProxyRecipients recipients, int objectID) {
+		throw new NotImplementedException();
+	}
 #endif
-	]); public static readonly new Class ServerClass = new Class("BaseCombatWeapon", DT_BaseCombatWeapon).WithManualClassID(StaticClassIndices.CBaseCombatWeapon);
+	public static readonly new Class
+#if CLIENT_DLL
+		ClientClass
+#else
+		ServerClass
+#endif
+		= new Class("BaseCombatWeapon", DT_BaseCombatWeapon).WithManualClassID(StaticClassIndices.CBaseCombatWeapon);
 
 	public int Clip1;
 	public int Clip2;
 	public int PrimaryAmmoType;
 	public int SecondaryAmmoType;
 	public int ViewModelIndex;
+	public int WorldModelIndex;
 	public bool FlipViewModel;
 
 	public TimeUnit_t NextPrimaryAttack;
 	public TimeUnit_t NextSecondaryAttack;
 	public TimeUnit_t TimeWeaponIdle;
+
+	public int State;
+	public readonly EHANDLE Owner = new();
 }
