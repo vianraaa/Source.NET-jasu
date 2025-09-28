@@ -27,12 +27,12 @@ using Class =
 
 public partial class
 #if CLIENT_DLL
-	C_SENT_Anim : C_BaseAnimating
+	C_SENT_Anim : C_BaseAnimatingOverlay
 #elif GAME_DLL
-	SENT_Anim 	: BaseAnimating
+	SENT_Anim 	: BaseAnimatingOverlay
 #endif
 {
-	public static readonly Table DT_SENT_Anim = new(DT_BaseAnimating, [
+	public static readonly Table DT_SENT_Anim = new(DT_BaseAnimatingOverlay, [
 #if CLIENT_DLL
 		RecvPropDataTable("ScriptedEntity", DT_ScriptedEntity)
 #elif GAME_DLL
