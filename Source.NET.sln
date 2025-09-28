@@ -65,11 +65,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Source.Formats.VPK", "Depen
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Usings", "Usings", "{AFA9FA29-7639-4BF9-A5C1-84364D0A14EB}"
 	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
 		Usings\GlobalUsings.cs = Usings\GlobalUsings.cs
 		Usings\MaterialUsings.cs = Usings\MaterialUsings.cs
 		Usings\ShaderUsings.cs = Usings\ShaderUsings.cs
 		usings_readme.txt = usings_readme.txt
-		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Roslyn Code Analysis", "Roslyn Code Analysis", "{F4200901-E70B-4811-B0CD-054FD520D5D7}"
@@ -103,9 +103,7 @@ Global
 		{383661AF-A866-4A97-A4EF-F0170496D679}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{383661AF-A866-4A97-A4EF-F0170496D679}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED987559-4315-4908-9873-9B3054C44F27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED987559-4315-4908-9873-9B3054C44F27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED987559-4315-4908-9873-9B3054C44F27}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED987559-4315-4908-9873-9B3054C44F27}.Release|Any CPU.Build.0 = Release|Any CPU
 		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{379DE4C6-5F3E-4AD5-B0E3-EB6670E06656}.Release|Any CPU.ActiveCfg = Release|Any CPU

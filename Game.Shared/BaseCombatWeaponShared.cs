@@ -32,9 +32,9 @@ using Class =
 
 public partial class
 #if CLIENT_DLL
-    C_BaseCombatWeapon
+    C_BaseCombatWeapon : C_BaseAnimating
 #else
-	BaseCombatWeapon
+	BaseCombatWeapon : BaseAnimating
 #endif
 {
 	public static readonly Table DT_LocalWeaponData = new([
