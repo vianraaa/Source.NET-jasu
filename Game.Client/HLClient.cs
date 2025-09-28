@@ -174,7 +174,7 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 
 	public void ErrorCreatingEntity(int entityIdx, int classIdx, int serialNumber) {
 		Msg($"Entity creation failed.\n");
-		Msg($"        Entity ID: {entityIdx - 1}\n");
+		Msg($"        Entity ID: {entityIdx}\n");
 		Msg($"    Entity Serial: {serialNumber}\n");
 		Msg($"         Class ID: {classIdx}\n");
 		Msg($"     Class Lookup: {typeof(StaticClassIndices).GetFields().Where(x => x.GetValue(null) is int i && i == classIdx).FirstOrDefault()?.Name ?? "Failed"}\n");

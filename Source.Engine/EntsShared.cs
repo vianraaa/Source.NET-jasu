@@ -14,9 +14,9 @@ public class EntityInfo {
 	public ClientFrame? From;
 	public ClientFrame? To;
 	public UpdateType UpdateType;
-	public int OldEntity;
-	public int NewEntity;
-	public int HeaderBase;
+	public int OldEntity = -1;
+	public int NewEntity = -1;
+	public int HeaderBase = -1;
 	public int HeaderCount;
 
 
