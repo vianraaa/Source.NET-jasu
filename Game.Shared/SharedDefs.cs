@@ -30,29 +30,29 @@ public enum EFL : uint
 	/// <summary>Special entity not deleted on restart</summary>
 	KeepOnRecreateEntities = 1 << 4,
 	/// <summary>One of the child entities is a player</summary>
-	HasPlayerChild = 1 << 4,
+	HasPlayerChild = 1 << 5,
 	/// <summary>Client-only: update shadow</summary>
-	DirtyShadowUpdate = 1 << 5,
+	DirtyShadowUpdate = 1 << 6,
 	/// <summary>Another entity watches events on this entity</summary>
-	Notify = 1 << 6,
+	Notify = 1 << 7,
 	/// <summary>Transmit entity even if it has no model</summary>
-	ForceCheckTransmit = 1 << 7,
+	ForceCheckTransmit = 1 << 8,
 	/// <summary>Set on frozen bots</summary>
-	BotFrozen = 1 << 8,
+	BotFrozen = 1 << 9,
 	/// <summary>Non-networked entity</summary>
-	ServerOnly = 1 << 9,
+	ServerOnly = 1 << 10,
 	/// <summary>Don't attach the edict automatically</summary>
-	NoAutoEdictAttach = 1 << 10,
+	NoAutoEdictAttach = 1 << 11,
 	/// <summary>Dirty absolute transform</summary>
-	DirtyAbsTransform = 1 << 11,
+	DirtyAbsTransform = 1 << 12,
 	/// <summary>Dirty absolute velocity</summary>
-	DirtyAbsVelocity = 1 << 12,
+	DirtyAbsVelocity = 1 << 13,
 	/// <summary>Dirty angular velocity</summary>
-	DirtyAbsAngVelocity = 1 << 13,
+	DirtyAbsAngVelocity = 1 << 14,
 	/// <summary>Dirty surrounding collision bounds</summary>
-	DirtySurroundingCollisionBounds = 1 << 14,
+	DirtySurroundingCollisionBounds = 1 << 15,
 	/// <summary>Dirty spatial partition</summary>
-	DirtySpatialPartition = 1 << 15,
+	DirtySpatialPartition = 1 << 16,
 	/// <summary>Entity is in the skybox</summary>
 	InSkybox = 1 << 17,
 	/// <summary>Show up in partition even when not solid</summary>

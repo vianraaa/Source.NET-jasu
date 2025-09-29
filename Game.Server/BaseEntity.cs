@@ -7,6 +7,7 @@ using Source.Common.Mathematics;
 
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Game.Server;
@@ -213,6 +214,14 @@ public partial class BaseEntity : IServerEntity
 	public void SetRefEHandle(BaseHandle handle) {
 		throw new NotImplementedException();
 	}
+
+
+	EFL eflags;
+	public Matrix4x4 CoordinateFrame;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void AddEFlags(EFL flags) => eflags |= flags;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void RemoveEFlags(EFL flags) => eflags &= ~flags;
+
 
 	public ref readonly Vector3 GetAbsOrigin() => ref AbsOrigin;
 	public ref readonly Vector3 GetViewOffset() => ref ViewOffset;

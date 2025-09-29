@@ -7,12 +7,15 @@ Server
 #endif
 	.SharedBaseEntityConstants;
 
+
 #if CLIENT_DLL
 global using SharedBaseEntity = Game.Client.C_BaseEntity;
 using Source.Common;
 using Source;
 using System.Numerics;
 using Source.Common.Mathematics;
+
+using Game.Shared;
 namespace Game.Client;
 #else
 global using SharedBaseEntity = Game.Server.BaseEntity;
@@ -20,19 +23,21 @@ using Source.Common;
 using Source;
 using System.Numerics;
 using Source.Common.Mathematics;
+
+using Game.Shared;
 namespace Game.Server;
 #endif
 
 using Table =
 #if CLIENT_DLL
-    RecvTable;
+	RecvTable;
 #else
 	SendTable;
 #endif
 
 using Class =
 #if CLIENT_DLL
-    ClientClass;
+	ClientClass;
 #else
 	ServerClass;
 #endif
@@ -91,6 +96,25 @@ public partial class
 
 	public virtual Vector3 EyePosition() => GetAbsOrigin() + GetViewOffset();
 	public virtual QAngle EyeAngles() => GetAbsAngles();
+	public void InvalidatePhysicsRecursive(InvalidatePhysicsBits changeFlags) {
+		EFL dirtyFlags = 0;
+
+		if ((changeFlags & InvalidatePhysicsBits.VelocityChanged) != 0)
+			dirtyFlags |= EFL.DirtyAbsVelocity;
+
+		if ((changeFlags & InvalidatePhysicsBits.PositionChanged) != 0) {
+			dirtyFlags |= EFL.DirtyAbsTransform;
+			// TODO: mark dirty
+		}
+
+		if ((changeFlags & InvalidatePhysicsBits.PositionChanged) != 0) {
+			dirtyFlags |= EFL.DirtyAbsTransform;
+			changeFlags |= InvalidatePhysicsBits.PositionChanged | InvalidatePhysicsBits.VelocityChanged;
+		}
+
+		AddEFlags(dirtyFlags);
+		// todo: children
+	}
 }
 
 #endif
