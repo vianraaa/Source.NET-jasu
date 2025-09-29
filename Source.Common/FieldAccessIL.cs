@@ -101,11 +101,21 @@ namespace Source.Common
 					case FieldInfo field:
 						if (i == c - 1)
 							il.LoggedEmit(OpCodes.Ldfld, field);
-						else
+						else if (field.FieldType.IsValueType)
 							il.LoggedEmit(OpCodes.Ldflda, field);
+						else
+							il.LoggedEmit(OpCodes.Ldfld, field);
 						break;
 					case IndexInfo index:
 						switch (index.Behavior) {
+							case IndexInfoBehavior.GenericArrayType:
+								MethodInfo getter = index.Container.GetMethod("get_Item", (BindingFlags)~0, [typeof(int)]) ?? index.Container.GetMethod("Get", (BindingFlags)~0, [typeof(int)]) ?? throw new Exception();
+								il.LoggedEmit(OpCodes.Ldc_I4, index.Index);
+								if (getter.IsVirtual)
+									il.LoggedEmit(OpCodes.Callvirt, getter);
+								else
+									il.LoggedEmit(OpCodes.Call, getter);
+								break;
 							case IndexInfoBehavior.InlineArray:
 								if (index.Index > 0) {
 									// Push the index
@@ -256,10 +266,11 @@ namespace Source.Common
 			}
 		}
 	}
-	public class DynamicArrayInfo(Type containedType, Func<int> length)
+	public class DynamicArrayInfo(Type containedType, Func<int> length, bool isList = false)
 	{
 		public Type ContainedType => containedType;
-		public int Length => length();
+		public int MaxLength => length();
+		public bool IsList => isList;
 	}
 
 	public static class DynamicArrayHelp
@@ -275,26 +286,29 @@ namespace Source.Common
 		public readonly DynamicArrayIndexAccessor?[] ArrayIndexers;
 		public readonly DynamicArrayInfo Info;
 
-		public int Length => Info.Length;
+		public int Length => Info.MaxLength;
 
-		public DynamicArrayAccessor(Type targetType, ReadOnlySpan<char> expression) : base(targetType, expression) {
+		public DynamicArrayAccessor(Type targetType, ReadOnlySpan<char> expression, int isList = -1) : base(targetType, expression) {
 			var arrayAttr = StoringType.GetCustomAttribute<InlineArrayAttribute>();
 			if (arrayAttr != null) {
 				Info = new(StoringType.GetGenericArguments()[0], () => arrayAttr.Length);
+			}
+			else if(isList > 0) {
+				Info = new(StoringType.GetGenericArguments()[0], () => isList, true);
 			}
 			else {
 				if (!DynamicArrayHelp.AcceptableTypes.TryGetValue(StoringType, out Info!))
 					throw new Exception("Uh oh, we need a type def override");
 			}
 
-			ArrayIndexers = new DynamicArrayIndexAccessor?[Info.Length];
+			ArrayIndexers = new DynamicArrayIndexAccessor?[Info.MaxLength];
 		}
 
 		public DynamicArrayIndexAccessor? AtIndex(int index) {
 			if (index < 0)
 				return null;
 
-			if (index >= Info.Length)
+			if (index >= Info.MaxLength)
 				return null;
 
 			return ArrayIndexers[index] ??= new(this, index);
@@ -308,10 +322,10 @@ namespace Source.Common
 
 		public override int Index { get; }
 
-		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index, bool isVector = false) : base(baseArray.TargetType, $"{baseArray.Name}[{Math.Abs(index)}]") {
+		public DynamicArrayIndexAccessor(DynamicArrayAccessor baseArray, int index, bool isVectorElem = false) : base(baseArray.TargetType, $"{baseArray.Name}[{Math.Abs(index)}]") {
 			BaseArrayAccessor = baseArray;
 			Index = Math.Abs(index);
-			IsAVectorElement = isVector;
+			IsAVectorElement = isVectorElem;
 		}
 	}
 
@@ -599,6 +613,7 @@ namespace Source
 		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index = 0) => new(OF_ARRAY(expression), index);
-		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index, true);
+		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index, isVectorElem: true);
+		public static DynamicArrayAccessor OF_LIST(ReadOnlySpan<char> expression, int max) => new(typeof(T), expression, isList: max);
 	}
 }

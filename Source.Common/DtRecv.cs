@@ -160,10 +160,12 @@ public static class RecvPropHelpers
 		return ret;
 	}
 
-	public static RecvProp RecvPropList(IFieldAccessor field, ResizeVectorFn fn, int maxElements, RecvProp arrayProp) {
-		MethodInfo ensureCapacityFn = field.FieldType.GetMethod("EnsureCapacity")!;
-		// ^^ TODO: GET RID OF THIS GARBAGE
-		return RecvPropList(field, fn, (_, list, capacity) => ensureCapacityFn.Invoke(list, [capacity]), maxElements, arrayProp);
+	public static RecvProp RecvPropList<T>(DynamicArrayAccessor field, ResizeVectorFn fn,RecvProp arrayProp) where T : new() {
+		return RecvPropList(field, fn, (_, list, capacity) => {
+			var realList = (IList<T>)list;
+			while (realList.Count < capacity)
+				realList.Add(new T());
+		}, field.Info.MaxLength, arrayProp);
 	}
 	public static RecvProp RecvPropList(IFieldAccessor field, ResizeVectorFn fn, EnsureCapacityFn ensureFn, int maxElements, RecvProp arrayProp) {
 		RecvProp ret = new();
@@ -236,14 +238,17 @@ public static class RecvPropHelpers
 
 		int iElement = extra.Index;
 		Assert(iElement < extra.MaxElements);
-		
-		// TODO: This is really confusing... do we need to reconsider datatable proxies...
-		extra.DataTableProxyFn(prop, out outInstance, fieldInfo.GetValue<object>(instance!), null, objectID);
+
+		if (fieldInfo is DynamicArrayAccessor dynamicArrayAccessor) {
+			extra.DataTableProxyFn(prop, out outInstance, dynamicArrayAccessor.AtIndex(iElement).GetValue<object>(instance!), null, objectID);
+		}
+		else
+			throw new Exception("Somehow got non-DynamicArrayAccessor here - re-evaluate.");
 	}
 
 	private static void RecvProxy_UtlVectorLength(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		RecvPropExtra_UtlVector extra = (RecvPropExtra_UtlVector)data.RecvProp.GetExtraData()!;
-		extra.ResizeFn(instance, field.GetValue<object>(instance), data.Value.Int);
+		extra.ResizeFn(instance, extra.FieldInfo.GetValue<object>(instance), data.Value.Int);
 	}
 
 	static readonly string[] ClientElementNames = GeneratePaddedStrings(Constants.MAX_ARRAY_ELEMENTS);

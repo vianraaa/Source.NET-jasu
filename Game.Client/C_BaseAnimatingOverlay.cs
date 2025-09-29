@@ -29,11 +29,11 @@ public partial class C_BaseAnimatingOverlay : C_BaseAnimating {
 	public const int MAX_OVERLAYS = 15;
 
 	public static readonly RecvTable DT_OverlayVars = new([
-		RecvPropList(FIELD_BAO.OF(nameof(AnimOverlay)), ResizeAnimationLayerCallback, MAX_OVERLAYS, RecvPropDataTable(null, C_AnimationLayer.DT_AnimationLayer))
+		RecvPropList<C_AnimationLayer>(FIELD_BAO.OF_LIST(nameof(AnimOverlay), MAX_OVERLAYS), ResizeAnimationLayerCallback, RecvPropDataTable(null, C_AnimationLayer.DT_AnimationLayer))
 	]);
 
 	private static void ResizeAnimationLayerCallback(object instance, object list, int length) {
-		throw new NotImplementedException();
+		Warning($"ResizeAnimationLayerCallback not implemented yet\n");
 	}
 
 	public static readonly ClientClass CC_OverlayVars = new ClientClass("OverlayVars", null, null, DT_OverlayVars);
