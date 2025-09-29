@@ -497,7 +497,7 @@ public class NetworkStringTable : INetworkStringTable
 				}
 
 				if (pEntry != null) {
-					Debug.Assert(pEntry == GetString(entryIndex));
+					Assert(pEntry == GetString(entryIndex));
 				}
 
 				pEntry = new(GetString(entryIndex));

@@ -232,7 +232,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 	// at compile time. But for right now during indev this is fine.
 	static readonly HashSet<ulong> OKDatatables = [
 		"DT_World".Hash(),
-		// "DT_GMOD_Player".Hash(),
+		"DT_GMOD_Player".Hash(),
 		"DT_PlayerResource".Hash(),
 		"DT_GMODGameRulesProxy".Hash(),
 		"DT_EnvTonemapController".Hash(),
@@ -241,6 +241,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		"DT_SENT_Point".Hash(),
 		"DT_SENT_Anim".Hash(),
 		"DT_WeaponPhysGun".Hash(),
+		"DT_PhysBeam".Hash(),
 	];
 
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
