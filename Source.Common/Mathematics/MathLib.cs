@@ -121,4 +121,66 @@ public static class MathLib
 	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float AngleMod(float a) => (360f / 65536) * ((int)(a * (65536f / 360.0f)) & 65535);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void AngleMatrix(in QAngle angles, in Vector3 position, ref Matrix4x4 matrix) {
+		AngleMatrix(in angles, ref matrix);
+		MatrixSetColumn(in position, 3, ref matrix);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void MatrixSetColumn(in Vector3 position, int column, ref Matrix4x4 matrix) {
+		matrix[0, column] = position.X;
+		matrix[1, column] = position.Y;
+		matrix[2, column] = position.Z;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void AngleMatrix(in QAngle angles, ref Matrix4x4 matrix) {
+		float pitch = angles.X * MathF.PI / 180.0f;
+		float yaw = angles.Y * MathF.PI / 180.0f;
+		float roll = angles.Z * MathF.PI / 180.0f;
+
+		float sp = MathF.Sin(pitch);
+		float cp = MathF.Cos(pitch);
+				   
+		float sy = MathF.Sin(yaw);
+		float cy = MathF.Cos(yaw);
+				   		
+		float sr = MathF.Sin(roll);
+		float cr = MathF.Cos(roll);
+
+		matrix.M11 = cp * cy;
+		matrix.M12 = sp * sr * cy - cr * sy;
+		matrix.M13 = sp * cr * cy + sr * sy;
+		matrix.M14 = 0f;
+
+		matrix.M21 = cp * sy;
+		matrix.M22 = sp * sr * sy + cr * cy;
+		matrix.M23 = sp * cr * sy - sr * cy;
+		matrix.M24 = 0f;
+
+		matrix.M31 = -sp;
+		matrix.M32 = sr * cp;
+		matrix.M33 = cr * cp;
+		matrix.M34 = 0f;
+
+		// Translation part
+		matrix.M41 = 0f;
+		matrix.M42 = 0f;
+		matrix.M43 = 0f;
+		matrix.M44 = 1f;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void NormalizeAngles(ref QAngle angles) {
+		int i;
+
+		for (i = 0; i < 3; i++) {
+			if (angles[i] > 180.0f) 
+				angles[i] -= 360.0f;
+			else if (angles[i] < -180.0f) 
+				angles[i] += 360.0f;
+		}
+	}
 }

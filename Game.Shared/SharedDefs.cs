@@ -10,6 +10,80 @@ using Source.Common;
 using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Game.Shared;
+using System;
+
+
+/// <summary>
+/// BaseEntity.eflags
+/// </summary>
+[Flags]
+public enum EFL : uint
+{
+	/// <summary>This entity is marked for death -- allows safe deletion</summary>
+	KillMe = 1 << 0,
+	/// <summary>Entity is dormant, no updates to client</summary>
+	Dormant = 1 << 1,
+	/// <summary>Noclip command is active</summary>
+	NoClipActive = 1 << 2,
+	/// <summary>Model is setting up its bones</summary>
+	SettingUpBones = 1 << 3,
+	/// <summary>Special entity not deleted on restart</summary>
+	KeepOnRecreateEntities = 1 << 4,
+	/// <summary>One of the child entities is a player</summary>
+	HasPlayerChild = 1 << 4,
+	/// <summary>Client-only: update shadow</summary>
+	DirtyShadowUpdate = 1 << 5,
+	/// <summary>Another entity watches events on this entity</summary>
+	Notify = 1 << 6,
+	/// <summary>Transmit entity even if it has no model</summary>
+	ForceCheckTransmit = 1 << 7,
+	/// <summary>Set on frozen bots</summary>
+	BotFrozen = 1 << 8,
+	/// <summary>Non-networked entity</summary>
+	ServerOnly = 1 << 9,
+	/// <summary>Don't attach the edict automatically</summary>
+	NoAutoEdictAttach = 1 << 10,
+	/// <summary>Dirty absolute transform</summary>
+	DirtyAbsTransform = 1 << 11,
+	/// <summary>Dirty absolute velocity</summary>
+	DirtyAbsVelocity = 1 << 12,
+	/// <summary>Dirty angular velocity</summary>
+	DirtyAbsAngVelocity = 1 << 13,
+	/// <summary>Dirty surrounding collision bounds</summary>
+	DirtySurroundingCollisionBounds = 1 << 14,
+	/// <summary>Dirty spatial partition</summary>
+	DirtySpatialPartition = 1 << 15,
+	/// <summary>Entity is in the skybox</summary>
+	InSkybox = 1 << 17,
+	/// <summary>Show up in partition even when not solid</summary>
+	UsePartitionWhenNotSolid = 1 << 18,
+	/// <summary>Entity is floating in fluid</summary>
+	TouchingFluid = 1 << 19,
+	/// <summary>Being lifted by barnacle</summary>
+	IsBeingLiftedByBarnacle = 1 << 20,
+	/// <summary>Not pushed by rotorwash</summary>
+	NoRotorWashPush = 1 << 21,
+	/// <summary>Entity has no think function</summary>
+	NoThinkFunction = 1 << 22,
+	/// <summary>Skip physics simulation</summary>
+	NoGamePhysicsSimulation = 1 << 23,
+	/// <summary>Check untouch</summary>
+	CheckUntouch = 1 << 24,
+	/// <summary>Don't block NPC line-of-sight</summary>
+	DontBlockLOS = 1 << 25,
+	/// <summary>NPCs shouldn't walk on this entity</summary>
+	DontWalkOn = 1 << 26,
+	/// <summary>Entity shouldn't dissolve</summary>
+	NoDissolve = 1 << 27,
+	/// <summary>Mega physcannon can't ragdoll this</summary>
+	NoMegaPhysCannonRagdoll = 1 << 28,
+	/// <summary>Don't adjust velocity in water</summary>
+	NoWaterVelocityChange = 1 << 29,
+	/// <summary>Physcannon can't pick up or punt</summary>
+	NoPhysCannonInteraction = 1 << 30,
+	/// <summary>Ignore forces from physics damage</summary>
+	NoDamageForces = 1u << 31
+}
 
 public static class SharedDefs
 {

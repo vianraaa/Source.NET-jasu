@@ -24,7 +24,7 @@ public partial class C_BaseEntity : IClientEntity
 {
 	private static void RecvProxy_AnimTime(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		C_BaseEntity pEntity = (C_BaseEntity)instance;
-		
+
 		long t = gpGlobals.GetNetworkBase(gpGlobals.TickCount, pEntity.EntIndex()) + data.Value.Int;
 
 		while (t < gpGlobals.TickCount - 127)
@@ -218,7 +218,7 @@ public partial class C_BaseEntity : IClientEntity
 	public InlineArray32<int> GMOD_int;
 	public InlineArray32<Vector3> GMOD_Vector;
 	public InlineArray32<QAngle> GMOD_QAngle;
-	public InlineArrayNew32<EHANDLE> GMOD_EHANDLE = new(); 
+	public InlineArrayNew32<EHANDLE> GMOD_EHANDLE = new();
 	public InlineArray512<char> GMOD_String0;
 	public InlineArray512<char> GMOD_String1;
 	public InlineArray512<char> GMOD_String2;
@@ -251,8 +251,6 @@ public partial class C_BaseEntity : IClientEntity
 	public Vector3 NetworkOrigin;
 	public QAngle NetworkAngles;
 
-	public Matrix4x4 CoordinateFrame;
-
 	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
 	public int DataChangeEventRef;
 
@@ -264,8 +262,16 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public ref readonly Vector3 GetAbsOrigin() => ref AbsOrigin;
-	public ref readonly QAngle GetAbsAngles() => ref AbsRotation;
+	public ref readonly Vector3 GetLocalOrigin() => ref Origin;
+	public ref readonly QAngle GetLocalAngles() => ref Rotation;
+	public ref readonly Vector3 GetAbsOrigin() {
+		CalcAbsolutePosition();
+		return ref AbsOrigin;
+	}
+	public ref readonly QAngle GetAbsAngles() {
+		CalcAbsolutePosition();
+		return ref AbsRotation;
+	}
 	public ref readonly Vector3 GetViewOffset() => ref ViewOffset;
 
 	public virtual ClientClass GetClientClass() => ClientClassRetriever.GetOrError(GetType());
@@ -416,8 +422,41 @@ public partial class C_BaseEntity : IClientEntity
 	public Vector3 GetNetworkOrigin() => Origin;
 	public QAngle GetNetworkAngles() => NetworkAngles;
 
-	private void CalcAbsolutePosition() {
+	static bool s_AbsRecomputionEnabled = true;
 
+	EFL eflags;
+	public Matrix4x4 CoordinateFrame;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void AddEFlags(EFL flags) => eflags |= flags;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void RemoveEFlags(EFL flags) => eflags &= ~flags;
+
+	private void CalcAbsolutePosition() {
+		if (!s_AbsRecomputionEnabled)
+			return;
+
+		if ((eflags & EFL.DirtyAbsTransform) == 0)
+			return;
+
+		RemoveEFlags(EFL.DirtyAbsTransform);
+
+		if (!MoveParent.IsValid()) {
+			MathLib.AngleMatrix(GetLocalAngles(), GetLocalOrigin(), ref CoordinateFrame);
+			AbsOrigin = GetLocalOrigin();
+			AbsRotation = GetLocalAngles();
+			MathLib.NormalizeAngles(ref AbsRotation);
+			return;
+		}
+
+		if (IsEffectActive(EntityEffects.BoneMerge)) {
+			MoveToAimEnt();
+			return;
+		}
+
+		// todo
+	}
+
+	public void MoveToAimEnt() {
+		throw new NotImplementedException();
 	}
 
 	public void PreDataUpdate(DataUpdateType updateType) {
@@ -441,7 +480,6 @@ public partial class C_BaseEntity : IClientEntity
 		OldSimulationTime = SimulationTime;
 
 		OldRenderMode = RenderMode;
-
 
 		OldInterpolationFrame = InterpolationFrame;
 		OldShouldDraw = ShouldDraw();
