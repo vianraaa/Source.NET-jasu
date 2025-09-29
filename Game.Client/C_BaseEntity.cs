@@ -379,7 +379,7 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public void NotifyShouldTransmit(ShouldTransmiteState state) {
-		throw new NotImplementedException();
+		// throw new NotImplementedException();
 	}
 
 	public void OnPreDataChanged(DataUpdateType updateType) {

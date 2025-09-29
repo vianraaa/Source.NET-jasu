@@ -375,7 +375,7 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	private void RecordLeavePVS(int i) {
-		throw new NotImplementedException();
+		// throw new NotImplementedException();
 	}
 
 	public void DeleteDLLEntity(int entIndex, ReadOnlySpan<char> reason, bool onRecreatingAllEntities = false) {
