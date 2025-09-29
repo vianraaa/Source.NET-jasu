@@ -1,4 +1,6 @@
-﻿using Source.Common;
+﻿#define DUMP_DECODE_DEBUGGING_INFO
+
+using Source.Common;
 using Source.Common.Audio;
 using Source.Common.Bitbuffers;
 
@@ -230,6 +232,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 	// A hashset of datatables that don't need decode prints.
 	// In the future, this should be made a whitelist of some sort which is enabled
 	// at compile time. But for right now during indev this is fine.
+#if DUMP_DECODE_DEBUGGING_INFO
 	static readonly HashSet<ulong> OKDatatables = [
 		"DT_World".Hash(),
 		"DT_GMOD_Player".Hash(),
@@ -243,6 +246,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		"DT_WeaponPhysGun".Hash(),
 		"DT_PhysBeam".Hash(),
 	];
+#endif
 
 	public bool Decode(RecvTable table, object instance, bf_read inRead, int objectID, bool updateDTI = true) {
 		RecvDecoder? decoder = table.Decoder;
@@ -268,11 +272,13 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 			else
 				decodeInfo.FieldInfo = null;
 
+#if DUMP_DECODE_DEBUGGING_INFO
 			if (!OKDatatables.Contains(table.GetName().Hash()))
 				if (recvProp?.GetParentArrayPropName() != null)
 					DevMsg($"Decoding [{iProp}] {table.GetName()}/{recvProp.GetParentArrayPropName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
 				else
 					DevMsg($"Decoding [{iProp}] {table.GetName()}/{(recvProp != null ? recvProp.GetName() : "<NULL NAME>")} for {instance}\n");
+#endif
 
 			decodeInfo.RecvProxyData.RecvProp = theStack.IsCurProxyValid() ? recvProp : null;
 			decodeInfo.Prop = decoder.GetSendProp((int)iProp);
