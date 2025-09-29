@@ -30,10 +30,10 @@ public class HL2MP_Player : HL2_Player
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PoseParameter)),
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PlaybackRate)),
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(Sequence)),
-		SendPropExclude(nameof(DT_BaseEntity), nameof(AbsRotation)),
+		SendPropExclude(nameof(DT_BaseEntity), nameof(Rotation)),
 		SendPropExclude(nameof(DT_BaseAnimatingOverlay), "overlay_vars"),
 
-		SendPropExclude(nameof(DT_BaseEntity), nameof(AbsOrigin)),
+		SendPropExclude(nameof(DT_BaseEntity), nameof(Origin)),
 		SendPropExclude(nameof(DT_ServerAnimationData), nameof(Cycle)),
 		SendPropExclude(nameof(DT_AnimTimeMustBeFirst), nameof(AnimTime)),
 		SendPropExclude(nameof(DT_BaseFlex), nameof(FlexWeight)),
