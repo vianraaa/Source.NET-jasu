@@ -306,6 +306,11 @@ public class CL(IServiceProvider services, Net Net,
 			cl.NetChannel!.SendNetMsg(msg, true);
 		}
 
+		// TODO: A better strategy here, rather than using a class instance made each time.
+		// Either ref struct or class pool... we probably should design a variant of ClassMemoryPool<T>
+		// designed to work with a specific interface type designed specifically to be resettable, like an
+		// IReusable or something
+
 		EntityReadInfo readInfo = new();
 		readInfo.Buf = entmsg.DataIn;
 		readInfo.From = oldFrame;
@@ -340,7 +345,14 @@ public class CL(IServiceProvider services, Net Net,
 	}
 
 	private void CallPostDataUpdates(EntityReadInfo u) {
+		for (int i = 0; i < u.NumPostDataUpdateCalls; i++) {
+			ref PostDataUpdateCall call = ref u.PostDataUpdateCalls[i];
 
+			IClientNetworkable? ent = EntityList.GetClientNetworkable(call.Ent);
+			ErrorIfNot(ent != null, $"CL_CallPostDataUpdates: missing ent {call.Ent}");
+
+			ent.PostDataUpdate(call.UpdateType);
+		}
 	}
 
 	private void MarkEntitiesOutOfPVS(ref MaxEdictsBitVec pvsFlags) {
