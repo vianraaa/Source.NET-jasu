@@ -184,8 +184,8 @@ namespace Source.Common
 			ILGenerator il = method.GetILGenerator();
 
 			il.LoggedEmit(OpCodes.Ldarg_0);
-			if (accessor.TargetType != typeof(object))
-				il.LoggedEmit(OpCodes.Castclass, accessor.TargetType);
+			il.LoggedEmit(OpCodes.Castclass, accessor.Members[0]!.DeclaringType!);
+
 			for (int i = 0, c = accessor.Members.Count - 1; i < c; i++) {
 				MemberInfo member = accessor.Members[i];
 				switch (member) {
@@ -197,10 +197,9 @@ namespace Source.Common
 				}
 			}
 
-			il.LoggedEmit(OpCodes.Ldarg_1);
-
 			switch (accessor.Members[^1]) {
 				case FieldInfo field:
+					LoadValue(accessor, il);
 					PerformAutocast(accessor, il);
 					il.LoggedEmit(OpCodes.Stfld, field);
 					break;
@@ -218,6 +217,7 @@ namespace Source.Common
 								il.LoggedEmit(OpCodes.Add);
 							}
 
+							LoadValue(accessor, il);
 							PerformAutocast(accessor, il);
 
 							if (index.ElementType.IsValueType && !index.ElementType.IsPrimitive)
@@ -247,6 +247,9 @@ namespace Source.Common
 			return fn;
 		}
 
+		private static void LoadValue(DynamicAccessor accessor, ILGenerator il) {
+			il.LoggedEmit(OpCodes.Ldarg_1);
+		}
 
 		static void PerformAutocast(DynamicAccessor accessor, ILGenerator il) {
 			MethodInfo? implicitCheck = ILAssembler.TryGetImplicitConversion(typeof(T), accessor.StoringType);
@@ -263,6 +266,12 @@ namespace Source.Common
 				else
 					il.LoggedEmit(loadCode);
 				il.LoggedEmit(convCode);
+			}
+			else {
+				if (typeof(T).IsValueType)
+					il.LoggedEmit(OpCodes.Ldobj, typeof(T));
+				else
+					il.LoggedEmit(OpCodes.Ldind_Ref);
 			}
 		}
 	}
