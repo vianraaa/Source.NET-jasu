@@ -346,8 +346,8 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public virtual bool Init(int entNum, int serialNum) {
+		Index = entNum;
 		cl_entitylist.AddNetworkableEntity(GetIClientUnknown(), entNum, serialNum);
-
 		CreationTick = gpGlobals.TickCount;
 
 		return true;
