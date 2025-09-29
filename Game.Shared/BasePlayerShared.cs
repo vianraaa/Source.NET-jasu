@@ -1,4 +1,5 @@
-﻿using Source.Common.Mathematics;
+﻿#if CLIENT_DLL || GAME_DLL
+using Source.Common.Mathematics;
 
 using System.Numerics;
 
@@ -11,7 +12,7 @@ namespace Game.Server;
 public partial class
 #if CLIENT_DLL
 	C_BasePlayer
-#else
+#elif GAME_DLL
 	BasePlayer
 #endif
 {
@@ -23,8 +24,17 @@ public partial class
 		throw new NotImplementedException();
 	}
 
+	public override Vector3 EyePosition() {
+		return base.EyePosition();
+	}
+
+	public override QAngle EyeAngles() {
+		return base.EyeAngles();
+	}
+
 	private void CalcPlayerView(ref Vector3 eyeOrigin, ref QAngle eyeAngles, ref float fov) {
-		throw new NotImplementedException();
+		eyeOrigin = EyePosition();
+		eyeAngles = EyeAngles();
 	}
 }
-
+#endif

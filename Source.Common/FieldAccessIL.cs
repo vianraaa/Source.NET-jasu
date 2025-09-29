@@ -442,10 +442,8 @@ namespace Source.Common
 
 			throw new KeyNotFoundException($"Cannot find an appropriate member named '{index}' in the current target type '{buildingTargetType.Name}'. Ensure naming is correct.");
 		}
-		public DynamicAccessor(Type target, Type store, string name) {
-			TargetType = target;
-			StoringType = store;
-			Name = name;
+		public DynamicAccessor(Type targetType, ReadOnlySpan<char> expression, ReadOnlySpan<char> name) : this(targetType, expression) {
+			Name = new(name);
 		}
 		public DynamicAccessor(Type targetType, ReadOnlySpan<char> expression) {
 			Name = new(expression);
@@ -611,6 +609,7 @@ namespace Source
 	public static class FIELD<T>
 	{
 		public static DynamicAccessor OF(ReadOnlySpan<char> expression) => new(typeof(T), expression);
+		public static DynamicAccessor OF_NAMED(ReadOnlySpan<char> expression, ReadOnlySpan<char> name) => new(typeof(T), expression, name);
 		public static DynamicArrayAccessor OF_ARRAY(ReadOnlySpan<char> expression) => new(typeof(T), expression);
 		public static DynamicArrayIndexAccessor OF_ARRAYINDEX(ReadOnlySpan<char> expression, int index = 0) => new(OF_ARRAY(expression), index);
 		public static DynamicArrayIndexAccessor OF_VECTORELEM(ReadOnlySpan<char> expression, int index) => new(OF_ARRAY(expression), index, isVectorElem: true);

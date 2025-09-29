@@ -12,14 +12,14 @@ using FIELD = FIELD<HL2MP_Player>;
 public class HL2MP_Player : HL2_Player
 {
 	public static readonly SendTable DT_HL2MPLocalPlayerExclusive = new([
-		SendPropVector(FIELD.OF(nameof(Origin)), 0, PropFlags.NoScale|PropFlags.ChangesOften, 0.0f, Constants.HIGH_DEFAULT),
+		SendPropVector(FIELD.OF(nameof(AbsOrigin)), 0, PropFlags.NoScale|PropFlags.ChangesOften, 0.0f, Constants.HIGH_DEFAULT),
 
 		SendPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0), 11, PropFlags.ChangesOften | PropFlags.RoundDown, 0, 360f ),
 		SendPropAngle(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1), 11, PropFlags.ChangesOften | PropFlags.RoundDown, 0, 360f ),
 	]); public static readonly ServerClass SC_HL2MPLocalPlayerExclusive = new ServerClass("HL2MPLocalPlayerExclusive", DT_HL2MPLocalPlayerExclusive);
 
 	public static readonly SendTable DT_HL2MPNonLocalPlayerExclusive = new([
-		SendPropVector(FIELD.OF(nameof(Origin)), 0, PropFlags.CoordMPLowPrecision|PropFlags.ChangesOften, 0.0f, Constants.HIGH_DEFAULT),
+		SendPropVector(FIELD.OF(nameof(AbsOrigin)), 0, PropFlags.CoordMPLowPrecision|PropFlags.ChangesOften, 0.0f, Constants.HIGH_DEFAULT),
 
 		SendPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0), 11, PropFlags.ChangesOften | PropFlags.RoundDown, 0, 360f),
 		SendPropAngle(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1), 11, PropFlags.ChangesOften | PropFlags.RoundDown, 0, 360f),
@@ -30,10 +30,10 @@ public class HL2MP_Player : HL2_Player
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PoseParameter)),
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(PlaybackRate)),
 		SendPropExclude(nameof(DT_BaseAnimating), nameof(Sequence)),
-		SendPropExclude(nameof(DT_BaseEntity), nameof(AngRotation)),
+		SendPropExclude(nameof(DT_BaseEntity), nameof(AbsRotation)),
 		SendPropExclude(nameof(DT_BaseAnimatingOverlay), "overlay_vars"),
 
-		SendPropExclude(nameof(DT_BaseEntity), nameof(Origin)),
+		SendPropExclude(nameof(DT_BaseEntity), nameof(AbsOrigin)),
 		SendPropExclude(nameof(DT_ServerAnimationData), nameof(Cycle)),
 		SendPropExclude(nameof(DT_AnimTimeMustBeFirst), nameof(AnimTime)),
 		SendPropExclude(nameof(DT_BaseFlex), nameof(FlexWeight)),

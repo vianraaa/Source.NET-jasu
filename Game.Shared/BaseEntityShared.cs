@@ -11,11 +11,15 @@ Server
 global using SharedBaseEntity = Game.Client.C_BaseEntity;
 using Source.Common;
 using Source;
+using System.Numerics;
+using Source.Common.Mathematics;
 namespace Game.Client;
 #else
 global using SharedBaseEntity = Game.Server.BaseEntity;
 using Source.Common;
 using Source;
+using System.Numerics;
+using Source.Common.Mathematics;
 namespace Game.Server;
 #endif
 
@@ -84,6 +88,9 @@ public partial class
 	]);
 	public static readonly Class CC_ScriptedEntity = new("ScriptedEntity", DT_ScriptedEntity);
 	public InlineArrayMaxPath<char> ScriptName;
+
+	public virtual Vector3 EyePosition() => GetAbsOrigin() + GetViewOffset();
+	public virtual QAngle EyeAngles() => GetAbsAngles();
 }
 
 #endif

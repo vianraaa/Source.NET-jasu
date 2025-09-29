@@ -74,8 +74,8 @@ public partial class C_BaseEntity : IClientEntity
 		RecvPropInt(FIELD.OF(nameof(SimulationTime)), 0, RecvProxy_SimulationTime),
 		RecvPropInt(FIELD.OF(nameof(InterpolationFrame))),
 
-		RecvPropVector(FIELD.OF(nameof(Origin))),
-		RecvPropQAngles(FIELD.OF(nameof(NetworkAngles))),
+		RecvPropVector(FIELD.OF_NAMED(nameof(NetworkOrigin), nameof(Origin))),
+		RecvPropQAngles(FIELD.OF_NAMED(nameof(NetworkAngles), nameof(Rotation))),
 
 		RecvPropInt(FIELD.OF(nameof(ModelIndex)), 0, RecvProxy_IntToModelIndex16_BackCompatible),
 
@@ -242,13 +242,16 @@ public partial class C_BaseEntity : IClientEntity
 	public bool OldShouldDraw;
 
 	public Vector3 AbsOrigin;
-	public QAngle AngAbsRotation;
+	public QAngle AbsRotation;
+	public Vector3 ViewOffset;
 	public Vector3 OldOrigin;
-	public QAngle OldAngRotation;
+	public QAngle OldRotation;
+	public Vector3 Origin;
+	public QAngle Rotation;
+	public Vector3 NetworkOrigin;
+	public QAngle NetworkAngles;
 
 	public Matrix4x4 CoordinateFrame;
-	public Vector3 Origin;
-	public QAngle NetworkAngles;
 
 	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
 	public int DataChangeEventRef;
@@ -261,13 +264,9 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public ref readonly QAngle GetAbsAngles() {
-		throw new NotImplementedException();
-	}
-
-	public ref readonly Vector3 GetAbsOrigin() {
-		throw new NotImplementedException();
-	}
+	public ref readonly Vector3 GetAbsOrigin() => ref AbsOrigin;
+	public ref readonly QAngle GetAbsAngles() => ref AbsRotation;
+	public ref readonly Vector3 GetViewOffset() => ref ViewOffset;
 
 	public virtual ClientClass GetClientClass() => ClientClassRetriever.GetOrError(GetType());
 
@@ -436,7 +435,7 @@ public partial class C_BaseEntity : IClientEntity
 		}
 
 		OldOrigin = GetNetworkOrigin();
-		OldAngRotation = GetNetworkAngles();
+		OldRotation = GetNetworkAngles();
 
 		OldAnimTime = AnimTime;
 		OldSimulationTime = SimulationTime;

@@ -54,7 +54,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELD.OF(nameof(ParentAttachment)), NUM_PARENTATTACHMENT_BITS, PropFlags.Unsigned),
 		SendPropInt(FIELD.OF(nameof(MoveType)), (int)Source.MoveType.MaxBits, PropFlags.Unsigned ),
 		SendPropInt(FIELD.OF(nameof(MoveCollide)), (int)Source.MoveCollide.MaxBits, PropFlags.Unsigned ),
-		SendPropQAngles (FIELD.OF(nameof(AngRotation)), 24, PropFlags.ChangesOften | PropFlags.RoundDown, SendProxy_Angles ),
+		SendPropQAngles (FIELD.OF(nameof(Rotation)), 24, PropFlags.ChangesOften | PropFlags.RoundDown, SendProxy_Angles ),
 		SendPropInt( FIELD.OF(nameof( TextureFrameIndex) ),     8, PropFlags.Unsigned ),
 		SendPropDataTable( "predictable_id", DT_PredictableId, SendProxy_SendPredictableId ),
 		SendPropInt(FIELD.OF(nameof(SimulatedEveryTick)),       1, PropFlags.Unsigned ),
@@ -100,7 +100,7 @@ public partial class BaseEntity : IServerEntity
 		SendPropInt(FIELD.OF(nameof(MapCreatedID)), 16),
 	]);
 
-	public ref readonly Vector3 GetLocalOrigin() => ref Origin;
+	public ref readonly Vector3 GetLocalOrigin() => ref AbsOrigin;
 	private static void SendProxy_OverrideMaterial(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
 		Warning("SendProxy_OverrideMaterial not yet implemented\n");
 	}
@@ -124,7 +124,10 @@ public partial class BaseEntity : IServerEntity
 	public byte ParentAttachment;
 	public byte MoveType;
 	public byte MoveCollide;
-	public QAngle AngRotation;
+	public Vector3 AbsOrigin;
+	public QAngle AbsRotation;
+	public Vector3 Origin;
+	public QAngle Rotation;
 	public bool TextureFrameIndex;
 	public bool SimulatedEveryTick;
 	public bool AnimatedEveryTick;
@@ -176,7 +179,7 @@ public partial class BaseEntity : IServerEntity
 
 	public float AnimTime;
 	public float SimulationTime;
-	public Vector3 Origin;
+	public Vector3 ViewOffset;
 	public Vector3 NetworkAngles;
 	public byte InterpolationFrame;
 	public int ModelIndex;
@@ -210,4 +213,8 @@ public partial class BaseEntity : IServerEntity
 	public void SetRefEHandle(BaseHandle handle) {
 		throw new NotImplementedException();
 	}
+
+	public ref readonly Vector3 GetAbsOrigin() => ref AbsOrigin;
+	public ref readonly Vector3 GetViewOffset() => ref ViewOffset;
+	public ref readonly QAngle GetAbsAngles() => ref AbsRotation;
 }
