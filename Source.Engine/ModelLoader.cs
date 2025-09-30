@@ -270,7 +270,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 	private void Mod_LoadSurfedges(BSPEdge[] edges) {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.SurfEdges);
-		ushort[] outData = lh.LoadLumpData<ushort>(throwIfNoElements: true, maxElements: BSPFileCommon.MAX_MAP_SURFEDGES);
+		int[] inData = lh.LoadLumpData<int>(throwIfNoElements: true, maxElements: BSPFileCommon.MAX_MAP_SURFEDGES);
+		ushort[] outData = new ushort[inData.Length]; ;
 		lh.GetMap().VertIndices = outData;
 
 		for (int i = 0; i < outData.Length; i++) {
