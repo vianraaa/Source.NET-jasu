@@ -17,7 +17,7 @@ public ref struct MapLoadHelper
 
 	public static void Init(Model? model, ReadOnlySpan<char> loadName) {
 		Host Host = Singleton<Host>();
-		ModelLoader ModelLoader = Singleton<ModelLoader>();
+		ModelLoader ModelLoader = (ModelLoader)Singleton<IModelLoader>();
 		IFileSystem fileSystem = Singleton<IFileSystem>();
 
 		Map = null;
@@ -166,7 +166,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		Common.TimestampedLog("Loading map");
 		mod.Type = ModelType.Brush;
 		mod.LoadFlags |= ModelLoaderFlags.Loaded;
-		MapLoadHelper.Init(mod, LoadName);
+		MapLoadHelper.Init(mod, ((Span<char>)(LoadName)).SliceNullTerminatedString());
 
 		Mod_LoadVertices();
 	}
