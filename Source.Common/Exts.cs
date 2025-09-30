@@ -224,11 +224,6 @@ public static class ClassUtils
 {
 	public static bool IsValidIndex<T>(this List<T> list, int index) => index >= 0 && index < list.Count;
 	public static bool IsValidIndex<T>(this List<T> list, long index) => index >= 0 && index < list.Count;
-	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : class, new() {
-		while (list.Count < ensureTo) {
-			list.Add(new T());
-		}
-	}
 	/// <summary>
 	/// Each value in the span is null-checked. If null, a new instance is created with no constructor ran. If not null, the existing instance
 	/// has all of its fields reset. The latter behavior may break everything and needs further testing.
@@ -421,13 +416,8 @@ public static class UnmanagedUtils
 		return span[..index];
 	}
 
-	/// <summary>
-	/// Ensures both the capacity and the count of the list.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="list"></param>
-	/// <param name="ensureTo"></param>
-	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
+
+	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : new() {
 		list.EnsureCapacity(ensureTo);
 
 		while (list.Count < ensureTo)
