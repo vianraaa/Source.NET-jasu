@@ -195,7 +195,7 @@ public enum MaterialVarFlags2
 }
 
 public static class IMaterialExts {
-	public static bool IsErrorMaterial([NotNullWhen(true)] this IMaterial? mat) {
+	public static bool IsErrorMaterial([NotNullWhen(false)] this IMaterial? mat) {
 		return mat == null || mat.IsErrorMaterialInternal();
 	}
 }
