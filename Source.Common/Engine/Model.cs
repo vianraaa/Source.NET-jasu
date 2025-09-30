@@ -16,10 +16,26 @@ namespace Source.Common.Engine;
 
 public struct ModelTexInfo {
 	public InlineArray2<Vector4> TextureVecsTexelsPerWorldUnits;
-	public InlineArray2<Vector4> LightmapVecsTexelsPerWorldUnits;
+	public InlineArray2<Vector4> LightmapVecsLuxelsPerWorldUnits;
 	public float LuxelsPerWorldUnit;
 	public float WorldUnitsPerLuxel;
-	public SurfF;
+	public Surf Flags;
+	public ushort TexInfoFlags;
+	public IMaterial? Material;
+}
+
+public struct CollisionModel
+{
+	public Vector3 Mins, Maxs, Origin;
+	public int HeadNode;
+	// vcollide_t research todo
+}
+
+public struct CollisionSurface
+{
+	public string Name;
+	public ushort SurfaceProps;
+	public ushort Flags;
 }
 
 public class WorldBrushData
@@ -37,7 +53,7 @@ public class WorldBrushData
 	public BSPNode[]? Nodes;
 	public ushort[]? LeafMinDistToWater;
 	public BSPTexInfo[]? TexInfo;
-	public BSPTexData[]? TexData;
+	public CollisionSurface[]? TexData;
 	public ushort[]? VertIndices;
 	// TODO: Displacement info
 	public BSPWorldLight[]? WorldLights;

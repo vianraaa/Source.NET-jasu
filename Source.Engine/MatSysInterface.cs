@@ -23,7 +23,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 	private void InitDebugMaterials() {
-
+		MaterialEmpty = GL_LoadMaterial("debug/debugempty", MaterialDefines.TEXTURE_GROUP_OTHER)!;
 	}
 
 	private void InitWellKnownRenderTargets() {
@@ -69,5 +69,16 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 	public void WorldStaticMeshDestroy() {
 
+	}
+
+	public ConVar mat_loadtextures = new("1", 0);
+	public IMaterial MaterialEmpty;
+
+	public IMaterial? GL_LoadMaterial(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName) {
+		IMaterial? material = null;
+		if (mat_loadtextures.GetInt() != 0)
+			return materials.FindMaterial(name, textureGroupName);
+		else
+			return MaterialEmpty;
 	}
 }

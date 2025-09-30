@@ -7,6 +7,7 @@ using Source.Common.MaterialSystem;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Numerics;
 
 namespace Source.Engine;
 
@@ -109,7 +110,7 @@ public ref struct MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -219,7 +220,40 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		// todo
 	}
 	private void Mod_LoadTexinfo() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexInfo);
+		BSPTexInfo[] inTexInfo = lh.LoadLumpData<BSPTexInfo>();
+		ModelTexInfo[] outTexInfo = new ModelTexInfo[inTexInfo.Length];
 
+		bool loadtextures = true; // << todo: convar
+		for (int i = 0; i < outTexInfo.Length; ++i) {
+			ref BSPTexInfo _in = ref inTexInfo[i];
+			ref ModelTexInfo _out = ref outTexInfo[i];
+			for (int j = 0; j < 2; ++j) {
+				for (int k = 0; k < 4; ++k) {
+					_out.TextureVecsTexelsPerWorldUnits[j][k] = _in.TextureVecsTexelsPerWorldUnits[j][k];
+					_out.LightmapVecsLuxelsPerWorldUnits[j][k] = _in.LightmapVecsLuxelsPerWorldUnits[j][k];
+				}
+			}
+
+			_out.LuxelsPerWorldUnit = _out.LightmapVecsLuxelsPerWorldUnits[0].AsVector3().Length();
+			_out.WorldUnitsPerLuxel = 1.0f / _out.LuxelsPerWorldUnit;
+
+			_out.Flags = (Surf)_in.Flags;
+			_out.TexInfoFlags = 0;
+
+			if (loadtextures) {
+				if (_in.TexData >= 0) 
+					_out.Material = materials.GL_LoadMaterial(lh.GetMap().TexData![_in.TexData].Name, MaterialDefines.TEXTURE_GROUP_WORLD);
+				else {
+					DevMsg($"Mod_LoadTexinfo: texdata < 0 (index=={i}/{outTexInfo.Length})\n");
+					_out.Material = null;
+				}
+				if (_out.Material == null) 
+					_out.Material = materials.MaterialEmpty;
+			}
+			else 
+				_out.Material = materials.MaterialEmpty;
+		}
 	}
 	private void Mod_LoadPlanes() {
 		// todo
