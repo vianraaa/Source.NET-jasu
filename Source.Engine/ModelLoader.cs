@@ -63,6 +63,18 @@ public ref struct MapLoadHelper
 		Assert(MapFileHandle != null);
 	}
 
+	public static void Shutdown() {
+		if (MapFileHandle != null) {
+			MapFileHandle.Close();
+			MapFileHandle = null;
+		}
+
+		LoadName = null;
+		MapName = null;
+		memreset(ref MapHeader);
+		Map = null;
+	}
+
 	private static void InitDLightGlobals(int version) {
 
 	}
@@ -110,7 +122,7 @@ public ref struct MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -199,6 +211,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		mod.Brush.RenderHandle = 0;
 
 		Common.TimestampedLog("Loading map");
+		CM.LoadMap(mod.StrName, false, out uint checksum);
+
 		mod.Type = ModelType.Brush;
 		mod.LoadFlags |= ModelLoaderFlags.Loaded;
 		MapLoadHelper.Init(mod, ((Span<char>)(LoadName)).SliceNullTerminatedString());
@@ -217,8 +231,10 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	private void Mod_LoadTexdata() {
-		// todo
+		MapLoadHelper.Map!.NumTexData = GetCollisionBSPData().NumSurfaces;
+		MapLoadHelper.Map!.TexData = GetCollisionBSPData().MapSurfaces.Base();
 	}
+
 	private void Mod_LoadTexinfo() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexInfo);
 		BSPTexInfo[] inTexInfo = lh.LoadLumpData<BSPTexInfo>();
@@ -242,22 +258,24 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			_out.TexInfoFlags = 0;
 
 			if (loadtextures) {
-				if (_in.TexData >= 0) 
+				if (_in.TexData >= 0)
 					_out.Material = materials.GL_LoadMaterial(lh.GetMap().TexData![_in.TexData].Name, MaterialDefines.TEXTURE_GROUP_WORLD);
 				else {
 					DevMsg($"Mod_LoadTexinfo: texdata < 0 (index=={i}/{outTexInfo.Length})\n");
 					_out.Material = null;
 				}
-				if (_out.Material == null) 
+				if (_out.Material == null)
 					_out.Material = materials.MaterialEmpty;
 			}
-			else 
+			else
 				_out.Material = materials.MaterialEmpty;
 		}
 	}
+
 	private void Mod_LoadPlanes() {
 		// todo
 	}
+
 	private void Mod_LoadVertices() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Vertexes);
 		lh.GetMap().Vertexes = lh.LoadLumpData<BSPVertex>();
@@ -275,7 +293,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		lh.GetMap().VertIndices = outData;
 
 		for (int i = 0; i < outData.Length; i++) {
-			int edge = outData[i];
+			int edge = inData[i];
 			int index = 0;
 			if (edge < 0) {
 				edge = -edge;

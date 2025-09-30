@@ -200,6 +200,26 @@ public static class BitVecExts
 	/// <param name="bit"></param>
 	public static void Clear(this bool[] bools, int bit) => bools[bit] = false;
 }
+public static class ListExtensions
+{ // Thanks JamesHoux: https://stackoverflow.com/questions/4972951/listt-to-t-without-copying
+	static class ArrayAccessor<T>
+	{
+		public static Func<List<T>, T[]> Getter;
+
+		static ArrayAccessor() {
+			var dm = new DynamicMethod("get", MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard, typeof(T[]), [typeof(List<T>)], typeof(ArrayAccessor<T>), true);
+			var il = dm.GetILGenerator();
+			il.Emit(OpCodes.Ldarg_0); // Load List<T> argument
+			il.Emit(OpCodes.Ldfld, typeof(List<T>).GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance)!); // Replace argument by field
+			il.Emit(OpCodes.Ret); // Return field
+			Getter = (Func<List<T>, T[]>)dm.CreateDelegate(typeof(Func<List<T>, T[]>));
+		}
+	}
+
+	public static T[] Base<T>(this List<T> list) {
+		return ArrayAccessor<T>.Getter(list);
+	}
+}
 public static class ClassUtils
 {
 	public static bool IsValidIndex<T>(this List<T> list, int index) => index >= 0 && index < list.Count;

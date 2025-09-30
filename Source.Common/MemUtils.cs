@@ -26,6 +26,7 @@ public static unsafe class MemUtils
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="field"></param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void memreset<T>(ref T field) where T : struct {
 		Unsafe.InitBlock(ref Unsafe.As<T, byte>(ref field), 0, (uint)Unsafe.SizeOf<T>());
 	}

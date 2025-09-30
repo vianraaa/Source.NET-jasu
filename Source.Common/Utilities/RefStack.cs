@@ -12,7 +12,7 @@ namespace Source.Common.Utilities;
 /// <summary>
 /// A by-reference Stack<typeparamref name="T"/> implementation. Never shrinks, but can grow to infinite size
 /// <br/>
-/// It only never shrinks to avoid unnecessary deallocations.
+/// It only never shrinks to avoid unnecessary deallocations. (and to allow references)
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class RefStack<T> : IEnumerable<T> where T : struct

@@ -1,4 +1,6 @@
-﻿using Source.Common.Formats.BSP;
+﻿using CommunityToolkit.HighPerformance;
+
+using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Common.Utilities;
@@ -53,6 +55,7 @@ public class WorldBrushData
 	public BSPNode[]? Nodes;
 	public ushort[]? LeafMinDistToWater;
 	public BSPTexInfo[]? TexInfo;
+	public int NumTexData;
 	public CollisionSurface[]? TexData;
 	public ushort[]? VertIndices;
 	// TODO: Displacement info
