@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Source.Common.Utilities;
 
+[DebuggerDisplay("UtlSymbol {String()}")]
 public struct UtlSymbol
 {
 	public static readonly UtlSymId_t UTL_INVAL_SYMBOL = UtlSymId_t.MaxValue;
