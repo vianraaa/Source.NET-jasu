@@ -28,7 +28,7 @@ public class CollisionBSPData
 	public string? MapNullName;
 	public readonly List<CollisionModel> MapCollisionModels = [];
 	public readonly List<CollisionSurface> MapSurfaces = [];
-	public readonly List<string> TextureNames = [];
+	public readonly List<string?> TextureNames = [];
 
 	IMaterialSystem? materials;
 
@@ -57,19 +57,19 @@ public class CollisionBSPData
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexData);
 		MapLoadHelper lhStringData = new MapLoadHelper(LumpIndex.TexDataStringData);
 		MapLoadHelper lhStringTable = new MapLoadHelper(LumpIndex.TexDataStringTable);
-		Span<char> stringData = lhStringData.LoadLumpData<char>();
+		Span<byte> stringData = lhStringData.LoadLumpData<byte>();
 		Span<int> stringTable = lhStringTable.LoadLumpData<int>();
 
 		BSPTexData[] inData = lh.LoadLumpData<BSPTexData>(throwIfNoElements: true, maxElements: BSPFileCommon.MAX_MAP_TEXDATA, sysErrorIfOOB: true);
 		IMaterial? material;
-		MapSurfaces.Clear(); MapSurfaces.EnsureCapacity(inData.Length);
-		TextureNames.Clear(); TextureNames.EnsureCapacity(inData.Length);
+		MapSurfaces.Clear(); MapSurfaces.EnsureCount(inData.Length);
+		TextureNames.Clear(); TextureNames.EnsureCountDefault(inData.Length);
 		int lastNull = -1;
 		for (int i = 0; i < stringData.Length; i++) {
-			ref char c = ref stringData[i];
+			ref byte c = ref stringData[i];
 			if (c == 0) {
 				lastNull = i;
-				TextureNames.Add(new string(stringData[(lastNull + 1)..i]));
+				TextureNames.Add(Encoding.ASCII.GetString(stringData[(lastNull + 1)..i]));
 			}
 		}
 		NumTextures = inData.Length;
@@ -80,7 +80,6 @@ public class CollisionBSPData
 			Assert(stringTable[_in.NameStringTableID] > 0);
 
 			int index = stringTable[_in.NameStringTableID];
-			Span<char> inName = stringData[index..];
 
 			material = materials!.FindMaterial(MapSurfaces[i].Name, MaterialDefines.TEXTURE_GROUP_WORLD, true);
 			if (!material.IsErrorMaterial()) {
@@ -94,7 +93,7 @@ public class CollisionBSPData
 			}
 
 			MapSurfaces.Add(new CollisionSurface() {
-				Name = TextureNames[index],
+				Name = TextureNames[index]!,
 				SurfaceProps = 0,
 				Flags = 0
 			});
