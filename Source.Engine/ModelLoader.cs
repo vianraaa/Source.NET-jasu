@@ -90,7 +90,7 @@ public ref struct MapLoadHelper
 		LumpID = lumpToLoad;
 		ref BSPLump lump = ref MapHeader.Lumps[(int)lumpToLoad];
 		LumpSize = lump.FileLength;
-		LumpSize = lump.FileOffset;
+		LumpOffset = lump.FileOffset;
 		LumpVersion = lump.Version;
 	}
 
