@@ -82,6 +82,6 @@ public class Model
 	public float Radius;
 
 	public BrushData Brush;
-	public MDLHandle_t Model;
+	public MDLHandle_t Studio;
 	public SpriteData Sprite;
 }
