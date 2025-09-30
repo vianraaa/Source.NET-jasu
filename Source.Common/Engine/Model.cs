@@ -7,6 +7,7 @@ using Source.Common.Utilities;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -26,6 +27,7 @@ public struct ModelTexInfo {
 	public IMaterial? Material;
 }
 
+[DebuggerDisplay("Source BSP Collision Model @ {Origin} [{Mins} -> {Maxs}] (head-node {HeadNode})")]
 public struct CollisionModel
 {
 	public Vector3 Mins, Maxs, Origin;
@@ -33,6 +35,7 @@ public struct CollisionModel
 	// vcollide_t research todo
 }
 
+[DebuggerDisplay("Source BSP Collision Surface '{Name}' (props: {SurfaceProps}, flags: {Flags})")]
 public struct CollisionSurface
 {
 	public string Name;
