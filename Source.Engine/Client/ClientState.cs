@@ -501,7 +501,7 @@ public class ClientState : BaseClientState
 
 		ReadOnlySpan<char> name = ModelPrecacheTable.GetString(index);
 
-		model = modelloader.GetModelForName(name, ModelReferenceType.Client);
+		model = modelloader.GetModelForName(name, ModelLoaderFlags.Client);
 		if (model == null) {
 			ref PrecacheUserData data = ref CL.GetPrecacheUserData(ModelPrecacheTable, index);
 			if (!Unsafe.IsNullRef(ref data) && (data.Flags & Res.FatalIfMissing) != 0) {
@@ -534,7 +534,7 @@ public class ClientState : BaseClientState
 			loadNow = true;
 
 		if (loadNow)
-			p.SetModel(modelloader.GetModelForName(name, ModelReferenceType.Client));
+			p.SetModel(modelloader.GetModelForName(name, ModelLoaderFlags.Client));
 		else
 			p.SetModel(null);
 	}

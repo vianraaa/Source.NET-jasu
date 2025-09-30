@@ -87,7 +87,7 @@ public class Model
 {
 	public FileNameHandle_t FileNameHandle;
 	public UtlSymbol StrName;
-	public ModelReferenceType LoadFlags;
+	public ModelLoaderFlags LoadFlags;
 	public int ServerCount;
 	public IMaterial[]? Materials;
 

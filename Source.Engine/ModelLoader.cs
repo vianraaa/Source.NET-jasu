@@ -7,19 +7,77 @@ using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
-[EngineComponent]
-public class MapLoadHelper
+public ref struct MapLoadHelper
 {
-	internal void Init(Model mod, Span<char> loadName) {
-		throw new NotImplementedException();
+	static WorldBrushData? Map;
+	static string? LoadName;
+	static string? MapName;
+	static Stream? MapFileHandle;
+	static BSPHeader MapHeader;
+
+	public static void Init(Model? model, ReadOnlySpan<char> loadName) {
+		Host Host = Singleton<Host>();
+		ModelLoader ModelLoader = Singleton<ModelLoader>();
+		IFileSystem fileSystem = Singleton<IFileSystem>();
+
+		Map = null;
+		LoadName = null;
+		MapFileHandle = null;
+
+		if (model == null)
+			MapName = new(loadName);
+		else
+			MapName = model.StrName.String();
+
+		MapFileHandle = fileSystem.Open(loadName, FileOpenOptions.Read | FileOpenOptions.Binary)?.Stream;
+		if(MapFileHandle == null) {
+			Host.Error($"MapLoadHelper.Init, unable to open {MapName}");
+			return;
+		}
+
+		if(!MapFileHandle.ReadToStruct(ref MapHeader) || MapHeader.Identifier != BSPFileCommon.IDBSPHEADER) {
+			MapFileHandle.Close();
+			MapFileHandle = null;
+			Host.Error($"MapLoadHelper.Init, map {MapName} has wrong identifier\n");
+			return;
+		}
+
+		if (MapHeader.Version < BSPFileCommon.MINBSPVERSION || MapHeader.Version > BSPFileCommon.BSPVERSION) {
+			MapFileHandle.Close();
+			MapFileHandle = null;
+			Host.Error($"MapLoadHelper.Init, map {MapName} has wrong version ({MapHeader.Version} when expecting {BSPFileCommon.BSPVERSION})\n");
+			return;
+		}
+
+		LoadName = new(loadName);
+
+#if !SWDS
+		InitDLightGlobals(MapHeader.Version);
+#endif
+		Map = ModelLoader.WorldBrushData;
+
+		Assert(MapFileHandle != null);
 	}
 
-	internal void Shutdown() {
-		throw new NotImplementedException();
+	private static void InitDLightGlobals(int version) {
+
+	}
+
+	public readonly LumpIndex LumpID;
+	public readonly int LumpSize;
+	public readonly int LumpOffset;
+	public readonly int LumpVersion;
+	
+	public MapLoadHelper(LumpIndex lumpToLoad) {
+		LumpID = lumpToLoad;
+		ref BSPLump lump = ref MapHeader.Lumps[(int)lumpToLoad];
+		LumpSize = lump.FileLength;
+		LumpSize = lump.FileOffset;
+		LumpVersion = lump.Version;
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MapLoadHelper MapLoadHelper) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -37,7 +95,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		throw new NotImplementedException();
 	}
 
-	public Model? GetModelForName(ReadOnlySpan<char> name, ModelReferenceType referenceType) {
+	public Model? GetModelForName(ReadOnlySpan<char> name, ModelLoaderFlags referenceType) {
 		Model? model = FindModel(name);
 		Model? retval = LoadModel(model, ref referenceType);
 
@@ -49,7 +107,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 	Model? WorldModel;
 
-	private Model? LoadModel(Model? mod, ref ModelReferenceType referenceType) {
+	private Model? LoadModel(Model? mod, ref ModelLoaderFlags referenceType) {
 		mod!.LoadFlags |= referenceType;
 
 		bool touchAllData = false;
@@ -59,11 +117,11 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			touchAllData = true;
 		}
 
-		if (mod.Type == ModelType.Studio && 0 == (mod.LoadFlags & ModelReferenceType.LoadedByPreload)) {
+		if (mod.Type == ModelType.Studio && 0 == (mod.LoadFlags & ModelLoaderFlags.LoadedByPreload)) {
 			throw new Exception("Studiomodels still need work");
 		}
 
-		if ((mod.LoadFlags & ModelReferenceType.Loaded) != 0)
+		if ((mod.LoadFlags & ModelLoaderFlags.Loaded) != 0)
 			return mod;
 
 		double st = Platform.Time;
@@ -94,7 +152,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	int MapLoadCount;
-	readonly WorldBrushData WorldBrushData = new();
+	public readonly WorldBrushData WorldBrushData = new();
 
 	private void Map_LoadModel(Model mod) {
 		MapLoadCount++;
@@ -104,13 +162,17 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		SetWorldModel(mod);
 		mod.Brush.Shared = WorldBrushData;
 		mod.Brush.RenderHandle = 0;
-		
+
 		Common.TimestampedLog("Loading map");
+		mod.Type = ModelType.Brush;
+		mod.LoadFlags |= ModelLoaderFlags.Loaded;
+		MapLoadHelper.Init(mod, LoadName);
 
 		Mod_LoadVertices();
 	}
 
 	private void Mod_LoadVertices() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Vertexes);
 
 	}
 
@@ -157,7 +219,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		if (!Models.TryGetValue(fnHandle, out model)) {
 			model = new() {
 				FileNameHandle = fnHandle,
-				LoadFlags = ModelReferenceType.NotLoadedOrReferenced,
+				LoadFlags = ModelLoaderFlags.NotLoadedOrReferenced,
 				StrName = name
 			};
 
@@ -189,7 +251,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		throw new NotImplementedException();
 	}
 
-	public Model? ReferenceModel(ReadOnlySpan<char> name, ModelReferenceType referenceType) {
+	public Model? ReferenceModel(ReadOnlySpan<char> name, ModelLoaderFlags referenceType) {
 		throw new NotImplementedException();
 	}
 
@@ -197,11 +259,11 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 	}
 
-	public void UnreferenceAllModels(ModelReferenceType referenceType) {
+	public void UnreferenceAllModels(ModelLoaderFlags referenceType) {
 		throw new NotImplementedException();
 	}
 
-	public void UnreferenceModel(Model model, ModelReferenceType referenceType) {
+	public void UnreferenceModel(Model model, ModelLoaderFlags referenceType) {
 		throw new NotImplementedException();
 	}
 }

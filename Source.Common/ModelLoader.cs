@@ -1,7 +1,7 @@
 ﻿using Source.Common.Engine;
 
 namespace Source.Common;
-public enum ModelReferenceType
+public enum ModelLoaderFlags
 {
 	NotLoadedOrReferenced = 0,
 	Loaded = 1 << 0,
@@ -25,10 +25,10 @@ public interface IModelLoader {
 	ReadOnlySpan<char> GetName(Model model);
 	void GetExtraData(Model model);
 	int GetModelFileSize(ReadOnlySpan<char> name);
-	Model? GetModelForName(ReadOnlySpan<char> name, ModelReferenceType referenceType);
-	Model? ReferenceModel(ReadOnlySpan<char> name, ModelReferenceType referenceType);
-	void UnreferenceModel(Model model, ModelReferenceType referenceType);
-	void UnreferenceAllModels(ModelReferenceType referenceType);
+	Model? GetModelForName(ReadOnlySpan<char> name, ModelLoaderFlags referenceType);
+	Model? ReferenceModel(ReadOnlySpan<char> name, ModelLoaderFlags referenceType);
+	void UnreferenceModel(Model model, ModelLoaderFlags referenceType);
+	void UnreferenceAllModels(ModelLoaderFlags referenceType);
 	void ResetModelServerCounts();
 	void PurgeUnusedModels();
 }
