@@ -42,12 +42,20 @@ public class WorldBrushData
 
 public struct BrushData
 {
-	public WorldBrushData Shared;
+	public WorldBrushData? Shared;
 	public int FirstModelSurface;
 	public int NumModelSurfaces;
 	public ushort RenderHandle;
 	public ushort FirstNode;
 }
+
+public struct SpriteData {
+	public int NumFrames;
+	public int Width;
+	public int Height;
+	// >> todo when EngineSprite exists: public EngineSprite? Sprite;
+}
+
 public enum ModelType
 {
 	Invalid,
@@ -72,8 +80,8 @@ public class Model
 
 	public Vector3 Mins, Maxs;
 	public float Radius;
-	
-	// Horrible! 
-	public InlineArray128<byte> Data;
-	public ref BrushData Brush => ref MemoryMarshal.AsRef<BrushData>(Data);
+
+	public BrushData Brush;
+	public MDLHandle_t Model;
+	public SpriteData Sprite;
 }
