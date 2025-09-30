@@ -63,13 +63,13 @@ public class CollisionBSPData
 		BSPTexData[] inData = lh.LoadLumpData<BSPTexData>(throwIfNoElements: true, maxElements: BSPFileCommon.MAX_MAP_TEXDATA, sysErrorIfOOB: true);
 		IMaterial? material;
 		MapSurfaces.Clear(); MapSurfaces.EnsureCount(inData.Length);
-		TextureNames.Clear(); TextureNames.EnsureCountDefault(inData.Length);
+		TextureNames.Clear(); TextureNames.EnsureCapacity(inData.Length);
 		int lastNull = -1;
 		for (int i = 0; i < stringData.Length; i++) {
 			ref byte c = ref stringData[i];
 			if (c == 0) {
-				lastNull = i;
 				TextureNames.Add(Encoding.ASCII.GetString(stringData[(lastNull + 1)..i]));
+				lastNull = i;
 			}
 		}
 		NumTextures = inData.Length;
