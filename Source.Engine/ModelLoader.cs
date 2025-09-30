@@ -6,19 +6,20 @@ using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
 {
-	static WorldBrushData? Map;
-	static string? LoadName;
-	static string? MapName;
-	static Stream? MapFileHandle;
-	static BSPHeader MapHeader;
-
+	internal static WorldBrushData? Map;
+	internal static string? LoadName;
+	internal static string? MapName;
+	internal static Stream? MapFileHandle;
+	internal static BSPHeader MapHeader;
+	static Host? Host;
 	public static void Init(Model? model, ReadOnlySpan<char> loadName) {
-		Host Host = Singleton<Host>();
+		Host = Singleton<Host>();
 		ModelLoader ModelLoader = (ModelLoader)Singleton<IModelLoader>();
 		IFileSystem fileSystem = Singleton<IFileSystem>();
 
@@ -32,12 +33,12 @@ public ref struct MapLoadHelper
 			MapName = model.StrName.String();
 
 		MapFileHandle = fileSystem.Open($"maps/{loadName}.bsp", FileOpenOptions.Read | FileOpenOptions.Binary)?.Stream;
-		if(MapFileHandle == null) {
+		if (MapFileHandle == null) {
 			Host.Error($"MapLoadHelper.Init, unable to open {MapName}");
 			return;
 		}
 
-		if(!MapFileHandle.ReadToStruct(ref MapHeader) || MapHeader.Identifier != BSPFileCommon.IDBSPHEADER) {
+		if (!MapFileHandle.ReadToStruct(ref MapHeader) || MapHeader.Identifier != BSPFileCommon.IDBSPHEADER) {
 			MapFileHandle.Close();
 			MapFileHandle = null;
 			Host.Error($"MapLoadHelper.Init, map {MapName} has wrong identifier\n");
@@ -65,11 +66,13 @@ public ref struct MapLoadHelper
 
 	}
 
+	public readonly WorldBrushData GetMap() => Map!;
+
 	public readonly LumpIndex LumpID;
 	public readonly int LumpSize;
 	public readonly int LumpOffset;
 	public readonly int LumpVersion;
-	
+
 	public MapLoadHelper(LumpIndex lumpToLoad) {
 		LumpID = lumpToLoad;
 		ref BSPLump lump = ref MapHeader.Lumps[(int)lumpToLoad];
@@ -83,9 +86,26 @@ public ref struct MapLoadHelper
 		return lump.ReadBytes(MapFileHandle!);
 	}
 
-	public Span<T> LoadLumpData<T>() where T : unmanaged {
+	public readonly T[] LoadLumpData<T>(bool throwIfNoElements = false, int maxElements = 0) where T : unmanaged {
 		ref BSPLump lump = ref MapHeader.Lumps[(int)LumpID];
-		return MemoryMarshal.Cast<byte, T>(lump.ReadBytes(MapFileHandle!));
+
+		T[]? data = lump.ReadBytes<T>(MapFileHandle!);
+		if (data == null) {
+			Host!.Error($"ModelLoader: funny {LumpID} lump size in {LoadName}");
+			return [];
+		}
+
+		if (throwIfNoElements && data.Length < 1) {
+			Host!.Error($"ModelLoader: lump {LumpID} has no elements in map {LoadName}");
+			return [];
+		}
+
+		if (maxElements > 0 && data.Length > maxElements) {
+			Host!.Error($"ModelLoader: lump {LumpID} has too many elements ({data.Length} > {maxElements}) in map {LoadName}");
+			return [];
+		}
+
+		return data;
 	}
 }
 
@@ -137,7 +157,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			return mod;
 
 		double st = Platform.Time;
-		mod.StrName.String().FileBase(LoadName);
+		mod.StrName.String()!.FileBase(LoadName);
 		DevMsg($"Loading: {mod.StrName.String()}\n");
 
 		mod.Type = GetTypeFromName(mod.StrName);
@@ -169,7 +189,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Map_LoadModel(Model mod) {
 		MapLoadCount++;
 
+#if !SWDS
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
+#endif
 
 		SetWorldModel(mod);
 		mod.Brush.Shared = WorldBrushData;
@@ -183,22 +205,49 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		Mod_LoadVertices();
 		BSPEdge[] edges = Mod_LoadEdges();
 		Mod_LoadSurfedges(edges);
+		Mod_LoadPlanes();
+		// Mod_LoadOcclusion();
+		Mod_LoadTexdata();
+		Mod_LoadTexinfo();
+
+#if !SWDS
+		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
+#endif
 	}
 
+	private void Mod_LoadTexdata() {
+		// todo
+	}
+	private void Mod_LoadTexinfo() {
+
+	}
+	private void Mod_LoadPlanes() {
+		// todo
+	}
 	private void Mod_LoadVertices() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Vertexes);
-		ReadOnlySpan<BSPVertex> inData = lh.LoadLumpData<BSPVertex>();
-		BSPVertex[] outData = inData.ToArray();
+		lh.GetMap().Vertexes = lh.LoadLumpData<BSPVertex>();
 	}
 
 	private BSPEdge[] Mod_LoadEdges() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Edges);
-		ReadOnlySpan<BSPEdge> inData = lh.LoadLumpData<BSPEdge>();
-		BSPEdge[] outData = inData.ToArray();
+		BSPEdge[] outData = lh.LoadLumpData<BSPEdge>();
 		return outData;
 	}
 	private void Mod_LoadSurfedges(BSPEdge[] edges) {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.SurfEdges);
+		ushort[] outData = lh.LoadLumpData<ushort>(throwIfNoElements: true, maxElements: BSPFileCommon.MAX_MAP_SURFEDGES);
+		lh.GetMap().VertIndices = outData;
 
+		for (int i = 0; i < outData.Length; i++) {
+			int edge = outData[i];
+			int index = 0;
+			if (edge < 0) {
+				edge = -edge;
+				index = 1;
+			}
+			outData[i] = edges[edge].V[index];
+		}
 	}
 	public void SetWorldModel(Model mod) {
 		WorldModel = mod;
@@ -221,7 +270,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	readonly Dictionary<FileNameHandle_t, Model> Models = [];
 
 	private Model? FindModel(ReadOnlySpan<char> name) {
-		if (name == null || name.Length <= 0)
+		if (name.IsEmpty)
 			Sys.Error("ModelLoader.FindModel: NULL name");
 
 

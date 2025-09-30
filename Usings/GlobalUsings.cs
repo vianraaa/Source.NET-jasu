@@ -18,3 +18,6 @@ global using PackedEntityHandle_t = nint;
 global using SpatialPartitionHandle_t = ushort;
 global using TimeUnit_t = double;
 global using MDLHandle_t = ushort;
+global using WorldDecalHandle_t = ushort;
+global using ShadowDecalHandle_t = ushort;
+global using OverlayFragmentHandle_t = ushort;

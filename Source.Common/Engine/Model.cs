@@ -14,6 +14,14 @@ using System.Threading.Tasks;
 
 namespace Source.Common.Engine;
 
+public struct ModelTexInfo {
+	public InlineArray2<Vector4> TextureVecsTexelsPerWorldUnits;
+	public InlineArray2<Vector4> LightmapVecsTexelsPerWorldUnits;
+	public float LuxelsPerWorldUnit;
+	public float WorldUnitsPerLuxel;
+	public SurfF;
+}
+
 public class WorldBrushData
 {
 	public int NumSubModels;
@@ -30,8 +38,10 @@ public class WorldBrushData
 	public ushort[]? LeafMinDistToWater;
 	public BSPTexInfo[]? TexInfo;
 	public BSPTexData[]? TexData;
+	public ushort[]? VertIndices;
 	// TODO: Displacement info
 	public BSPWorldLight[]? WorldLights;
+	public BSPPrimitive[]? Primitives;
 	public BSPPrimVert[]? PrimVerts;
 	public ushort[]? PrimIndices;
 	public BSPArea[]? Areas;

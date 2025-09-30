@@ -2,6 +2,11 @@
 using System.Numerics;
 using System;
 using GameLumpId_t = int;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Source.Common.Mathematics;
+using CommunityToolkit.HighPerformance;
+using SharpCompress.Common;
 
 namespace Source.Common.Formats.BSP;
 
@@ -240,11 +245,17 @@ public struct BSPLump
 	/// <param name="stream"></param>
 	/// <param name="index"></param>
 	/// <returns></returns>
-	public byte[] ReadBytes(Stream stream) {
+	public byte[] ReadBytes(Stream stream) => ReadBytes<byte>(stream)!; // << Never will be null when byte
+	public unsafe T[]? ReadBytes<T>(Stream stream) where T : unmanaged {
 		stream.Seek(FileOffset, SeekOrigin.Begin);
+
+		int sizeofone = Unsafe.SizeOf<T>();
 
 		// If uncompressed size != 0, perform LZMA decompression on the lump contents
 		if (UncompressedSize != 0) {
+			if ((UncompressedSize % sizeofone) != 0)
+				return null; // Funny size
+
 			using BinaryReader br = new(stream);
 			LZMAHeader header = default;
 			header.ID = br.ReadUInt32();
@@ -252,10 +263,12 @@ public struct BSPLump
 			header.LZMASize = br.ReadUInt32();
 
 			if (header.ID == LZMAHeader.LZMA_ID) {
-				byte[] uncompressed = new byte[UncompressedSize];
-				using MemoryStream msOut = new(uncompressed);
-				LZMA.Decompress(stream, msOut, header.LZMASize, UncompressedSize);
-				return uncompressed;
+				T[] uncompressed = new T[UncompressedSize / Unsafe.SizeOf<T>()];
+				fixed (T* ptr = uncompressed) {
+					using UnmanagedMemoryStream msOut = new((byte*)ptr, UncompressedSize);
+					LZMA.Decompress(stream, msOut, header.LZMASize, UncompressedSize);
+					return uncompressed;
+				}
 			}
 			else {
 				Warning("Invalid LZMA chunk.\n");
@@ -264,8 +277,11 @@ public struct BSPLump
 		}
 		// Otherwise, read an uncompressed lump
 		else {
-			byte[] data = new byte[FileLength];
-			stream!.Read(data);
+			if ((FileLength % sizeofone) != 0)
+				return null; // Funny size
+
+			T[] data = new T[FileLength / Unsafe.SizeOf<T>()];
+			stream.ReadExactly(MemoryMarshal.Cast<T, byte>(data));
 			return data;
 		}
 	}
@@ -454,6 +470,53 @@ public struct BSPOccluderDataV1
 	public int PolyCount;
 	public Vector3 Mins;
 	public Vector3 Maxs;
+}
+
+public struct BSPMSurface1
+{
+	public InlineArray2<int> TextureMins;
+	public InlineArray2<short> TextureExtents;
+	public ushort NumPrims;
+	public ushort FirstPrimID;
+}
+
+public struct BSPMSurfaceNormal
+{
+	public uint FirstVertNormal;
+}
+
+public struct BSPMSurface2
+{
+	public uint Flags;
+	public Box<CPlane> plane;
+	public int FirstVertIndex;
+	public WorldDecalHandle_t Decals;
+	public ShadowDecalHandle_t ShadowDecals;
+	public OverlayFragmentHandle_t FirstOverlayFragment;
+	public short materialSortID;
+	public ushort VertBufferIndex;
+	public ushort DynamicShadowsEnabled_TexInfo;
+	// todo:  IDispInfo
+	public int VisFrame;
+
+	public bool DynamicShadowsEnabled {
+		readonly get => (DynamicShadowsEnabled_TexInfo & 0x1) != 0;
+		set {
+			if (value)
+				DynamicShadowsEnabled_TexInfo |= 0x1;
+			else
+				DynamicShadowsEnabled_TexInfo &= 0xFFFE;
+		}
+	}
+
+	public ushort TexInfo {
+		readonly get => (ushort)(DynamicShadowsEnabled_TexInfo >> 1);
+		set {
+			ushort masked = (ushort)(value & 0x7FFF);
+			DynamicShadowsEnabled_TexInfo = (ushort)((DynamicShadowsEnabled_TexInfo & 0x1) | (masked << 1));
+		}
+	}
+
 }
 
 /// <summary>
@@ -880,3 +943,244 @@ public struct BSPWaterOverlay
 }
 
 // epair_t is weird
+
+public enum Contents
+{
+	/// <summary>
+	/// No contents
+	/// </summary>
+	Empty = 0,
+	/// <summary>
+	/// an eye is never valid in a solid
+	/// </summary>
+	Solid = 0x1,
+	/// <summary>
+	/// translucent, but not watery (glass)
+	/// </summary>
+	Window = 0x2,
+	Aux = 0x4,
+	/// <summary>
+	/// alpha-tested "grate" textures.  Bullets/sight pass through, but solids don't
+	/// </summary>
+	Grate = 0x8,
+	Slime = 0x10,
+	Water = 0x20,
+	/// <summary>
+	/// block AI line of sight
+	/// </summary>
+	BlockLOS = 0x40,
+	/// <summary>
+	/// things that cannot be seen through (may be non-solid though)
+	/// </summary>
+	Opaque = 0x80,
+	LastVisibleContents = 0x80,
+	AllVisibleContents = (LastVisibleContents | (LastVisibleContents - 1)),
+	TestFogVolume = 0x100,
+	/// <summary>
+	/// per team contents used to differentiate collisions 
+	/// </summary>
+	Team1 = 0x800,
+	/// <summary>
+	/// between players and objects on different teams
+	/// </summary>
+	Team2 = 0x1000,
+	/// <summary>
+	/// ignore CONTENTS_OPAQUE on surfaces that have SURF_NODRAW
+	/// </summary>
+	IgnoreNoDrawOpaque = 0x2000,
+	/// <summary>
+	/// hits entities which are MOVETYPE_PUSH (doors, plats, etc.)
+	/// </summary>
+	Moveable = 0x4000,
+	/// <summary>
+	/// remaining contents are non-visible, and don't eat brushes
+	/// </summary>
+	AreaPortal = 0x8000,
+	PlayerClip = 0x10000,
+	MonsterClip = 0x20000,
+	/// <summary>
+	/// currents can be added to any other contents, and may be mixed
+	/// </summary>
+	Current0 = 0x40000,
+	Current90 = 0x80000,
+	Current180 = 0x100000,
+	Current270 = 0x200000,
+	CurrentUp = 0x400000,
+	CurrentDown = 0x800000,
+	/// <summary>
+	/// removed before bsping an entity
+	/// </summary>
+	Origin = 0x1000000,
+	/// <summary>
+	/// should never be on a brush, only in game
+	/// </summary>
+	Monster = 0x2000000,
+	Debris = 0x4000000,
+	/// <summary>
+	/// brushes to be added after vis leafs
+	/// </summary>
+	Detail = 0x8000000,
+	/// <summary>
+	/// auto set if any surface has trans
+	/// </summary>
+	Translucent = 0x10000000,
+	Ladder = 0x20000000,
+	/// <summary>
+	/// use accurate hitboxes on trace
+	/// </summary>
+	HitBox = 0x40000000,
+}
+
+public enum Surf : ushort
+{
+	/// <summary>
+	/// value will hold the light strength
+	/// </summary>
+	Light = 0x0001,
+	/// <summary>
+	/// don't draw, indicates we should skylight + draw 2d sky but not draw the 3D skybox
+	/// </summary>
+	Sky2D = 0x0002,
+	/// <summary>
+	/// don't draw, but add to skybox
+	/// </summary>
+	Sky = 0x0004,
+	/// <summary>
+	/// turbulent water warp
+	/// </summary>
+	Warp = 0x0008,
+	Trans = 0x0010,
+	/// <summary>
+	/// the surface can not have a portal placed on it
+	/// </summary>
+	NoPortal = 0x0020,
+	/// <summary>
+	/// FIXME: This is an xbox hack to work around elimination of trigger surfaces, which breaks occluders
+	/// </summary>
+	Trigger = 0x0040,
+	/// <summary>
+	/// don't bother referencing the texture
+	/// </summary>
+	NoDraw = 0x0080,
+	/// <summary>
+	/// make a primary bsp splitter			  
+	/// </summary>
+	Hint = 0x0100,
+	/// <summary>
+	/// completely ignore, allowing non-closed brushes
+	/// </summary>
+	Skip = 0x0200,
+	/// <summary>
+	/// Don't calculate light
+	/// </summary>
+	NoLight = 0x0400,
+	/// <summary>
+	/// calculate three lightmaps for the surface for bumpmapping
+	/// </summary>
+	BumpLight = 0x0800,
+	/// <summary>
+	/// Don't receive shadows
+	/// </summary>
+	NoShadows = 0x1000,
+	/// <summary>
+	/// Don't receive decals
+	/// </summary>
+	NoDecals = 0x2000,
+	/// <summary>
+	/// Don't subdivide patches on this surface 
+	/// </summary>
+	NoChop = 0x4000,
+	/// <summary>
+	/// surface is part of a hitbox
+	/// </summary>
+	Hitbox = 0x8000,
+}
+
+
+public enum Mask : uint
+{
+	All = 0xFFFFFFFF,
+	/// <summary>
+	/// everything that is normally solid
+	/// </summary>
+	Solid = Contents.Solid | Contents.Moveable | Contents.Window | Contents.Monster | Contents.Grate,
+	/// <summary>
+	/// everything that blocks player movement
+	/// </summary>
+	PlayerSolid = Contents.Solid | Contents.Moveable | Contents.PlayerClip | Contents.Window | Contents.Monster | Contents.Grate,
+	/// <summary>
+	/// blocks npc movement
+	/// </summary>
+	NPCSolid = Contents.Solid | Contents.Moveable | Contents.MonsterClip | Contents.Window | Contents.Monster | Contents.Grate,
+	/// <summary>
+	/// water physics in these contents
+	/// </summary>
+	Water = Contents.Water | Contents.Moveable | Contents.Slime,
+	/// <summary>
+	/// everything that blocks lighting
+	/// </summary>
+	Opaque = Contents.Solid | Contents.Moveable | Contents.Opaque,
+	/// <summary>
+	/// everything that blocks lighting, but with monsters added.
+	/// </summary>
+	OpaqueAndNPCs = Opaque | Contents.Monster,
+	/// <summary>
+	/// everything that blocks line of sight for AI
+	/// </summary>
+	BlockLOS = Contents.Solid | Contents.Moveable | Contents.BlockLOS,
+	/// <summary>
+	/// everything that blocks line of sight for AI plus NPCs
+	/// </summary>
+	BlockLOSAndNPCs = BlockLOS | Contents.Monster,
+	/// <summary>
+	/// everything that blocks line of sight for players
+	/// </summary>
+	Visible = Opaque | Contents.IgnoreNoDrawOpaque,
+	/// <summary>
+	/// everything that blocks line of sight for players, but with monsters added.
+	/// </summary>
+	VisibleAndNPCs = OpaqueAndNPCs | Contents.IgnoreNoDrawOpaque,
+	/// <summary>
+	/// bullets see these as solid
+	/// </summary>
+	Shot = Contents.Solid | Contents.Moveable | Contents.Monster | Contents.Window | Contents.Debris | Contents.HitBox,
+	/// <summary>
+	/// non-raycasted weapons see this as solid (includes grates)
+	/// </summary>
+	ShotHull = Contents.Solid | Contents.Moveable | Contents.Monster | Contents.Window | Contents.Debris | Contents.Grate,
+	/// <summary>
+	/// hits solids (not grates) and passes through everything else
+	/// </summary>
+	ShotPortal = Contents.Solid | Contents.Moveable | Contents.Window | Contents.Monster,
+	/// <summary>
+	/// everything normally solid, except monsters (world+brush only)
+	/// </summary>
+	SolidBrushOnly = Contents.Solid | Contents.Moveable | Contents.Window | Contents.Grate,
+	/// <summary>
+	/// everything normally solid for player movement, except monsters (world+brush only)
+	/// </summary>
+	PlayerSolidBrushOnly = Contents.Solid | Contents.Moveable | Contents.Window | Contents.PlayerClip | Contents.Grate,
+	/// <summary>
+	/// everything normally solid for npc movement, except monsters (world+brush only)
+	/// </summary>
+	NPCSolidBrushOnly = Contents.Solid | Contents.Moveable | Contents.Window | Contents.MonsterClip | Contents.Grate,
+	/// <summary>
+	/// just the world, used for route rebuilding
+	/// </summary>
+	NPCWorldStatic = Contents.Solid | Contents.Window | Contents.MonsterClip | Contents.Grate,
+	/// <summary>
+	/// These are things that can split areaportals
+	/// </summary>
+	SplitAreaPortal = Contents.Water | Contents.Slime,
+
+	/// <summary>
+	/// UNDONE: This is untested, any moving water
+	/// </summary>
+	Current = Contents.Current0 | Contents.Current90 | Contents.Current180 | Contents.Current270 | Contents.CurrentUp | Contents.CurrentDown,
+
+	/// <summary>
+	/// everything that blocks corpse movement
+	/// UNDONE: Not used yet / may be deleted
+	/// </summary>
+	DeadSolid = Contents.Solid | Contents.PlayerClip | Contents.Window | Contents.Grate
+}

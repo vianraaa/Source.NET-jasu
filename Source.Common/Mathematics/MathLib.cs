@@ -22,7 +22,7 @@ public enum PlaneType : byte
 	Pad1 = 19
 }
 
-public class CPlane
+public struct CPlane
 {
 	public Vector3 Normal;
 	public float Dist;
