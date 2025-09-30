@@ -79,7 +79,7 @@ public class CollisionBSPData
 			Assert(_in.NameStringTableID >= 0);
 			Assert(stringTable[_in.NameStringTableID] > 0);
 
-			int index = stringTable[_in.NameStringTableID];
+			int index = _in.NameStringTableID;
 
 			material = materials!.FindMaterial(MapSurfaces[i].Name, MaterialDefines.TEXTURE_GROUP_WORLD, true);
 			if (!material.IsErrorMaterial()) {
