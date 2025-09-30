@@ -194,6 +194,11 @@ public enum MaterialVarFlags2
 	SupportsFlashlight = (1 << 19),
 }
 
+public static class IMaterialExts {
+	public static bool IsErrorMaterial([NotNullWhen(true)] this IMaterial? mat) {
+		return mat == null || mat.IsErrorMaterialInternal();
+	}
+}
 public interface IMaterial
 {
 	bool IsRealTimeVersion();
@@ -204,4 +209,5 @@ public interface IMaterial
 	bool TryFindVar(ReadOnlySpan<char> varName, [NotNullWhen(true)] out IMaterialVar? found, bool complain = true);
 	IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true);
 	void Refresh();
+	bool IsErrorMaterialInternal();
 }

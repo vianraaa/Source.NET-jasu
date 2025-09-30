@@ -40,6 +40,11 @@ public class Material : IMaterialInternal
 
 		return 0;
 	}
+
+	public bool IsErrorMaterialInternal() {
+		return materials.errorMaterial == this;
+	}
+
 	public MaterialVarFlags2 GetMaterialVarFlags2() {
 		if (ShaderParams != null && VarCount > (int)ShaderMaterialVars.Flags2) {
 			IMaterialVar var = ShaderParams[(int)ShaderMaterialVars.Flags2];
