@@ -265,7 +265,7 @@ public struct BSPLump
 		// Otherwise, read an uncompressed lump
 		else {
 			byte[] data = new byte[FileLength];
-			stream.Read(data);
+			stream!.Read(data);
 			return data;
 		}
 	}

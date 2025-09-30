@@ -4,6 +4,8 @@ using Source.Common.Filesystem;
 using Source.Common.Utilities;
 using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Source.Engine;
 
@@ -74,6 +76,16 @@ public ref struct MapLoadHelper
 		LumpSize = lump.FileLength;
 		LumpSize = lump.FileOffset;
 		LumpVersion = lump.Version;
+	}
+
+	public byte[] LoadLumpData() {
+		ref BSPLump lump = ref MapHeader.Lumps[(int)LumpID];
+		return lump.ReadBytes(MapFileHandle!);
+	}
+
+	public Span<T> LoadLumpData<T>() where T : unmanaged {
+		ref BSPLump lump = ref MapHeader.Lumps[(int)LumpID];
+		return MemoryMarshal.Cast<byte, T>(lump.ReadBytes(MapFileHandle!));
 	}
 }
 
@@ -173,7 +185,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 	private void Mod_LoadVertices() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Vertexes);
-
+		ReadOnlySpan<BSPVertex> inData = lh.LoadLumpData<BSPVertex>();
+		BSPVertex[] outData = inData.ToArray();
 	}
 
 	public void SetWorldModel(Model mod) {
