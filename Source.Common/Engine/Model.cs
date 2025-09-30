@@ -38,6 +38,14 @@ public class WorldBrushData
 	public BSPCubeMapSample[]? CubemapSamples;
 }
 
+public class BrushData
+{
+	public WorldBrushData Shared;
+	public int FirstModelSurface;
+	public int NumModelSurfaces;
+	public ushort RenderHandle;
+	public ushort FirstNode;
+}
 public enum ModelType
 {
 	Invalid,
@@ -64,4 +72,5 @@ public class Model
 	public float Radius;
 
 	public object? Data;
+	public BrushData Brush => Data is BrushData brushData ? brushData : throw new Exception("Not a brush!");
 }

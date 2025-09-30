@@ -94,6 +94,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	int MapLoadCount;
+	readonly WorldBrushData WorldBrushData = new();
 
 	private void Map_LoadModel(Model mod) {
 		MapLoadCount++;
@@ -101,6 +102,11 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
 
 		SetWorldModel(mod);
+		mod.Brush.Shared = WorldBrushData;
+		mod.Brush.RenderHandle = 0;
+		Common.TimestampedLog("Loading map");
+
+
 	}	
 
 	public void SetWorldModel(Model mod) {

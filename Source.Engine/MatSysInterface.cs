@@ -1,15 +1,23 @@
 ﻿
+using Microsoft.Extensions.DependencyInjection;
+
 using Source.Common;
+using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
-public class MatSysInterface(IMaterialSystem materials)
+
+public class MatSysInterface(IMaterialSystem materials, IServiceProvider services)
 {
 	public readonly TextureReference FullFrameFBTexture0 = new();
 	public readonly TextureReference FullFrameFBTexture1 = new();
 
+	CommonHostState host_state;
+
 	public void Init() {
+		host_state = services.GetRequiredService<CommonHostState>();
 		InitWellKnownRenderTargets();
 		InitDebugMaterials();
 	}
@@ -42,7 +50,24 @@ public class MatSysInterface(IMaterialSystem materials)
 			rtFlags)!;
 	}
 
+	int FrameCount = 0;
+	struct MeshList {
+		public IMesh Mesh;
+		public IMaterial Material;
+		public int VertCount;
+		public VertexFormat VertexFormat;
+	}
+	readonly List<MeshList> Meshes = [];
+	readonly List<IMesh> WorldStaticMeshes = [];
+	ConVar mat_max_worldmesh_vertices = new("65536", 0);
 	public void WorldStaticMeshCreate() {
+		FrameCount = 1;
+		WorldStaticMeshDestroy();
+		Assert(WorldStaticMeshes.Count == 0);
+
+		
+	}
+	public void WorldStaticMeshDestroy() {
 
 	}
 }
