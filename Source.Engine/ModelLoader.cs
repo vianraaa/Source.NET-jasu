@@ -111,7 +111,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	private void Mod_LoadVertices() {
-		throw new NotImplementedException();
+
 	}
 
 	public void SetWorldModel(Model mod) {

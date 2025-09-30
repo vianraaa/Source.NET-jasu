@@ -49,7 +49,8 @@ public struct BrushData
 	public ushort FirstNode;
 }
 
-public struct SpriteData {
+public struct SpriteData
+{
 	public int NumFrames;
 	public int Width;
 	public int Height;
@@ -64,6 +65,21 @@ public enum ModelType
 	Studio
 }
 
+public enum ModelFlag
+{
+	MaterialProxy = 0x0001,
+	Translucent = 0x0002,
+	VertexLit = 0x0004,
+	TranslucentTwoPass = 0x0008,
+	FramebufferTexture = 0x0010,
+	HasDLight = 0x0020,
+	UsesFBTexture = 0x0100,
+	UsesBumpMapping = 0x0200,
+	UsesEnvCubemap = 0x0400,
+	AmbientBoost = 0x0800,
+	DoNotCastShadows = 0x1000
+}
+
 /// <summary>
 /// Analog of model_t
 /// </summary>
@@ -76,7 +92,7 @@ public class Model
 	public IMaterial[]? Materials;
 
 	public ModelType Type;
-	public int Flags;
+	public ModelFlag Flags;
 
 	public Vector3 Mins, Maxs;
 	public float Radius;
