@@ -421,6 +421,12 @@ public static class UnmanagedUtils
 		return span[..index];
 	}
 
+	/// <summary>
+	/// Ensures both the capacity and the count of the list.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="list"></param>
+	/// <param name="ensureTo"></param>
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : unmanaged {
 		list.EnsureCapacity(ensureTo);
 
