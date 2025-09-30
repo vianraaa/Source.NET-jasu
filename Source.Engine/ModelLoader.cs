@@ -251,7 +251,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 		MapLoadHelper.Shutdown();
 		double elapsed = Platform.Time - startTime;
-		Common.TimestampedLog($"Map_LoadModel: Finish - loading took {elapsed}f seconds");
+		Common.TimestampedLog($"Map_LoadModel: Finish - loading took {elapsed:F4} seconds");
 	}
 
 	private void Mod_LoadPrimitives() { }
