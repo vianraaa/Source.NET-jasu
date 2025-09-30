@@ -222,7 +222,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 		mod.Type = ModelType.Brush;
 		mod.LoadFlags |= ModelLoaderFlags.Loaded;
-		MapLoadHelper.Init(mod, ((Span<char>)(LoadName)).SliceNullTerminatedString());
+		MapLoadHelper.Init(mod, ((Span<char>)(ActiveMapName)).SliceNullTerminatedString());
 
 		Mod_LoadVertices();
 		BSPEdge[] edges = Mod_LoadEdges();
@@ -231,7 +231,6 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		// Mod_LoadOcclusion();
 		Mod_LoadTexdata();
 		Mod_LoadTexinfo();
-
 #if !SWDS
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
 #endif
