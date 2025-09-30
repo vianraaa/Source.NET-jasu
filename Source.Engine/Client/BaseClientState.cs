@@ -421,7 +421,6 @@ public abstract class BaseClientState(
 #if !SWDS
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessStringTable);
 #endif
-
 		StringTableContainer?.SetAllowCreation(true);
 
 		NetworkStringTable? table = (NetworkStringTable?)StringTableContainer?.CreateStringTableEx(msg.TableName, msg.MaxEntries, msg.UserDataSize, msg.UserDataSizeBits, msg.IsFilenames);

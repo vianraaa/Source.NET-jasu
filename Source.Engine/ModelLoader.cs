@@ -104,10 +104,15 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		SetWorldModel(mod);
 		mod.Brush.Shared = WorldBrushData;
 		mod.Brush.RenderHandle = 0;
+		
 		Common.TimestampedLog("Loading map");
 
+		Mod_LoadVertices();
+	}
 
-	}	
+	private void Mod_LoadVertices() {
+		throw new NotImplementedException();
+	}
 
 	public void SetWorldModel(Model mod) {
 		WorldModel = mod;

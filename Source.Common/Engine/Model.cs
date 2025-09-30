@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,7 +40,7 @@ public class WorldBrushData
 	public BSPCubeMapSample[]? CubemapSamples;
 }
 
-public class BrushData
+public struct BrushData
 {
 	public WorldBrushData Shared;
 	public int FirstModelSurface;
@@ -70,7 +72,8 @@ public class Model
 
 	public Vector3 Mins, Maxs;
 	public float Radius;
-
-	public object? Data;
-	public BrushData Brush => Data is BrushData brushData ? brushData : throw new Exception("Not a brush!");
+	
+	// Horrible! 
+	public InlineArray128<byte> Data;
+	public ref BrushData Brush => ref MemoryMarshal.AsRef<BrushData>(Data);
 }
