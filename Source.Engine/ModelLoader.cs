@@ -99,26 +99,33 @@ public ref struct MapLoadHelper
 		return lump.ReadBytes(MapFileHandle!);
 	}
 
-	public readonly T[] LoadLumpData<T>(bool throwIfNoElements = false, int maxElements = 0) where T : unmanaged {
+	public readonly T[] LoadLumpData<T>(bool throwIfNoElements = false, int maxElements = 0, bool sysErrorIfOOB = false) where T : unmanaged {
 		ref BSPLump lump = ref MapHeader.Lumps[(int)LumpID];
+		string? error;
 
 		T[]? data = lump.ReadBytes<T>(MapFileHandle!);
 		if (data == null) {
-			Host!.Error($"ModelLoader: funny {LumpID} lump size in {LoadName}");
-			return [];
+			error = $"ModelLoader: funny {LumpID} lump size in {LoadName}";
+			goto doError;
 		}
 
 		if (throwIfNoElements && data.Length < 1) {
-			Host!.Error($"ModelLoader: lump {LumpID} has no elements in map {LoadName}");
-			return [];
+			error = $"ModelLoader: lump {LumpID} has no elements in map {LoadName}";
+			goto doError;
 		}
 
 		if (maxElements > 0 && data.Length > maxElements) {
-			Host!.Error($"ModelLoader: lump {LumpID} has too many elements ({data.Length} > {maxElements}) in map {LoadName}");
-			return [];
+			error = $"ModelLoader: lump {LumpID} has too many elements ({data.Length} > {maxElements}) in map {LoadName}";
+			goto doError;
 		}
 
 		return data;
+	doError:
+		if (sysErrorIfOOB)
+			Singleton<Sys>().Error(error);
+		else
+			Host!.Error(error);
+		return [];
 	}
 }
 
