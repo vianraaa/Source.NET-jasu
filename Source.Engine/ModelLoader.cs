@@ -181,6 +181,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		MapLoadHelper.Init(mod, ((Span<char>)(LoadName)).SliceNullTerminatedString());
 
 		Mod_LoadVertices();
+		BSPEdge[] edges = Mod_LoadEdges();
+		Mod_LoadSurfedges(edges);
 	}
 
 	private void Mod_LoadVertices() {
@@ -189,6 +191,15 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		BSPVertex[] outData = inData.ToArray();
 	}
 
+	private BSPEdge[] Mod_LoadEdges() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Edges);
+		ReadOnlySpan<BSPEdge> inData = lh.LoadLumpData<BSPEdge>();
+		BSPEdge[] outData = inData.ToArray();
+		return outData;
+	}
+	private void Mod_LoadSurfedges(BSPEdge[] edges) {
+
+	}
 	public void SetWorldModel(Model mod) {
 		WorldModel = mod;
 	}
