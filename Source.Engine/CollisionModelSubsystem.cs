@@ -5,6 +5,7 @@ using CommunityToolkit.HighPerformance;
 using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 using Source.Common.Utilities;
 
 using System;
@@ -28,6 +29,7 @@ public class CollisionBSPData
 	public string? MapNullName;
 	public readonly List<CollisionModel> MapCollisionModels = [];
 	public readonly List<CollisionSurface> MapSurfaces = [];
+	public readonly List<CollisionPlane> MapPlanes = [];
 	public readonly List<string?> TextureNames = [];
 
 	IMaterialSystem? materials;
@@ -37,6 +39,7 @@ public class CollisionBSPData
 	public int NumSurfaces;
 	public int NumLeafs;
 	public int NumAreas;
+	public int NumPlanes;
 	public int NumClusters;
 	public int NumTextures;
 

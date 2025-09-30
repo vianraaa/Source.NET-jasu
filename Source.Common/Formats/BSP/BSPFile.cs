@@ -488,7 +488,7 @@ public struct BSPMSurfaceNormal
 public struct BSPMSurface2
 {
 	public uint Flags;
-	public Box<CPlane> plane;
+	public Box<CollisionPlane> plane;
 	public int FirstVertIndex;
 	public WorldDecalHandle_t Decals;
 	public ShadowDecalHandle_t ShadowDecals;

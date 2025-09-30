@@ -46,7 +46,8 @@ public struct CollisionSurface
 public class WorldBrushData
 {
 	public int NumSubModels;
-	public CPlane[]? Planes;
+	public CollisionPlane[]? Planes;
+	public int NumPlanes;
 	public BSPLeaf[]? Leafs;
 	public BSPLeafWaterData[]? LeafWaterData;
 	public BSPVertex[]? Vertexes;

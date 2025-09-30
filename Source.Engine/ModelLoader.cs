@@ -208,6 +208,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 	private void Map_LoadModel(Model mod) {
 		MapLoadCount++;
+		double startTime = Platform.Time;
 
 #if !SWDS
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
@@ -231,11 +232,34 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		// Mod_LoadOcclusion();
 		Mod_LoadTexdata();
 		Mod_LoadTexinfo();
+
 #if !SWDS
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
 #endif
+
+		Mod_LoadPrimitives();
+		Mod_LoadPrimVerts();
+		Mod_LoadPrimIndices();
+
+#if !SWDS
+		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
+#endif
+
+		Mod_LoadFaces();
+		Mod_LoadVertNormals();
+		Mod_LoadVertNormalIndices();
+
+		MapLoadHelper.Shutdown();
+		double elapsed = Platform.Time - startTime;
+		Common.TimestampedLog($"Map_LoadModel: Finish - loading took {elapsed}f seconds");
 	}
 
+	private void Mod_LoadPrimitives() { }
+	private void Mod_LoadPrimVerts() { }
+	private void Mod_LoadPrimIndices() { }
+	private void Mod_LoadFaces() { }
+	private void Mod_LoadVertNormals() { }
+	private void Mod_LoadVertNormalIndices() { }
 	private void Mod_LoadTexdata() {
 		MapLoadHelper.Map!.NumTexData = GetCollisionBSPData().NumSurfaces;
 		MapLoadHelper.Map!.TexData = GetCollisionBSPData().MapSurfaces.Base();
@@ -279,7 +303,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	private void Mod_LoadPlanes() {
-		// todo
+		MapLoadHelper.Map!.Planes = GetCollisionBSPData().MapPlanes.Base();
+		MapLoadHelper.Map!.NumPlanes = GetCollisionBSPData().NumPlanes;
 	}
 
 	private void Mod_LoadVertices() {
