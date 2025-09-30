@@ -29,7 +29,7 @@ public ref struct MapLoadHelper
 		else
 			MapName = model.StrName.String();
 
-		MapFileHandle = fileSystem.Open(loadName, FileOpenOptions.Read | FileOpenOptions.Binary)?.Stream;
+		MapFileHandle = fileSystem.Open($"maps/{loadName}.bsp", FileOpenOptions.Read | FileOpenOptions.Binary)?.Stream;
 		if(MapFileHandle == null) {
 			Host.Error($"MapLoadHelper.Init, unable to open {MapName}");
 			return;
