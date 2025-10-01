@@ -409,8 +409,10 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 					DevMsg($"Mod_LoadTexinfo: texdata < 0 (index=={i}/{outTexInfo.Length})\n");
 					_out.Material = null;
 				}
-				if (_out.Material == null)
+				if (_out.Material == null) {
+					DevWarning($"Mod_LoadTexInfo: cannot find material named {lh.GetMap().TexData![_in.TexData].Name}\n");
 					_out.Material = materials.MaterialEmpty;
+				}
 			}
 			else
 				_out.Material = materials.MaterialEmpty;
