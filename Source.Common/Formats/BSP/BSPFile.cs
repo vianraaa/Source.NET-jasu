@@ -493,7 +493,7 @@ public struct BSPMSurface2
 	public WorldDecalHandle_t Decals;
 	public ShadowDecalHandle_t ShadowDecals;
 	public OverlayFragmentHandle_t FirstOverlayFragment;
-	public short materialSortID;
+	public short MaterialSortID;
 	public ushort VertBufferIndex;
 	public ushort DynamicShadowsEnabled_TexInfo;
 	// todo:  IDispInfo

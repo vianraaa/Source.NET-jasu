@@ -125,7 +125,7 @@ public ref struct MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM, CommonHostState host_state) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -253,12 +253,17 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Mod_LoadPrimitives() { }
 	private void Mod_LoadPrimVerts() { }
 	private void Mod_LoadPrimIndices() { }
-	private ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData? data = null) {
-		return ref (data ?? host_state.WorldBrush)!.Surfaces2[surfaceIndex];
-	}
+	public static ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData? data = null) => ref (data ?? Singleton<CommonHostState>().WorldBrush)!.Surfaces2![surfaceIndex];
 	public static ref CollisionPlane MSurf_Plane(ref BSPMSurface2 surfID) => ref surfID.Plane.GetReference();
 	public static ref int MSurf_FirstVertIndex(ref BSPMSurface2 surfID) => ref surfID.FirstVertIndex;
 	public static ref SurfDraw MSurf_Flags(ref BSPMSurface2 surfID) => ref surfID.Flags;
+	public static bool SurfaceHasDispInfo(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasDisp) != 0;
+	public static ref ushort MSurf_VertBufferIndex(ref BSPMSurface2 surfID) => ref surfID.VertBufferIndex;
+	public static ref short MSurf_MaterialSortID(ref BSPMSurface2 surfID) => ref surfID.MaterialSortID;
+	public static bool SurfaceHasPrims(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasPrims) != 0;
+	public static int MSurf_SortGroup(ref BSPMSurface2 surfID) => (int)(surfID.Flags & SurfDraw.SortGroupMask) >> (int)SurfDraw.SortGroupShift;
+	public static void MSurf_SetSortGroup(ref BSPMSurface2 surfID, int sortGroup) => surfID.Flags |= (SurfDraw)((sortGroup << (int)SurfDraw.SortGroupShift) & (int)SurfDraw.SortGroupMask);
+	public static ref ModelTexInfo MSurf_TexInfo(ref BSPMSurface2 surfID, WorldBrushData? data = null) => ref (data ?? Singleton<CommonHostState>().WorldBrush)!.TexInfo![surfID.TexInfo];
 	public static int MSurf_VertCount(ref BSPMSurface2 surfID) => (int)(((uint)surfID.Flags >> (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask);
 	public static void MSurf_SetVertCount(ref BSPMSurface2 surfID, uint vertCount) {
 		uint flags = (vertCount << (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask;

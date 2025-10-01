@@ -23,7 +23,8 @@ public struct ViewStack
 public class Render(
 	CommonHostState host_state,
 	IMaterialSystem materials,
-	Host Host
+	Host Host,
+	MatSysInterface MaterialSystem
 	)
 {
 	int framecount = 1;
@@ -176,7 +177,7 @@ public class Render(
 	private void LoadSkys() { }
 	private void InitStudio() { }
 	private void LoadWorldGeometry() {
-		Host.MatSysInterface.WorldStaticMeshCreate();
+		MaterialSystem.WorldStaticMeshCreate();
 	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }

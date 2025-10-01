@@ -210,4 +210,5 @@ public interface IMaterial
 	IMaterialVar FindVar(ReadOnlySpan<char> varName, out bool found, bool complain = true);
 	void Refresh();
 	bool IsErrorMaterialInternal();
+	VertexFormat GetVertexFormat();
 }
