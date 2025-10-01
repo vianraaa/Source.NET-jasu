@@ -347,7 +347,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] = (short)offsetIntoLightmapPage[0];
 		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] = (short)offsetIntoLightmapPage[1];
 	}
-	private void RegisterLightmapSurfaces() {
+	internal void RegisterLightmapSurfaces() {
 		ref BSPMSurface2 surfID = ref Unsafe.NullRef<BSPMSurface2>();
 		materials.BeginLightmapAllocation();
 
@@ -423,5 +423,13 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			return materials.FindMaterial(name, textureGroupName);
 		else
 			return MaterialEmpty;
+	}
+
+	internal void DestroySortInfo() {
+
+	}
+
+	internal void CreateSortInfo() {
+		WorldStaticMeshCreate();
 	}
 }

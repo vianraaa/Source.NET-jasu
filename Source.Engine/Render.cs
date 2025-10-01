@@ -177,7 +177,9 @@ public class Render(
 	private void LoadSkys() { }
 	private void InitStudio() { }
 	private void LoadWorldGeometry() {
-		MaterialSystem.WorldStaticMeshCreate();
+		MaterialSystem.DestroySortInfo();
+		MaterialSystem.RegisterLightmapSurfaces();
+		MaterialSystem.CreateSortInfo();
 	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }
