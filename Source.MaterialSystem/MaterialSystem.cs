@@ -315,10 +315,10 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			patchKeyValues = null!;
 		}
 		else {
-			int len = vmtName.Length + ".vmt".Length;
+			int len = tempNameBuffer.Length + ".vmt".Length;
 			Span<char> matNameWithExtension = stackalloc char[len];
-			vmtName.CopyTo(matNameWithExtension);
-			".vmt".CopyTo(matNameWithExtension[vmtName.Length..]);
+			tempNameBuffer.CopyTo(matNameWithExtension);
+			".vmt".CopyTo(matNameWithExtension[tempNameBuffer.Length..]);
 
 			IMaterialInternal? mat = null;
 			if (keyValues.Name.Equals("subrect", StringComparison.OrdinalIgnoreCase)) {
