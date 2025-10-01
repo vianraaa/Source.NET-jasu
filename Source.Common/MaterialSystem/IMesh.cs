@@ -495,7 +495,25 @@ public unsafe struct MeshBuilder : IDisposable
 	// Locks the vertex buffer, can specify arbitrary index lists
 	// (must use the Index() call below)
 	public void Begin(IMesh pMesh, MaterialPrimitiveType type, int nVertexCount, int nIndexCount, ref int nFirstVertex) => throw new NotImplementedException();
-	public void Begin(IMesh pMesh, MaterialPrimitiveType type, int nVertexCount, int nIndexCount) => throw new NotImplementedException();
+	public void Begin(IMesh pMesh, MaterialPrimitiveType type, int nVertexCount, int nIndexCount) {
+		Assert(pMesh != null && Mesh == null);
+		Assert((type != MaterialPrimitiveType.Quads) && (type != MaterialPrimitiveType.InstancedQuads) && (type != MaterialPrimitiveType.Polygon) &&
+			(type != MaterialPrimitiveType.LineStrip) && (type != MaterialPrimitiveType.LineLoop));
+
+		Assert(type != MaterialPrimitiveType.Points);
+
+		Mesh = pMesh;
+		GenerateIndices = false;
+		Type = type;
+
+		Mesh.SetPrimitiveType(type);
+		Mesh.LockMesh(nVertexCount, nIndexCount, ref Desc);
+
+		IndexBuilder.AttachBegin(pMesh, nIndexCount, ref Desc);
+		VertexBuilder.AttachBegin(pMesh, nVertexCount, ref Desc.Vertex);
+
+		Reset();
+	}
 
 	// forward compat
 	public void Begin(IVertexBuffer pVertexBuffer, MaterialPrimitiveType type, int numPrimitives) => throw new NotImplementedException();
