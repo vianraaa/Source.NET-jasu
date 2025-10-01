@@ -71,6 +71,9 @@ public class WorldBrushData
 	public BSPAreaPortal[]? AreaPortals;
 	public Vector3[]? ClipPortalVerts;
 	public BSPCubeMapSample[]? CubemapSamples;
+	public int NumSurfaces;
+	public BSPMSurface1[]? Surfaces1;
+	public BSPMSurface2[]? Surfaces2;
 }
 
 public struct BrushData
