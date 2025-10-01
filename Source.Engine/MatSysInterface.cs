@@ -353,7 +353,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		SortedSet<BSPMSurface2> surfaces = new(new LightmapComparer());
 		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
-			surfID = ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
+			surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
 			if ((ModelLoader.MSurf_TexInfo(ref surfID).Flags & Surf.Light) != 0 ||
 				(ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
 				ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
