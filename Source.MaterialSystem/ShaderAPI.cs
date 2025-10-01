@@ -777,4 +777,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		Assert(status == GL_FRAMEBUFFER_COMPLETE, "Framebuffer incomplete");
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
+
+	public IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) {
+		return MeshMgr.CreateStaticMesh(format, textureGroup, material);
+	}
 }

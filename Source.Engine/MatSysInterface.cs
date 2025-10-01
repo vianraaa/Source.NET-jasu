@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.HighPerformance;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Commands;
@@ -6,11 +8,6 @@ using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
-
-
-public class MaterialList {
-	public Dictionary<IMaterial, List<>>
-}
 
 public class MatSysInterface(IMaterialSystem materials, IServiceProvider services)
 {
@@ -71,6 +68,13 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		WorldStaticMeshes.Clear();
 		using MatRenderContextPtr renderContext = new(materials);
+		var meshes = Meshes.AsSpan();
+		for (int i = 0; i < Meshes.Count; i++) {
+			VertexFormat format = meshes[i].Material.GetVertexFormat();
+			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
+			using MeshBuilder meshBuilder = new MeshBuilder();
+			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
+		}
 	}
 	public void WorldStaticMeshDestroy() {
 
