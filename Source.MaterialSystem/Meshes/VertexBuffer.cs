@@ -135,7 +135,7 @@ public unsafe class VertexBuffer : IDisposable
 		else {
 			Position = 0;
 		}
-		baseVertexIndex = Position / VertexSize;
+		baseVertexIndex = VertexSize == 0 ? 0 : (Position / VertexSize);
 		if (SysmemBuffer == null) {
 			RecomputeVBO();
 		}
