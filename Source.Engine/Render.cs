@@ -206,7 +206,7 @@ public enum SurfDraw : uint
 	HasDLight = 0x00080000,
 	DLightPass = 0x00100000,
 	UNUSED2 = 0x00200000,
-	VertCuntMask = 0xFF000000,
+	VertCountMask = 0xFF000000,
 	SortGroupMask = 0x00C00000,
 	VertCountShift = 24,
 	SortGroupShift = 22,
