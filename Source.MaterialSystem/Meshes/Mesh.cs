@@ -4,6 +4,7 @@ using Source.Common.ShaderAPI;
 
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem.Meshes;
 
@@ -41,6 +42,8 @@ public unsafe class Mesh : IMesh
 	protected int FirstVertex;
 	protected int FirstIndex;
 
+	public bool Locked;
+
 	public VertexBuffer GetVertexBuffer() => throw new Exception();
 	public IndexBuffer GetIndexBuffer() => throw new Exception();
 
@@ -56,7 +59,7 @@ public unsafe class Mesh : IMesh
 		IsDrawing = false;
 	}
 
-	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat) {
+	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat = VertexFormat.Invalid) {
 		if (ShaderDevice.IsDeactivated()) {
 			ResetMeshRenderState();
 			return false;
@@ -87,8 +90,62 @@ public unsafe class Mesh : IMesh
 		throw new NotImplementedException();
 	}
 
-	public virtual void Draw(int firstIndex = -1, int indexCount = 0) {
-		throw new NotImplementedException();
+	public virtual unsafe void Draw(int firstIndex = -1, int indexCount = 0) {
+		Assert(VertexBuffer != null);
+		if (VertexBuffer == null)
+			return;
+
+		if(!ShaderUtil.OnDrawMesh(this, firstIndex, indexCount)) {
+			MarkAsDrawn();
+			return;
+		}
+
+		PrimList* primList = stackalloc PrimList[1];
+		if (firstIndex == -1 || indexCount == 0) {
+			primList->FirstIndex = 0;
+			primList->NumIndices = NumIndices;
+		}
+		else {
+			primList->FirstIndex = firstIndex;
+			primList->NumIndices = indexCount;
+		}
+		DrawInternal(primList, 1);
+	}
+
+	private unsafe void DrawInternal(PrimList* primList, int lists) {
+		HandleLateCreation();
+
+		int i;
+		for (i = 0; i < lists; i++) {
+			if (primList[i].NumIndices > 0)
+				break;
+		}
+
+		if (i == lists)
+			return;
+
+		// Assert(ShaderAPI.IsInSelectionMode());
+
+		if (!SetRenderState(0, 0))
+			return;
+
+		s_Prims = primList;
+		s_PrimsCount = lists;
+
+#if DEBUG
+		for (i = 0; i < lists; ++i) 
+			Assert(primList[i].NumIndices > 0);
+#endif
+
+		s_FirstVertex = 0;
+		s_NumVertices = (uint)VertexBuffer.VertexCount;
+
+		DrawMesh();
+
+		// Source doesn't seem to reset these. I don't know why it doesn't, but I can't see a good reason not to,
+		// and considering this is almost always going to be a stack-backed pointer, I see a very good reason to do so
+		s_Prims = null;
+		s_PrimsCount = 0;
 	}
 
 	public virtual void EndCastBuffer() {
@@ -150,13 +207,22 @@ public unsafe class Mesh : IMesh
 		return startIndex;
 	}
 
+	static readonly ushort* ScratchIndexBuffer = (ushort*)NativeMemory.Alloc(6 * sizeof(ushort));
 	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
-		throw new NotImplementedException();
+		ShaderUtil.SyncMatrices();
+
+		Lock(vertexCount, false, ref desc.Vertex);
+		if (Type != MaterialPrimitiveType.Points) 
+			Lock(false, -1, indexCount, ref desc.Index);
+		else {
+			desc.Index.Indices = ScratchIndexBuffer;
+			desc.Index.IndexSize = 0;
+		}
+
+		Locked = true;
 	}
 
-	public virtual void MarkAsDrawn() {
-		throw new NotImplementedException();
-	}
+	public virtual void MarkAsDrawn() {}
 
 	public virtual void ModifyBegin(int firstVertex, int vertexCount, int firstIndex, int indexCount, ref MeshDesc desc) {
 		throw new NotImplementedException();
@@ -196,12 +262,15 @@ public unsafe class Mesh : IMesh
 	int NumIndices;
 
 	public virtual void UnlockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
+		Assert(Locked);
+
 		Unlock(vertexCount, ref desc.Vertex);
 		if (Type != MaterialPrimitiveType.Points)
 			Unlock(indexCount, ref desc.Index);
 
 		NumVertices = vertexCount;
 		NumIndices = indexCount;
+		Locked = false;
 	}
 
 	public virtual int VertexCount() {
