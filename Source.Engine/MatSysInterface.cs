@@ -574,8 +574,12 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	public ConVar mat_loadtextures = new("1", 0);
 	public IMaterial MaterialEmpty;
 
-	public IMaterial? GL_LoadMaterial(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName) {
-		IMaterial? material = null;
+	public IMaterial GL_LoadMaterial(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName) {
+		IMaterial? material = GL_LoadMaterialNoRef(name, textureGroupName);
+		return material;
+	}
+
+	private IMaterial GL_LoadMaterialNoRef(ReadOnlySpan<char> name, ReadOnlySpan<char> textureGroupName) {
 		if (mat_loadtextures.GetInt() != 0)
 			return materials.FindMaterial(name, textureGroupName);
 		else

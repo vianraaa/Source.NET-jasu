@@ -299,7 +299,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		if (existingMaterial != null)
 			return existingMaterial;
 
-
 		Span<char> vmtName = stackalloc char["materials/".Length + temp.Length];
 		"materials/".CopyTo(vmtName);
 		temp.CopyTo(vmtName["materials/".Length..]);
