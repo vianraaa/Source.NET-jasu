@@ -7,6 +7,11 @@ using Source.Common.MaterialSystem;
 
 namespace Source.Engine;
 
+
+public class MaterialList {
+	public Dictionary<IMaterial, List<>>
+}
+
 public class MatSysInterface(IMaterialSystem materials, IServiceProvider services)
 {
 	public readonly TextureReference FullFrameFBTexture0 = new();

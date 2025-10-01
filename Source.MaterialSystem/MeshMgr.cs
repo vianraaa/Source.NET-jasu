@@ -155,4 +155,12 @@ public class MeshMgr
 	internal void RestoreBuffers() {
 		Init();
 	}
+
+	internal IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) {
+		Mesh mesh = new Mesh();
+		mesh.SetVertexFormat(format);
+		if (material != null)
+			mesh.SetMaterial((IMaterialInternal)material);
+		return mesh;
+	}
 }
