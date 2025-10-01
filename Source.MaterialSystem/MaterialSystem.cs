@@ -293,15 +293,19 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		return "GAME";
 	}
 	public IMaterial FindMaterialEx(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, MaterialFindContext context, bool complain, ReadOnlySpan<char> complainPrefix) {
-		string temp = new string(materialName).Replace('\\', '/');
-		IMaterialInternal? existingMaterial = MaterialDict.FindMaterial(temp, false);
+		Span<char> tempNameBuffer = stackalloc char[materialName.Length];
+		for (int i = 0; i < materialName.Length; i++) {
+			char c = materialName[i];
+			tempNameBuffer[i] = c == '\\' ? '/' : c;
+		}
+		IMaterialInternal? existingMaterial = MaterialDict.FindMaterial(tempNameBuffer, false);
 
 		if (existingMaterial != null)
 			return existingMaterial;
 
-		Span<char> vmtName = stackalloc char["materials/".Length + temp.Length];
+		Span<char> vmtName = stackalloc char["materials/".Length + tempNameBuffer.Length];
 		"materials/".CopyTo(vmtName);
-		temp.CopyTo(vmtName["materials/".Length..]);
+		tempNameBuffer.CopyTo(vmtName["materials/".Length..]);
 
 		KeyValues keyValues = new KeyValues("vmt");
 		KeyValues pPatchKeyValues = new KeyValues("vmt_patches");
@@ -332,7 +336,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		}
 
 		if (complain) {
-			Assert(temp != null);
+			Assert(tempNameBuffer != null);
 
 			if (MaterialDict.NoteMissing(vmtName)) {
 				if (complainPrefix != null)
