@@ -1002,3 +1002,18 @@ public static class SpanExts
 		return source.Length;
 	}
 }
+
+// Saving for a rainy day, if it's ever needed...
+/*
+public delegate ref T RefFn<T>();
+/// <summary>
+/// A more complicated way of boxing a ref to a structure. Should be used conservatively, as it will allocate more memory 
+/// than a normal box (ie. generating an anonymous lambda) but it is very convenient and avoids unsafe code/keeps GC references proper.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class BoxRefPtr<T> {
+	RefFn<T> refFn;
+	public BoxRefPtr(RefFn<T> refFn) => this.refFn = refFn;
+	public ref T Deref() => ref refFn();
+}
+*/

@@ -11,6 +11,7 @@ using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 
 using System.Collections.Generic;
+using System.Net;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -437,32 +438,29 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		uv.Y /= texInfo.Material!.GetMappingHeight();
 	}
 
-	public class LightmapComparer : IComparer<BSPMSurface2>
-	{
-		public int Compare(BSPMSurface2 surfID1, BSPMSurface2 surfID2) {
-			bool hasLightmap1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.NoLight) == 0;
-			bool hasLightmap2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.NoLight) == 0;
+	public static int CompareSurfID(ref BSPMSurface2 surfID1, ref BSPMSurface2 surfID2) {
+		bool hasLightmap1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.NoLight) == 0;
+		bool hasLightmap2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.NoLight) == 0;
 
-			if (hasLightmap1 != hasLightmap2)
-				return (hasLightmap2 ? 1 : 0) - (hasLightmap1 ? 1 : 0);
+		if (hasLightmap1 != hasLightmap2)
+			return (hasLightmap2 ? 1 : 0) - (hasLightmap1 ? 1 : 0);
 
-			IMaterial? material1 = ModelLoader.MSurf_TexInfo(ref surfID1).Material;
-			IMaterial? material2 = ModelLoader.MSurf_TexInfo(ref surfID2).Material;
-			int enum1 = material1!.GetEnumerationID();
-			int enum2 = material2!.GetEnumerationID();
-			if (enum1 != enum2)
-				return enum1 - enum2;
+		IMaterial? material1 = ModelLoader.MSurf_TexInfo(ref surfID1).Material;
+		IMaterial? material2 = ModelLoader.MSurf_TexInfo(ref surfID2).Material;
+		int enum1 = material1!.GetEnumerationID();
+		int enum2 = material2!.GetEnumerationID();
+		if (enum1 != enum2)
+			return enum1 - enum2;
 
-			bool hasLightstyle1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.HasLightstyles) == 0;
-			bool hasLightstyle2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.HasLightstyles) == 0;
+		bool hasLightstyle1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.HasLightstyles) == 0;
+		bool hasLightstyle2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.HasLightstyles) == 0;
 
-			if (hasLightstyle1 != hasLightstyle2)
-				return (hasLightstyle2 ? 1 : 0) - (hasLightstyle1 ? 1 : 0);
+		if (hasLightstyle1 != hasLightstyle2)
+			return (hasLightstyle2 ? 1 : 0) - (hasLightstyle1 ? 1 : 0);
 
-			int area1 = ModelLoader.MSurf_LightmapExtents(ref surfID1)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID1)[1];
-			int area2 = ModelLoader.MSurf_LightmapExtents(ref surfID2)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID2)[1];
-			return area2 - area1;
-		}
+		int area1 = ModelLoader.MSurf_LightmapExtents(ref surfID1)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID1)[1];
+		int area2 = ModelLoader.MSurf_LightmapExtents(ref surfID2)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID2)[1];
+		return area2 - area1;
 	}
 
 	public const int NUM_BUMP_VECTS = 3;
@@ -506,22 +504,27 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		ref BSPMSurface2 surfID = ref Unsafe.NullRef<BSPMSurface2>();
 		materials.BeginLightmapAllocation();
 
-		SortedSet<BSPMSurface2> surfaces = new(new LightmapComparer());
+		List<nint> surfaces = new();
 		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
 			surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
-			if ((ModelLoader.MSurf_TexInfo(ref surfID).Flags & Surf.Light) != 0 ||
+			if ((ModelLoader.MSurf_TexInfo(ref surfID).Flags & Surf.NoLight) != 0 ||
 				(ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
 				ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
 			}
 			else
 				ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.NoLight;
 
-			surfaces.Add(surfID);
+			surfaces.Add(surfID.SurfNum);
 		}
+		surfaces.Sort((sn1, sn2) => {
+			ref BSPMSurface2 surfID1 = ref host_state.WorldBrush!.Surfaces2![sn1];
+			ref BSPMSurface2 surfID2 = ref host_state.WorldBrush!.Surfaces2![sn2];
+			return CompareSurfID(ref surfID1, ref surfID2);
+		});
 
 		surfID = ref Unsafe.NullRef<BSPMSurface2>();
-		foreach (var surfIDCopy in surfaces) {
-			surfID = ref host_state.WorldBrush!.Surfaces2![surfIDCopy.SurfNum];
+		foreach (var surfIDidx in surfaces) {
+			surfID = ref host_state.WorldBrush!.Surfaces2![surfIDidx];
 			bool hasLightmap = (ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) == 0;
 			if (hasLightmap)
 				RegisterLightmappedSurface(ref surfID);
