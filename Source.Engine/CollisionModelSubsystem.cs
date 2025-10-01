@@ -117,44 +117,63 @@ public class CollisionBSPData
 			map_texinfo.Add(_out);
 		}
 	}
-	internal void LoadLeafs() { 
-	
+	internal void LoadLeafs() {
+
 	}
-	internal void LoadLeafBrushes() { 
-	
+	internal void LoadLeafBrushes() {
+
 	}
-	internal void LoadPlanes() { 
-	
+	internal void LoadPlanes() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Planes);
+		BSPPlane[] inData = lh.LoadLumpData<BSPPlane>(throwIfNoElements: true, BSPFileCommon.MAX_MAP_PLANES, sysErrorIfOOB: true);
+		MapPlanes.Clear(); MapPlanes.EnsureCount(inData.Length);
+
+		Span<CollisionPlane> planes = MapPlanes.AsSpan();
+		int count = inData.Length;
+		for (int i = 0; i < count; i++) {
+			ref readonly BSPPlane _in = ref inData[i];
+			ref CollisionPlane _out = ref planes[i];
+			int bits = 0;
+			for (int j = 0; j < 3; j++) {
+				_out.Normal[j] = _in.Normal[j];
+				if (_out.Normal[j] < 0)
+					bits |= 1 << j;
+			}
+
+			_out.Dist = _in.Dist;
+			_out.Type = (PlaneType)_in.Type;
+			_out.SignBits = (byte)bits;
+		}
 	}
-	internal void LoadBrushes() { 
-	
+	internal void LoadBrushes() {
+
 	}
-	internal void LoadBrushSides(List<ushort> map_texinfo) { 
-	
+	internal void LoadBrushSides(List<ushort> map_texinfo) {
+
 	}
-	internal void LoadSubmodels() { 
-	
+	internal void LoadSubmodels() {
+
 	}
-	internal void LoadNodes() { 
-	
+	internal void LoadNodes() {
+
 	}
-	internal void LoadAreas() { 
-	
+	internal void LoadAreas() {
+
 	}
-	internal void LoadAreaPortals() { 
-	
+	internal void LoadAreaPortals() {
+
 	}
-	internal void LoadVisibility() { 
-	
+	internal void LoadVisibility() {
+
 	}
-	internal void LoadEntityString() { 
-	
+	internal void LoadEntityString() {
+
 	}
-	internal void LoadPhysics() { 
-	
+	internal void LoadPhysics() {
+
 	}
-	internal void LoadDispInfo() { 
-	
+	internal void LoadDispInfo() {
+
 	}
 	internal bool Load(ReadOnlySpan<char> name) {
 		List<ushort> map_texinfo = [];

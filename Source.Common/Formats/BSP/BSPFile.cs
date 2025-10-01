@@ -408,9 +408,9 @@ public struct BSPVertex
 /// </summary>
 public struct BSPPlane
 {
-	public Vector3 normal;
-	public float dist;
-	public int type;
+	public Vector3 Normal;
+	public float Dist;
+	public int Type;
 }
 /// <summary>
 /// Analog of dnode_t
