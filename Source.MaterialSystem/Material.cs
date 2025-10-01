@@ -287,7 +287,7 @@ public class Material : IMaterialInternal
 		}
 
 		if (!error) {
-			flags |= MaterialFlags.IsPrecached;
+			flags |= MaterialFlags.VarsIsPrecached;
 			KeyValues? fallbackKeyValues = InitializeShader(vmtKeyValues!, patchKeyValues, findContext);
 			if (fallbackKeyValues != null) {
 				InitializeMaterialProxy(fallbackKeyValues);
