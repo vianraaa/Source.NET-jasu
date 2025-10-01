@@ -84,6 +84,12 @@ public class CollisionBSPData
 
 			int index = _in.NameStringTableID;
 
+			MapSurfaces.Add(new CollisionSurface() {
+				Name = TextureNames[index]!,
+				SurfaceProps = 0,
+				Flags = 0
+			});
+
 			material = materials!.FindMaterial(MapSurfaces[i].Name, MaterialDefines.TEXTURE_GROUP_WORLD, true);
 			if (!material.IsErrorMaterial()) {
 				IMaterialVar var;
@@ -94,12 +100,6 @@ public class CollisionBSPData
 					// TODO: set surface properties.
 				}
 			}
-
-			MapSurfaces.Add(new CollisionSurface() {
-				Name = TextureNames[index]!,
-				SurfaceProps = 0,
-				Flags = 0
-			});
 		}
 	}
 	internal void LoadTexinfo(List<ushort> map_texinfo) {
