@@ -66,12 +66,9 @@ public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInter
 public interface IMaterialInternal : IMaterial
 {
 	void DrawMesh(VertexCompressionType vertexCompressionType);
-	ReadOnlySpan<char> GetName();
 	IMaterialInternal GetRealTimeVersion();
-	VertexFormat GetVertexFormat();
 	bool IsManuallyCreated();
 	bool IsPrecached();
-	bool IsRealTimeVersion();
 	bool IsUsingVertexID();
 	void Precache();
 	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0);
