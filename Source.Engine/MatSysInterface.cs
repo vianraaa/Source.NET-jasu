@@ -384,9 +384,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		int nMaxVertices = renderContext.GetMaxVerticesToRender(material);
 		int worldLimit = mat_max_worldmesh_vertices.GetInt();
 		worldLimit = Math.Max(worldLimit, 1024);
-		if (nMaxVertices > worldLimit) {
+		if (nMaxVertices > worldLimit) 
 			nMaxVertices = mat_max_worldmesh_vertices.GetInt();
-		}
 
 		Span<MeshList> meshes = Meshes.AsSpan();
 
