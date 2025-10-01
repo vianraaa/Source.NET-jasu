@@ -266,7 +266,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	private void Mod_LoadFaces() {
-		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexInfo);
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Faces);
 		BSPFace[] inFaces = lh.LoadLumpData<BSPFace>();
 
 		int count = inFaces.Length;
