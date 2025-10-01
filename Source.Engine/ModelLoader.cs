@@ -287,10 +287,13 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		int count = inFaces.Length;
 		BSPMSurface1[] out1 = new BSPMSurface1[count];
 		BSPMSurface2[] out2 = new BSPMSurface2[count];
+		BSPSurfaceLighting[] lighting = new BSPSurfaceLighting[count];
 
 		WorldBrushData brushData = lh.GetMap();
 		brushData.Surfaces1 = out1;
 		brushData.Surfaces2 = out2;
+		brushData.SurfaceLighting = lighting;
+		brushData.SurfaceNormals = new BSPMSurfaceNormal[count];
 		brushData.NumSurfaces = count;
 
 		int ti, di;
@@ -299,8 +302,10 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			ref readonly BSPFace _in = ref inFaces[surfnum];
 			ref BSPMSurface1 _out1 = ref out1[surfnum];
 			ref BSPMSurface2 _out2 = ref out2[surfnum];
+			ref BSPSurfaceLighting _light = ref lighting[surfnum];
 			_out1.SurfNum = surfnum;
 			_out2.SurfNum = surfnum;
+			_light.SurfNum = surfnum;
 
 			ref BSPMSurface2 surfID = ref SurfaceHandleFromIndex(surfnum, brushData);
 
