@@ -27,6 +27,15 @@ public static unsafe class MemUtils
 	/// <typeparam name="T"></typeparam>
 	/// <param name="field"></param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void memreset<T>(Span<T> field) where T : struct {
+		for (int i = 0; i < field.Length; i++) field[i] = default;
+	}
+	/// <summary>
+	/// This honestly might not be faster.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="field"></param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void memreset<T>(ref T field) where T : struct {
 		Unsafe.InitBlock(ref Unsafe.As<T, byte>(ref field), 0, (uint)Unsafe.SizeOf<T>());
 	}

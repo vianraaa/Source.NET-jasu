@@ -32,8 +32,38 @@ public struct SurfaceSortGroup {
 
 public class MSurfaceSortList {
 	const int MAX_MAT_SORT_GROUPS = 4;
-	public void Init(int maxSortIDs, int minMaterialLists) {
 
+	int MaxSortIDs;
+	public void Init(int maxSortIDs, int minMaterialLists) {
+		List.Clear();
+		List.EnsureCapacity(minMaterialLists);
+
+		MaxSortIDs = maxSortIDs;
+
+		int groupMax = maxSortIDs * MAX_MAT_SORT_GROUPS;
+		Groups.EnsureCount(groupMax);
+		memreset(Groups.AsSpan());
+
+		int groupBytes = (groupMax + 7) >> 3;
+		GroupUsed.EnsureCount(groupBytes);
+		memreset(GroupUsed.AsSpan());
+
+		for (int i = 0; i < SortGroupLists.Length; i++) {
+			ref List<SurfaceSortGroup> list = ref SortGroupLists.AsSpan()[i];
+			list ??= [];
+			if (i == 0) {
+				list.Clear();
+				list.EnsureCapacity(128);
+				GroupOffset[0] = 0;
+			}
+			else {
+				list.Clear();
+				list.EnsureCapacity(16);
+				GroupOffset[i] = maxSortIDs * i;
+			}
+		}
+
+		InitGroup(ref EmptyGroup);
 	}
 
 	readonly int[] GroupOffset = new int[MAX_MAT_SORT_GROUPS];
