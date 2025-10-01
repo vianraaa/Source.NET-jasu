@@ -41,8 +41,8 @@ public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInter
 	}
 
 	public IEnumerator<IMaterialInternal> GetEnumerator() {
-		foreach(var kvp in Dict) {
-			if (kvp.Value.Material == null) 
+		foreach (var kvp in Dict) {
+			if (kvp.Value.Material == null)
 				continue;
 			yield return kvp.Value.Material;
 		}
