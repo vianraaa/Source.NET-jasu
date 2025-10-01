@@ -19,6 +19,12 @@ public class MatLightmaps
 
 	public void BeginLightmapAllocation() {
 		NumSortIDs = 0;
+		ImagePackers.Clear();
+		ImagePackers.Add(new(MaterialSystem));
+		ImagePackers[0].Reset(0, GetMaxLightmapPageWidth(), GetMaxLightmapPageHeight());
+		SetCurrentMaterialInternal(null);
+		CurrentWhiteLightmapMaterial = null;
+		NumSortIDs = 0;
 		EnumerateMaterials();
 	}
 
