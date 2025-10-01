@@ -397,4 +397,7 @@ public class MatRenderContext : IMatRenderContextInternal
 	public IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) {
 		return materials.ShaderDevice.CreateStaticMesh(format, textureGroup, material);
 	}
+
+	public int GetMaxVerticesToRender(IMaterial material) => materials.ShaderAPI.GetMaxVerticesToRender(material);
+	public int GetMaxIndicesToRender(IMaterial material) => materials.ShaderAPI.GetMaxIndicesToRender(material);
 }

@@ -163,4 +163,20 @@ public class MeshMgr
 			mesh.SetMaterial((IMaterialInternal)material);
 		return mesh;
 	}
+
+	internal int GetMaxIndicesToRender(IMaterial material) {
+		return IMesh.INDEX_BUFFER_SIZE;
+	}
+
+	internal int GetMaxVerticesToRender(IMaterial material) {
+		VertexFormat fmt = material.GetVertexFormat();
+		int vertexSize = VertexFormatSize(fmt);
+		if (vertexSize == 0) {
+			Warning($"bad vertex size for material {material.GetName()}\n");
+			return 0;
+		}
+
+		int nMaxVerts = ShaderAPI.GetCurrentDynamicVBSize() / vertexSize;
+		return Math.Min(nMaxVerts, 65535);
+	}
 }

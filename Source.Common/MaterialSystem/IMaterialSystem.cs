@@ -212,6 +212,8 @@ public interface IMatRenderContext
 	void GetWindowSize(out int w, out int h);
 	ITexture? GetRenderTarget();
 	IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material);
+	int GetMaxVerticesToRender(IMaterial material);
+	int GetMaxIndicesToRender(IMaterial material);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -266,4 +268,7 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public ITexture? GetRenderTarget() => ctx.GetRenderTarget();
 
 	public IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) => ctx.CreateStaticMesh(format, textureGroup, material);
+
+	public int GetMaxVerticesToRender(IMaterial material) => ctx.GetMaxVerticesToRender(material);
+	public int GetMaxIndicesToRender(IMaterial material) => ctx.GetMaxIndicesToRender(material);
 }

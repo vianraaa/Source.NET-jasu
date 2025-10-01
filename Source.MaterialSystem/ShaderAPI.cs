@@ -781,4 +781,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) {
 		return MeshMgr.CreateStaticMesh(format, textureGroup, material);
 	}
+
+	internal int GetMaxVerticesToRender(IMaterial material) => MeshMgr.GetMaxVerticesToRender(material);
+	internal int GetMaxIndicesToRender(IMaterial material) => MeshMgr.GetMaxIndicesToRender(material);
 }
