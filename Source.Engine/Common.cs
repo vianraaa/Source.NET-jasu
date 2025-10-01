@@ -82,7 +82,7 @@ public class Common(IServiceProvider providers, ILocalize? Localize, Sys Sys)
 	}
 
 	internal static void TimestampedLog(ReadOnlySpan<char> msg) {
-		string time = DateTime.Now.ToString("d T");
+		string time = DateTime.Now.ToString("G");
 		Span<char> finalMsg = stackalloc char[msg.Length + 5 + time.Length];
 		finalMsg[0] = '[';
 		time.CopyTo(finalMsg[1..]);
