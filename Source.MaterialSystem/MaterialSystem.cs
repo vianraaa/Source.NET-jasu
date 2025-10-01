@@ -233,7 +233,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues keyValues) => CreateMaterial(materialName, textureGroup, keyValues);
 	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, KeyValues keyValues) => CreateMaterial(materialName, TEXTURE_GROUP_OTHER, keyValues);
 
-	public IMaterialInternal CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues keyValues) {
+	public IMaterialInternal CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues? keyValues) {
 		IMaterialInternal material;
 		lock (this) {
 			material = new Material(this, materialName, textureGroup, keyValues);
@@ -326,7 +326,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			else {
 				// NOTE: This differs slightly, but should still work
 				// It seems passing keyValues into precachevars like Source does *really* makes things unhappy, and I don't want to diagnose that right now
-				mat = CreateMaterial(tempNameBuffer, textureGroupName, keyValues);
+				mat = CreateMaterial(tempNameBuffer, textureGroupName, null);
+				mat.PrecacheVars(keyValues);
 				MaterialDict.AddMaterialToMaterialList(mat);
 			}
 			keyValues = null!;
