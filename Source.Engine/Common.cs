@@ -89,6 +89,6 @@ public class Common(IServiceProvider providers, ILocalize? Localize, Sys Sys)
 		"]: ".CopyTo(finalMsg[(1 + time.Length)..]);
 		msg.CopyTo(finalMsg[(1 + time.Length + 3)..]);
 		finalMsg[^1] = '\n';
-		Msg(msg);
+		Msg(finalMsg);
 	}
 }
