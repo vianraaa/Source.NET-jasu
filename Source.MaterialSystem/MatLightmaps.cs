@@ -74,7 +74,7 @@ public class MatLightmaps
 
 			SetCurrentMaterialInternal(material);
 
-			//Assert(material.GetMinLightmapPageID() > material.GetMaxLightmapPageID());
+			Assert(material.GetMinLightmapPageID() > material.GetMaxLightmapPageID());
 			Assert(GetCurrentMaterialInternal() != null);
 
 			GetCurrentMaterialInternal()!.SetMinLightmapPageID(GetNumLightmapPages());
