@@ -298,6 +298,13 @@ public unsafe struct VertexBuilder
 		memreset(ref Desc);
 	}
 
+	internal void Color3ubv(ReadOnlySpan<byte> rgb) {
+		byte* pDst = CurrColor;
+		*pDst++ = rgb[0];
+		*pDst++ = rgb[1];
+		*pDst = rgb[2];
+	}
+
 	internal void Color4ubv(ReadOnlySpan<byte> rgba) {
 		byte* pDst = CurrColor;
 		*pDst++ = rgba[0];
@@ -600,10 +607,15 @@ public unsafe struct MeshBuilder : IDisposable
 	// position setting
 	public void Position3f(float x, float y, float z) => VertexBuilder.Position3f(x, y, z);
 	public void Position3fv(ReadOnlySpan<float> v) => VertexBuilder.Position3fv(v);
+	public void Position3fv(in Vector3 vec) {
+		fixed (Vector3* ptr = &vec)
+			VertexBuilder.Position3fv(new(ptr, 3));
+	}
 
 	// normal setting
 	public void Normal3f(float x, float y, float z) => VertexBuilder.Normal3f(x, y, z);
 	public void Normal3fv(ReadOnlySpan<float> n) => VertexBuilder.Normal3fv(n);
+	public void Normal3fv(Vector3 vec) => VertexBuilder.Normal3f(vec.X, vec.Y, vec.Z);
 	// What do these even do
 	public void NormalDelta3fv(ReadOnlySpan<float> n) => throw new NotImplementedException();
 	public void NormalDelta3f(float nx, float ny, float nz) => throw new NotImplementedException();
@@ -615,9 +627,12 @@ public unsafe struct MeshBuilder : IDisposable
 	public void Color4fv(ReadOnlySpan<float> rgba) => VertexBuilder.Color4fv(rgba);
 
 	// Faster versions of color
-	public void Color3ub(byte r, byte g, byte b) => throw new NotImplementedException();
-	public void Color3ubv(ReadOnlySpan<float> rgb) => throw new NotImplementedException();
-	public void Color4ub(byte r, byte g, byte b, byte a) => throw new NotImplementedException();
+	public void Color3ub(byte r, byte g, byte b) => VertexBuilder.Color3ubv([r, g, b]);
+	public void Color3ubv(in Color rgb) {
+		fixed (Color* ptr = &rgb)
+			VertexBuilder.Color3ubv(new(ptr, 3));
+	}
+	public void Color4ub(byte r, byte g, byte b, byte a) => VertexBuilder.Color4ubv([r, g, b, a]);
 	public unsafe void Color4ubv(ReadOnlySpan<byte> rgba) => VertexBuilder.Color4ubv(rgba);
 	public unsafe void Color4ubv(in Color rgba) {
 		fixed (Color* ptr = &rgba)
@@ -639,7 +654,8 @@ public unsafe struct MeshBuilder : IDisposable
 	// texture coordinate setting
 	public void TexCoord1f(int stage, float s) => throw new NotImplementedException();
 	public void TexCoord2f(int stage, float s, float t) => VertexBuilder.TexCoord2f(stage, s, t);
-	public void TexCoord2fv(int stage, ReadOnlySpan<float> st) => throw new NotImplementedException();
+	public void TexCoord2fv(int stage, ReadOnlySpan<float> st) => VertexBuilder.TexCoord2f(stage, st[0], st[1]);
+	public void TexCoord2fv(int stage, in Vector2 vec) => VertexBuilder.TexCoord2f(stage, vec.X, vec.Y);
 	public void TexCoord3f(int stage, float s, float t, float u) => throw new NotImplementedException();
 	public void TexCoord3fv(int stage, ReadOnlySpan<float> stu) => throw new NotImplementedException();
 	public void TexCoord4f(int stage, float s, float t, float u, float w) => throw new NotImplementedException();
@@ -651,9 +667,11 @@ public unsafe struct MeshBuilder : IDisposable
 	// tangent space 
 	public void TangentS3f(float sx, float sy, float sz) { /* TODO: add tangents to vertex elements + descriptor */ }
 	public void TangentS3fv(ReadOnlySpan<float> s) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentS3fv(Vector3 vec) { /* TODO: add tangents to vertex elements + descriptor */ }
 
 	public void TangentT3f(float tx, float ty, float tz) { /* TODO: add tangents to vertex elements + descriptor */ }
 	public void TangentT3fv(ReadOnlySpan<float> t) { /* TODO: add tangents to vertex elements + descriptor */ }
+	public void TangentT3fv(Vector3 vec) { /* TODO: add tangents to vertex elements + descriptor */ }
 
 	// Wrinkle
 	public void Wrinkle1f(float flWrinkle) => throw new NotImplementedException();

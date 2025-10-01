@@ -473,10 +473,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public int GetNumSortIDs() => MatLightmaps.GetNumSortIDs();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void GetSortInfo(Span<MaterialSystem_SortInfo> sortInfoArray) => MatLightmaps.GetSortInfo(sortInfoArray);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void BeginLightmapAllocation() => MatLightmaps.BeginLightmapAllocation();
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void EndLightmapAllocation() => MatLightmaps.EndLightmapAllocation();
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public short AllocateLightmap(int allocationWidth, int allocationHeight, Span<int> offsetIntoLightmapPage, IMaterial? material) => (short)MatLightmaps.AllocateLightmap(allocationWidth, allocationHeight, offsetIntoLightmapPage, material);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public short AllocateWhiteLightmap(IMaterial? material) => (short)MatLightmaps.AllocateWhiteLightmap(material);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void GetLightmapPageSize(int lightmap, ref int width, ref int height) => MatLightmaps.GetLightmapPageSize(lightmap, ref width, ref height);
 
 	public event Action? Restore;
 

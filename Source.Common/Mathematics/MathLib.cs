@@ -32,7 +32,10 @@ public struct CollisionPlane
 }
 public static class MathLib
 {
-
+	public static Vector3 AsVector3(this ReadOnlySpan<float> span) => new(span[0], span[1], span[2]);
+	public static bool IsValid(this Vector2 vec) => !float.IsNaN(vec.X) && !float.IsNaN(vec.Y);
+	public static bool IsValid(this Vector3 vec) => !float.IsNaN(vec.X) && !float.IsNaN(vec.Y) && !float.IsNaN(vec.Z);
+	public static bool IsValid(this Vector4 vec) => !float.IsNaN(vec.X) && !float.IsNaN(vec.Y) && !float.IsNaN(vec.Z) && !float.IsNaN(vec.W);
 	static MathLib() {
 
 	}

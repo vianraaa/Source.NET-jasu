@@ -4,10 +4,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Commands;
+using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 
+using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -236,6 +240,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		return vertexCount;
 	}
+	public const uint TEXINFO_USING_BASETEXTURE2 = 0x0001;
 	public void WorldStaticMeshCreate() {
 		FrameCount = 1;
 		WorldStaticMeshDestroy();
@@ -277,9 +282,159 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		for (int i = 0; i < Meshes.Count; i++) {
 			VertexFormat format = meshes[i].Material.GetVertexFormat();
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
-			using MeshBuilder meshBuilder = new MeshBuilder();
+			int vertBufferIndex = 0;
+			MeshBuilder meshBuilder = new MeshBuilder();
 			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
+			for (int j = 0; j < WorldStaticMeshes.Count; j++) {
+				int meshId = sortIndex[j];
+				if (meshId == i) {
+					WorldStaticMeshes[j] = Meshes[i].Mesh;
+					ref readonly SurfaceSortGroup group = ref matSortArray.GetGroupForSortID(0, j);
+					for (short _blockIndex = group.ListHead; _blockIndex != -1; _blockIndex = matSortArray.GetSurfaceBlock(_blockIndex).NextBlock) {
+						ref MaterialList matList = ref matSortArray.GetSurfaceBlock(_blockIndex);
+						for (int _index = 0; _index < matList.Count; ++_index) {
+							ref BSPMSurface2 surfID = ref matList.Surfaces[_index];
+							ModelLoader.MSurf_VertBufferIndex(ref surfID) = (ushort)vertBufferIndex;
+							BuildMSurfaceVertexArrays(host_state.WorldBrush!, ref surfID, IMaterialSystem.OVERBRIGHT, ref meshBuilder);
+							vertBufferIndex += ModelLoader.MSurf_VertCount(ref surfID);
+						}
+					}
+				}
+			}
+
+			meshBuilder.End();
+			Assert(vertBufferIndex == Meshes[i].VertCount);
+			meshBuilder.Dispose();
 		}
+	}
+
+	struct SurfaceCtx {
+		public InlineArray2<int> LightmapSize;
+		public InlineArray2<int> LightmapPageSize;
+		public float BumpSTexCoordOffset;
+		public Vector2 Offset;
+		public Vector2 Scale;
+	}
+
+	private void BuildMSurfaceVertexArrays(WorldBrushData brushData, ref BSPMSurface2 surfID, float overbright, ref MeshBuilder builder) {
+		SurfaceCtx ctx = default;
+		SurfSetupSurfaceContext(ref ctx, ref surfID);
+
+		Color flatColor = new(255, 255, 255, 255);
+
+		Vector3 vect = default;
+		bool negate = false;
+		// if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) 
+			// negate = TangentSpaceSurfaceSetup(ref surfID, vect);
+
+		// CheckMSurfaceBaseTexture2(pBrushData, surfID);
+
+		for (int i = 0; i < ModelLoader.MSurf_VertCount(ref surfID); i++) {
+			int vertIndex = brushData.VertIndices![ModelLoader.MSurf_FirstVertIndex(ref surfID) + i];
+
+			ref Vector3 vec = ref brushData.Vertexes![vertIndex].Position;
+
+			builder.Position3fv(vec);
+
+			Vector2 uv = default;
+			SurfComputeTextureCoordinate(ref ctx, ref surfID, ref vec, ref uv);
+			builder.TexCoord2fv(0, uv);
+
+			SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
+			builder.TexCoord2fv(1, uv);
+
+			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.BumpLight) != 0) {
+				if (uv.X + ctx.BumpSTexCoordOffset * 3 > 1.00001f) {
+					Assert(0);
+
+					SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
+				}
+				builder.TexCoord2f(2, ctx.BumpSTexCoordOffset, 0.0f);
+			}
+
+			ref Vector3 normal = ref brushData.VertNormals![brushData.VertNormalIndices![ModelLoader.MSurf_FirstVertNormal(ref surfID) + i]];
+			builder.Normal3fv(normal);
+
+			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) {
+				// TangentSpaceComputeBasis(out Vector3 tangentS, out Vector3 tangentT, normal, out vect, negate);
+				// builder.TangentS3fv(tangentS);
+				// builder.TangentT3fv(tangentT);
+			}
+
+			if (!ModelLoader.SurfaceHasDispInfo(ref surfID) && (ModelLoader.MSurf_TexInfo(ref surfID).TexInfoFlags & TEXINFO_USING_BASETEXTURE2) != 0) {
+				bool warned = false;
+				if (!warned) {
+					ReadOnlySpan<char> materialName = ModelLoader.MSurf_TexInfo(ref surfID).Material!.GetName();
+					warned = true;
+					Warning($"Warning: WorldTwoTextureBlend found on a non-displacement surface (material: {materialName}). This wastes perf for no benefit.\n");
+				}
+
+				builder.Color4ub(255, 255, 255, 0);
+			}
+			else {
+				builder.Color3ubv(flatColor);
+			}
+
+			builder.AdvanceVertex();
+		}
+	}
+
+	MaterialSystem_SortInfo[]? materialSortInfoArray;
+	private int SortInfoToLightmapPage(int sortID) => materialSortInfoArray![sortID].LightmapPageID;
+
+	private void SurfSetupSurfaceContext(ref SurfaceCtx ctx, ref BSPMSurface2 surfID) {
+		materials.GetLightmapPageSize(SortInfoToLightmapPage(ModelLoader.MSurf_MaterialSortID(ref surfID)), ref ctx.LightmapPageSize[0], ref ctx.LightmapPageSize[1]);
+		ctx.LightmapSize[0] = ModelLoader.MSurf_LightmapExtents(ref surfID)[0] + 1;
+		ctx.LightmapSize[1] = ModelLoader.MSurf_LightmapExtents(ref surfID)[1] + 1;
+
+		ctx.Scale.X = 1.0f / ctx.LightmapPageSize[0];
+		ctx.Scale.Y = 1.0f / ctx.LightmapPageSize[1];
+
+		ctx.Offset.X = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] * ctx.Scale.X;
+		ctx.Offset.Y = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] * ctx.Scale.Y;
+
+		if (ctx.LightmapPageSize[0] != 0.0f) 
+			ctx.BumpSTexCoordOffset = (float)ctx.LightmapSize[0] / ctx.LightmapPageSize[0];
+		else 
+			ctx.BumpSTexCoordOffset = 0.0f;
+	}
+
+	private void SurfComputeLightmapCoordinate(ref SurfaceCtx ctx, ref BSPMSurface2 surfID, ref Vector3 vec, ref Vector2 uv) {
+		if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) 
+			uv.X = uv.Y = 0.5f;
+		
+		else if (ModelLoader.MSurf_LightmapExtents(ref surfID)[0] == 0) {
+			uv = (0.5f * ctx.Scale + ctx.Offset);
+		}
+		else {
+			ref ModelTexInfo texInfo = ref ModelLoader.MSurf_TexInfo(ref surfID);
+
+			uv.X = Vector3.Dot(vec, texInfo.LightmapVecsLuxelsPerWorldUnits[0].AsVector3()) + texInfo.LightmapVecsLuxelsPerWorldUnits[0][3];
+			uv.X -= ModelLoader.MSurf_LightmapMins(ref surfID)[0];
+			uv.X += 0.5f;
+
+			uv.Y = Vector3.Dot(vec, texInfo.LightmapVecsLuxelsPerWorldUnits[1].AsVector3()) + texInfo.LightmapVecsLuxelsPerWorldUnits[1][3];
+			uv.Y -= ModelLoader.MSurf_LightmapMins(ref surfID)[1];
+			uv.Y += 0.5f;
+
+			uv *= ctx.Scale;
+			uv += ctx.Offset;
+
+			Assert(uv.IsValid());
+		}
+		uv.X = Math.Clamp(uv.X, 0.0f, 1.0f);
+		uv.Y = Math.Clamp(uv.Y, 0.0f, 1.0f);
+	}
+
+	private void SurfComputeTextureCoordinate(ref SurfaceCtx ctx, ref BSPMSurface2 surfID, ref Vector3 vec, ref Vector2 uv) {
+		ref ModelTexInfo texInfo = ref ModelLoader.MSurf_TexInfo(ref surfID);
+
+		// base texture coordinate
+		uv.X = Vector3.Dot(vec, texInfo.TextureVecsTexelsPerWorldUnits[0].AsVector3()) + texInfo.TextureVecsTexelsPerWorldUnits[0][3];
+		uv.X /= texInfo.Material!.GetMappingWidth();
+
+		uv.Y = Vector3.Dot(vec, texInfo.TextureVecsTexelsPerWorldUnits[1].AsVector3()) + texInfo.TextureVecsTexelsPerWorldUnits[1][3];
+		uv.Y /= texInfo.Material!.GetMappingHeight();
 	}
 
 	public class LightmapComparer : IComparer<BSPMSurface2>
@@ -429,6 +584,10 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 	internal void CreateSortInfo() {
+		Assert(materialSortInfoArray == null);
+		int sortIDs = materials.GetNumSortIDs();
+		materialSortInfoArray = new MaterialSystem_SortInfo[sortIDs];
+		materials.GetSortInfo(materialSortInfoArray);
 		WorldStaticMeshCreate();
 	}
 }

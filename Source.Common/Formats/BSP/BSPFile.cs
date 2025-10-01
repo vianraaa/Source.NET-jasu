@@ -400,7 +400,7 @@ struct BSPPhysDisp
 /// </summary>
 public struct BSPVertex
 {
-	public Vector3 Point;
+	public Vector3 Position;
 }
 
 /// <summary>

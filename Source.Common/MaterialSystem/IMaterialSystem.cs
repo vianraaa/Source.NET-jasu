@@ -164,8 +164,25 @@ public enum MaterialPropertyTypes {
 	NeedsBumpedLightmaps
 }
 
+public struct StandardLightmap {
+	public const int White = -1;
+	public const int WhiteBump = -2;
+	public const int UserDefined = -3;
+}
+
+public struct MaterialSystem_SortInfo
+{
+	public IMaterial? Material;
+	public int LightmapPageID;
+}
+
 public interface IMaterialSystem
 {
+	public const float OVERBRIGHT = 2;
+	public const float OO_OVERBRIGHT = 1f / 2f;
+	public const float GAMMA = 2.2f;
+	public const float TEXGAMMA = 2.2f;
+
 	event Action Restore;
 	IMatRenderContext GetRenderContext();
 	void ModInit();
@@ -189,6 +206,8 @@ public interface IMaterialSystem
 	void BeginLightmapAllocation();
 	short AllocateLightmap(int allocationWidth, int allocationHeight, Span<int> offsetIntoLightmapPage, IMaterial? material);
 	short AllocateWhiteLightmap(IMaterial? material);
+	void GetSortInfo(Span<MaterialSystem_SortInfo> materialSortInfoArray);
+	void GetLightmapPageSize(int lightmap, ref int width, ref int height);
 }
 
 public interface IMatRenderContext
