@@ -25,7 +25,16 @@ public class MatLightmaps
 		SetCurrentMaterialInternal(null);
 		CurrentWhiteLightmapMaterial = null;
 		NumSortIDs = 0;
+		ResetMaterialLightmapPageInfo();
 		EnumerateMaterials();
+	}
+
+	public void ResetMaterialLightmapPageInfo() {
+		foreach(var material in MaterialSystem.MaterialDict) { 
+			material.SetMinLightmapPageID(9999);
+			material.SetMaxLightmapPageID(-9999);
+			material.SetNeedsWhiteLightmap(false);
+		}
 	}
 
 	public void EnumerateMaterials() {
