@@ -487,8 +487,8 @@ public struct BSPMSurfaceNormal
 
 public struct BSPMSurface2
 {
-	public uint Flags;
-	public Box<CollisionPlane> plane;
+	public SurfDraw Flags;
+	public Box<CollisionPlane> Plane;
 	public int FirstVertIndex;
 	public WorldDecalHandle_t Decals;
 	public ShadowDecalHandle_t ShadowDecals;
@@ -662,22 +662,22 @@ public struct BSPFace
 	public InlineArray2<int> LightmapTextureSizeInLuxels;
 	public int OrigFace;
 	public ushort GetNumPrims() => (ushort)(NumPrims & 0x7FFF);
-	void SetNumPrims(ushort prims) {
+	public void SetNumPrims(ushort prims) {
 		Assert((prims & 0x8000) == 0);
 		NumPrims &= unchecked((ushort)~0x7FFF);
 		NumPrims |= unchecked((ushort)(prims & 0x7FFF));
 	}
-	bool AreDynamicShadowsEnabled() => (NumPrims & 0x8000) == 0;
-	void SetDynamicShadowsEnabled(bool enabled) {
+	public bool AreDynamicShadowsEnabled() => (NumPrims & 0x8000) == 0;
+	public void SetDynamicShadowsEnabled(bool enabled) {
 		if (enabled)
 			NumPrims &= unchecked((ushort)~0x8000);
 		else
 			NumPrims |= 0x8000;
 	}
 
-	ushort NumPrims;
-	ushort FirstPrimID;
-	uint SmoothingGroups;
+	public ushort NumPrims;
+	public ushort FirstPrimID;
+	public uint SmoothingGroups;
 }
 
 /// <summary>
@@ -1183,4 +1183,34 @@ public enum Mask : uint
 	/// UNDONE: Not used yet / may be deleted
 	/// </summary>
 	DeadSolid = Contents.Solid | Contents.PlayerClip | Contents.Window | Contents.Grate
+}
+
+public enum SurfDraw : uint
+{
+	NoLight = 0x00000001,
+	Node = 0x00000002,
+	Sky = 0x00000004,
+	BumpLight = 0x00000008,
+	NoDraw = 0x00000010,
+	Trans = 0x00000020,
+	PlaneBack = 0x00000040,
+	Dynamic = 0x00000080,
+	TangentSpace = 0x00000100,
+	NoCull = 0x00000200,
+	HasLightstyles = 0x00000400,
+	HasDisp = 0x00000800,
+	AlphaTest = 0x00001000,
+	NoShadows = 0x00002000,
+	NoDecals = 0x00004000,
+	HasPrims = 0x00008000,
+	WaterSurface = 0x00010000,
+	UnderWater = 0x00020000,
+	AboveWater = 0x00040000,
+	HasDLight = 0x00080000,
+	DLightPass = 0x00100000,
+	UNUSED2 = 0x00200000,
+	VertCountMask = 0xFF000000,
+	SortGroupMask = 0x00C00000,
+	VertCountShift = 24,
+	SortGroupShift = 22,
 }

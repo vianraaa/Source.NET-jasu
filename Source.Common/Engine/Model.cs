@@ -58,7 +58,8 @@ public class WorldBrushData
 	public Vector3[]? VertNormals;
 	public BSPNode[]? Nodes;
 	public ushort[]? LeafMinDistToWater;
-	public BSPTexInfo[]? TexInfo;
+	public ModelTexInfo[]? TexInfo;
+	public int NumTexInfo;
 	public int NumTexData;
 	public CollisionSurface[]? TexData;
 	public ushort[]? VertIndices;

@@ -1,14 +1,10 @@
 ﻿using Source.Common.Engine;
 using Source.Common;
 using Source.Common.Filesystem;
-using Source.Common.Utilities;
 using Source.Common.Formats.BSP;
-using Source.Common.MaterialSystem;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Numerics;
-
+using Source.Common.Mathematics;
+using CommunityToolkit.HighPerformance;
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
@@ -129,7 +125,7 @@ public ref struct MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM, CommonHostState host_state) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -257,7 +253,89 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Mod_LoadPrimitives() { }
 	private void Mod_LoadPrimVerts() { }
 	private void Mod_LoadPrimIndices() { }
-	private void Mod_LoadFaces() { }
+	private ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData? data = null) {
+		return ref (data ?? host_state.WorldBrush)!.Surfaces2[surfaceIndex];
+	}
+	public static ref CollisionPlane MSurf_Plane(ref BSPMSurface2 surfID) => ref surfID.Plane.GetReference();
+	public static ref int MSurf_FirstVertIndex(ref BSPMSurface2 surfID) => ref surfID.FirstVertIndex;
+	public static ref SurfDraw MSurf_Flags(ref BSPMSurface2 surfID) => ref surfID.Flags;
+	public static int MSurf_VertCount(ref BSPMSurface2 surfID) => (int)(((uint)surfID.Flags >> (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask);
+	public static void MSurf_SetVertCount(ref BSPMSurface2 surfID, uint vertCount) {
+		uint flags = (vertCount << (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask;
+		surfID.Flags |= (SurfDraw)flags;
+	}
+
+	private void Mod_LoadFaces() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexInfo);
+		BSPFace[] inFaces = lh.LoadLumpData<BSPFace>();
+
+		int count = inFaces.Length;
+		BSPMSurface1[] out1 = new BSPMSurface1[count];
+		BSPMSurface2[] out2 = new BSPMSurface2[count];
+
+		WorldBrushData brushData = lh.GetMap();
+		brushData.Surfaces1 = out1;
+		brushData.Surfaces2 = out2;
+		brushData.NumSurfaces = count;
+
+		int ti, di;
+
+		for (int surfnum = 0; surfnum < count; surfnum++) {
+			ref readonly BSPFace _in = ref inFaces[surfnum];
+			ref BSPMSurface1 _out1 = ref out1[surfnum];
+			ref BSPMSurface2 _out2 = ref out2[surfnum];
+
+			ref BSPMSurface2 surfID = ref SurfaceHandleFromIndex(surfnum, brushData);
+
+			MSurf_FirstVertIndex(ref surfID) = _in.FirstEdge;
+
+			int vertCount = _in.NumEdges;
+			MSurf_Flags(ref surfID) = 0;
+			Assert(vertCount <= 255);
+			MSurf_SetVertCount(ref surfID, (uint)vertCount);
+
+			int planenum = _in.PlaneNum;
+			if (_in.OnNode != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.Node;
+
+			if (_in.Side != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.PlaneBack;
+
+			_out2.Plane = lh.GetMap().Planes![planenum];
+
+			ti = _in.TexInfo;
+			if (ti < 0 || ti >= lh.GetMap().NumTexInfo) 
+				Host.Error("Mod_LoadFaces: bad texinfo number");
+			
+			surfID.TexInfo = (ushort)ti;
+			surfID.DynamicShadowsEnabled = _in.AreDynamicShadowsEnabled();
+			ref ModelTexInfo tex = ref lh.GetMap().TexInfo![ti];
+
+			if (tex.Material == null)
+				tex.Material = materials.MaterialEmpty;
+
+			// TODO
+			// if (Mod_LoadSurfaceLightingV1(pLighting, _in, lh.GetMap().LightData)) 
+			// MSurf_Flags(ref surfID) |= SurfDraw.HasLightStyles;
+
+			// set the drawing flags flag
+			if ((tex.Flags & Surf.NoLight) != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
+
+			if ((tex.Flags & Surf.NoShadows) != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.NoShadows;
+
+			if ((tex.Flags & Surf.Warp) != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.WaterSurface;
+
+			if ((tex.Flags & Surf.Sky) != 0)
+				MSurf_Flags(ref surfID) |= SurfDraw.Sky;
+
+			// todo: disp info
+			// todo: primitives
+		}
+	}
+	
 	private void Mod_LoadVertNormals() { }
 	private void Mod_LoadVertNormalIndices() { }
 	private void Mod_LoadTexdata() {
@@ -269,6 +347,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.TexInfo);
 		BSPTexInfo[] inTexInfo = lh.LoadLumpData<BSPTexInfo>();
 		ModelTexInfo[] outTexInfo = new ModelTexInfo[inTexInfo.Length];
+
+		lh.GetMap().TexInfo = outTexInfo;
+		lh.GetMap().NumTexInfo = inTexInfo.Length;
 
 		bool loadtextures = true; // << todo: convar
 		for (int i = 0; i < outTexInfo.Length; ++i) {

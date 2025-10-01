@@ -181,33 +181,3 @@ public class Render(
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }
 }
-
-public enum SurfDraw : uint
-{
-	NoLight = 0x00000001,
-	Node = 0x00000002,
-	Sky = 0x00000004,
-	BumpLight = 0x00000008,
-	NoDraw = 0x00000010,
-	Trans = 0x00000020,
-	PlaneBack = 0x00000040,
-	Dynamic = 0x00000080,
-	TangentSpace = 0x00000100,
-	NoCull = 0x00000200,
-	HasLightstyles = 0x00000400,
-	HasDisp = 0x00000800,
-	AlphaTest = 0x00001000,
-	NoShadows = 0x00002000,
-	NoDecals = 0x00004000,
-	HasPrims = 0x00008000,
-	WaterSurface = 0x00010000,
-	UnderWater = 0x00020000,
-	AboveWater = 0x00040000,
-	HasDLight = 0x00080000,
-	DLightPass = 0x00100000,
-	UNUSED2 = 0x00200000,
-	VertCountMask = 0xFF000000,
-	SortGroupMask = 0x00C00000,
-	VertCountShift = 24,
-	SortGroupShift = 22,
-}
