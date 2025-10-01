@@ -191,9 +191,12 @@ public unsafe class Mesh : IMesh
 
 	public virtual int Lock(bool readOnly, int firstIndex, int indexCount, ref IndexDesc desc) {
 		if (ShaderDevice.IsDeactivated() || indexCount == 0) {
-			Assert(false);
+			desc.Indices = ScratchIndexBuffer;
+			desc.IndexSize = 0;
 			return 0;
 		}
+
+		IndexBuffer ??= new IndexBuffer(indexCount, false);
 
 		desc.Indices = (ushort*)IndexBuffer.Lock(readOnly, indexCount, out int startIndex, firstIndex);
 		if (desc.Indices == null) {
@@ -204,9 +207,10 @@ public unsafe class Mesh : IMesh
 		}
 
 		desc.IndexSize = 1;
+		IsIBLocked = true;
 		return startIndex;
 	}
-
+	bool IsIBLocked;
 	static readonly ushort* ScratchIndexBuffer = (ushort*)NativeMemory.Alloc(6 * sizeof(ushort));
 	public virtual void LockMesh(int vertexCount, int indexCount, ref MeshDesc desc) {
 		ShaderUtil.SyncMatrices();
@@ -254,7 +258,10 @@ public unsafe class Mesh : IMesh
 	}
 
 	public virtual bool Unlock(int indexCount, ref IndexDesc desc) {
+		if (!IsIBLocked)
+			return true;
 		IndexBuffer.Unlock(indexCount);
+		IsIBLocked = false;
 		return true;
 	}
 

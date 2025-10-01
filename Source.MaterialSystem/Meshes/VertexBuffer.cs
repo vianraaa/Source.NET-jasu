@@ -95,7 +95,7 @@ public unsafe class VertexBuffer : IDisposable
 	}
 
 	public int NextLockOffset() {
-		int nextOffset = (Position + VertexSize - 1) / VertexSize;
+		int nextOffset = VertexSize == 0 ? 0 : (Position + VertexSize - 1) / VertexSize;
 		nextOffset *= VertexSize;
 		return nextOffset;
 	}
