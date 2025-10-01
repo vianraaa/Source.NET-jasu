@@ -179,8 +179,8 @@ public unsafe class Mesh : IMesh
 
 	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
 		if (VertexBuffer == null) {
-			// todo:
-			throw new NotImplementedException();
+			int size = MeshMgr.VertexFormatSize(VertexFormat);
+			VertexBuffer = new VertexBuffer(VertexFormat, size, vertexCount, false);
 		}
 
 		byte* vertexMemory = VertexBuffer.Lock(vertexCount, out desc.FirstVertex);
