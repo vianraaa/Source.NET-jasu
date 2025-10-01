@@ -84,6 +84,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		ShaderSystem.LoadAllShaderDLLs();
 		TextureSystem.Init();
+		MatLightmaps = new(this);
 	}
 
 	ILauncherManager launcherMgr;
@@ -471,13 +472,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		else ShaderAPI.GetBackBufferDimensions(out fbWidth, out fbHeight);
 	}
 
-	public int GetNumSortIDs() {
-		throw new NotImplementedException();
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public int GetNumSortIDs() => MatLightmaps.GetNumSortIDs();
 
 	public event Action? Restore;
 
 	public IMaterialInternal errorMaterial;
+	public readonly MatLightmaps MatLightmaps;
 }
 
 public enum MatrixStackFlags : uint
