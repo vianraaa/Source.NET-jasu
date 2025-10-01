@@ -61,6 +61,12 @@ public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInter
 	public IMaterialInternal AddMaterialSubRect(Span<char> matNameWithExtension, ReadOnlySpan<char> textureGroupName, KeyValues keyValues, KeyValues pPatchKeyValues) {
 		throw new NotImplementedException();
 	}
+
+	internal IMaterialInternal AddMaterial(Span<char> name, ReadOnlySpan<char> textureGroupName) {
+		IMaterialInternal material = materials.CreateMaterial(name, textureGroupName, null);
+		AddMaterialToMaterialList(material);
+		return material;
+	}
 }
 
 public interface IMaterialInternal : IMaterial
@@ -73,7 +79,7 @@ public interface IMaterialInternal : IMaterial
 	bool IsPrecached();
 	bool IsUsingVertexID();
 	void Precache();
-	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0);
+	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, List<FileNameHandle_t>? includes = null, MaterialFindContext findContext = 0);
 	void SetEnumerationID(int id);
 	void SetMaxLightmapPageID(int value);
 	void SetMinLightmapPageID(int value);

@@ -307,11 +307,12 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		"materials/".CopyTo(vmtName);
 		tempNameBuffer.CopyTo(vmtName["materials/".Length..]);
 
+		List<FileNameHandle_t>? includes = null;
 		KeyValues keyValues = new KeyValues("vmt");
-		KeyValues pPatchKeyValues = new KeyValues("vmt_patches");
-		if (!LoadVMTFile(keyValues, pPatchKeyValues, vmtName, true)) {
+		KeyValues patchKeyValues = new KeyValues("vmt_patches");
+		if (!Material.LoadVMTFile(FileSystem, keyValues, patchKeyValues, vmtName, true, null)) {
 			keyValues = null!;
-			pPatchKeyValues = null!;
+			patchKeyValues = null!;
 		}
 		else {
 			int len = vmtName.Length + ".vmt".Length;
@@ -321,17 +322,17 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 			IMaterialInternal? mat = null;
 			if (keyValues.Name.Equals("subrect", StringComparison.OrdinalIgnoreCase)) {
-				mat = MaterialDict.AddMaterialSubRect(matNameWithExtension, textureGroupName, keyValues, pPatchKeyValues);
+				mat = MaterialDict.AddMaterialSubRect(matNameWithExtension, textureGroupName, keyValues, patchKeyValues);
 			}
 			else {
-				// NOTE: This differs slightly, but should still work
-				// It seems passing keyValues into precachevars like Source does *really* makes things unhappy, and I don't want to diagnose that right now
-				mat = CreateMaterial(tempNameBuffer, textureGroupName, null);
-				mat.PrecacheVars(keyValues);
-				MaterialDict.AddMaterialToMaterialList(mat);
+				mat = MaterialDict.AddMaterial(matNameWithExtension, textureGroupName);
+				if (ShaderDevice.IsUsingGraphics()) {
+					mat.PrecacheVars(keyValues, patchKeyValues, includes, context);
+					ForcedTextureLoadPathID = null;
+				}
 			}
 			keyValues = null!;
-			pPatchKeyValues = null!;
+			patchKeyValues = null!;
 
 			return mat;
 		}
@@ -348,27 +349,6 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		}
 
 		return errorMaterial;
-	}
-
-	private bool LoadVMTFile(KeyValues keyValues, KeyValues patchKeyValues, Span<char> materialName, bool absolutePath) {
-		Span<char> fileName = stackalloc char[MAX_PATH];
-		ReadOnlySpan<char> pathID = "GAME";
-		if (!absolutePath) {
-			sprintf(fileName, "materials/%s.vmt", new string(materialName));
-		}
-		else {
-			sprintf(fileName, "%s.vmt", new string(materialName));
-			if (materialName[0] == '/' && materialName[1] == '/' && materialName[2] != '/') {
-				pathID = null;
-			}
-		}
-
-		if (!keyValues.LoadFromFile(FileSystem, fileName[..fileName.IndexOf('\0')], pathID)) {
-			return false;
-		}
-		// ExpandPatchFile(keyValues, patchKeyValues, pathID, includes);
-
-		return true;
 	}
 
 	public string? ForcedTextureLoadPathID;

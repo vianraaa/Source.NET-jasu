@@ -2,6 +2,7 @@
 
 using SharpCompress.Common;
 
+using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
@@ -16,6 +17,8 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 
@@ -224,11 +227,35 @@ public class Material : IMaterialInternal
 		}
 	}
 
+	readonly List<FileNameHandle_t> VMTIncludes = [];
+
 	private string GetTextureGroupName() {
 		return "";
 	}
 
-	public bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0) {
+	public static bool LoadVMTFile(IFileSystem fileSystem, KeyValues keyValues, KeyValues patchKeyValues, ReadOnlySpan<char> materialName, bool absolutePath, List<FileNameHandle_t>? includes = null) {
+		Span<char> fileName = stackalloc char[MAX_PATH];
+		ReadOnlySpan<char> pathID = "GAME";
+		if (!absolutePath) {
+			sprintf(fileName, "materials/%s.vmt", new string(materialName));
+		}
+		else {
+			sprintf(fileName, "%s.vmt", new string(materialName));
+			if (materialName[0] == '/' && materialName[1] == '/' && materialName[2] != '/') {
+				pathID = null;
+			}
+		}
+
+		if (!keyValues.LoadFromFile(fileSystem, fileName[..fileName.IndexOf('\0')], pathID)) {
+			return false;
+		}
+		// ExpandPatchFile(keyValues, patchKeyValues, pathID, includes);
+
+		return true;
+	}
+
+
+	public bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, List<FileNameHandle_t>? includes = null, MaterialFindContext findContext = 0) {
 		if (IsPrecachedVars())
 			return true;
 
@@ -249,8 +276,14 @@ public class Material : IMaterialInternal
 			patchKeyValues = inPatchKeyValues;
 		}
 		else {
-			// includes
-			error = true;
+			VMTIncludes.Clear();
+
+			vmtKeyValues = new KeyValues("vmt");
+			patchKeyValues = new KeyValues("vmt_patches");
+			if (!LoadVMTFile(materials.FileSystem, vmtKeyValues, patchKeyValues, GetName(), false, VMTIncludes)) {
+				Warning($"CMaterial::PrecacheVars: error loading vmt file for {GetName()}\n");
+				error = true;
+			}
 		}
 
 		if (!error) {
