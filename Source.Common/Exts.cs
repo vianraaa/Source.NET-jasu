@@ -416,7 +416,6 @@ public static class UnmanagedUtils
 		return span[..index];
 	}
 
-
 	public static void EnsureCount<T>(this List<T> list, int ensureTo) where T : new() {
 		list.EnsureCapacity(ensureTo);
 
@@ -1000,6 +999,28 @@ public static class SpanExts
 
 		source.CopyTo(dest);
 		return source.Length;
+	}
+
+	public static Span<char> StripExtension(this Span<char> incoming, Span<char> outgoing) {
+		int index = incoming.LastIndexOf('.');
+		incoming.CopyTo(outgoing);
+		if (index == -1)
+			return outgoing;
+		for (int i = index; i < incoming.Length; i++)
+			outgoing[i] = '\0';
+
+		return outgoing[..index];
+	}
+
+	public static Span<char> StripExtension(this ReadOnlySpan<char> incoming, Span<char> outgoing) {
+		int index = incoming.LastIndexOf('.');
+		incoming.CopyTo(outgoing);
+		if (index == -1)
+			return outgoing;
+		for (int i = index; i < incoming.Length; i++)
+			outgoing[i] = '\0';
+
+		return outgoing[..index];
 	}
 }
 

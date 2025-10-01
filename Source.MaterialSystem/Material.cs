@@ -7,6 +7,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
+using Source.Common.Utilities;
 
 using Steamworks;
 
@@ -66,8 +67,12 @@ public class Material : IMaterialInternal
 	IShaderAPI ShaderAPI => materials.ShaderAPI;
 
 	public Material(MaterialSystem materials, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues? keyValues) {
+		Span<char> temp = stackalloc char[materialName.Length];
+		materialName.ToLowerInvariant(temp);
+		temp = temp.StripExtension(temp);
+
 		this.materials = materials;
-		name = new(materialName);
+		name = new(temp);
 		texGroupName = new(textureGroupName);
 		this.keyValues = keyValues;
 		if (keyValues != null) {
@@ -598,7 +603,7 @@ public class Material : IMaterialInternal
 	}
 
 	MaterialFlags flags;
-	string name;
+	UtlSymbol name;
 	string texGroupName;
 	IShader? Shader;
 	KeyValues? keyValues;
