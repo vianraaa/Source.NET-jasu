@@ -5,6 +5,8 @@ using Source.Common.Formats.BSP;
 using System.Numerics;
 using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
+using System.Runtime.CompilerServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
@@ -255,11 +257,15 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Mod_LoadPrimIndices() { }
 	public static ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData? data = null) => ref (data ?? Singleton<CommonHostState>().WorldBrush)!.Surfaces2![surfaceIndex];
 	public static ref CollisionPlane MSurf_Plane(ref BSPMSurface2 surfID) => ref surfID.Plane.GetReference();
+	public static unsafe int MSurf_Index(ref BSPMSurface2 surfID, WorldBrushData? data = null) => (int)surfID.SurfNum;
 	public static ref int MSurf_FirstVertIndex(ref BSPMSurface2 surfID) => ref surfID.FirstVertIndex;
 	public static ref SurfDraw MSurf_Flags(ref BSPMSurface2 surfID) => ref surfID.Flags;
 	public static bool SurfaceHasDispInfo(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasDisp) != 0;
 	public static ref ushort MSurf_VertBufferIndex(ref BSPMSurface2 surfID) => ref surfID.VertBufferIndex;
 	public static ref short MSurf_MaterialSortID(ref BSPMSurface2 surfID) => ref surfID.MaterialSortID;
+	public static Span<short> MSurf_LightmapExtents(ref BSPMSurface2 surfID, WorldBrushData? data = null) {
+		return (data ?? Singleton<CommonHostState>().WorldBrush)!.SurfaceLighting![MSurf_Index(ref surfID, data)].LightmapExtents;
+	}
 	public static bool SurfaceHasPrims(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasPrims) != 0;
 	public static int MSurf_SortGroup(ref BSPMSurface2 surfID) => (int)(surfID.Flags & SurfDraw.SortGroupMask) >> (int)SurfDraw.SortGroupShift;
 	public static void MSurf_SetSortGroup(ref BSPMSurface2 surfID, int sortGroup) => surfID.Flags |= (SurfDraw)((sortGroup << (int)SurfDraw.SortGroupShift) & (int)SurfDraw.SortGroupMask);
@@ -289,6 +295,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			ref readonly BSPFace _in = ref inFaces[surfnum];
 			ref BSPMSurface1 _out1 = ref out1[surfnum];
 			ref BSPMSurface2 _out2 = ref out2[surfnum];
+			_out1.SurfNum = surfnum;
+			_out2.SurfNum = surfnum;
 
 			ref BSPMSurface2 surfID = ref SurfaceHandleFromIndex(surfnum, brushData);
 

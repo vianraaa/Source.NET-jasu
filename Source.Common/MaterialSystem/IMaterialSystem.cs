@@ -178,6 +178,8 @@ public interface IMaterialSystem
 	void BeginRenderTargetAllocation();
 	void EndRenderTargetAllocation();
 	int GetNumSortIDs();
+	void EndLightmapAllocation();
+	void BeginLightmapAllocation();
 }
 
 public interface IMatRenderContext

@@ -474,19 +474,44 @@ public struct BSPOccluderDataV1
 
 public struct BSPMSurface1
 {
+	public nint SurfNum;
 	public InlineArray2<int> TextureMins;
 	public InlineArray2<short> TextureExtents;
 	public ushort NumPrims;
 	public ushort FirstPrimID;
 }
 
+public struct BSPSurfaceLighting {
+	public nint SurfNum;
+
+	public unsafe ref ColorRGBExp32 AvgLightColor(int lightStyleIndex) {
+		if (lightStyleIndex < 0 || lightStyleIndex >= (Samples?.Length ?? 0))
+			throw new IndexOutOfRangeException();
+
+		return ref Samples![Samples.Length - 1 - lightStyleIndex];
+	}
+
+	// Lightmap info
+	public InlineArray2<short> LightmapMins;
+	public InlineArray2<short> LightmapExtents;
+	public InlineArray2<short> OffsetIntoLightmapPage;
+
+	public int LastComputedFrame; 
+	public int DLightBits;        
+	public int DLightFrame;       
+
+	public InlineArrayMaxLightmaps<byte> Styles;  
+	public ColorRGBExp32[]? Samples;
+}
 public struct BSPMSurfaceNormal
 {
+	public nint SurfNum;
 	public uint FirstVertNormal;
 }
 
 public struct BSPMSurface2
 {
+	public nint SurfNum; // We use this instead of pointer subtraction math in MSurf_Index
 	public SurfDraw Flags;
 	public Box<CollisionPlane> Plane;
 	public int FirstVertIndex;

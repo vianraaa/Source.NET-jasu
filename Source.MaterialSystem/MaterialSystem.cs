@@ -23,7 +23,7 @@ namespace Source.MaterialSystem;
 
 public class MaterialSystem : IMaterialSystem, IShaderUtil
 {
-	MaterialDict MaterialDict;
+	public readonly MaterialDict MaterialDict;
 	nint graphics;
 	public static void DLLInit(IServiceCollection services) {
 		services.AddSingleton<MatSystemSurface>();
@@ -473,6 +473,14 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public int GetNumSortIDs() => MatLightmaps.GetNumSortIDs();
+
+	public void EndLightmapAllocation() {
+		throw new NotImplementedException();
+	}
+
+	public void BeginLightmapAllocation() {
+		throw new NotImplementedException();
+	}
 
 	public event Action? Restore;
 

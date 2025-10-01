@@ -75,6 +75,8 @@ public class WorldBrushData
 	public int NumSurfaces;
 	public BSPMSurface1[]? Surfaces1;
 	public BSPMSurface2[]? Surfaces2;
+	public BSPSurfaceLighting[]? SurfaceLighting;
+	public BSPMSurfaceNormal[]? SurfaceNormals;
 }
 
 public struct BrushData

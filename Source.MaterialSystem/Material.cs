@@ -665,4 +665,8 @@ public class Material : IMaterialInternal
 	private void CleanUpStateSnapshots() {
 
 	}
+
+	int EnumerationID;
+	public int GetEnumerationID() => EnumerationID;
+	public void SetEnumerationID(int id) => EnumerationID = id;
 }

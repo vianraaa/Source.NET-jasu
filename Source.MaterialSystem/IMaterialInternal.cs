@@ -72,4 +72,5 @@ public interface IMaterialInternal : IMaterial
 	bool IsUsingVertexID();
 	void Precache();
 	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0);
+	void SetEnumerationID(int id);
 }

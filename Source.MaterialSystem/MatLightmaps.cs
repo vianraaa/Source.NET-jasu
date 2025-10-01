@@ -14,6 +14,13 @@ public class MatLightmaps
 
 	public void BeginLightmapAllocation() {
 		NumSortIDs = 0;
+		EnumerateMaterials();
+	}
+
+	public void EnumerateMaterials() {
+		int id = 0;
+		foreach (var material in MaterialSystem.MaterialDict) 
+			material.SetEnumerationID(id++);
 	}
 
 	public int AllocateLightmap(int width, int height, InlineArray2<int> offsetIntoLightmapPage, IMaterialInternal imaterial) {

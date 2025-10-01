@@ -212,4 +212,5 @@ public interface IMaterial
 	bool IsErrorMaterialInternal();
 	VertexFormat GetVertexFormat();
 	ReadOnlySpan<char> GetName();
+	int GetEnumerationID();
 }

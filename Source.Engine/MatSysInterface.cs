@@ -13,13 +13,15 @@ using System.Text.RegularExpressions;
 
 namespace Source.Engine;
 
-public struct MaterialList {
+public struct MaterialList
+{
 	public short NextBlock;
 	public short Count;
 	public InlineArray15<BSPMSurface2> Surfaces;
 }
 
-public struct SurfaceSortGroup {
+public struct SurfaceSortGroup
+{
 	public short ListHead;
 	public short ListTail;
 	public ushort VertexCount;
@@ -28,9 +30,10 @@ public struct SurfaceSortGroup {
 	public ushort IndexCountNoDetail;
 	public ushort TriangleCount;
 	public ushort SurfaceCount;
-}	
+}
 
-public class MSurfaceSortList {
+public class MSurfaceSortList
+{
 	const int MAX_MAT_SORT_GROUPS = 4;
 
 	int MaxSortIDs;
@@ -123,9 +126,9 @@ public class MSurfaceSortList {
 			// m_list may be invalid now! remake the span
 			m_list = List.AsSpan();
 
-			if (prevIndex >= 0) 
+			if (prevIndex >= 0)
 				m_list[prevIndex].NextBlock = nextBlock;
-			
+
 			group.ListTail = nextBlock;
 			if (group.ListHead == -1) {
 				SortGroupLists[sortGroup].Add(group);
@@ -223,11 +226,9 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	public static int VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group) {
 		int vertexCount = 0;
 
-		for (short _blockIndex = group.ListHead; _blockIndex != -1; _blockIndex = list.GetSurfaceBlock(_blockIndex).NextBlock)  
-		{																			
-			ref MaterialList matList = ref list.GetSurfaceBlock(_blockIndex); 
-			for (int _index = 0; _index < matList.Count; ++_index)                
-			{																		
+		for (short _blockIndex = group.ListHead; _blockIndex != -1; _blockIndex = list.GetSurfaceBlock(_blockIndex).NextBlock) {
+			ref MaterialList matList = ref list.GetSurfaceBlock(_blockIndex);
+			for (int _index = 0; _index < matList.Count; ++_index) {
 				ref BSPMSurface2 surfID = ref matList.Surfaces[_index];
 				vertexCount += ModelLoader.MSurf_VertCount(ref surfID);
 			}
@@ -280,11 +281,59 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
 		}
 	}
+	
+	public class LightmapComparer : IComparer<BSPMSurface2> {
+		public int Compare(BSPMSurface2 surfID1, BSPMSurface2 surfID2) {
+			bool hasLightmap1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.NoLight) == 0;
+			bool hasLightmap2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.NoLight) == 0;
 
+			if (hasLightmap1 != hasLightmap2)
+				return (hasLightmap2 ? 1 : 0) - (hasLightmap1 ? 1 : 0);
+
+			IMaterial? material1 = ModelLoader.MSurf_TexInfo(ref surfID1).Material;
+			IMaterial? material2 = ModelLoader.MSurf_TexInfo(ref surfID2).Material;
+			int enum1 = material1!.GetEnumerationID();
+			int enum2 = material2!.GetEnumerationID();
+			if (enum1 != enum2)
+				return enum1 - enum2;
+
+			bool hasLightstyle1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.HasLightstyles) == 0;
+			bool hasLightstyle2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.HasLightstyles) == 0;
+
+			if (hasLightstyle1 != hasLightstyle2)
+				return (hasLightstyle2 ? 1 : 0) - (hasLightstyle1 ? 1 : 0);
+
+			int area1 = ModelLoader.MSurf_LightmapExtents(ref surfID1)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID1)[1];
+			int area2 = ModelLoader.MSurf_LightmapExtents(ref surfID2)[0] * ModelLoader.MSurf_LightmapExtents(ref surfID2)[1];
+			return area2 - area1;
+		}
+	}
+
+	private void RegisterLightmapSurfaces() {
+		ref BSPMSurface2 surfID = ref Unsafe.NullRef<BSPMSurface2>();
+		materials.BeginLightmapAllocation();
+
+		SortedSet<BSPMSurface2> surfaces = new(new LightmapComparer());
+		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
+			surfID = ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
+			if ((ModelLoader.MSurf_TexInfo(ref surfID).Flags & Surf.Light) != 0 ||
+				(ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
+				ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
+			}
+			else 
+				ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.NoLight;
+			
+			surfaces.Add(surfID);
+		}
+
+		surfID = ref Unsafe.NullRef<BSPMSurface2>();
+
+		materials.EndLightmapAllocation();
+	}
 	private int FindOrAddMesh(IMaterial? material, int vertexCount) {
 		VertexFormat format = material.GetVertexFormat();
 
-		using MatRenderContextPtr renderContext = new(materials );
+		using MatRenderContextPtr renderContext = new(materials);
 
 		int nMaxVertices = renderContext.GetMaxVerticesToRender(material);
 		int worldLimit = mat_max_worldmesh_vertices.GetInt();
