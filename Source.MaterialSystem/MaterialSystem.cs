@@ -326,7 +326,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			else {
 				// NOTE: This differs slightly, but should still work
 				// It seems passing keyValues into precachevars like Source does *really* makes things unhappy, and I don't want to diagnose that right now
-				mat = CreateMaterial(matNameWithExtension, textureGroupName, keyValues);
+				mat = CreateMaterial(tempNameBuffer, textureGroupName, keyValues);
 				MaterialDict.AddMaterialToMaterialList(mat);
 			}
 			keyValues = null!;
