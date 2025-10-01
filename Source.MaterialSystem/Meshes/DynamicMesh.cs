@@ -50,6 +50,8 @@ public unsafe class DynamicMesh : Mesh
 		int firstIndex = Lock(false, -1, indexCount, ref desc.Index);
 		if (FirstIndex < 0)
 			FirstIndex = firstIndex;
+
+		base.Locked = true;
 	}
 
 	public void Init(int bufferId) {
