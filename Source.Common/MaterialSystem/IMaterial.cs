@@ -211,4 +211,5 @@ public interface IMaterial
 	void Refresh();
 	bool IsErrorMaterialInternal();
 	VertexFormat GetVertexFormat();
+	ReadOnlySpan<char> GetName();
 }
