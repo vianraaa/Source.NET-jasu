@@ -167,10 +167,10 @@ public class MatRenderContext : IMatRenderContextInternal
 		shaderAPI.Bind(GetCurrentMaterialInternal());
 	}
 
-	private IMaterialInternal? GetCurrentMaterialInternal() {
+	public IMaterialInternal? GetCurrentMaterialInternal() {
 		return currentMaterial;
 	}
-	private void SetCurrentMaterialInternal(IMaterialInternal? mat) {
+	public void SetCurrentMaterialInternal(IMaterialInternal? mat) {
 		currentMaterial = mat;
 	}
 

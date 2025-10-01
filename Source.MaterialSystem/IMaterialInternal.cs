@@ -66,6 +66,8 @@ public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInter
 public interface IMaterialInternal : IMaterial
 {
 	void DrawMesh(VertexCompressionType vertexCompressionType);
+	int GetMaxLightmapPageID();
+	int GetMinLightmapPageID();
 	IMaterialInternal GetRealTimeVersion();
 	bool IsManuallyCreated();
 	bool IsPrecached();
@@ -73,4 +75,8 @@ public interface IMaterialInternal : IMaterial
 	void Precache();
 	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, MaterialFindContext findContext = 0);
 	void SetEnumerationID(int id);
+	void SetMaxLightmapPageID(int value);
+	void SetMinLightmapPageID(int value);
+	bool GetNeedsWhiteLightmap();
+	void SetNeedsWhiteLightmap(bool value);
 }

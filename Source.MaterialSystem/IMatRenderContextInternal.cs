@@ -13,4 +13,6 @@ public interface IMatRenderContextInternal : IMatRenderContext
 	void SwapBuffers();
 	void SyncMatrices();
 	void SyncMatrix(MaterialMatrixMode mode);
+	IMaterialInternal? GetCurrentMaterialInternal();
+	void SetCurrentMaterialInternal(IMaterialInternal? material);
 }

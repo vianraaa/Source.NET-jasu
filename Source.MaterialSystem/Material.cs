@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.HighPerformance;
 
+using SharpCompress.Common;
+
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
@@ -669,4 +671,20 @@ public class Material : IMaterialInternal
 	int EnumerationID;
 	public int GetEnumerationID() => EnumerationID;
 	public void SetEnumerationID(int id) => EnumerationID = id;
+	public bool GetPropertyFlag(MaterialPropertyTypes types) => false; // todo
+
+	int MinLightmapPageID;
+	int MaxLightmapPageID;
+
+	public int GetMinLightmapPageID() => MinLightmapPageID;
+	public int GetMaxLightmapPageID() => MaxLightmapPageID;
+	public void SetMinLightmapPageID(int value) => MinLightmapPageID = value;
+	public void SetMaxLightmapPageID(int value) => MaxLightmapPageID = value;
+	public bool GetNeedsWhiteLightmap() => (flags & MaterialFlags.NeedsWhiteLightmap) != 0;
+	public void SetNeedsWhiteLightmap(bool value) {
+		if (value)
+			flags |= MaterialFlags.NeedsWhiteLightmap;
+		else
+			flags &= ~MaterialFlags.NeedsWhiteLightmap;
+	}
 }

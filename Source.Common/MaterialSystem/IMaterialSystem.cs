@@ -157,6 +157,13 @@ public enum MaterialRenderTargetDepth
 	Only
 }
 
+public enum MaterialPropertyTypes {
+	NeedsLightmap,
+	Opacity,
+	Reflectivity,
+	NeedsBumpedLightmaps
+}
+
 public interface IMaterialSystem
 {
 	event Action Restore;
@@ -180,6 +187,8 @@ public interface IMaterialSystem
 	int GetNumSortIDs();
 	void EndLightmapAllocation();
 	void BeginLightmapAllocation();
+	short AllocateLightmap(int allocationWidth, int allocationHeight, Span<int> offsetIntoLightmapPage, IMaterial? material);
+	short AllocateWhiteLightmap(IMaterial? material);
 }
 
 public interface IMatRenderContext

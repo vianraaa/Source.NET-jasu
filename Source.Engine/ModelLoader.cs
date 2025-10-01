@@ -270,6 +270,10 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	public static int MSurf_SortGroup(ref BSPMSurface2 surfID) => (int)(surfID.Flags & SurfDraw.SortGroupMask) >> (int)SurfDraw.SortGroupShift;
 	public static void MSurf_SetSortGroup(ref BSPMSurface2 surfID, int sortGroup) => surfID.Flags |= (SurfDraw)((sortGroup << (int)SurfDraw.SortGroupShift) & (int)SurfDraw.SortGroupMask);
 	public static ref ModelTexInfo MSurf_TexInfo(ref BSPMSurface2 surfID, WorldBrushData? data = null) => ref (data ?? Singleton<CommonHostState>().WorldBrush)!.TexInfo![surfID.TexInfo];
+	public static Span<short> MSurf_OffsetIntoLightmapPage(ref BSPMSurface2 surfID, WorldBrushData? data = null) {
+		data ??= Singleton<CommonHostState>().WorldBrush;
+		return data!.SurfaceLighting![MSurf_Index(ref surfID, data)].OffsetIntoLightmapPage;
+	}
 	public static int MSurf_VertCount(ref BSPMSurface2 surfID) => (int)(((uint)surfID.Flags >> (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask);
 	public static void MSurf_SetVertCount(ref BSPMSurface2 surfID, uint vertCount) {
 		uint flags = (vertCount << (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask;
@@ -317,9 +321,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			_out2.Plane = lh.GetMap().Planes![planenum];
 
 			ti = _in.TexInfo;
-			if (ti < 0 || ti >= lh.GetMap().NumTexInfo) 
+			if (ti < 0 || ti >= lh.GetMap().NumTexInfo)
 				Host.Error("Mod_LoadFaces: bad texinfo number");
-			
+
 			surfID.TexInfo = (ushort)ti;
 			surfID.DynamicShadowsEnabled = _in.AreDynamicShadowsEnabled();
 			ref ModelTexInfo tex = ref lh.GetMap().TexInfo![ti];
@@ -348,7 +352,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			// todo: primitives
 		}
 	}
-	
+
 	private void Mod_LoadVertNormals() { }
 	private void Mod_LoadVertNormalIndices() { }
 	private void Mod_LoadTexdata() {

@@ -213,4 +213,5 @@ public interface IMaterial
 	VertexFormat GetVertexFormat();
 	ReadOnlySpan<char> GetName();
 	int GetEnumerationID();
+	bool GetPropertyFlag(MaterialPropertyTypes needsBumpedLightmaps);
 }

@@ -116,7 +116,7 @@ public class HardwareConfig : IMaterialSystemHardwareConfig
 	}
 
 	public int MaxTextureAspectRatio() {
-		throw new NotImplementedException();
+		return int.MaxValue;
 	}
 
 	public unsafe int MaxTextureDepth() {

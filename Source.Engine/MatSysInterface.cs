@@ -281,8 +281,9 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
 		}
 	}
-	
-	public class LightmapComparer : IComparer<BSPMSurface2> {
+
+	public class LightmapComparer : IComparer<BSPMSurface2>
+	{
 		public int Compare(BSPMSurface2 surfID1, BSPMSurface2 surfID2) {
 			bool hasLightmap1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.NoLight) == 0;
 			bool hasLightmap2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.NoLight) == 0;
@@ -309,6 +310,43 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		}
 	}
 
+	public const int NUM_BUMP_VECTS = 3;
+	private static bool SurfNeedsBumpedLightmaps(ref BSPMSurface2 surfID) => ModelLoader.MSurf_TexInfo(ref surfID).Material!.GetPropertyFlag(MaterialPropertyTypes.NeedsBumpedLightmaps);
+	private void RegisterUnlightmappedSurface(ref BSPMSurface2 surfID) {
+		ModelLoader.MSurf_MaterialSortID(ref surfID) = materials.AllocateWhiteLightmap(ModelLoader.MSurf_TexInfo(ref surfID).Material);
+		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] = 0;
+		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] = 0;
+	}
+	private void RegisterLightmappedSurface(ref BSPMSurface2 surfID) {
+		Span<int> lightmapSize = stackalloc int[2];
+		int allocationWidth, allocationHeight;
+		bool needsBumpmap;
+
+		lightmapSize[0] = ModelLoader.MSurf_LightmapExtents(ref surfID)[0] + 1;
+		lightmapSize[1] = ModelLoader.MSurf_LightmapExtents(ref surfID)[1] + 1;
+
+		needsBumpmap = SurfNeedsBumpedLightmaps(ref surfID);
+		if (needsBumpmap) {
+			ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.BumpLight;
+			allocationWidth = lightmapSize[0] * (NUM_BUMP_VECTS + 1);
+		}
+		else {
+			ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.BumpLight;
+			allocationWidth = lightmapSize[0];
+		}
+
+		allocationHeight = lightmapSize[1];
+
+		Span<int> offsetIntoLightmapPage = stackalloc int[2];
+		ModelLoader.MSurf_MaterialSortID(ref surfID) = materials.AllocateLightmap(
+			allocationWidth,
+			allocationHeight,
+			offsetIntoLightmapPage,
+			ModelLoader.MSurf_TexInfo(ref surfID).Material);
+
+		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] = (short)offsetIntoLightmapPage[0];
+		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] = (short)offsetIntoLightmapPage[1];
+	}
 	private void RegisterLightmapSurfaces() {
 		ref BSPMSurface2 surfID = ref Unsafe.NullRef<BSPMSurface2>();
 		materials.BeginLightmapAllocation();
@@ -320,13 +358,21 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 				(ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
 				ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
 			}
-			else 
+			else
 				ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.NoLight;
-			
+
 			surfaces.Add(surfID);
 		}
 
 		surfID = ref Unsafe.NullRef<BSPMSurface2>();
+		foreach (var surfIDCopy in surfaces) {
+			surfID = ref host_state.WorldBrush!.Surfaces2![surfIDCopy.SurfNum];
+			bool hasLightmap = (ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) == 0;
+			if (hasLightmap)
+				RegisterLightmappedSurface(ref surfID);
+			else
+				RegisterUnlightmappedSurface(ref surfID);
+		}
 
 		materials.EndLightmapAllocation();
 	}
