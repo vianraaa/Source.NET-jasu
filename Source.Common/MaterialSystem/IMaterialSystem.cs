@@ -177,6 +177,7 @@ public interface IMaterialSystem
 	ITexture? CreateNamedRenderTargetTextureEx(ReadOnlySpan<char> rtName, int w, int h, RenderTargetSizeMode sizeMode, ImageFormat format, MaterialRenderTargetDepth depthMode, TextureFlags textureFlags, CreateRenderTargetFlags renderTargetFlags);
 	void BeginRenderTargetAllocation();
 	void EndRenderTargetAllocation();
+	int GetNumSortIDs();
 }
 
 public interface IMatRenderContext

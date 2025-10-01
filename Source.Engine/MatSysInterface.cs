@@ -240,7 +240,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		WorldStaticMeshDestroy();
 		Meshes.Clear();
 
-		int sortIDs = 0;
+		int sortIDs = materials.GetNumSortIDs();
 
 		Assert(WorldStaticMeshes.Count == 0);
 		WorldStaticMeshes.EnsureCountDefault(sortIDs);
@@ -249,7 +249,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		matSortArray.Init(sortIDs, 512);
 		Span<int> sortIndex = stackalloc int[WorldStaticMeshes.Count];
 
-		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush.NumSurfaces; surfaceIndex++) {
+		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
 			ref BSPMSurface2 surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
 			ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.TangentSpace;
 

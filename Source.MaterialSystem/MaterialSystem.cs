@@ -471,6 +471,10 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		else ShaderAPI.GetBackBufferDimensions(out fbWidth, out fbHeight);
 	}
 
+	public int GetNumSortIDs() {
+		throw new NotImplementedException();
+	}
+
 	public event Action? Restore;
 
 	public IMaterialInternal errorMaterial;
