@@ -4,6 +4,7 @@ using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
+using Source.Common.Formats.BSP;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
@@ -216,7 +217,7 @@ public class ViewRender : IViewRender
 			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) 
 				AddViewToScene(skyView);
 			if ((clearFlags & clearFlags) == 0) {
-				if (enginetrace->GetPointContents(viewRender.origin) == CONTENTS_SOLID) {
+				if (enginetrace.GetPointContents(viewRender.Origin, out _) == Contents.Solid) {
 					clearFlags |= ClearFlags.ClearColor;
 				}
 			}

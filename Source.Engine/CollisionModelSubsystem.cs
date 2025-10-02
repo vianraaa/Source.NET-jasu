@@ -2,6 +2,7 @@
 
 using CommunityToolkit.HighPerformance;
 
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
