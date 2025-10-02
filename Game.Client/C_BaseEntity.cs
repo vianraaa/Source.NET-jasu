@@ -258,8 +258,27 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public int DrawModel(int flags) {
-		throw new NotImplementedException();
+	public bool ReadyToDraw;
+	public int DrawModel(StudioFlags flags) {
+		if (!ReadyToDraw)
+			return 0;
+		int drawn = 0;
+		if (Model == null)
+			return drawn;
+
+		switch (Model.Type) {
+			case ModelType.Brush:
+				drawn = DrawBrushModel((flags & StudioFlags.Transparency) != 0, flags, (flags & StudioFlags.TwoPass) != 0);
+				break;
+			case ModelType.Studio: break;
+			case ModelType.Sprite: break;
+		}
+		return drawn;
+	}
+
+	private int DrawBrushModel(bool v1, StudioFlags flags, bool v2) {
+		// todo
+		return 1;
 	}
 
 	public ref readonly Vector3 GetLocalOrigin() => ref Origin;
