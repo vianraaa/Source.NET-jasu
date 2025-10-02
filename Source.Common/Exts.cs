@@ -1024,6 +1024,7 @@ public static class SpanExts
 	}
 }
 
+
 // Saving for a rainy day, if it's ever needed...
 /*
 public delegate ref T RefFn<T>();
@@ -1038,3 +1039,33 @@ public class BoxRefPtr<T> {
 	public ref T Deref() => ref refFn();
 }
 */
+
+public struct SafeFieldPointer<TOwner, TType>
+{
+	public delegate ref TType GetRefFn(TOwner owner);
+
+	public static readonly SafeFieldPointer<TOwner, TType> Null = new();
+
+	TOwner? owner;
+	GetRefFn? refFn;
+
+	[MemberNotNullWhen(false, nameof(owner), nameof(refFn))] public readonly bool IsNull => owner == null || refFn == null;
+
+	public SafeFieldPointer() { }
+	public SafeFieldPointer(GetRefFn refFn) {
+		this.refFn = refFn;
+	}
+	public SafeFieldPointer(TOwner owner, GetRefFn refFn) {
+		this.owner = owner;
+		this.refFn = refFn;
+	}
+
+	public TOwner? Owner { readonly get => owner; set => owner = value; }
+	public GetRefFn? RefFn { readonly get => refFn; set => refFn = value; }
+
+	public readonly ref TType Get() {
+		if (IsNull)
+			throw new NullReferenceException("Owner and/or GetRefFn are null.");
+		return ref refFn(owner);
+	}
+}
