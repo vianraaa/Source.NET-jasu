@@ -120,7 +120,7 @@ public ref struct MapLoadHelper
 		return data;
 	doError:
 		if (sysErrorIfOOB)
-			Singleton<Sys>().Error(error);
+			Sys.Error(error);
 		else
 			Host!.Error(error);
 		return [];
