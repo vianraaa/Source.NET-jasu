@@ -183,4 +183,12 @@ public class Render(
 	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }
+
+	internal void DrawSceneBegin() {
+
+	}
+
+	internal void DrawSceneEnd() {
+		
+	}
 }

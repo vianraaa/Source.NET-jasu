@@ -74,4 +74,7 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	public void DrawIdentityBrushModel(IWorldRenderList list, Model model) {
 		throw new NotImplementedException();
 	}
+
+	public void SceneBegin() => engineRenderer.DrawSceneBegin();
+	public void SceneEnd() => engineRenderer.DrawSceneEnd();
 }
