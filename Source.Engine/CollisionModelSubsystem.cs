@@ -29,45 +29,6 @@ public static class CollisionBSPDataStatic
 	public static CollisionBSPData GetCollisionBSPData() => g_BSPData;
 }
 
-[DebuggerDisplay("Source BSP Collision Model @ {Origin} [{Mins} -> {Maxs}] (head-node {HeadNode})")]
-public struct CollisionModel
-{
-	public Vector3 Mins, Maxs, Origin;
-	public int HeadNode;
-
-	// Analog of CM_PointLeafnum
-	public static int PointLeafnum(in Vector3 point) {
-		CollisionBSPData bspData = GetCollisionBSPData();
-		if (bspData.NumPlanes == 0)
-			return 0;
-		return PointLeafnum_r(bspData, in point, 0);
-	}
-
-	public static int PointLeafnum_r(CollisionBSPData bspData, in Vector3 point, int num) {
-		float d;
-		ref CollisionNode node = ref Unsafe.NullRef<CollisionNode>();
-		ref CollisionPlane plane = ref Unsafe.NullRef<CollisionPlane>();
-
-		while (num >= 0) {
-			node = ref bspData.MapNodes.AsSpan()[bspData.MapRootNode + num];
-			plane = ref bspData.MapPlanes.AsSpan()[node.CollisionPlaneIdx];
-
-			if ((int)plane.Type < 3)
-				d = point[(int)plane.Type] - plane.Dist;
-			else
-				d = Vector3.Dot(plane.Normal, point) - plane.Dist;
-
-			if (d < 0)
-				num = node.Children[1];
-			else
-				num = node.Children[0];
-		}
-
-		return -1 - num;
-	}
-	// vcollide_t research todo
-}
-
 public class CollisionBSPData
 {
 	public string? MapName;

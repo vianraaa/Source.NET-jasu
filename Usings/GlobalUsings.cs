@@ -21,3 +21,4 @@ global using MDLHandle_t = ushort;
 global using WorldDecalHandle_t = ushort;
 global using ShadowDecalHandle_t = ushort;
 global using OverlayFragmentHandle_t = ushort;
+global using Trace = Source.Common.GameTrace;

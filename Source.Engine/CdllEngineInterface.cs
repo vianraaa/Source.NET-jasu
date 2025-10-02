@@ -112,7 +112,7 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 		if (MaterialSystemConfig.Fullbright == 1)
 			return SkyboxVisibility.Skybox3D;
 
-		int leaf = CollisionModel.PointLeafnum(point);
+		int leaf = CM.PointLeafnum(point);
 		int flags = GetCollisionBSPData()!.MapLeafs[leaf].Flags;
 		if ((flags & BSPFileCommon.LEAF_FLAGS_SKY) != 0)
 			return SkyboxVisibility.Skybox3D;

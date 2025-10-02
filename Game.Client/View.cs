@@ -35,11 +35,13 @@ public class ViewRender : IViewRender
 
 	readonly IMaterialSystem materials;
 	readonly IServiceProvider services;
+	readonly IEngineTrace enginetrace;
 	readonly Render engineRenderer;
-	public ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) {
+	public ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer, IEngineTrace enginetrace) {
 		this.materials = materials;
 		this.services = services;
 		this.engineRenderer = engineRenderer;
+		this.enginetrace = enginetrace;
 		SimpleExecutor = new(this);
 	}
 
@@ -211,8 +213,12 @@ public class ViewRender : IViewRender
 			bool drew3dSkybox = false;
 			SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
 			SkyboxView skyView = new SkyboxView(this);
-			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) {
+			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) 
 				AddViewToScene(skyView);
+			if ((clearFlags & clearFlags) == 0) {
+				if (enginetrace->GetPointContents(viewRender.origin) == CONTENTS_SOLID) {
+					clearFlags |= ClearFlags.ClearColor;
+				}
 			}
 		}
 		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {

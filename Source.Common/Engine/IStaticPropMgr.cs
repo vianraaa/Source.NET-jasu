@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-public class Ray { }
-public class GameTrace { } // RaphaelIT7: Just as a note, a Ray & a GameTrace are two completely different things.
-public class IClientRenderable { }
 public class IPhysicsEnvironment { }
 public class IVPhysicsKeyHandler { }
 

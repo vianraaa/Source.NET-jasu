@@ -28,14 +28,6 @@ public struct ModelTexInfo
 	public IMaterial? Material;
 }
 
-[DebuggerDisplay("Source BSP Collision Surface '{Name}' (props: {SurfaceProps}, flags: {Flags})")]
-public struct CollisionSurface
-{
-	public string Name;
-	public ushort SurfaceProps;
-	public ushort Flags;
-}
-
 public class WorldBrushData
 {
 	public int NumSubModels;
