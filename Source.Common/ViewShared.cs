@@ -9,7 +9,7 @@ public enum ClearFlags
 {
 	ClearColor = 0x1,
 	ClearDepth = 0x2,
-	ClearFull_target = 0x4,
+	ClearFullTarget = 0x4,
 	NoDraw = 0x8,
 	ClearObeyStencil = 0x10,
 	ClearStencil = 0x20,
