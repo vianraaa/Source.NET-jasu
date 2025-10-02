@@ -66,4 +66,12 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	public virtual void SetMainView(in Vector3 origin, in QAngle angles) {
 		engineRenderer.SetMainView(in origin, in angles);
 	}
+
+	public void DrawBrushModel(IClientEntity baseentity, Model model, in Vector3 origin, in QAngle angles) {
+		throw new NotImplementedException();
+	}
+
+	public void DrawIdentityBrushModel(IWorldRenderList list, Model model) {
+		throw new NotImplementedException();
+	}
 }
