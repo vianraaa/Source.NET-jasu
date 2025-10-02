@@ -11,6 +11,7 @@ using Source.Engine;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,20 +19,31 @@ using System.Threading.Tasks;
 namespace Game.Client;
 
 
-public class ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) : IViewRender
+public class ViewRender : IViewRender
 {
 	public const int VIEW_NEARZ = 3;
 
-	static ConVar r_nearz = new(VIEW_NEARZ.ToString(), FCvar.Cheat, "Override the near clipping plane." );
-	static ConVar r_farz = new("-1", FCvar.Cheat, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
+	static ConVar r_nearz = new(VIEW_NEARZ.ToString(), FCvar.Cheat, "Override the near clipping plane.");
+	static ConVar r_farz = new("-1", FCvar.Cheat, "Override the far clipping plane. -1 means to use the value in env_fog_controller.");
 
 	public ViewSetup? CurrentView;
 	bool ForceNoVis;
 	DrawFlags BaseDrawFlags;
 	Frustum Frustum;
+	Base3dView? ActiveRenderer;
+	readonly SimpleRenderExecutor SimpleExecutor;
+
+	readonly IMaterialSystem materials;
+	readonly IServiceProvider services;
+	readonly Render engineRenderer;
+	public ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) {
+		this.materials = materials;
+		this.services = services;
+		this.engineRenderer = engineRenderer;
+		SimpleExecutor = new(this);
+	}
 
 	IRenderView render;
-	Base3dView? ActiveRenderer;
 
 	public int BuildWorldListsNumber() {
 		throw new NotImplementedException();
@@ -81,9 +93,9 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		if (r_farz.GetFloat() < 1) {
 			farZ = 16000; // todo
 		}
-		else 
+		else
 			farZ = r_farz.GetFloat();
-	
+
 		return farZ;
 	}
 
@@ -123,7 +135,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		viewEye.StereoEye = StereoEye.Mono;
 
 		C_BasePlayer? player = C_BasePlayer.GetLocalPlayer();
-		if(player != null) {
+		if (player != null) {
 			player.CalcView(ref viewEye.Origin, ref viewEye.Angles, ref viewEye.ZNear, ref viewEye.ZFar, ref viewEye.FOV);
 		}
 	}
@@ -199,7 +211,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 			bool drew3dSkybox = false;
 			SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
 			SkyboxView skyView = new SkyboxView(this);
-			if((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false){
+			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) {
 				AddViewToScene(skyView);
 			}
 		}
@@ -241,7 +253,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 
 			root = enginevgui.GetPanel(VGuiPanelType.ClientDllTools);
 			root?.SetSize(viewWidth, viewHeight);
-			
+
 			// AllowCurrentViewAccess(true);
 
 			render.VGui_Paint(PaintMode.InGamePanels);
@@ -263,7 +275,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 	}
 
 	private void AddViewToScene(SkyboxView skyView) {
-		throw new NotImplementedException();
+		SimpleExecutor.AddView(skyView);
 	}
 
 	// Needs more work. Mostly just to clear the buffers rn
@@ -311,5 +323,11 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 
 	public void WriteSaveGameScreenshotOfSize(ReadOnlySpan<char> pFilename, int width, int height, bool bCreatePowerOf2Padded = false, bool bWriteVTF = false) {
 		throw new NotImplementedException();
+	}
+
+	internal Base3dView? SetActiveRenderer(Base3dView? view) {
+		Base3dView? previous = ActiveRenderer;
+		ActiveRenderer = view;
+		return previous;
 	}
 }

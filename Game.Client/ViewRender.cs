@@ -12,6 +12,7 @@ using CommunityToolkit.HighPerformance;
 using Source.Common.Commands;
 using System.Runtime.InteropServices;
 using Source;
+using Source.Common.MaterialSystem;
 
 namespace Game.Client;
 using static ViewRenderConVars;
@@ -26,6 +27,45 @@ public static class ViewRenderConVars
 	internal readonly static ConVar r_drawtranslucentrenderables = new("1", FCvar.Cheat);
 	internal readonly static ConVar r_drawopaquerenderables = new("1", FCvar.Cheat);
 	internal readonly static ConVar r_threaded_renderables = new("0", 0);
+}
+
+public class RenderExecutor {
+	public virtual void AddView(Rendering3dView view) { }
+	public virtual void Execute() { }
+	public RenderExecutor(ViewRender mainView) {
+		this.mainView = mainView;
+	}
+	protected ViewRender mainView;
+}
+
+public class SimpleRenderExecutor : RenderExecutor
+{
+	public SimpleRenderExecutor(ViewRender mainView) : base(mainView) {
+		
+	}
+	public override void AddView(Rendering3dView view) {
+		Base3dView? prevRenderer = mainView.SetActiveRenderer(view);
+		view.Draw();
+		mainView.SetActiveRenderer(prevRenderer);
+	}
+	public override void Execute() {
+	
+	}
+}
+
+public enum ViewID {
+	Illegal = -2,
+	None = -1,
+	Main = 0,
+	Sky3D = 1,
+	Monitor = 2,
+	Reflection = 3,
+	Refraction = 4,
+	IntroPlayer = 5,
+	IntroCamera = 6,
+	ShadowDepthTexture = 7,
+	SSAO = 8,
+	Count
 }
 
 public class Base3dView
@@ -47,12 +87,13 @@ public class Rendering3dView : Base3dView
 	protected DrawFlags DrawFlags;
 	protected ClearFlags ClearFlags;
 	protected IWorldRenderList? WorldRenderList = null;
+	protected ViewSetup ViewSetup;
 
 	public Rendering3dView(ViewRender mainView) : base(mainView) {
 
 	}
 	public virtual void Setup(in ViewSetup setup) {
-
+		ViewSetup = setup; // copy to our ViewSetup
 	}
 	public override DrawFlags GetDrawFlags() {
 		return DrawFlags;
@@ -73,7 +114,7 @@ public class SkyboxView : Rendering3dView
 
 	}
 
-	public unsafe bool Setup(in ViewSetup viewRender, ref ClearFlags clearFlags, ref SkyboxVisibility skyboxVisible) {
+	public bool Setup(in ViewSetup viewRender, ref ClearFlags clearFlags, ref SkyboxVisibility skyboxVisible) {
 		base.Setup(in viewRender);
 
 		skyboxVisible = ComputeSkyboxVisibility();
@@ -92,7 +133,19 @@ public class SkyboxView : Rendering3dView
 		return true;
 	}
 
-	private unsafe SafeFieldPointer<PlayerLocalData, Sky3DParams> PreRender3dSkyboxWorld(ref SkyboxVisibility skyboxVisible) {
+	public override void Draw() {
+		ITexture? rtColor = null;
+		ITexture? rtDepth = null;
+		if (ViewSetup.StereoEye != StereoEye.Mono)
+			throw new Exception("No support for multi-stereo-eye yet");
+		DrawInternal(ViewID.Sky3D, true, rtColor, rtDepth);
+	}
+
+	private void DrawInternal(ViewID skyBoxViewID, bool invokePreAndPostRender, ITexture? rtColor, ITexture? rtDepth) {
+		throw new NotImplementedException();
+	}
+
+	private SafeFieldPointer<PlayerLocalData, Sky3DParams> PreRender3dSkyboxWorld(ref SkyboxVisibility skyboxVisible) {
 		if ((skyboxVisible != SkyboxVisibility.Skybox3D) && r_3dsky.GetInt() != 2)
 			return SafeFieldPointer<PlayerLocalData, Sky3DParams>.Null;
 
