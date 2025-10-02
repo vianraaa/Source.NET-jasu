@@ -156,7 +156,7 @@ public class Sys(Host host, GameServer sv, ICommandLine CommandLine)
 		return SpewRetval.Continue;
 	}
 
-	public void Error(ReadOnlySpan<char> v) {
+	public static void Error(ReadOnlySpan<char> v) {
 		Warning(v);
 		AssertMsg(false, v);
 	}

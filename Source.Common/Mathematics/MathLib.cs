@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using Source.Common.Formats.BSP;
+
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Source.Common.Mathematics;
@@ -24,7 +26,7 @@ public enum PlaneType : byte
 
 public struct CollisionLeaf
 {
-	public int Contents;
+	public Contents Contents;
 	public short Cluster;
 
 	private short areaFlags;

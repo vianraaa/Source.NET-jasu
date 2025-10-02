@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
 using SharpCompress.Common;
+using System.Security.AccessControl;
 
 namespace Source.Common.Formats.BSP;
 
@@ -721,9 +722,16 @@ public struct BSPLeafVersion0
 	public int Contents;
 	public short Cluster;
 
-	short areaandflags;
-	public short Area => throw new NotImplementedException();  // 9 bits 
-	public short Flags => throw new NotImplementedException(); // 7 bits
+	short areaFlags;
+	public short Area {
+		readonly get => (short)(areaFlags & 0x1FF);
+		set => areaFlags = (short)((areaFlags & ~0x1FF) | (value & 0x1FF));
+	}
+
+	public short Flags {
+		readonly get => (short)((areaFlags >> 9) & 0x7F);
+		set => areaFlags = (short)((areaFlags & ~(0x7F << 9)) | ((value & 0x7F) << 9));
+	}
 
 	public InlineArray3<short> Mins;
 	public InlineArray3<short> Maxs;
@@ -750,10 +758,16 @@ public struct BSPLeaf
 	public int Contents;
 	public short Cluster;
 
-	short areaandflags;
+	short areaFlags;
+	public short Area {
+		readonly get => (short)(areaFlags & 0x1FF);
+		set => areaFlags = (short)((areaFlags & ~0x1FF) | (value & 0x1FF));
+	}
 
-	public short Area => throw new NotImplementedException();  // 9 bits 
-	public short Flags => throw new NotImplementedException(); // 7 bits
+	public short Flags {
+		readonly get => (short)((areaFlags >> 9) & 0x7F);
+		set => areaFlags = (short)((areaFlags & ~(0x7F << 9)) | ((value & 0x7F) << 9));
+	}
 
 	public InlineArray3<short> Mins;
 	public InlineArray3<short> Maxs;
