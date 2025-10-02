@@ -17,7 +17,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
-		RecvPropDataTable(nameof(Local), FIELD.OF(nameof(Local)), C_PlayerLocalData.DT_Local, 0, DataTableRecvProxy_PointerDataTable),
+		RecvPropDataTable(nameof(Local), FIELD.OF(nameof(Local)), PlayerLocalData.DT_Local, 0, DataTableRecvProxy_PointerDataTable),
 		RecvPropFloat(FIELD.OF(nameof(Friction))),
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(Ammo)), RecvPropInt( FIELD.OF_ARRAYINDEX(nameof(Ammo)))),
 		RecvPropInt(FIELD.OF(nameof(OnTarget))),
@@ -105,7 +105,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 
 	bool DeadFlag;
 	readonly PlayerState pl = new();
-	readonly C_PlayerLocalData Local = new();
+	public readonly PlayerLocalData Local = new();
 	readonly EHANDLE Vehicle = new();
 	readonly EHANDLE UseEntity = new();
 	readonly EHANDLE ObserverTarget = new();

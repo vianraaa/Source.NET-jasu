@@ -11,9 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Game.Client;
-using FIELD = FIELD<C_PlayerLocalData>;
+using FIELD = FIELD<PlayerLocalData>;
 
-public class C_PlayerLocalData
+public class PlayerLocalData
 {
 	public static readonly RecvTable DT_Local = new([
 		RecvPropArray3(FIELD.OF_ARRAY(nameof(AreaBits)), RecvPropInt(FIELD.OF_ARRAYINDEX(nameof(AreaBits)))),
