@@ -216,7 +216,8 @@ public class ViewRender : IViewRender
 			SkyboxView skyView = new SkyboxView(this);
 			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) 
 				AddViewToScene(skyView);
-			if ((clearFlags & clearFlags) == 0) {
+
+			if ((clearFlags & ClearFlags.ClearColor) == 0) {
 				if (enginetrace.GetPointContents(viewRender.Origin, out _) == Contents.Solid) {
 					clearFlags |= ClearFlags.ClearColor;
 				}
