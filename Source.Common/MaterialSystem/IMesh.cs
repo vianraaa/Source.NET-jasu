@@ -269,6 +269,7 @@ public unsafe struct VertexBuilder
 
 	internal void TexCoord2f(int stage, float s, float t) {
 		float* pDst = CurrTexCoord[stage];
+		if (pDst == null) return;
 		*pDst++ = s;
 		*pDst++ = t;
 	}

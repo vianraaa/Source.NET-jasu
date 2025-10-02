@@ -370,8 +370,23 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		}
 	}
 
-	private void Mod_LoadVertNormals() { }
-	private void Mod_LoadVertNormalIndices() { }
+	private void Mod_LoadVertNormals() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.VertNormals);
+		Vector3[] inVertNormals = lh.LoadLumpData<Vector3>();
+
+		lh.GetMap().VertNormals = inVertNormals;
+	}
+	private void Mod_LoadVertNormalIndices() { 
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.VertNormalIndices);
+		ushort[] inVertNormalIndices = lh.LoadLumpData<ushort>();
+		lh.GetMap().VertNormalIndices = inVertNormalIndices;
+		int normalIndex = 0;
+		for (int i = 0; i < lh.GetMap().NumSurfaces; i++) {
+			ref BSPMSurface2 surfID = ref SurfaceHandleFromIndex(i, lh.GetMap());
+			MSurf_FirstVertNormal(ref surfID, lh.GetMap()) = (uint)normalIndex;
+			normalIndex += MSurf_VertCount(ref surfID);
+		}
+	}
 	private void Mod_LoadTexdata() {
 		MapLoadHelper.Map!.NumTexData = GetCollisionBSPData().NumSurfaces;
 		MapLoadHelper.Map!.TexData = GetCollisionBSPData().MapSurfaces.Base();
