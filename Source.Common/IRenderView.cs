@@ -56,4 +56,6 @@ public interface IRenderView
 	void Push2DView(ViewSetup view, ClearFlags flags, ITexture? renderTarget, Frustum frustumPlanes);
 	void PopView(Frustum frustumPlanes);
 	void SetMainView(in Vector3 origin, in QAngle angles);
+	void SceneBegin();
+	void SceneEnd();
 }

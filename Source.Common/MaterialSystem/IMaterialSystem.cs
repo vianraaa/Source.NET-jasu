@@ -302,4 +302,8 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 
 	public int GetMaxVerticesToRender(IMaterial material) => ctx.GetMaxVerticesToRender(material);
 	public int GetMaxIndicesToRender(IMaterial material) => ctx.GetMaxIndicesToRender(material);
+
+	public void TurnOnToneMapping() {
+		// todo
+	}
 }

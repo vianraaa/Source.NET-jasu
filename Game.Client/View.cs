@@ -203,26 +203,39 @@ public class ViewRender : IViewRender
 	IEngineVGui? _enginevgui;
 	IEngineVGui enginevgui => _enginevgui ??= Singleton<IEngineVGui>();
 
+	public static bool RenderingView { get; private set; }
+
 	public void RenderView(in ViewSetup viewRender, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
 		MatRenderContextPtr renderContext;
 		using (renderContext = new MatRenderContextPtr(materials)) {
 			ITexture? saveRenderTarget = renderContext.GetRenderTarget();
 		}
 
-		SetupMain3DView(in viewRender, clearFlags);
-		using (renderContext = new MatRenderContextPtr(materials)) {
-			bool drew3dSkybox = false;
-			SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
-			SkyboxView skyView = new SkyboxView(this);
-			if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false) 
-				AddViewToScene(skyView);
+		RenderingView = true;
+		render.SceneBegin();
+		using (renderContext = new MatRenderContextPtr(materials))
+			renderContext.TurnOnToneMapping();
 
-			if ((clearFlags & ClearFlags.ClearColor) == 0) {
-				if (enginetrace.GetPointContents(viewRender.Origin, out _) == Contents.Solid) {
-					clearFlags |= ClearFlags.ClearColor;
-				}
+		SetupMain3DView(in viewRender, clearFlags);
+
+		bool drew3dSkybox = false;
+		SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
+		SkyboxView skyView = new SkyboxView(this);
+		if ((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false)
+			AddViewToScene(skyView);
+
+		if ((clearFlags & ClearFlags.ClearColor) == 0) {
+			if (enginetrace.GetPointContents(viewRender.Origin, out _) == Contents.Solid) {
+				clearFlags |= ClearFlags.ClearColor;
 			}
 		}
+
+		ViewDrawScene(drew3dSkybox, skyboxVisible, in viewRender, clearFlags, ViewID.Main, (whatToDraw & RenderViewInfo.DrawViewmodel) != 0);
+		render.SceneEnd();
+		DrawViewModels(in viewRender, whatToDraw & RenderViewInfo.DrawViewmodel);
+
+		CleanupMain3DView(in viewRender);
+
 		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {
 			int viewWidth = viewRender.UnscaledWidth;
 			int viewHeight = viewRender.UnscaledHeight;
@@ -280,6 +293,18 @@ public class ViewRender : IViewRender
 				renderContext.Flush();
 			}
 		}
+	}
+
+	private void ViewDrawScene(bool drew3dSkybox, SkyboxVisibility skyboxVisible, in ViewSetup viewRender, ClearFlags clearFlags, ViewID main, bool drawViewModel = false, int baseDrawFlags = 0) {
+		throw new NotImplementedException();
+	}
+
+	private void DrawViewModels(in ViewSetup viewRender, RenderViewInfo renderViewInfo) {
+		throw new NotImplementedException();
+	}
+
+	private void CleanupMain3DView(in ViewSetup viewRender) {
+		throw new NotImplementedException();
 	}
 
 	private void AddViewToScene(SkyboxView skyView) {
