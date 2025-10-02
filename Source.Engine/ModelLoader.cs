@@ -286,7 +286,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		data ??= Singleton<CommonHostState>().WorldBrush;
 		return data!.SurfaceLighting![MSurf_Index(ref surfID, data)].OffsetIntoLightmapPage;
 	}
-	public static int MSurf_VertCount(ref BSPMSurface2 surfID) => (int)(((uint)surfID.Flags >> (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask);
+	public static int MSurf_VertCount(ref BSPMSurface2 surfID) => (int)(((uint)surfID.Flags >> (int)SurfDraw.VertCountShift) & 0xFF);
 	public static void MSurf_SetVertCount(ref BSPMSurface2 surfID, uint vertCount) {
 		uint flags = (vertCount << (int)SurfDraw.VertCountShift) & (uint)SurfDraw.VertCountMask;
 		surfID.Flags |= (SurfDraw)flags;
