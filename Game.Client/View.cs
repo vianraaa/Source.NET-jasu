@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace Game.Client;
 
+
 public class ViewRender(IMaterialSystem materials, IServiceProvider services, Render engineRenderer) : IViewRender
 {
 	public const int VIEW_NEARZ = 3;
@@ -194,7 +195,14 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 		}
 
 		SetupMain3DView(in viewRender, clearFlags);
-
+		using (renderContext = new MatRenderContextPtr(materials)) {
+			bool drew3dSkybox = false;
+			SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
+			SkyboxView skyView = new SkyboxView(this);
+			if((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false){
+				AddViewToScene(in skyView);
+			}
+		}
 		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {
 			int viewWidth = viewRender.UnscaledWidth;
 			int viewHeight = viewRender.UnscaledHeight;

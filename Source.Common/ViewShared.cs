@@ -1,4 +1,5 @@
-﻿using Source.Common.Mathematics;
+﻿using Source.Common.Client;
+using Source.Common.Mathematics;
 
 using System.Numerics;
 
@@ -20,13 +21,6 @@ public enum StereoEye
 	Left = 1,
 	Right = 2,
 	Max = 3,
-}
-
-public class Base3dView {
-	protected ViewSetup setup;
-	public Frustum GetFrustrum() {
-		throw new NotImplementedException();
-	}
 }
 
 public struct ViewSetup

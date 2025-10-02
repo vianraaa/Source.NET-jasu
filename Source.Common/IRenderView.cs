@@ -1,4 +1,5 @@
-﻿using Source.Common.MaterialSystem;
+﻿using Source.Common.Engine;
+using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine;
 
@@ -6,8 +7,51 @@ using System.Numerics;
 
 namespace Source.Common;
 
+public interface IWorldRenderList
+{
+
+}
+
+public enum DrawWorldListFlags
+{
+	StrictlyAboveWater = 0x001,
+	StrictlyUnderWater = 0x002,
+	IntersectsWater = 0x004,
+	WaterSurface = 0x008,
+	Skybox = 0x010,
+	ClipSkybox = 0x020,
+	ShadowDepth = 0x040,
+	Refraction = 0x080,
+	Reflection = 0x100,
+	SSAO = 0x800,
+}
+
+public enum MatSortGroup
+{
+	StrictlyAboveWater = 0,
+	StrictlyUnderwater,
+	IntersectsWaterSurface,
+	WaterSurface,
+
+	Max
+}
+
+public enum RenderDepthMode
+{
+	Normal,
+	Shadow,
+	SSAO,
+	Override,
+	Max
+}
+
+/// <summary>
+/// Analog of IVRenderView
+/// </summary>
 public interface IRenderView
 {
+	void DrawBrushModel(IClientEntity baseentity, Model model, in Vector3 origin, in QAngle angles);
+	void DrawIdentityBrushModel(IWorldRenderList list, Model model);
 	void VGui_Paint(PaintMode mode);
 	void Push2DView(ViewSetup view, ClearFlags flags, ITexture? renderTarget, Frustum frustumPlanes);
 	void PopView(Frustum frustumPlanes);
