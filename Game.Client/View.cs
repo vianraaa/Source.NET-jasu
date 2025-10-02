@@ -200,7 +200,7 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 			SkyboxVisibility skyboxVisible = SkyboxVisibility.NotVisible;
 			SkyboxView skyView = new SkyboxView(this);
 			if((drew3dSkybox = skyView.Setup(in viewRender, ref clearFlags, ref skyboxVisible)) != false){
-				AddViewToScene(in skyView);
+				AddViewToScene(skyView);
 			}
 		}
 		if ((whatToDraw & RenderViewInfo.DrawHUD) != 0) {
@@ -260,6 +260,10 @@ public class ViewRender(IMaterialSystem materials, IServiceProvider services, Re
 				renderContext.Flush();
 			}
 		}
+	}
+
+	private void AddViewToScene(SkyboxView skyView) {
+		throw new NotImplementedException();
 	}
 
 	// Needs more work. Mostly just to clear the buffers rn
