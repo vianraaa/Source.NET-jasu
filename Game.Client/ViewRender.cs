@@ -29,7 +29,8 @@ public static class ViewRenderConVars
 	internal readonly static ConVar r_threaded_renderables = new("0", 0);
 }
 
-public class RenderExecutor {
+public class RenderExecutor
+{
 	public virtual void AddView(Rendering3dView view) { }
 	public virtual void Execute() { }
 	public RenderExecutor(ViewRender mainView) {
@@ -41,7 +42,7 @@ public class RenderExecutor {
 public class SimpleRenderExecutor : RenderExecutor
 {
 	public SimpleRenderExecutor(ViewRender mainView) : base(mainView) {
-		
+
 	}
 	public override void AddView(Rendering3dView view) {
 		Base3dView? prevRenderer = mainView.SetActiveRenderer(view);
@@ -49,11 +50,12 @@ public class SimpleRenderExecutor : RenderExecutor
 		mainView.SetActiveRenderer(prevRenderer);
 	}
 	public override void Execute() {
-	
+
 	}
 }
 
-public enum ViewID {
+public enum ViewID
+{
 	Illegal = -2,
 	None = -1,
 	Main = 0,
@@ -127,7 +129,7 @@ public class SkyboxView : Rendering3dView
 		clearFlags |= ClearFlags.ClearDepth;
 
 		DrawFlags = DrawFlags.RenderUnderwater | DrawFlags.RenderAbovewater | DrawFlags.RenderWater;
-		if (r_skybox.GetBool()) 
+		if (r_skybox.GetBool())
 			DrawFlags |= DrawFlags.DrawSkybox;
 
 		return true;
@@ -166,6 +168,6 @@ public class SkyboxView : Rendering3dView
 	static ref Sky3DParams GetSkybox3DRef(PlayerLocalData local) => ref local.Skybox3D;
 
 	private SkyboxVisibility ComputeSkyboxVisibility() {
-		throw new NotImplementedException();
+		return engine.IsSkyboxVisibleFromPoint(ViewSetup.Origin);
 	}
 }

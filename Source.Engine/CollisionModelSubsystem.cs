@@ -10,7 +10,10 @@ using Source.Common.Utilities;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -23,6 +26,45 @@ public static class CollisionBSPDataStatic
 	public static CollisionBSPData GetCollisionBSPData() => g_BSPData;
 }
 
+[DebuggerDisplay("Source BSP Collision Model @ {Origin} [{Mins} -> {Maxs}] (head-node {HeadNode})")]
+public struct CollisionModel
+{
+	public Vector3 Mins, Maxs, Origin;
+	public int HeadNode;
+
+	// Analog of CM_PointLeafnum
+	public static int PointLeafnum(in Vector3 point) {
+		CollisionBSPData bspData = GetCollisionBSPData();
+		if (bspData.NumPlanes == 0)
+			return 0;
+		return PointLeafnum_r(bspData, in point, 0);
+	}
+
+	public static int PointLeafnum_r(CollisionBSPData bspData, in Vector3 point, int num) {
+		float d;
+		ref CollisionNode node = ref Unsafe.NullRef<CollisionNode>();
+		ref CollisionPlane plane = ref Unsafe.NullRef<CollisionPlane>();
+
+		while (num >= 0) {
+			node = ref bspData.MapNodes.AsSpan()[bspData.MapRootNode + num];
+			plane = ref bspData.MapPlanes.AsSpan()[node.CollisionPlaneIdx];
+
+			if ((int)plane.Type < 3)
+				d = point[(int)plane.Type] - plane.Dist;
+			else
+				d = Vector3.Dot(plane.Normal, point) - plane.Dist;
+
+			if (d < 0)
+				num = node.Children[1];
+			else
+				num = node.Children[0];
+		}
+
+		return -1 - num;
+	}
+	// vcollide_t research todo
+}
+
 public class CollisionBSPData
 {
 	public string? MapName;
@@ -30,17 +72,23 @@ public class CollisionBSPData
 	public readonly List<CollisionModel> MapCollisionModels = [];
 	public readonly List<CollisionSurface> MapSurfaces = [];
 	public readonly List<CollisionPlane> MapPlanes = [];
+	public readonly List<CollisionNode> MapNodes = [];
+	public readonly List<CollisionLeaf> Leafs = [];
+	public readonly List<ushort> MapLeafBrushes = [];
 	public readonly List<string?> TextureNames = [];
 
 	IMaterialSystem? materials;
 
 	public BSPVis[]? MapVis;
 
+	public int MapRootNode;
+
 	public int NumSurfaces;
 	public int NumLeafs;
 	public int NumAreas;
 	public int NumPlanes;
 	public int NumClusters;
+	public int NumNodes;
 	public int NumTextures;
 
 	internal bool Init() {
@@ -118,11 +166,36 @@ public class CollisionBSPData
 		}
 	}
 	internal void LoadLeafs() {
-
+		MapLoadHelper lh = new(LumpIndex.Leafs);
+		switch (lh.LumpVersion) {
+			case 0:
+				CollisionBSPData_LoadLeafs_Version_0(lh);
+				break;
+			case 1:
+				CollisionBSPData_LoadLeafs_Version_1(lh);
+				break;
+			default:
+				Assert(0);
+				Error("Unknown LUMP_LEAFS version\n");
+				break;
+		}
 	}
+
+	private void CollisionBSPData_LoadLeafs_Version_1(MapLoadHelper lh) {
+		throw new NotImplementedException();
+	}
+
+	private void CollisionBSPData_LoadLeafs_Version_0(MapLoadHelper lh) {
+		throw new NotImplementedException();
+	}
+
 	internal void LoadLeafBrushes() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.LeafBrushes);
+		ushort[] inData = lh.LoadLumpData<ushort>(throwIfNoElements: true, BSPFileCommon.MAX_MAP_LEAFBRUSHES, sysErrorIfOOB: true);
 
+		MapLeafBrushes.Clear(); MapLeafBrushes.AddRange(inData);
 	}
+
 	internal void LoadPlanes() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Planes);
 		BSPPlane[] inData = lh.LoadLumpData<BSPPlane>(throwIfNoElements: true, BSPFileCommon.MAX_MAP_PLANES, sysErrorIfOOB: true);
@@ -155,6 +228,23 @@ public class CollisionBSPData
 
 	}
 	internal void LoadNodes() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Nodes);
+		BSPNode[] inData = lh.LoadLumpData<BSPNode>(throwIfNoElements: true, BSPFileCommon.MAX_MAP_NODES, sysErrorIfOOB: true);
+		int count = inData.Length;
+		MapNodes.Clear(); MapNodes.EnsureCount(count + 6);
+
+		NumNodes = count;
+		MapRootNode = 0;
+
+		Span<CollisionNode> outNodes = MapNodes.AsSpan();
+		Span<CollisionPlane> planes = MapPlanes.AsSpan();
+		for (int i = 0; i < count; i++) {
+			ref BSPNode _in = ref inData[i];
+			ref CollisionNode _out = ref outNodes[i];
+			_out.CollisionPlaneIdx = _in.PlaneNum;
+			for (int j = 0; j < 2; j++)
+				_out.Children[j] = _in.Children[j];
+		}
 
 	}
 	internal void LoadAreas() {

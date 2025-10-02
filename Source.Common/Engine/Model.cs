@@ -28,14 +28,6 @@ public struct ModelTexInfo
 	public IMaterial? Material;
 }
 
-[DebuggerDisplay("Source BSP Collision Model @ {Origin} [{Mins} -> {Maxs}] (head-node {HeadNode})")]
-public struct CollisionModel
-{
-	public Vector3 Mins, Maxs, Origin;
-	public int HeadNode;
-	// vcollide_t research todo
-}
-
 [DebuggerDisplay("Source BSP Collision Surface '{Name}' (props: {SurfaceProps}, flags: {Flags})")]
 public struct CollisionSurface
 {

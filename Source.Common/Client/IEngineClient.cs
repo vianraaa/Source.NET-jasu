@@ -1,5 +1,6 @@
 ﻿using Source.Common.Mathematics;
 
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -94,4 +95,5 @@ public interface IEngineClient
 	int GetLocalPlayer();
 	double GetLastTimeStamp();
 	uint GetProtocolVersion();
+	SkyboxVisibility IsSkyboxVisibleFromPoint(in Vector3 origin);
 }

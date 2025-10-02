@@ -22,6 +22,33 @@ public enum PlaneType : byte
 	Pad1 = 19
 }
 
+public struct CollisionLeaf
+{
+	public int Contents;
+	public short Cluster;
+
+	private short areaFlags;
+	public ushort FirstLeafBrush;
+	public ushort NumLeafBrushes;
+	public ushort DispListStart;
+	public ushort DispCount;
+
+	public short Area {
+		readonly get => (short)(areaFlags & 0x1FF);
+		set => areaFlags = (short)((areaFlags & ~0x1FF) | (value & 0x1FF));
+	}
+
+	public short Flags { 
+		readonly get => (short)((areaFlags >> 9) & 0x7F);
+		set => areaFlags = (short)((areaFlags & ~(0x7F << 9)) | ((value & 0x7F) << 9));
+	}
+}
+
+public struct CollisionNode {
+	public int CollisionPlaneIdx;
+	public InlineArray2<int> Children;
+}
+
 public struct CollisionPlane
 {
 	public Vector3 Normal;
