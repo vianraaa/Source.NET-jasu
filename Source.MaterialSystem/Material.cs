@@ -358,7 +358,7 @@ public class Material : IMaterialInternal
 			// Load the included file
 			ReadOnlySpan<char> includeFileName = currentKeyValues.GetString("include");
 
-			if (!includeFileName.IsEmpty) {
+			if (includeFileName.IsEmpty) {
 				Warning("VMT patch file has no include key - invalid!\n");
 				Assert(!includeFileName.IsEmpty);
 				break;
