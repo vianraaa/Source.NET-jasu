@@ -137,8 +137,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (fullReset) {
 			InitVertexAndPixelShaders();
 		}
-
-		SetDefaultState();
 	}
 
 	private void InitVertexAndPixelShaders() {
@@ -308,9 +306,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	internal void SetSkinningMatrices() {
 		throw new NotImplementedException();
-	}
-
-	public void SetDefaultState() {
 	}
 
 	internal void ShadeMode(ShadeMode shadeMode) {

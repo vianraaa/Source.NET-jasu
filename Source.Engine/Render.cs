@@ -260,7 +260,7 @@ public class Render(
 		if (aspectRatio == 0.0f)
 			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Height / (float)viewSetup.Width) : 1.0f;
 
-		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles + new QAngle(0, 0, -45));
+		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles + new QAngle(0, 0, -65));
 
 		float fovX = MathLib.DEG2RAD(viewSetup.FOV);
 

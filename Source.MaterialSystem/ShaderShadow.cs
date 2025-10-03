@@ -22,6 +22,7 @@ public struct GraphicsBoardState
 
 	public bool DepthTest;
 	public bool DepthWrite;
+	internal ShaderDepthFunc DepthFunc;
 }
 
 /// <summary>
@@ -169,7 +170,7 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void DepthFunc(ShaderDepthFunc depthFunc) {
-		throw new NotImplementedException();
+		State.DepthFunc = depthFunc;
 	}
 
 	public void EnableDepthWrites(bool enable) {
@@ -338,5 +339,12 @@ public class ShadowState : IShaderShadow
 
 	public void BlendOpSeparateAlpha(ShaderBlendOp blendOp) {
 		throw new NotImplementedException();
+	}
+
+	public void SetDefaultState() {
+		DepthFunc(ShaderDepthFunc.NearerOrEqual);
+		EnableDepthWrites(true);
+		EnableDepthTest(true);
+		EnableBlending(false);
 	}
 }
