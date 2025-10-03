@@ -37,9 +37,6 @@ public unsafe class Mesh : IMesh
 
 
 	protected int Mode = ComputeMode(MaterialPrimitiveType.Triangles);
-	protected int FirstVertex;
-	protected int FirstIndex;
-
 	public bool Locked;
 
 	public VertexBuffer GetVertexBuffer() => throw new Exception();

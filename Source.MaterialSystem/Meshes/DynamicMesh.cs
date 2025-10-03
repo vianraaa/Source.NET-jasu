@@ -8,6 +8,11 @@ public unsafe class DynamicMesh : Mesh
 	bool VertexOverride;
 	bool IndexOverride;
 
+	int TotalVertices;
+	int TotalIndices;
+	int FirstVertex;
+	int FirstIndex;
+
 	int BufferId;
 	public void ResetVertexAndIndexCounts() {
 		TotalVertices = TotalIndices = 0;
