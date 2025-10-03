@@ -112,7 +112,7 @@ public unsafe class VertexBuffer : IDisposable
 
 		vbo = (int)glCreateBuffer();
 		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
-		glNamedBufferData((uint)vbo, BufferSize, null, GL_DYNAMIC_DRAW);
+		glNamedBufferData((uint)vbo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 		RecomputeVAO();
 	}
 

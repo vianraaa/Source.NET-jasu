@@ -27,7 +27,7 @@ public unsafe class IndexBuffer : IDisposable
 		Dispose();
 		ibo = (int)glCreateBuffer();
 		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
-		glNamedBufferData((uint)ibo, BufferSize, null, GL_DYNAMIC_DRAW);
+		glNamedBufferData((uint)ibo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
 		if (SysmemBuffer == null) {
 			Warning("WARNING: RecomputeIBO failure (OpenGL's not happy...)\n");
