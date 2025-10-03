@@ -6,6 +6,7 @@ using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
 
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -73,7 +74,15 @@ public class ShaderSystem : IShaderSystemInternal
 		throw new NotImplementedException();
 	}
 
+	// Temporary shader aliases so I can get by without making lightmappedgeneric
+	public static readonly FrozenDictionary<ulong, string> AliasedShaders = new Dictionary<ulong, string>() {
+		{ "LightmappedGeneric".Hash(), "UnlitGeneric" }
+	}.ToFrozenDictionary();
+
 	public IShader? FindShader(ReadOnlySpan<char> shaderName) {
+		if (AliasedShaders.TryGetValue(shaderName.Hash(), out string? alternativeShader))
+			shaderName = alternativeShader;
+
 		foreach (var shaderDLL in ShaderDLLs) {
 			foreach (var shader in shaderDLL.GetShaders()) {
 				if (shaderName.Equals(shader.GetName(), StringComparison.OrdinalIgnoreCase))
