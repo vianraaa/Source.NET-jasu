@@ -44,6 +44,7 @@ public class WorldBrushData
 	public Vector3[]? VertNormals;
 	public int NumVertNormals => VertNormals?.Length ?? 0;
 	public BSPNode[]? Nodes;
+	public BSPFace[]? Faces;
 	public ushort[]? LeafMinDistToWater;
 	public ModelTexInfo[]? TexInfo;
 	public int NumTexInfo;

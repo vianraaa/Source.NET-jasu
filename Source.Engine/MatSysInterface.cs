@@ -277,7 +277,6 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			sortIndex[i] = !Unsafe.IsNullRef(ref surfID) ? FindOrAddMesh(ModelLoader.MSurf_TexInfo(ref surfID).Material, vertexCount) : -1;
 		}
 
-
 		using MatRenderContextPtr renderContext = new(materials);
 		var meshes = Meshes.AsSpan();
 		for (int i = 0; i < Meshes.Count; i++) {
@@ -285,7 +284,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
 			MeshBuilder meshBuilder = new MeshBuilder();
-			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount);
+			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {
 				int meshId = sortIndex[j];
 				if (meshId == i) {
@@ -329,7 +328,6 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		// negate = TangentSpaceSurfaceSetup(ref surfID, vect);
 
 		// CheckMSurfaceBaseTexture2(pBrushData, surfID);
-		ushort first = (ushort)builder.GetCurrentVertex();
 		int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
 		for (int i = 0; i < vertCount; i++) {
 			int vertIndex = brushData.VertIndices![ModelLoader.MSurf_FirstVertIndex(ref surfID) + i];
@@ -378,11 +376,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			}
 
 			builder.AdvanceVertex();
-			if(i >= 2) {
-				ushort firstOffset = (ushort)(first + (i - 2));
-				builder.FastIndex(firstOffset);
-				builder.FastIndex((ushort)(firstOffset + i));
-				builder.FastIndex((ushort)(firstOffset + i + 1));
+			if (i >= 2) {
+				ushort first = surfID.VertBufferIndex;
+				builder.FastIndex(first);
+				builder.FastIndex((ushort)(first + i - 1));
+				builder.FastIndex((ushort)(first + i));
 			}
 		}
 	}
@@ -555,7 +553,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		Span<MeshList> meshes = Meshes.AsSpan();
 
 		for (int i = 0; i < meshes.Length; i++) {
-			if (meshes[i].VertexFormat != format)
+			if (meshes[i].Material != material)
 				continue;
 
 			if (meshes[i].VertCount + vertexCount > nMaxVertices)

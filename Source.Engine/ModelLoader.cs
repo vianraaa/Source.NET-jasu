@@ -296,12 +296,14 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Faces);
 		BSPFace[] inFaces = lh.LoadLumpData<BSPFace>();
 
+
 		int count = inFaces.Length;
 		BSPMSurface1[] out1 = new BSPMSurface1[count];
 		BSPMSurface2[] out2 = new BSPMSurface2[count];
 		BSPSurfaceLighting[] lighting = new BSPSurfaceLighting[count];
 
 		WorldBrushData brushData = lh.GetMap();
+		brushData.Faces = inFaces;
 		brushData.Surfaces1 = out1;
 		brushData.Surfaces2 = out2;
 		brushData.SurfaceLighting = lighting;
