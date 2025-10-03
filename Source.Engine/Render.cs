@@ -257,11 +257,11 @@ public class Render(
 	private float ComputeViewMatrices(ref Matrix4x4 worldToView, ref Matrix4x4 viewToProjection, ref Matrix4x4 worldToProjection, in ViewSetup viewSetup) {
 		float aspectRatio = viewSetup.AspectRatio;
 		if (aspectRatio == 0.0f)
-			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Width / (float)viewSetup.Height) : 1.0f;
+			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Height / (float)viewSetup.Width) : 1.0f;
 
-		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles);
+		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles + new QAngle(0, 0, -45));
 
-		float fov = MathLib.DEG2RAD(viewSetup.FOV);
+		float fovX = MathLib.DEG2RAD(viewSetup.FOV);
 
 		if (viewSetup.Ortho) {
 			throw new NotImplementedException();
@@ -273,7 +273,7 @@ public class Render(
 			throw new NotImplementedException();
 		}
 		else
-			viewToProjection = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspectRatio, viewSetup.ZNear, viewSetup.ZFar);
+			viewToProjection = Matrix4x4.CreatePerspectiveFieldOfView(fovX, aspectRatio, viewSetup.ZNear, viewSetup.ZFar);
 
 		worldToProjection = Matrix4x4.Multiply(viewToProjection, worldToView);
 

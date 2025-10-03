@@ -326,11 +326,12 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		Vector3 vect = default;
 		bool negate = false;
 		// if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) 
-			// negate = TangentSpaceSurfaceSetup(ref surfID, vect);
+		// negate = TangentSpaceSurfaceSetup(ref surfID, vect);
 
 		// CheckMSurfaceBaseTexture2(pBrushData, surfID);
-
-		for (int i = 0; i < ModelLoader.MSurf_VertCount(ref surfID); i++) {
+		ushort first = (ushort)builder.GetCurrentVertex();
+		int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
+		for (int i = 0; i < vertCount; i++) {
 			int vertIndex = brushData.VertIndices![ModelLoader.MSurf_FirstVertIndex(ref surfID) + i];
 
 			ref Vector3 vec = ref brushData.Vertexes![vertIndex].Position;
@@ -377,6 +378,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			}
 
 			builder.AdvanceVertex();
+		}
+		for (int i = 1; i < vertCount - 1; i++) {
+			builder.FastIndex(first); 
+			builder.FastIndex((ushort)(first + i)); 
+			builder.FastIndex((ushort)(first + i + 1));
 		}
 	}
 

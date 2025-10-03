@@ -212,7 +212,7 @@ public class ViewRender : IViewRender
 				case StereoEye.Mono:
 					viewEye.X = (int)(vr.X * viewportScale);
 					viewEye.Y = (int)(vr.Y * viewportScale);
-					viewEye.Width = (int)(vr.Height * viewportScale);
+					viewEye.Width = (int)(vr.Width * viewportScale);
 					viewEye.Height = (int)(vr.Height * viewportScale);
 					float engineAspectRatio = engine.GetScreenAspectRatio();
 					viewEye.AspectRatio = (engineAspectRatio > 0.0f) ? engineAspectRatio : ((float)viewEye.Width / (float)viewEye.Height);

@@ -468,6 +468,9 @@ public struct IndexBuilder
 	}
 
 	public unsafe void FastTriangle(int startVert) {
+		startVert += IndexOffset;
+		if (CurrentIndex + 2 >= MaxIndexCount)
+			throw new IndexOutOfRangeException();
 		Desc.Indices[CurrentIndex] = (ushort)(startVert);
 		Desc.Indices[CurrentIndex + 1] = (ushort)(startVert + 1);
 		Desc.Indices[CurrentIndex + 2] = (ushort)(startVert + 2);
