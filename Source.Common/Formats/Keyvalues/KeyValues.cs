@@ -687,6 +687,8 @@ public class KeyValues : IEnumerable<KeyValues>
 		Type = Types.String;
 	}
 
+	public int Count => children.Count;
+
 	public bool IsEmpty(ReadOnlySpan<char> keyName = default) {
 		KeyValues? dat = FindKey(keyName, false);
 		if (dat == null)
