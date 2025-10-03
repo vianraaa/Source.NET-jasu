@@ -37,8 +37,6 @@ public unsafe class Mesh : IMesh
 
 
 	protected int Mode = ComputeMode(MaterialPrimitiveType.Triangles);
-	protected int TotalVertices;
-	protected int TotalIndices;
 	protected int FirstVertex;
 	protected int FirstIndex;
 
