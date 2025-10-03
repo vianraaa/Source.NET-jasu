@@ -439,7 +439,7 @@ public struct IndexBuilder
 		}
 	}
 
-	public void AdvanceIndex(int indices) {
+	public void AdvanceIndex() {
 		CurrentIndex += (int)Desc.IndexSize;
 		if (CurrentIndex > IndexCount)
 			IndexCount = CurrentIndex;
@@ -455,6 +455,23 @@ public struct IndexBuilder
 		IndexBuffer = null;
 		MaxIndexCount = 0;
 		memreset(ref Desc);
+	}
+
+	public unsafe void Index(ushort index) {
+		Desc.Indices[CurrentIndex] = (ushort)(IndexOffset + index);
+	}
+
+	public unsafe void FastIndex(ushort index) {
+		Desc.Indices[CurrentIndex] = (ushort)(IndexOffset + index);
+		CurrentIndex += (ushort)Desc.IndexSize;
+		IndexCount = CurrentIndex;
+	}
+
+	public unsafe void FastTriangle(int startVert) {
+		Desc.Indices[CurrentIndex] = (ushort)(startVert);
+		Desc.Indices[CurrentIndex + 1] = (ushort)(startVert + 1);
+		Desc.Indices[CurrentIndex + 2] = (ushort)(startVert + 2);
+		AdvanceIndices(3);
 	}
 }
 
@@ -588,10 +605,10 @@ public unsafe struct MeshBuilder : IDisposable
 	// Advances the current vertex and index by one
 	public void AdvanceVertex() => VertexBuilder.AdvanceVertex();
 	public void AdvanceVertices(int nVerts) => throw new NotImplementedException();
-	public void AdvanceIndex() => throw new NotImplementedException();
-	public void AdvanceIndices(int nIndices) => throw new NotImplementedException();
-	public int GetCurrentVertex() => throw new NotImplementedException();
-	public int GetCurrentIndex() => throw new NotImplementedException();
+	public void AdvanceIndex() => IndexBuilder.AdvanceIndex();
+	public void AdvanceIndices(int indices) => IndexBuilder.AdvanceIndices(indices);
+	public int GetCurrentVertex() => VertexBuilder.CurrentVertex;
+	public int GetCurrentIndex() => IndexBuilder.CurrentIndex;
 
 	// Data retrieval...
 	public ReadOnlySpan<float> Position() => throw new NotImplementedException();
@@ -692,7 +709,10 @@ public unsafe struct MeshBuilder : IDisposable
 	public void UserData(ReadOnlySpan<float> pData) => throw new NotImplementedException();
 
 	// Used to define the indices (only used if you aren't using primitives)
-	public void Index(ushort index) => throw new NotImplementedException();
+	public void Index(ushort index) => IndexBuilder.Index(index);
+
+	public void FastIndex(ushort index) => IndexBuilder.FastIndex(index);
+	public void FastTriangle(int startVert) => IndexBuilder.FastTriangle(startVert);
 
 
 	private void ComputeNumVertsAndIndices(out int maxVertices, out int maxIndices, MaterialPrimitiveType type, int primitiveCount) {
