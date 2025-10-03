@@ -257,7 +257,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		Span<int> sortIndex = stackalloc int[WorldStaticMeshes.Count];
 
 		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
-			ref BSPMSurface2 surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
+			ref BSPMSurface2 surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex, host_state.WorldBrush);
 			ModelLoader.MSurf_Flags(ref surfID) &= ~SurfDraw.TangentSpace;
 
 			if (ModelLoader.SurfaceHasDispInfo(ref surfID)) {
@@ -284,7 +284,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
 			MeshBuilder meshBuilder = new MeshBuilder();
-			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
+			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {
 				int meshId = sortIndex[j];
 				if (meshId == i) {
@@ -308,12 +308,24 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		}
 	}
 
-	struct SurfaceCtx {
+	struct SurfaceCtx
+	{
 		public InlineArray2<int> LightmapSize;
 		public InlineArray2<int> LightmapPageSize;
 		public float BumpSTexCoordOffset;
 		public Vector2 Offset;
 		public Vector2 Scale;
+	}
+
+	struct TempMapVertex()
+	{
+		public ushort Index;
+		public Vector3 Position;
+		public Vector2 TexCoord0;
+		public Vector2 TexCoord1;
+		public Vector2 TexCoord2;
+		public Vector3 Normal;
+		public Color Color = new(255, 255, 255);
 	}
 
 	private void BuildMSurfaceVertexArrays(WorldBrushData brushData, ref BSPMSurface2 surfID, float overbright, ref MeshBuilder builder) {
@@ -329,19 +341,22 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		// CheckMSurfaceBaseTexture2(pBrushData, surfID);
 		int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
+		Span<TempMapVertex> vertices = stackalloc TempMapVertex[vertCount];
 		for (int i = 0; i < vertCount; i++) {
 			int vertIndex = brushData.VertIndices![ModelLoader.MSurf_FirstVertIndex(ref surfID) + i];
 
-			ref Vector3 vec = ref brushData.Vertexes![vertIndex].Position;
+			vertices[i].Index = (ushort)(builder.GetCurrentVertex() + i);
 
-			builder.Position3fv(vec);
+			ref Vector3 vec = ref brushData.Vertexes![vertIndex].Position;
+			vertices[i].Position = vec;
 
 			Vector2 uv = default;
+
 			SurfComputeTextureCoordinate(ref ctx, ref surfID, ref vec, ref uv);
-			builder.TexCoord2fv(0, uv);
+			vertices[i].TexCoord0 = uv;
 
 			SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
-			builder.TexCoord2fv(1, uv);
+			vertices[i].TexCoord1 = uv;
 
 			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.BumpLight) != 0) {
 				if (uv.X + ctx.BumpSTexCoordOffset * 3 > 1.00001f) {
@@ -349,11 +364,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 					SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
 				}
-				builder.TexCoord2f(2, ctx.BumpSTexCoordOffset, 0.0f);
+				vertices[i].TexCoord2 = uv;
 			}
 
 			ref Vector3 normal = ref brushData.VertNormals![brushData.VertNormalIndices![ModelLoader.MSurf_FirstVertNormal(ref surfID) + i]];
-			builder.Normal3fv(normal);
+			vertices[i].Normal = normal;
 
 			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) {
 				// TangentSpaceComputeBasis(out Vector3 tangentS, out Vector3 tangentT, normal, out vect, negate);
@@ -369,20 +384,33 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 					Warning($"Warning: WorldTwoTextureBlend found on a non-displacement surface (material: {materialName}). This wastes perf for no benefit.\n");
 				}
 
-				builder.Color4ub(255, 255, 255, 0);
+				vertices[i].Color = new(255, 255, 255, 0);
 			}
 			else {
-				builder.Color3ubv(flatColor);
-			}
-
-			builder.AdvanceVertex();
-			if (i >= 2) {
-				ushort first = surfID.VertBufferIndex;
-				builder.FastIndex(first);
-				builder.FastIndex((ushort)(first + i - 1));
-				builder.FastIndex((ushort)(first + i));
+				vertices[i].Color = flatColor;
 			}
 		}
+
+		for (int i = 0; i < vertCount; i++)
+			PushVertex(ref builder, in vertices[i]);
+		for (int i = 1; i < vertCount - 1; i++)
+			EmitTriangle(ref builder, in vertices[0], in vertices[i], in vertices[i + 1]);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void EmitTriangle(ref MeshBuilder builder, in TempMapVertex v1, in TempMapVertex v2, in TempMapVertex v3) {
+		builder.FastIndex(v1.Index);
+		builder.FastIndex(v2.Index);
+		builder.FastIndex(v3.Index);
+	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	void PushVertex(ref MeshBuilder builder, in TempMapVertex v) {
+		builder.Position3fv(v.Position);
+		builder.TexCoord2fv(0, v.TexCoord0);
+		builder.TexCoord2fv(1, v.TexCoord1);
+		builder.Normal3fv(v.Normal);
+		builder.Color4ub(v.Color.R, v.Color.G, v.Color.B, v.Color.A);
+		builder.AdvanceVertex();
 	}
 
 	MaterialSystem_SortInfo[]? materialSortInfoArray;
@@ -399,16 +427,16 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		ctx.Offset.X = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] * ctx.Scale.X;
 		ctx.Offset.Y = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] * ctx.Scale.Y;
 
-		if (ctx.LightmapPageSize[0] != 0.0f) 
+		if (ctx.LightmapPageSize[0] != 0.0f)
 			ctx.BumpSTexCoordOffset = (float)ctx.LightmapSize[0] / ctx.LightmapPageSize[0];
-		else 
+		else
 			ctx.BumpSTexCoordOffset = 0.0f;
 	}
 
 	private void SurfComputeLightmapCoordinate(ref SurfaceCtx ctx, ref BSPMSurface2 surfID, ref Vector3 vec, ref Vector2 uv) {
-		if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) 
+		if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0)
 			uv.X = uv.Y = 0.5f;
-		
+
 		else if (ModelLoader.MSurf_LightmapExtents(ref surfID)[0] == 0) {
 			uv = (0.5f * ctx.Scale + ctx.Offset);
 		}
@@ -511,7 +539,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		List<nint> surfaces = new();
 		for (int surfaceIndex = 0; surfaceIndex < host_state.WorldBrush!.NumSurfaces; surfaceIndex++) {
-			surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex);
+			surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex, host_state.WorldBrush);
 			if ((ModelLoader.MSurf_TexInfo(ref surfID).Flags & Surf.NoLight) != 0 ||
 				(ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
 				ModelLoader.MSurf_Flags(ref surfID) |= SurfDraw.NoLight;
@@ -547,7 +575,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		int nMaxVertices = renderContext.GetMaxVerticesToRender(material);
 		int worldLimit = mat_max_worldmesh_vertices.GetInt();
 		worldLimit = Math.Max(worldLimit, 1024);
-		if (nMaxVertices > worldLimit) 
+		if (nMaxVertices > worldLimit)
 			nMaxVertices = mat_max_worldmesh_vertices.GetInt();
 
 		Span<MeshList> meshes = Meshes.AsSpan();
