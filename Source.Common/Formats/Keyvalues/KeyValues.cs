@@ -3,6 +3,7 @@ using Source.Common.GUI;
 
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Source.Common.Formats.Keyvalues;
@@ -20,6 +21,13 @@ public class KeyValues : IEnumerable<KeyValues>
 		Pointer,
 		Color,
 		Uint64,
+	}
+
+	public void Clear() {
+		foreach (var child in children)
+			child.node = null!; // << Intentionally break children
+		children.Clear();
+		Type = Types.None;
 	}
 
 	public string Name = "";
@@ -290,7 +298,7 @@ public class KeyValues : IEnumerable<KeyValues>
 		return didAnything;
 	}
 
-	private void DetermineValueType(string input) { 
+	private void DetermineValueType(string input) {
 		// Try Int32
 		if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i32)) {
 			Value = i32;
@@ -501,6 +509,36 @@ public class KeyValues : IEnumerable<KeyValues>
 	}
 
 	public KeyValues? GetFirstSubKey() => children.First?.Value;
+	public KeyValues? GetFirstTrueSubKey() {
+		for (KeyValues? ret = GetFirstSubKey(); ret != null; ret = ret.GetNextKey()) {
+			if (ret.Type == Types.None)
+				return ret;
+		}
+		return null;
+	}
+	public KeyValues? GetNextTrueSubKey() {
+		for (LinkedListNode<KeyValues>? ret = node.Next; ret != null; ret = ret.Next) {
+			if (ret.Value.Type == Types.None)
+				return ret.Value;
+		}
+		return null;
+	}
+
+	public KeyValues? GetFirstValue() {
+		for (KeyValues? ret = GetFirstSubKey(); ret != null; ret = ret.GetNextKey()) {
+			if (ret.Type != Types.None)
+				return ret;
+		}
+		return null;
+	}
+
+	public KeyValues? GetNextValue() {
+		for (LinkedListNode<KeyValues>? ret = node.Next; ret != null; ret = ret.Next) {
+			if (ret.Value.Type != Types.None)
+				return ret.Value;
+		}
+		return null;
+	}
 
 	public int GetInt() {
 		return Convert.ToInt32(Value);
@@ -647,5 +685,16 @@ public class KeyValues : IEnumerable<KeyValues>
 
 		Value = new string(str);
 		Type = Types.String;
+	}
+
+	public bool IsEmpty(ReadOnlySpan<char> keyName = default) {
+		KeyValues? dat = FindKey(keyName, false);
+		if (dat == null)
+			return true;
+
+		if (dat.Type == Types.None && dat.children.Count == 0)
+			return true;
+
+		return false;
 	}
 }
