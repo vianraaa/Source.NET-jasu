@@ -204,6 +204,7 @@ public class Render(
 		Span<MatSysInterface.MeshList> meshLists = MaterialSystem.Meshes.AsSpan();
 		for (int i = 0; i < meshLists.Length; i++) {
 			ref MatSysInterface.MeshList meshList = ref meshLists[i];
+			renderContext.Bind(meshList.Material);
 			meshList.Mesh.Draw();
 		}
 	}

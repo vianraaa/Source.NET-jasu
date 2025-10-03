@@ -280,7 +280,7 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public void MatrixMode(MaterialMatrixMode mode) => ctx.MatrixMode(mode);
 	public void PushMatrix() => ctx.PushMatrix();
 	public void LoadIdentity() => ctx.LoadIdentity();
-	public void Bind(IMaterial material, object? proxyData) => ctx.Bind(material, proxyData);
+	public void Bind(IMaterial material, object? proxyData = null) => ctx.Bind(material, proxyData);
 	public IMaterial? GetCurrentMaterial() => ctx.GetCurrentMaterial();
 	public void PopMatrix() => ctx.PopMatrix();
 	public IShaderAPI GetShaderAPI() => ctx.GetShaderAPI();

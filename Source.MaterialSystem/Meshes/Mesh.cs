@@ -359,7 +359,7 @@ public unsafe class Mesh : IMesh
 	}
 
 	internal bool HasColorMesh() {
-		return false;
+		return true;
 	}
 
 	internal bool HasFlexMesh() {
