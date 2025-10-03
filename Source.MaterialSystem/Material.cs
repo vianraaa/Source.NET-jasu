@@ -239,7 +239,7 @@ public class Material : IMaterialInternal
 		return "";
 	}
 
-	public static bool LoadVMTFile(IFileSystem fileSystem, KeyValues keyValues, KeyValues patchKeyValues, ReadOnlySpan<char> materialName, bool absolutePath, List<FileNameHandle_t>? includes = null) {
+	public static bool LoadVMTFile(IFileSystem fileSystem, ref KeyValues keyValues, KeyValues patchKeyValues, ReadOnlySpan<char> materialName, bool absolutePath, List<FileNameHandle_t>? includes = null) {
 		Span<char> fileName = stackalloc char[MAX_PATH];
 		ReadOnlySpan<char> pathID = "GAME";
 		if (!absolutePath) {
@@ -458,7 +458,7 @@ public class Material : IMaterialInternal
 
 			vmtKeyValues = new KeyValues("vmt");
 			patchKeyValues = new KeyValues("vmt_patches");
-			if (!LoadVMTFile(materials.FileSystem, vmtKeyValues, patchKeyValues, GetName(), false, VMTIncludes)) {
+			if (!LoadVMTFile(materials.FileSystem, ref vmtKeyValues, patchKeyValues, GetName(), false, VMTIncludes)) {
 				Warning($"CMaterial::PrecacheVars: error loading vmt file for {GetName()}\n");
 				error = true;
 			}

@@ -314,7 +314,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		List<FileNameHandle_t>? includes = null;
 		KeyValues keyValues = new KeyValues("vmt");
 		KeyValues patchKeyValues = new KeyValues("vmt_patches");
-		if (!Material.LoadVMTFile(FileSystem, keyValues, patchKeyValues, vmtName, true, null)) {
+		if (!Material.LoadVMTFile(FileSystem, ref keyValues, patchKeyValues, vmtName, true, null)) {
 			keyValues = null!;
 			patchKeyValues = null!;
 		}
