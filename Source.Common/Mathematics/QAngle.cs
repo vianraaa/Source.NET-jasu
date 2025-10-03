@@ -40,7 +40,10 @@ public struct QAngle
 
 	public static implicit operator Vector3(QAngle angle) => new(angle.X, angle.Y, angle.Z);
 	public static implicit operator QAngle(Vector3 vector) => new(vector);
-
+	public static QAngle operator +(QAngle a, QAngle b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+	public static QAngle operator -(QAngle a, QAngle b) => new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+	public static QAngle operator *(QAngle a, QAngle b) => new(a.X * b.X, a.Y * b.Y, a.Z * b.Z);
+	public static QAngle operator /(QAngle a, QAngle b) => new(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
 	public void Init() {
 		X = 0;
 		Y = 0;
