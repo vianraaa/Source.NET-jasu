@@ -8,6 +8,7 @@ using Source.Common.ShaderAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -240,11 +241,13 @@ public interface IMatRenderContext
 	void PushRenderTargetAndViewport(ITexture? thisTexture);
 	void PopRenderTargetAndViewport();
 	void PushRenderTargetAndViewport(ITexture? renderTarget, int x, int y, int width, int height);
+	void PushRenderTargetAndViewport(ITexture? renderTarget, ITexture? depthTarget, int x, int y, int width, int height);
 	void GetWindowSize(out int w, out int h);
 	ITexture? GetRenderTarget();
 	IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material);
 	int GetMaxVerticesToRender(IMaterial material);
 	int GetMaxIndicesToRender(IMaterial material);
+	void LoadMatrix(in Matrix4x4 matrixProjection);
 }
 
 public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
@@ -306,4 +309,8 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public void TurnOnToneMapping() {
 		// todo
 	}
+
+	public void PushRenderTargetAndViewport(ITexture? rtColor, ITexture? rtDepth, int x, int y, int width, int height) => ctx.PushRenderTargetAndViewport(rtColor, rtDepth, x, y, width, height);
+
+	public void LoadMatrix(in Matrix4x4 matrixProjection) => ctx.LoadMatrix(in matrixProjection);
 }

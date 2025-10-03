@@ -83,4 +83,6 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	public void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint returnFlags) => engineRenderer.ViewSetupVisEx(novis, origins, out returnFlags);
 
 	public void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust) => engineRenderer.DrawWorldLists(list, flags, waterZAdjust);
+
+	public void Push3DView(in ViewSetup viewRender, ClearFlags clearFlags, ITexture? rtColor, Frustum frustum, ITexture? rtDepth) => engineRenderer.Push3DView(in viewRender, clearFlags, rtColor, frustum, rtDepth);
 }

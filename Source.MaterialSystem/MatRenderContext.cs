@@ -104,6 +104,12 @@ public class MatRenderContext : IMatRenderContextInternal
 		CurrentMatrixChanged();
 	}
 
+	public void LoadMatrix(in Matrix4x4 matrix) {
+		ref MatrixStackItem item = ref CurMatrixItem;
+		item.Matrix = matrix;
+		CurrentMatrixChanged();
+	}
+
 	private void MarkDirty() => MatrixStacksDirtyStates[(int)matrixMode] = true;
 
 	public void MatrixMode(MaterialMatrixMode mode) {
@@ -365,6 +371,13 @@ public class MatRenderContext : IMatRenderContextInternal
 		RenderTargetStack.Push(element);
 		CommitRenderTargetAndViewport();
 	}
+
+	public void PushRenderTargetAndViewport(ITexture? colorTexture, ITexture? depthTexture, int x, int y, int w, int h) {
+		RenderTargetStackElement element = new(colorTexture, depthTexture, x, y, w, h);
+		RenderTargetStack.Push(element);
+		CommitRenderTargetAndViewport();
+	}
+
 	public void PushRenderTargetAndViewport(ITexture? thisTexture) {
 		RenderTargetStackElement element = new(thisTexture, 0, 0, -1, -1);
 		RenderTargetStack.Push(element);

@@ -189,7 +189,7 @@ public class Render(
 	}
 
 	internal void DrawSceneEnd() {
-		
+
 	}
 
 	internal void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint returnFlags) {
@@ -197,6 +197,52 @@ public class Render(
 	}
 
 	internal void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust) {
-		throw new NotImplementedException();
+
+	}
+
+	float Near;
+	float Far;
+
+	internal void Push3DView(in ViewSetup view, ClearFlags clearFlags, ITexture? rtColor, Frustum frustum, ITexture? rtDepth) {
+		ref ViewStack writeStack = ref ViewStack.Push();
+		writeStack.View = view;
+		writeStack.Is2DView = false;
+		writeStack.NoDraw = (clearFlags & ClearFlags.NoDraw) != 0;
+
+		ref ViewSetup topView = ref writeStack.View;
+
+		if (topView.AspectRatio == 0.0f)
+			topView.AspectRatio = (topView.Height != 0) ? ((float)topView.Width / (float)topView.Height) : 1.0f;
+
+		ref ViewStack viewStack = ref ViewStack.Top();
+		topView.AspectRatio = ComputeViewMatrices(out viewStack.MatrixView, out viewStack.MatrixProjection, out viewStack.MatrixWorldToScreen, in topView);
+
+		Near = topView.ZNear;
+		Far = topView.ZFar;
+
+		ExtractMatrices();
+
+		if (!writeStack.NoDraw) {
+			using MatRenderContextPtr renderContext = new(materials);
+
+			if (rtColor == null)
+				rtColor = renderContext.GetRenderTarget();
+
+			renderContext.PushRenderTargetAndViewport(rtColor, rtDepth, topView.X, topView.Y, topView.Width, topView.Height);
+
+			ClearView(topView, clearFlags, rtColor, rtDepth);
+
+			renderContext.DepthRange(0, 1);
+			renderContext.MatrixMode(MaterialMatrixMode.Projection);
+			renderContext.PushMatrix();
+			renderContext.LoadMatrix(MatrixProjection);
+			renderContext.MatrixMode(MaterialMatrixMode.View);
+			renderContext.PushMatrix();
+			renderContext.LoadMatrix(MatrixView);
+			renderContext.MatrixMode(MaterialMatrixMode.Model);
+			renderContext.PushMatrix();
+
+			OnViewActive(frustum);
+		}
 	}
 }

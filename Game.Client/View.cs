@@ -392,7 +392,7 @@ public class ViewRender : IViewRender
 	}
 
 	private void CleanupMain3DView(in ViewSetup viewRender) {
-		throw new NotImplementedException();
+		render.PopView(GetFrustum());
 	}
 
 	private void AddViewToScene(Rendering3dView view) {
@@ -404,6 +404,10 @@ public class ViewRender : IViewRender
 		using MatRenderContextPtr renderContext = new(materials);
 		renderContext.ClearColor4ub(0, 0, 0, 255);
 		renderContext.ClearBuffers((clearFlags & ClearFlags.ClearColor) != 0, (clearFlags & ClearFlags.ClearDepth) != 0, (clearFlags & ClearFlags.ClearStencil) != 0);
+
+		ITexture? rtColor = null;
+		ITexture? rtDepth = null;
+		render.Push3DView(in viewRender, clearFlags, rtColor, GetFrustum(), rtDepth);
 	}
 
 	public void SetCheapWaterEndDistance(float cheapWaterEndDistance) {
