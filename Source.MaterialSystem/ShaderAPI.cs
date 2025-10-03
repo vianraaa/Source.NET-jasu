@@ -10,6 +10,7 @@ using Source.Common.Bitmap;
 using Source.Common.Engine;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
+using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 using Source.MaterialSystem.Meshes;
 
@@ -343,6 +344,9 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			int maxWidth = 0, maxHeight = 0;
 			GetBackBufferDimensions(out maxWidth, out maxHeight);
 		}
+		// TODO: this has a lot more logic...
+		glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
+		glDepthRangef((viewport.MinZ * 2) - 1, viewport.MaxZ);
 	}
 
 	public void GetViewports(Span<ShaderViewport> viewports) {

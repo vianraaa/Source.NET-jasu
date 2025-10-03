@@ -61,11 +61,10 @@ public class MatRenderContext : IMatRenderContextInternal
 		shaderAPI.GetBackBufferDimensions(out width, out height);
 	}
 
-	public unsafe void DepthRange(double near, double far) {
+	public void DepthRange(double near, double far) {
 		ActiveViewport.MinZ = (float)near;
 		ActiveViewport.MaxZ = (float)far;
-		fixed (ShaderViewport* pVp = &ActiveViewport)
-			shaderAPI.SetViewports(new(pVp, 1));
+		shaderAPI.SetViewports(new(ref ActiveViewport));
 	}
 
 	public void EndRender() {
