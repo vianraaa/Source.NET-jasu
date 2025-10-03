@@ -84,6 +84,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 		ShaderSystem.LoadAllShaderDLLs();
 		TextureSystem.Init();
+		ShaderSystem.Init();
+		CreateDebugMaterials();
 		MatLightmaps = new(this);
 	}
 
@@ -233,6 +235,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues keyValues) => CreateMaterial(materialName, textureGroup, keyValues);
 	IMaterial IMaterialSystem.CreateMaterial(ReadOnlySpan<char> materialName, KeyValues keyValues) => CreateMaterial(materialName, TEXTURE_GROUP_OTHER, keyValues);
 
+	public IMaterialInternal CreateMaterial(ReadOnlySpan<char> materialName, KeyValues? keyValues)
+		=> CreateMaterial(materialName, MaterialDefines.TEXTURE_GROUP_OTHER, keyValues);
 	public IMaterialInternal CreateMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroup, KeyValues? keyValues) {
 		IMaterialInternal material;
 		lock (this) {
@@ -356,6 +360,18 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public IMaterial? FindMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, bool complain, ReadOnlySpan<char> complainPrefix) {
 		return FindMaterialEx(materialName, textureGroupName, MaterialFindContext.None, complain, complainPrefix);
 	}
+
+	public void CreateDebugMaterials() {
+		KeyValues vmtKeyValues;
+
+
+		vmtKeyValues = new("UnlitGeneric");
+		vmtKeyValues.SetInt("$model", 1);
+		vmtKeyValues.SetFloat("$decalscale", 0.05f);
+		vmtKeyValues.SetString("$basetexture", "error");
+		errorMaterial = CreateMaterial("___error.vmt", vmtKeyValues);
+	}
+
 	public IMaterial? FindProceduralMaterial(ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName, KeyValues keyValues) {
 		IMaterialInternal? material = MaterialDict.FindMaterial(materialName, true);
 		if (keyValues != null) {

@@ -58,7 +58,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		CreateMatrixStacks();
 
-		ShaderManager.Init();
 		MeshMgr.Init();
 		Device!.SetSwapInterval(0);
 

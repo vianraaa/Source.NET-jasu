@@ -647,6 +647,7 @@ public class Material : IMaterialInternal
 	}
 
 	public VertexFormat GetVertexFormat() {
+		Precache();
 		return ShaderRenderState.VertexFormat;
 	}
 
