@@ -126,6 +126,19 @@ public unsafe static class Gl46
 			_ => throw new NotImplementedException()
 		};
 	}
+	public static int GLEnum(this ShaderDepthFunc factor) {
+		return factor switch {
+			ShaderDepthFunc.Never => GL_NEVER,
+			ShaderDepthFunc.Nearer => GL_LESS,
+			ShaderDepthFunc.Equal => GL_EQUAL,
+			ShaderDepthFunc.NearerOrEqual => GL_LEQUAL,
+			ShaderDepthFunc.Farther => GL_GREATER,
+			ShaderDepthFunc.NotEqual => GL_NOTEQUAL,
+			ShaderDepthFunc.FartherOrEqual => GL_GEQUAL,
+			ShaderDepthFunc.Always => GL_ALWAYS,
+			_ => throw new NotImplementedException()
+		};
+	}
 	public static bool Both(this ShaderBlendFactor factor) {
 		return factor switch {
 			ShaderBlendFactor.BothInvSrcAlpha => true,
