@@ -24,6 +24,7 @@ public struct ModelTexInfo
 	public float LuxelsPerWorldUnit;
 	public float WorldUnitsPerLuxel;
 	public Surf Flags;
+	public int TexData;
 	public ushort TexInfoFlags;
 	public IMaterial? Material;
 }

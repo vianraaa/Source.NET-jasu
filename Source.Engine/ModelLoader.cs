@@ -255,7 +255,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Mod_LoadPrimitives() { }
 	private void Mod_LoadPrimVerts() { }
 	private void Mod_LoadPrimIndices() { }
-	public static ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData? data = null) => ref (data ?? Singleton<CommonHostState>().WorldBrush)!.Surfaces2![surfaceIndex];
+	public static ref BSPFace FaceHandleFromIndex(int surfaceIndex, WorldBrushData data) => ref data.Faces![surfaceIndex];
+	public static ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData data) => ref data.Surfaces2![surfaceIndex];
 	public static ref CollisionPlane MSurf_Plane(ref BSPMSurface2 surfID) => ref surfID.Plane.GetReference();
 	public static unsafe int MSurf_Index(ref BSPMSurface2 surfID, WorldBrushData? data = null) => (int)surfID.SurfNum;
 	public static ref int MSurf_FirstVertIndex(ref BSPMSurface2 surfID) => ref surfID.FirstVertIndex;
@@ -415,7 +416,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 			_out.LuxelsPerWorldUnit = _out.LightmapVecsLuxelsPerWorldUnits[0].AsVector3().Length();
 			_out.WorldUnitsPerLuxel = 1.0f / _out.LuxelsPerWorldUnit;
-
+			_out.TexData = _in.TexData;
 			_out.Flags = (Surf)_in.Flags;
 			_out.TexInfoFlags = 0;
 
