@@ -378,11 +378,12 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			}
 
 			builder.AdvanceVertex();
-		}
-		for (int i = 1; i < vertCount - 1; i++) {
-			builder.FastIndex(first); 
-			builder.FastIndex((ushort)(first + i)); 
-			builder.FastIndex((ushort)(first + i + 1));
+			if(i >= 2) {
+				ushort firstOffset = (ushort)(first + (i - 2));
+				builder.FastIndex(firstOffset);
+				builder.FastIndex((ushort)(firstOffset + i));
+				builder.FastIndex((ushort)(firstOffset + i + 1));
+			}
 		}
 	}
 
