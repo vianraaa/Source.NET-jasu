@@ -50,6 +50,7 @@ public enum RenderDepthMode
 /// </summary>
 public interface IRenderView
 {
+	public const uint VIEW_SETUP_VIS_EX_RETURN_FLAGS_USES_RADIAL_VIS = 1;
 	void DrawBrushModel(IClientEntity baseentity, Model model, in Vector3 origin, in QAngle angles);
 	void DrawIdentityBrushModel(IWorldRenderList list, Model model);
 	void VGui_Paint(PaintMode mode);
@@ -58,4 +59,5 @@ public interface IRenderView
 	void SetMainView(in Vector3 origin, in QAngle angles);
 	void SceneBegin();
 	void SceneEnd();
+	void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint visFlags);
 }

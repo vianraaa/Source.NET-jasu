@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Game.Shared;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Client;
@@ -14,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -203,8 +206,6 @@ public class ViewRender : IViewRender
 	IEngineVGui? _enginevgui;
 	IEngineVGui enginevgui => _enginevgui ??= Singleton<IEngineVGui>();
 
-	public static bool RenderingView { get; private set; }
-
 	public void RenderView(in ViewSetup viewRender, ClearFlags clearFlags, RenderViewInfo whatToDraw) {
 		MatRenderContextPtr renderContext;
 		using (renderContext = new MatRenderContextPtr(materials)) {
@@ -295,8 +296,56 @@ public class ViewRender : IViewRender
 		}
 	}
 
-	private void ViewDrawScene(bool drew3dSkybox, SkyboxVisibility skyboxVisible, in ViewSetup viewRender, ClearFlags clearFlags, ViewID main, bool drawViewModel = false, int baseDrawFlags = 0) {
-		throw new NotImplementedException();
+	private void ViewDrawScene(bool drew3dSkybox, SkyboxVisibility skyboxVisible, in ViewSetup viewRender, ClearFlags clearFlags, ViewID viewID, bool drawViewModel = false, DrawFlags baseDrawFlags = 0) {
+		BaseDrawFlags = baseDrawFlags;
+		SetupCurrentView(in viewRender.Origin, in viewRender.Angles, viewID);
+		IGameSystem.PreRenderAllSystems();
+		SetupVis(in viewRender, out uint visFlags);
+	}
+
+	public static Vector3 CurrentRenderOrigin = new(0, 0, 0);
+	public static QAngle CurrentRenderAngles = new(0, 0, 0);
+	public static Vector3 CurrentRenderForward = new(0, 0, 0);
+	public static Vector3 CurrentRenderRight = new(0, 0, 0);
+	public static Vector3 CurrentRenderUp = new(0, 0, 0);
+	public static Matrix4x4 CurrentCamInverse;
+	public static bool CanAccessCurrentView = false;
+	public static bool RenderingView = false;
+	public static ViewID CurrentViewID = ViewID.None;
+
+	private void SetupCurrentView(in Vector3 origin, in QAngle angles, ViewID viewID) {
+		CurrentRenderOrigin = origin;
+		CurrentRenderAngles = angles;
+
+		ComputeCameraVariables(origin, angles, out CurrentRenderForward, out CurrentRenderRight, out CurrentRenderUp, ref CurrentCamInverse);
+
+		CurrentViewID = viewID;
+		CanAccessCurrentView = true;
+
+		// view.GetScreenFadeDistances(out float screenFadeMinSize, out float screenFadeMaxSize);
+		// modelinfo.SetViewScreenFadeRange(screenFadeMinSize, screenFadeMaxSize);
+	}
+
+	private void ComputeCameraVariables(in Vector3 origin, in QAngle angles, out Vector3 forward, out Vector3 right, out Vector3 up, ref Matrix4x4 currentCamInverse) {
+		angles.Vectors(out forward, out right, out up);
+
+		for (int i = 0; i < 3; ++i) {
+			currentCamInverse[i, 0] = right[i];
+			currentCamInverse[i, 1] = up[i];
+			currentCamInverse[i, 2] = -forward[i];
+			currentCamInverse[i, 3] = 0.0f;
+		}
+
+		currentCamInverse[3, 0] = -Vector3.Dot(right, origin);
+		currentCamInverse[3, 1] = -Vector3.Dot(up, origin);
+		currentCamInverse[3, 2] = Vector3.Dot(forward, origin);
+		currentCamInverse[3, 3] = 1.0F;
+	}
+
+	public virtual bool ShouldForceNoVis() => ForceNoVis;
+	private void SetupVis(in ViewSetup viewRender, out uint visFlags) {
+		// TODO: more logic here 
+		render.ViewSetupVisEx(ShouldForceNoVis(), new ReadOnlySpan<Vector3>(in viewRender.Origin), out visFlags);
 	}
 
 	private void DrawViewModels(in ViewSetup viewRender, RenderViewInfo renderViewInfo) {

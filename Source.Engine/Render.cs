@@ -191,4 +191,8 @@ public class Render(
 	internal void DrawSceneEnd() {
 		
 	}
+
+	internal void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint returnFlags) {
+		ModelLoader.Map_VisSetup(host_state.WorldModel, origins, novis, out returnFlags);
+	}
 }

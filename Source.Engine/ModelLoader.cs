@@ -555,4 +555,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	public void UnreferenceModel(Model model, ModelLoaderFlags referenceType) {
 		throw new NotImplementedException();
 	}
+
+	internal static void Map_VisSetup(Model? worldModel, ReadOnlySpan<Vector3> origins, bool novis, out uint returnFlags) {
+		// todo
+		returnFlags = 0;
+	}
 }
