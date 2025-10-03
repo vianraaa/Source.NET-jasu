@@ -59,7 +59,7 @@ namespace Source.Formats.VPK
 
 			var partFile = ParentArchive.Parts.FirstOrDefault(part => part.Index == ArchiveIndex);
 			if (partFile == null)
-				return null;
+				throw new Exception("Part file was null!");
 
 			if (HasPreloadData) {
 				dataCache = new byte[PreloadBytes + EntryLength];
