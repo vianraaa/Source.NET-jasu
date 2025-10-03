@@ -106,7 +106,49 @@ public class Rendering3dView : Base3dView
 
 	protected void EnableWorldFog() => throw new NotImplementedException();
 	protected void SetupRenderablesList(int viewID) => throw new NotImplementedException();
-	protected void DrawWorld(float waterZAdjust) => throw new NotImplementedException();
+	protected void DrawWorld(float waterZAdjust) {
+		DrawWorldListFlags engineFlags = BuildEngineDrawWorldListFlags(DrawFlags);
+		mainView.render.DrawWorldLists(WorldRenderList, engineFlags, waterZAdjust);
+	}
+
+	private DrawWorldListFlags BuildEngineDrawWorldListFlags(DrawFlags drawFlags) {
+		DrawWorldListFlags engineFlags = 0;
+
+		if ((drawFlags & DrawFlags.DrawSkybox) != 0)
+			engineFlags |= DrawWorldListFlags.Skybox;
+		
+		if ((drawFlags & DrawFlags.RenderAbovewater) != 0) {
+			engineFlags |= DrawWorldListFlags.StrictlyAboveWater;
+			engineFlags |= DrawWorldListFlags.IntersectsWater;
+		}
+
+		if ((drawFlags & DrawFlags.RenderUnderwater) != 0) {
+			engineFlags |= DrawWorldListFlags.StrictlyUnderWater;
+			engineFlags |= DrawWorldListFlags.IntersectsWater;
+		}
+
+		if ((drawFlags & DrawFlags.RenderWater) != 0)
+			engineFlags |= DrawWorldListFlags.WaterSurface;
+		
+		if ((drawFlags & DrawFlags.ClipSkybox) != 0)
+			engineFlags |= DrawWorldListFlags.ClipSkybox;
+
+		if ((drawFlags & DrawFlags.ShadowDepthMap) != 0)
+			engineFlags |= DrawWorldListFlags.ShadowDepth;
+		
+		if ((drawFlags & DrawFlags.RenderRefraction) != 0)
+			engineFlags |= DrawWorldListFlags.Refraction;
+		
+		if ((drawFlags & DrawFlags.RenderReflection) != 0)
+			engineFlags |= DrawWorldListFlags.Reflection;
+		
+		if ((drawFlags & DrawFlags.SSAODepthPass) != 0) {
+			engineFlags |= DrawWorldListFlags.SSAO | DrawWorldListFlags.StrictlyUnderWater | DrawWorldListFlags.IntersectsWater | DrawWorldListFlags.StrictlyAboveWater;
+			engineFlags &= ~(DrawWorldListFlags.WaterSurface | DrawWorldListFlags.Refraction | DrawWorldListFlags.Reflection);
+		}
+
+		return engineFlags;
+	}
 }
 
 public class SkyboxView : Rendering3dView

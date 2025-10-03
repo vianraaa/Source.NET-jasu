@@ -12,7 +12,7 @@ public interface IWorldRenderList
 
 }
 
-public enum DrawWorldListFlags
+public enum DrawWorldListFlags : ulong
 {
 	StrictlyAboveWater = 0x001,
 	StrictlyUnderWater = 0x002,
@@ -60,4 +60,5 @@ public interface IRenderView
 	void SceneBegin();
 	void SceneEnd();
 	void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint visFlags);
+	void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust);
 }

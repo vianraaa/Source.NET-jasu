@@ -9,6 +9,8 @@ using Source.Engine.Client;
 using System.Drawing;
 using System.Numerics;
 
+using static Source.Common.Networking.svc_ClassInfo;
+
 namespace Source.Engine;
 
 public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem materials,
@@ -79,4 +81,6 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	public void SceneEnd() => engineRenderer.DrawSceneEnd();
 
 	public void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint returnFlags) => engineRenderer.ViewSetupVisEx(novis, origins, out returnFlags);
+
+	public void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust) => engineRenderer.DrawWorldLists(list, flags, waterZAdjust);
 }

@@ -23,6 +23,37 @@ using System.Threading.Tasks;
 namespace Game.Client;
 
 
+public class BaseWorldView : Rendering3dView
+{
+	public BaseWorldView(ViewRender mainView) : base(mainView) { }
+}
+public class SimpleWorldView : BaseWorldView
+{
+	public SimpleWorldView(ViewRender mainView) : base(mainView) { }
+	public void Setup(in ViewSetup view, ClearFlags clearFlags, bool drawSkybox) {
+		base.Setup(in view);
+
+		ClearFlags = clearFlags;
+		DrawFlags = DrawFlags.DrawEntities;
+
+		if (drawSkybox)
+			DrawFlags |= DrawFlags.DrawSkybox;
+	}
+	public override void Draw() {
+		using MatRenderContextPtr renderContext = new(mainView.materials);
+
+		DrawExecute(0, ViewRender.CurrentViewID, 0);
+	}
+
+	private void DrawExecute(float waterHeight, ViewID viewID, float waterZAdjust) {
+		using MatRenderContextPtr renderContext = new(mainView.materials);
+
+		if((DrawFlags & DrawFlags.DrawEntities) != 0) {
+			DrawWorld(waterZAdjust);
+		}
+	}
+}
+
 public class ViewRender : IViewRender
 {
 	public const int VIEW_NEARZ = 3;
@@ -37,7 +68,7 @@ public class ViewRender : IViewRender
 	Base3dView? ActiveRenderer;
 	readonly SimpleRenderExecutor SimpleExecutor;
 
-	readonly IMaterialSystem materials;
+	internal readonly IMaterialSystem materials;
 	readonly IServiceProvider services;
 	readonly IEngineTrace enginetrace;
 	readonly Render engineRenderer;
@@ -49,7 +80,7 @@ public class ViewRender : IViewRender
 		SimpleExecutor = new(this);
 	}
 
-	IRenderView render;
+	internal IRenderView render;
 
 	public int BuildWorldListsNumber() {
 		throw new NotImplementedException();
@@ -301,6 +332,13 @@ public class ViewRender : IViewRender
 		SetupCurrentView(in viewRender.Origin, in viewRender.Angles, viewID);
 		IGameSystem.PreRenderAllSystems();
 		SetupVis(in viewRender, out uint visFlags);
+		DrawWorldAndEntities(true, in viewRender, clearFlags);
+	}
+
+	private void DrawWorldAndEntities(bool drawSkybox, in ViewSetup viewRender, ClearFlags clearFlags) {
+		SimpleWorldView noWaterView = new SimpleWorldView(this);
+		noWaterView.Setup(in viewRender, clearFlags, drawSkybox);
+		AddViewToScene(noWaterView);
 	}
 
 	public static Vector3 CurrentRenderOrigin = new(0, 0, 0);
@@ -349,15 +387,16 @@ public class ViewRender : IViewRender
 	}
 
 	private void DrawViewModels(in ViewSetup viewRender, RenderViewInfo renderViewInfo) {
-		throw new NotImplementedException();
+		// TODO
+		// We don't have viewmodel stuff ready at all yet
 	}
 
 	private void CleanupMain3DView(in ViewSetup viewRender) {
 		throw new NotImplementedException();
 	}
 
-	private void AddViewToScene(SkyboxView skyView) {
-		SimpleExecutor.AddView(skyView);
+	private void AddViewToScene(Rendering3dView view) {
+		SimpleExecutor.AddView(view);
 	}
 
 	// Needs more work. Mostly just to clear the buffers rn
