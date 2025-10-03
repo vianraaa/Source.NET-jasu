@@ -177,6 +177,6 @@ public class MeshMgr
 		}
 
 		int nMaxVerts = ShaderAPI.GetCurrentDynamicVBSize() / vertexSize;
-		return Math.Min(nMaxVerts, 65535);
+		return Math.Min(nMaxVerts, 32767); // TODO: We should look into increasing the vertex/index limits in-engine
 	}
 }

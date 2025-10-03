@@ -227,7 +227,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 	internal readonly List<MeshList> Meshes = [];
 	internal readonly List<IMesh?> WorldStaticMeshes = [];
-	ConVar mat_max_worldmesh_vertices = new("65536", 0);
+	ConVar mat_max_worldmesh_vertices = new((32767 / 3).ToString(), 0);
 	public static int VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group) {
 		int vertexCount = 0;
 
