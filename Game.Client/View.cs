@@ -82,10 +82,6 @@ public class ViewRender : IViewRender
 
 	internal IRenderView render;
 
-	public int BuildWorldListsNumber() {
-		throw new NotImplementedException();
-	}
-
 	public void DisableVis() {
 		throw new NotImplementedException();
 	}

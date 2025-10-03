@@ -60,6 +60,6 @@ public interface IRenderView
 	void SceneBegin();
 	void SceneEnd();
 	void ViewSetupVisEx(bool novis, ReadOnlySpan<Vector3> origins, out uint visFlags);
-	void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust);
+	void DrawWorld(DrawWorldListFlags flags, float waterZAdjust);
 	void Push3DView(in ViewSetup viewRender, ClearFlags clearFlags, ITexture? rtColor, Frustum frustum, ITexture? rtDepth);
 }

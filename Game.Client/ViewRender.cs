@@ -88,7 +88,6 @@ public class Rendering3dView : Base3dView
 {
 	protected DrawFlags DrawFlags;
 	protected ClearFlags ClearFlags;
-	protected IWorldRenderList? WorldRenderList = null;
 	protected ViewSetup ViewSetup;
 
 	public Rendering3dView(ViewRender mainView) : base(mainView) {
@@ -108,7 +107,7 @@ public class Rendering3dView : Base3dView
 	protected void SetupRenderablesList(int viewID) => throw new NotImplementedException();
 	protected void DrawWorld(float waterZAdjust) {
 		DrawWorldListFlags engineFlags = BuildEngineDrawWorldListFlags(DrawFlags);
-		mainView.render.DrawWorldLists(WorldRenderList, engineFlags, waterZAdjust);
+		mainView.render.DrawWorld(engineFlags, waterZAdjust);
 	}
 
 	private DrawWorldListFlags BuildEngineDrawWorldListFlags(DrawFlags drawFlags) {

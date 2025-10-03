@@ -57,7 +57,6 @@ public interface IViewRender
 	ref ViewSetup GetPlayerViewSetup();
 	ref ViewSetup GetViewSetup();
 	void DisableVis();
-	int BuildWorldListsNumber();
 	void SetCheapWaterStartDistance(float cheapWaterStartDistance);
 	void SetCheapWaterEndDistance(float cheapWaterEndDistance);
 	void GetWaterLODParams(ref float cheapWaterStartDistance, ref float cheapWaterEndDistance);

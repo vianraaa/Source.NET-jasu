@@ -151,7 +151,7 @@ public class Render(
 		renderContext.LoadIdentity();
 	}
 
-	private void ClearView(ViewSetup topView, ClearFlags flags, ITexture? renderTarget) {
+	private void ClearView(ViewSetup topView, ClearFlags flags, ITexture? color, ITexture? depth = null) {
 
 	}
 
@@ -184,6 +184,7 @@ public class Render(
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }
 
+
 	internal void DrawSceneBegin() {
 
 	}
@@ -196,7 +197,9 @@ public class Render(
 		ModelLoader.Map_VisSetup(host_state.WorldModel, origins, novis, out returnFlags);
 	}
 
-	internal void DrawWorldLists(IWorldRenderList? list, DrawWorldListFlags flags, float waterZAdjust) {
+	internal void DrawWorld(DrawWorldListFlags flags, float waterZAdjust) {
+		using MatRenderContextPtr renderContext = new(materials);
+
 
 	}
 
@@ -215,7 +218,7 @@ public class Render(
 			topView.AspectRatio = (topView.Height != 0) ? ((float)topView.Width / (float)topView.Height) : 1.0f;
 
 		ref ViewStack viewStack = ref ViewStack.Top();
-		topView.AspectRatio = ComputeViewMatrices(out viewStack.MatrixView, out viewStack.MatrixProjection, out viewStack.MatrixWorldToScreen, in topView);
+		topView.AspectRatio = ComputeViewMatrices(ref viewStack.MatrixView, ref viewStack.MatrixProjection, ref viewStack.MatrixWorldToScreen, in topView);
 
 		Near = topView.ZNear;
 		Far = topView.ZFar;
@@ -244,5 +247,48 @@ public class Render(
 
 			OnViewActive(frustum);
 		}
+	}
+
+	private float ComputeViewMatrices(ref Matrix4x4 worldToView, ref Matrix4x4 viewToProjection, ref Matrix4x4 worldToProjection, in ViewSetup viewSetup) {
+		float flAspectRatio = viewSetup.AspectRatio;
+		if (flAspectRatio == 0.0f)
+			flAspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Width / (float)viewSetup.Height) : 1.0f;
+
+		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles);
+
+		if (viewSetup.Ortho) {
+			throw new NotImplementedException();
+		}
+		else if (viewSetup.OffCenter) {
+			throw new NotImplementedException();
+		}
+		else if (viewSetup.ViewToProjectionOverride) {
+			throw new NotImplementedException();
+		}
+		else
+			viewToProjection = Matrix4x4.CreatePerspectiveFieldOfView(MathLib.DEG2RAD(viewSetup.FOV), flAspectRatio, viewSetup.ZNear, viewSetup.ZFar);
+
+		worldToProjection = Matrix4x4.Multiply(viewToProjection, worldToView);
+
+		return flAspectRatio;
+	}
+
+	private static Matrix4x4 baseRotation;
+	private static bool didInit = false;
+	private void ComputeViewMatrix(ref Matrix4x4 worldToView, in Vector3 origin, in QAngle angles) {
+		if (!didInit) {
+			baseRotation = Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, MathLib.DEG2RAD(-90));
+			baseRotation *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitZ, MathLib.DEG2RAD(90));
+
+			didInit = true;
+		}
+
+		worldToView = baseRotation;
+
+		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, MathLib.DEG2RAD(-angles.Z)); // -angles[2]
+		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitY, MathLib.DEG2RAD(-angles.X)); // -angles[0]
+		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitZ, MathLib.DEG2RAD(-angles.Y)); // -angles[1]
+
+		worldToView *= Matrix4x4.CreateTranslation(-origin);
 	}
 }
