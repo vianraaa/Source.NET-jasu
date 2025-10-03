@@ -406,7 +406,11 @@ public struct IndexBuilder
 	}
 
 	private unsafe static void GenerateSequentialIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
-		throw new NotImplementedException();
+		if (indices == null)
+			return;
+
+		for (int i = 0; i < indexCount; ++i)
+			indices[i] = (ushort)(i + indexOffset);
 	}
 
 	private unsafe static void GeneratePolygonIndexBuffer(ushort* indices, int indexCount, int indexOffset) {

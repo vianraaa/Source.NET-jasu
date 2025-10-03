@@ -13,7 +13,7 @@ using System.Security.Cryptography;
 
 namespace Source.Engine;
 
-public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con Con, IMaterialSystem materials, MaterialSystem_Config MaterialSystemConfig) : IEngineClient
+public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con Con, IMaterialSystem materials, MaterialSystem_Config MaterialSystemConfig, MatSysInterface MatSys) : IEngineClient
 {
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
@@ -117,5 +117,9 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 		if ((flags & BSPFileCommon.LEAF_FLAGS_SKY) != 0)
 			return SkyboxVisibility.Skybox3D;
 		return ((flags & BSPFileCommon.LEAF_FLAGS_SKY2D) != 0) ? SkyboxVisibility.Skybox2D : SkyboxVisibility.NotVisible;
+	}
+
+	public float GetScreenAspectRatio() {
+		return MatSys.GetScreenAspect();
 	}
 }

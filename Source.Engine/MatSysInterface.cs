@@ -218,15 +218,15 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 	int FrameCount = 0;
-	struct MeshList
+	internal struct MeshList
 	{
 		public IMesh Mesh;
 		public IMaterial Material;
 		public int VertCount;
 		public VertexFormat VertexFormat;
 	}
-	readonly List<MeshList> Meshes = [];
-	readonly List<IMesh?> WorldStaticMeshes = [];
+	internal readonly List<MeshList> Meshes = [];
+	internal readonly List<IMesh?> WorldStaticMeshes = [];
 	ConVar mat_max_worldmesh_vertices = new("65536", 0);
 	public static int VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group) {
 		int vertexCount = 0;
@@ -285,7 +285,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
 			MeshBuilder meshBuilder = new MeshBuilder();
-			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, 0);
+			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {
 				int meshId = sortIndex[j];
 				if (meshId == i) {
@@ -596,5 +596,13 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		materialSortInfoArray = new MaterialSystem_SortInfo[sortIDs];
 		materials.GetSortInfo(materialSortInfoArray);
 		WorldStaticMeshCreate();
+	}
+
+	internal float GetScreenAspect() {
+		// r_aspectratio todo
+		IMatRenderContext renderContext = materials.GetRenderContext();
+
+		renderContext.GetRenderTargetDimensions(out int width, out int height);
+		return (height != 0) ? ((float)width / (float)height) : 1.0f;
 	}
 }

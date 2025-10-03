@@ -96,4 +96,5 @@ public interface IEngineClient
 	double GetLastTimeStamp();
 	uint GetProtocolVersion();
 	SkyboxVisibility IsSkyboxVisibleFromPoint(in Vector3 origin);
+	float GetScreenAspectRatio();
 }

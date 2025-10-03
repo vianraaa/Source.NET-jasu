@@ -1,4 +1,6 @@
 ﻿
+using CommunityToolkit.HighPerformance;
+
 using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
@@ -199,8 +201,11 @@ public class Render(
 
 	internal void DrawWorld(DrawWorldListFlags flags, float waterZAdjust) {
 		using MatRenderContextPtr renderContext = new(materials);
-
-
+		Span<MatSysInterface.MeshList> meshLists = MaterialSystem.Meshes.AsSpan();
+		for (int i = 0; i < meshLists.Length; i++) {
+			ref MatSysInterface.MeshList meshList = ref meshLists[i];
+			meshList.Mesh.Draw();
+		}
 	}
 
 	float Near;
@@ -250,11 +255,13 @@ public class Render(
 	}
 
 	private float ComputeViewMatrices(ref Matrix4x4 worldToView, ref Matrix4x4 viewToProjection, ref Matrix4x4 worldToProjection, in ViewSetup viewSetup) {
-		float flAspectRatio = viewSetup.AspectRatio;
-		if (flAspectRatio == 0.0f)
-			flAspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Width / (float)viewSetup.Height) : 1.0f;
+		float aspectRatio = viewSetup.AspectRatio;
+		if (aspectRatio == 0.0f)
+			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Width / (float)viewSetup.Height) : 1.0f;
 
 		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles);
+
+		float fov = MathLib.DEG2RAD(viewSetup.FOV);
 
 		if (viewSetup.Ortho) {
 			throw new NotImplementedException();
@@ -266,11 +273,11 @@ public class Render(
 			throw new NotImplementedException();
 		}
 		else
-			viewToProjection = Matrix4x4.CreatePerspectiveFieldOfView(MathLib.DEG2RAD(viewSetup.FOV), flAspectRatio, viewSetup.ZNear, viewSetup.ZFar);
+			viewToProjection = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspectRatio, viewSetup.ZNear, viewSetup.ZFar);
 
 		worldToProjection = Matrix4x4.Multiply(viewToProjection, worldToView);
 
-		return flAspectRatio;
+		return aspectRatio;
 	}
 
 	private static Matrix4x4 baseRotation;
@@ -278,7 +285,6 @@ public class Render(
 	private void ComputeViewMatrix(ref Matrix4x4 worldToView, in Vector3 origin, in QAngle angles) {
 		if (!didInit) {
 			baseRotation = Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, MathLib.DEG2RAD(-90));
-			baseRotation *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitZ, MathLib.DEG2RAD(90));
 
 			didInit = true;
 		}

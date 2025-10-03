@@ -201,10 +201,25 @@ public class ViewRender : IViewRender
 		for (StereoEye eye = GetFirstEye(); eye <= GetLastEye(); eye = eye + 1) {
 			ref ViewSetup viewEye = ref GetView(eye);
 
+			float viewportScale = 1.0f; // mat_viewportscale todo
+
 			viewEye.UnscaledX = vr.X;
 			viewEye.UnscaledY = vr.Y;
 			viewEye.UnscaledWidth = vr.Width;
 			viewEye.UnscaledHeight = vr.Height;
+
+			switch (eye) {
+				case StereoEye.Mono:
+					viewEye.X = (int)(vr.X * viewportScale);
+					viewEye.Y = (int)(vr.Y * viewportScale);
+					viewEye.Width = (int)(vr.Height * viewportScale);
+					viewEye.Height = (int)(vr.Height * viewportScale);
+					float engineAspectRatio = engine.GetScreenAspectRatio();
+					viewEye.AspectRatio = (engineAspectRatio > 0.0f) ? engineAspectRatio : ((float)viewEye.Width / (float)viewEye.Height);
+					break;
+				default:
+					throw new NotImplementedException("Stereo-eye not yet implemented");
+			}
 
 			ClearFlags clearFlags = ClearFlags.ClearColor | ClearFlags.ClearDepth | ClearFlags.ClearStencil;
 
