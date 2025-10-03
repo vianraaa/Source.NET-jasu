@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -253,6 +254,20 @@ public static class CFormatting
 	/// <param name="target"></param>
 	/// <param name="str"></param>
 	/// <returns></returns>
+	public static float strtof(ReadOnlySpan<char> input, out ReadOnlySpan<char> output) {
+		Span<char> outputBuffer = stackalloc char[input.Length];
+		int i = 0;
+		while (input[i] switch { '0' or '1' or '2' or '3' or '4' or '5' or '6' or '7' or '8' or '9' or '.' => true, _ => false }) {
+			outputBuffer[i] = input[i];
+			i++;
+		}
+		if (float.TryParse(outputBuffer[..i], NumberStyles.Float, CultureInfo.InvariantCulture, out float ret)) {
+			output = input[i..];
+			return ret;
+		}
+		output = input;
+		return 0;
+	}
 	public static int strcpy(Span<char> target, ReadOnlySpan<char> str) {
 		str = str.SliceNullTerminatedString();
 		int len = Math.Min(target.Length, str.Length);

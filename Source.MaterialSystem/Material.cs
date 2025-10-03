@@ -2,6 +2,7 @@
 
 using SharpCompress.Common;
 
+using Source.Common;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
@@ -14,8 +15,10 @@ using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -662,9 +665,54 @@ public class Material : IMaterialInternal
 
 		return new MaterialVar(material, name, vecVal[..dimensions]);
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	static bool IsEndline(char c) => c == '\n' || c == '\0';
 
-	private static int ParseVectorFromKeyValueString(KeyValues keyValue, ReadOnlySpan<char> name, Span<float> vecVal) {
-		throw new NotImplementedException();
+	private static int ParseVectorFromKeyValueString(KeyValues keyValue, ReadOnlySpan<char> materialName, Span<float> vecVal) {
+		ReadOnlySpan<char> scan = keyValue.GetString();
+		bool divideBy255 = false;
+
+		while (char.IsWhiteSpace(scan[0]))
+			scan = scan[1..];
+
+		if (scan[0] == '{')
+			divideBy255 = true;
+		else
+			Assert(scan[0] == '[');
+
+		scan = scan[1..];
+		int i;
+		for (i = 0; i < 4; i++) {
+			// skip whitespace
+			while (char.IsWhiteSpace(scan[0]))
+				scan = scan[1..];
+
+			if (IsEndline(scan[0]) || scan[0] == ']' || scan[0] == '}') {
+				if (scan[0] != ']' && scan[0] != '}')
+					Warning($"Warning in .VMT file ({materialName}): no ']' or '}}' found in vector key \"{keyValue.Name}\".\nDid you forget to surround the vector with \"s?\n");
+
+				vecVal[i] = 0.0f;
+				break;
+			}
+			vecVal[i] = strtof(scan, out ReadOnlySpan<char> end);
+
+			if (scan == end) {
+				Warning($"Error in .VMT file: error parsing vector element \"{keyValue.Name}\" in \"{materialName}\"\n");
+				return 0;
+			}
+
+			scan = end;
+		}
+
+		if (divideBy255) {
+			const float div = 1.0f / 255.0f;
+			vecVal[0] *= div;
+			vecVal[1] *= div;
+			vecVal[2] *= div;
+			vecVal[3] *= div;
+		}
+
+		return i;
 	}
 
 	private static IMaterialVar? CreateMatrixVarFromKeyValue(Material material, KeyValues keyValue) {
