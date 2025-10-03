@@ -54,6 +54,7 @@ public abstract unsafe class BitHelpers
 /// </summary>
 public abstract unsafe class BitBuffer
 {
+	public abstract uint ChecksumXOR();
 	public const uint COORD_INTEGER_BITS = 14;
 	public const uint COORD_FRACTIONAL_BITS = 5;
 	public const int COORD_DENOMINATOR = 1 << (int)COORD_FRACTIONAL_BITS;

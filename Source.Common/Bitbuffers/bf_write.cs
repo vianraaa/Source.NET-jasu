@@ -716,4 +716,17 @@ public unsafe class bf_write : BitBuffer
 		int intVal = BitConverter.SingleToInt32Bits(val);
 		WriteUBitLong((uint)intVal, 32);
 	}
+
+	// Some Garry decision it seems?
+	public override uint ChecksumXOR() {
+		uint checksum = 0x1532c78;
+		int bytesWritten = BytesWritten;
+		if (bytesWritten != 0) {
+			do {
+				checksum = ((checksum + data![0] * 0x10u) * 4u ^ 0x1532c60u) * 3u + data![0] * unchecked((uint)-0x44) + unchecked((uint)-0x11);
+				bytesWritten--;
+			} while (bytesWritten != 0);
+		}
+		return checksum;
+	}
 }

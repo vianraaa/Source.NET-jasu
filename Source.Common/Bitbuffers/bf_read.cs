@@ -687,4 +687,8 @@ public unsafe class bf_read : BitBuffer
 	public bool CompareBits(bf_read other, int bits) {
 		return ReadUBitLong(bits) != other.ReadUBitLong(bits);
 	}
+
+	public override uint ChecksumXOR() {
+		throw new NotImplementedException();
+	}
 }
