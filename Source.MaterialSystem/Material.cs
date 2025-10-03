@@ -382,9 +382,9 @@ public class Material : IMaterialInternal
 
 		baseKeyValuesOut = currentKeyValues;
 
-		if (nCount >= 10) 
+		if (nCount >= 10)
 			Warning("Infinite recursion in patch file?\n");
-		
+
 		return true;
 	}
 
@@ -402,11 +402,11 @@ public class Material : IMaterialInternal
 		}
 
 		KeyValues? srcInsertSection = srcKeyValues.FindKey("insert");
-		if (srcInsertSection != null) 
+		if (srcInsertSection != null)
 			MergeKeyValues(srcInsertSection, destInsertSection);
 
 		KeyValues? srcReplaceSection = srcKeyValues.FindKey("replace");
-		if (srcReplaceSection != null) 
+		if (srcReplaceSection != null)
 			MergeKeyValues(srcReplaceSection, destReplaceSection);
 	}
 
@@ -654,6 +654,16 @@ public class Material : IMaterialInternal
 	}
 
 	private static IMaterialVar? CreateVectorMaterialVarFromKeyValue(Material material, KeyValues keyValue) {
+		ReadOnlySpan<char> name = GetVarName(keyValue);
+		Span<float> vecVal = stackalloc float[4];
+		int dimensions = ParseVectorFromKeyValueString(keyValue, name, vecVal);
+		if (dimensions == 0)
+			return null;
+
+		return new MaterialVar(material, name, vecVal[..dimensions]);
+	}
+
+	private static int ParseVectorFromKeyValueString(KeyValues keyValue, ReadOnlySpan<char> name, Span<float> vecVal) {
 		throw new NotImplementedException();
 	}
 

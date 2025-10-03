@@ -41,6 +41,17 @@ public sealed class MaterialVar : IMaterialVar
 		VecVal[0] = VecVal[1] = VecVal[2] = VecVal[3] = val;
 		IntVal = (int)val;
 	}
+	public MaterialVar(IMaterial material, ReadOnlySpan<char> key, Span<float> val) {
+		Init();
+		owningMaterial = (IMaterialInternal)material!;
+		Name = new(key);
+		Type = MaterialVarType.Vector;
+		NumVectorComps = (byte)Math.Min(val.Length, 4);
+		for (int i = 0; i < NumVectorComps; i++) 
+			VecVal[i] = val[i];
+		
+		IntVal = (int)VecVal[0];
+	}
 	public MaterialVar(IMaterial material, ReadOnlySpan<char> key, ReadOnlySpan<char> val) {
 		Init();
 		owningMaterial = (IMaterialInternal)material!;
