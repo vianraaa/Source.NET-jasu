@@ -679,7 +679,7 @@ public abstract class BaseClientState(
 		msg.WriteLong(authProtocol);
 		msg.WriteLong(challengeNr);
 		msg.WriteLong(RetryChallenge);
-		msg.WriteUBitLong(2729496039, 32);
+		msg.WriteUBitLong(msg.ChecksumXOR(), 32);
 		msg.WriteString(GetClientName(), true, 256);
 		msg.WriteString(password.GetString(), true, 256);
 		msg.WriteString(SteamAppInfo.GetSteamInf(fileSystem).PatchVersion, true, 32);
