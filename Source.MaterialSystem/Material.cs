@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -254,11 +255,183 @@ public class Material : IMaterialInternal
 		if (!keyValues.LoadFromFile(fileSystem, fileName[..fileName.IndexOf('\0')], pathID)) {
 			return false;
 		}
-		// ExpandPatchFile(keyValues, patchKeyValues, pathID, includes);
+		ExpandPatchFile(ref keyValues, patchKeyValues, pathID, includes);
 
 		return true;
 	}
 
+	private static void ExpandPatchFile(ref KeyValues keyValues, KeyValues patchKeyValues, ReadOnlySpan<char> pathID, List<FileNameHandle_t>? includes) {
+		KeyValues? nonPatchKeyValues = null;
+		if (!patchKeyValues.IsEmpty())
+			nonPatchKeyValues = keyValues.MakeCopy();
+		else {
+			bool success = AccumulateRecursiveVmtPatches(patchKeyValues, ref nonPatchKeyValues, keyValues, pathID, includes);
+			if (!success) {
+				return;
+			}
+		}
+
+		if (nonPatchKeyValues != null) {
+			ApplyPatchKeyValues(nonPatchKeyValues, patchKeyValues);
+			keyValues = nonPatchKeyValues;
+		}
+	}
+
+	private static void ApplyPatchKeyValues(KeyValues keyvalues, KeyValues patchKeyValues) {
+		KeyValues? insertSection = patchKeyValues.FindKey("insert");
+		KeyValues? replaceSection = patchKeyValues.FindKey("replace");
+
+		if (insertSection != null)
+			InsertKeyValues(keyvalues, insertSection, false);
+
+		if (replaceSection != null)
+			InsertKeyValues(keyvalues, replaceSection, true);
+	}
+
+	private static void InsertKeyValues(KeyValues dst, KeyValues src, bool checkForExistence, bool recursive = false) {
+		KeyValues? srcVar = src.GetFirstSubKey();
+		while (srcVar != null) {
+			if (!checkForExistence || dst.FindKey(srcVar.Name) != null) {
+				switch (srcVar.Type) {
+					case KeyValues.Types.String:
+						dst.SetString(srcVar.Name, srcVar.GetString());
+						break;
+					case KeyValues.Types.Int:
+						dst.SetInt(srcVar.Name, srcVar.GetInt());
+						break;
+					case KeyValues.Types.Double:
+						dst.SetFloat(srcVar.Name, srcVar.GetFloat());
+						break;
+					case KeyValues.Types.Pointer:
+						dst.SetPtr(srcVar.Name, srcVar.GetPtr());
+						break;
+					case KeyValues.Types.None: {
+							KeyValues? newDest = dst.FindKey(srcVar.Name, true);
+							Assert(newDest != null);
+							InsertKeyValues(newDest, srcVar, checkForExistence, true);
+						}
+						break;
+				}
+			}
+			srcVar = srcVar.GetNextKey();
+		}
+
+		if (recursive && dst.GetFirstSubKey() == null)
+			dst.SetInt("__vmtpatchdummy", 1);
+
+		if (checkForExistence) {
+			for (KeyValues? scan = dst.GetFirstTrueSubKey(); scan != null; scan = scan.GetNextTrueSubKey()) {
+				KeyValues? tmp = src.FindKey(scan.Name);
+				if (tmp == null)
+					continue;
+
+				if (tmp.Type != KeyValues.Types.None)
+					continue;
+
+				InsertKeyValues(scan, tmp, checkForExistence);
+			}
+		}
+	}
+
+	static IFileSystem? _fileSystem;
+	static IFileSystem g_fileSystem => _fileSystem ??= Singleton<IFileSystem>();
+
+	private static bool AccumulateRecursiveVmtPatches(KeyValues patchKeyValuesOut, ref KeyValues? baseKeyValuesOut, KeyValues keyValues, ReadOnlySpan<char> pathID, List<ulong>? includes) {
+		includes?.Clear();
+
+		patchKeyValuesOut.Clear();
+
+		if (!keyValues.Name.Equals("patch", StringComparison.OrdinalIgnoreCase)) {
+			if (baseKeyValuesOut != null)
+				baseKeyValuesOut = null;
+
+			return true;
+		}
+
+		KeyValues currentKeyValues = keyValues.MakeCopy();
+
+		int nCount = 0;
+		while (nCount < 10 && currentKeyValues.Name.Equals("patch", StringComparison.OrdinalIgnoreCase)) {
+			// Accumulate the new patch keys from this file
+			AccumulatePatchKeyValues(currentKeyValues, patchKeyValuesOut);
+
+			// Load the included file
+			ReadOnlySpan<char> includeFileName = currentKeyValues.GetString("include");
+
+			if (!includeFileName.IsEmpty) {
+				Warning("VMT patch file has no include key - invalid!\n");
+				Assert(!includeFileName.IsEmpty);
+				break;
+			}
+
+			currentKeyValues.Clear();
+			bool bSuccess = currentKeyValues.LoadFromFile(g_fileSystem, includeFileName, pathID);
+			if (bSuccess)
+				includes?.Add(g_fileSystem.FindOrAddFileName(includeFileName));
+			else {
+				currentKeyValues = null!;
+#if !SWDS
+				Warning($"Failed to load $include VMT file {includeFileName}\n");
+#endif
+				AssertMsg(false, $"Failed to load $include VMT file ({includeFileName})");
+				return false;
+			}
+
+			nCount++;
+		}
+
+		baseKeyValuesOut = currentKeyValues;
+
+		if (nCount >= 10) 
+			Warning("Infinite recursion in patch file?\n");
+		
+		return true;
+	}
+
+	private static void AccumulatePatchKeyValues(KeyValues srcKeyValues, KeyValues patchKeyValues) {
+		KeyValues? destInsertSection = patchKeyValues.FindKey("insert");
+		if (destInsertSection == null) {
+			destInsertSection = new KeyValues("insert");
+			patchKeyValues.AddSubKey(destInsertSection);
+		}
+
+		KeyValues? destReplaceSection = patchKeyValues.FindKey("replace");
+		if (destReplaceSection == null) {
+			destReplaceSection = new KeyValues("replace");
+			patchKeyValues.AddSubKey(destReplaceSection);
+		}
+
+		KeyValues? srcInsertSection = srcKeyValues.FindKey("insert");
+		if (srcInsertSection != null) 
+			MergeKeyValues(srcInsertSection, destInsertSection);
+
+		KeyValues? srcReplaceSection = srcKeyValues.FindKey("replace");
+		if (srcReplaceSection != null) 
+			MergeKeyValues(srcReplaceSection, destReplaceSection);
+	}
+
+	private static void MergeKeyValues(KeyValues srcKeys, KeyValues destKeys) {
+		for (KeyValues? kv = srcKeys.GetFirstValue(); kv != null; kv = kv.GetNextValue()) {
+			switch (kv.Type) {
+				case KeyValues.Types.String:
+					destKeys.SetString(kv.Name, kv.GetString());
+					break;
+				case KeyValues.Types.Int:
+					destKeys.SetInt(kv.Name, kv.GetInt());
+					break;
+				case KeyValues.Types.Double:
+					destKeys.SetFloat(kv.Name, kv.GetFloat());
+					break;
+				case KeyValues.Types.Pointer:
+					destKeys.SetPtr(kv.Name, kv.GetPtr());
+					break;
+			}
+		}
+		for (KeyValues? kv = srcKeys.GetFirstTrueSubKey(); kv != null; kv = kv.GetNextTrueSubKey()) {
+			KeyValues destKV = destKeys.FindKey(kv.Name, true)!;
+			MergeKeyValues(kv, destKV);
+		}
+	}
 
 	public bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, List<FileNameHandle_t>? includes = null, MaterialFindContext findContext = 0) {
 		if (IsPrecachedVars())
