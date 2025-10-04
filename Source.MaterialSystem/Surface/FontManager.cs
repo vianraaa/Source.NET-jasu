@@ -285,8 +285,8 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 					return null; // cannot load...
 
 				FileStream file = File.OpenRead(filePath);
-				binary = (nint)NativeMemory.AllocZeroed((nuint)info.Length);
-				using UnmanagedMemoryStream stream = new UnmanagedMemoryStream((byte*)binary, 0, info.Length, FileAccess.Write);
+				binary = (nint)NativeMemory.AllocZeroed((nuint)file.Length);
+				using UnmanagedMemoryStream stream = new UnmanagedMemoryStream((byte*)binary, 0, file.Length, FileAccess.Write);
 				file.CopyTo(stream);
 				FontBinaries[fontName.Hash()] = binary;
 				FontBinaryLengths[fontName.Hash()] = (nint)info.Length;
