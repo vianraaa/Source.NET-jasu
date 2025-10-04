@@ -584,8 +584,8 @@ public unsafe struct MeshBuilder : IDisposable
 	public void DrawQuad(IMesh pMesh, ReadOnlySpan<float> v1, ReadOnlySpan<float> v2, ReadOnlySpan<float> v3, ReadOnlySpan<float> v4, ReadOnlySpan<byte> pColor, bool wireframe = false) => throw new NotImplementedException();
 
 	// returns the number of indices and vertices
-	public int VertexCount() => throw new NotImplementedException();
-	public int IndexCount() => throw new NotImplementedException();
+	public int VertexCount() => VertexBuilder.VertexCount;
+	public int IndexCount() => IndexBuilder.IndexCount;
 
 	// Resets the mesh builder so it points to the start of everything again
 	public void Reset() {
