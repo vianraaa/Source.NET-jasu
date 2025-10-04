@@ -8,16 +8,56 @@ using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Source.SDLManager;
 
 internal static class SDL3_State
 {
 	static bool ready = false;
-	internal static void InitializeIfRequired() {
+	[UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+	internal static unsafe void SDL_Log(nint _, int categoryRaw, SDL_LogPriority priority, byte* str) {
+		SDL_LogCategory category = (SDL_LogCategory)categoryRaw;
+		string msg = SDL3.PtrToStringUTF8(str) ?? "<NULL MESSAGE>";
+
+		ReadOnlySpan<char> piece = category switch {
+			SDL_LogCategory.SDL_LOG_CATEGORY_APPLICATION => "SDL/App: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_ASSERT => "SDL/Assert: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_AUDIO => "SDL/Audio: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_CUSTOM => "SDL/Custom: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_ERROR => "SDL/Error: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_GPU => "SDL/GPU: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_INPUT => "SDL/Input: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_RENDER => "SDL/Render: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_SYSTEM => "SDL/System: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_TEST => "SDL/Test: ",
+			SDL_LogCategory.SDL_LOG_CATEGORY_VIDEO => "SDL/Video: ",
+			_ => "SDL/Unknown: "
+		};
+
+		Span<char> message = stackalloc char[piece.Length + msg.Length + 1];
+		piece.CopyTo(message);
+		msg?.CopyTo(message[piece.Length..]);
+		message[^1] = '\n';
+		switch (priority) {
+			case SDL_LogPriority.SDL_LOG_PRIORITY_TRACE: Msg(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_VERBOSE: Msg(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_DEBUG: Msg(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_INFO: Msg(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_WARN: Warning(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_ERROR: Error(message); break;
+			case SDL_LogPriority.SDL_LOG_PRIORITY_CRITICAL: Error(message); break;
+			default: Msg(message); break;
+		}
+	}
+
+	internal static unsafe void InitializeIfRequired() {
 		if (ready) return;
 
+		SDL3.SDL_SetLogOutputFunction(&SDL_Log, 0);
+		SDL3.SDL_SetLogPriorities(SDL_LogPriority.SDL_LOG_PRIORITY_TRACE);
 		SDL3.SDL_SetAppMetadata(Path.GetFileNameWithoutExtension(Environment.ProcessPath), "N/A", "N/A");
 		if (!SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO))
 			throw new Exception("Couldn't initialize SDL3's video subsystem.");
