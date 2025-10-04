@@ -209,6 +209,7 @@ public interface IMaterialSystem
 	short AllocateWhiteLightmap(IMaterial? material);
 	void GetSortInfo(Span<MaterialSystem_SortInfo> materialSortInfoArray);
 	void GetLightmapPageSize(int lightmap, ref int width, ref int height);
+	void GetBackBufferDimensions(out int width, out int height);
 }
 
 public interface IMatRenderContext

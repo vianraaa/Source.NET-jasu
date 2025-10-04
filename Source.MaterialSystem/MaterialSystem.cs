@@ -480,6 +480,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public short AllocateWhiteLightmap(IMaterial? material) => (short)MatLightmaps.AllocateWhiteLightmap(material);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void GetLightmapPageSize(int lightmap, ref int width, ref int height) => MatLightmaps.GetLightmapPageSize(lightmap, ref width, ref height);
 
+	public void GetBackBufferDimensions(out int width, out int height) => ShaderAPI.GetBackBufferDimensions(out width, out height);
 	public event Action? Restore;
 
 	public IMaterialInternal errorMaterial;

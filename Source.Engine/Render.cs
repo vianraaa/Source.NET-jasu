@@ -153,8 +153,44 @@ public class Render(
 		renderContext.LoadIdentity();
 	}
 
-	private void ClearView(ViewSetup topView, ClearFlags flags, ITexture? color, ITexture? depth = null) {
+	private void ClearView(ViewSetup topView, ClearFlags flags, ITexture? renderTarget, ITexture? depthTexture = null) {
+		bool clearColor = (flags & ClearFlags.ClearColor) != 0;
+		bool clearDepth = (flags & ClearFlags.ClearDepth) != 0;
+		bool clearStencil = (flags & ClearFlags.ClearStencil) != 0;
+		bool forceClearWholeRenderTarget = (flags & ClearFlags.ClearFullTarget) != 0;
+		bool obeyStencil = (flags & ClearFlags.ClearObeyStencil) != 0;
 
+		if (!clearColor && !clearDepth && !clearStencil)
+			return;
+
+		using MatRenderContextPtr renderContext = new(materials);
+
+		if (!forceClearWholeRenderTarget) {
+			// if (obeyStencil)
+			//	renderContext.ClearBuffersObeyStencil(clearColor, clearDepth);
+			// else
+			renderContext.ClearBuffers(clearColor, clearDepth, clearStencil);
+		}
+		else {
+			// Get the render target dimensions
+			int width, height;
+			if (renderTarget != null) {
+				width = renderTarget.GetActualWidth();
+				height = renderTarget.GetActualHeight();
+			}
+			else {
+				materials.GetBackBufferDimensions(out width, out height);
+			}
+
+			renderContext.PushRenderTargetAndViewport(renderTarget, depthTexture, 0, 0, width, height);
+
+			// if (obeyStencil)
+			// 	renderContext->ClearBuffersObeyStencil(clearColor, clearDepth);
+			// else
+			renderContext.ClearBuffers(clearColor, clearDepth, clearStencil);
+
+			renderContext.PopRenderTargetAndViewport();
+		}
 	}
 
 	public int FrameCount = 1;
