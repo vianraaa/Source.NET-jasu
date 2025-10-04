@@ -1,18 +1,69 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Source.Common.Commands;
+
+public class EmptyConVar() : ConVar("", "0", 0) {
+	public override void SetValue(double value) { }
+	public override void SetValue(float value) { }
+	public override void SetValue(int value) { }
+	public override void SetValue(ReadOnlySpan<char> value) { }
+	public override string GetName() => "";
+	public override bool IsFlagSet(FCvar flag) => false;
+}
+
+public struct ConVarRef
+{
+	static readonly EmptyConVar EmptyConVar = new EmptyConVar();
+	static ICvar? cvar;
+	static ICvar CVar => cvar ??= Singleton<ICvar>();
+	
+	ConVar ConVar;
+
+	public ConVarRef(ReadOnlySpan<char> name) {
+		Init(name, false);
+	}
+
+	public ConVarRef(ReadOnlySpan<char> name, bool ignoreMissing) {
+		Init(name, ignoreMissing);
+	}
+
+	[MemberNotNull(nameof(ConVar))]
+	public void Init(ReadOnlySpan<char> name, bool ignoreMissing) {
+		var conVar = CVar?.FindVar(name);
+		ConVar = conVar ??= EmptyConVar;
+		if (!IsValid()) {
+			if (CVar != null && !ignoreMissing)
+				Warning($"ConVarRef {name} doesn't point to an existing ConVar\n");
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] private readonly bool IsValid() => ConVar != EmptyConVar;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly int GetInt() => ConVar.GetInt();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly float GetFloat() => ConVar.GetFloat();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly double GetDouble() => ConVar.GetDouble();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly ReadOnlySpan<char> GetString() => ConVar.GetString();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly bool GetBool() => ConVar.GetBool();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly IConVar GetLinkedConVar() => ConVar;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(ReadOnlySpan<char> value) => ConVar.SetValue(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(int value) => ConVar.SetValue(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(float value) => ConVar.SetValue(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(double value) => ConVar.SetValue(value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(bool value) => ConVar.SetValue(value ? 1 : 0);
+}
 
 public class ConVar : ConCommandBase, IConVar
 {
 	public override bool Equals(object? obj) {
-		if(obj == null) return false;
+		if (obj == null) return false;
 		return obj is ConVar cv ? cv.Name == Name : false;
 	}
 	public override int GetHashCode() => Name.GetHashCode();
 	public override string ToString() {
 		return $"ConVar '{Name}'"
-			+ (IsFlagSet(FCvar.NeverAsString) ? "" : 
+			+ (IsFlagSet(FCvar.NeverAsString) ? "" :
 			($"[{value}" + ((defaultValue != value) ? $", default {defaultValue}" : "]")));
 	}
 
@@ -169,16 +220,16 @@ public class ConVar : ConCommandBase, IConVar
 		}
 	}
 
-	public void SetValue(ReadOnlySpan<char> value) {
+	public virtual void SetValue(ReadOnlySpan<char> value) {
 		parent!.InternalSetValue(value);
 	}
-	public void SetValue(int value) {
+	public virtual void SetValue(int value) {
 		parent!.InternalSetIntValue(value);
 	}
-	public void SetValue(float value) {
+	public virtual void SetValue(float value) {
 		parent!.InternalSetDoubleValue(value);
 	}
-	public void SetValue(double value) {
+	public virtual void SetValue(double value) {
 		parent!.InternalSetDoubleValue(value);
 	}
 
@@ -244,9 +295,9 @@ public class ConVar : ConCommandBase, IConVar
 				value = var.GetString();
 			}
 
-			if(value != null) {
+			if (value != null) {
 				Dbg.ConColorMsg(clr, $"\"{var.GetName()}\" = \"{value}\"");
-				if(!value.Equals(var.GetDefault(), StringComparison.OrdinalIgnoreCase)) 
+				if (!value.Equals(var.GetDefault(), StringComparison.OrdinalIgnoreCase))
 					Dbg.ConMsg($" ( def. \"{var.GetDefault()}\" )");
 
 			}
