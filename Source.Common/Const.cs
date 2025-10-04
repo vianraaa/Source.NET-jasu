@@ -167,7 +167,7 @@ public enum RenderMode : byte
 	Count,
 }
 
-enum RenderFx
+public enum RenderFx
 {
 	None = 0,
 	PulseSlow,

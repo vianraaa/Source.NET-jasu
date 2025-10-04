@@ -7,6 +7,7 @@ using System;
 using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 using System.Numerics;
 using Game.Shared;
+using Source.Common.Mathematics;
 
 namespace Game.Client;
 
@@ -37,6 +38,14 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropEHandle(FIELD.OF(nameof(ViewEntity))),
 		RecvPropBool(FIELD.OF(nameof(DisableWorldClicking))),
 	]);
+
+	public virtual void PreThink() {}
+	public virtual void PostThink() {}
+
+	public void SetViewAngles(in QAngle angles) {
+		SetLocalAngles(angles);
+		SetNetworkAngles(angles);
+	}
 
 	private static void RecvProxy_LocalVelocityX(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
 		throw new NotImplementedException();

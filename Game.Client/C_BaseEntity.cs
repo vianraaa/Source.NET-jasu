@@ -18,6 +18,8 @@ using System.Runtime.InteropServices;
 using FIELD = Source.FIELD<Game.Client.C_BaseEntity>;
 
 using static System.Net.Mime.MediaTypeNames;
+using Source.Engine;
+using SharpCompress.Compressors.Xz;
 
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
@@ -94,7 +96,7 @@ public partial class C_BaseEntity : IClientEntity
 
 		RecvPropInt(FIELD.OF(nameof(MoveType)), 0, RecvProxy_MoveType),
 		RecvPropInt(FIELD.OF(nameof(MoveCollide)), 0, RecvProxy_MoveCollide),
-		RecvPropQAngles (FIELD.OF(nameof(AngRotation))),
+		RecvPropQAngles (FIELD.OF(nameof(Rotation))),
 		RecvPropInt( FIELD.OF(nameof( TextureFrameIndex) )),
 		RecvPropDataTable( "predictable_id", DT_PredictableId ),
 		RecvPropInt(FIELD.OF(nameof(SimulatedEveryTick))),
@@ -177,7 +179,6 @@ public partial class C_BaseEntity : IClientEntity
 
 	public byte MoveType;
 	public byte MoveCollide;
-	public QAngle AngRotation;
 	public bool TextureFrameIndex;
 	public bool SimulatedEveryTick;
 	public bool AnimatedEveryTick;
@@ -386,9 +387,88 @@ public partial class C_BaseEntity : IClientEntity
 	double SpawnTime;
 	double LastMessageTime;
 
+	public void MoveToLastReceivedPosition(bool force) {
+		if (force || (RenderFx)RenderFX != RenderFx.Ragdoll) {
+			SetLocalOrigin(GetNetworkOrigin());
+			SetLocalAngles(GetNetworkAngles());
+		}
+	}
+	public virtual void PreDataUpdate(DataUpdateType updateType) {
+		if (AddDataChangeEvent(this, updateType, ref DataChangeEventRef)) 
+			OnPreDataChanged(updateType);
+		
+		bool newentity = updateType == DataUpdateType.Created;
+
+		// if (!newentity) 
+			//Interp_RestoreToLastNetworked(GetVarMapping());
+
+		if (newentity && !IsClientCreated()) {
+			SpawnTime = engine.GetLastTimeStamp();
+			Spawn();
+		}
+
+		OldOrigin = GetNetworkOrigin();
+		OldRotation = GetNetworkAngles();
+		OldAnimTime = AnimTime;
+		OldSimulationTime = SimulationTime;
+
+		OldRenderMode = RenderMode;
+
+		// TODO: client leaf sorting
+
+		OldInterpolationFrame = InterpolationFrame;
+		OldShouldDraw = ShouldDraw();
+	}
+
 	public virtual void PostDataUpdate(DataUpdateType updateType) {
-		// todo
+		if ((RenderFx)RenderFX == RenderFx.Ragdoll && updateType == DataUpdateType.Created)
+			MoveToLastReceivedPosition(true);
+		else
+			MoveToLastReceivedPosition(false);
+
+		if (Index == 0) {
+			ModelIndex = 1;
+			// SetSolid(SolidType.BSP);
+		}
+
+		if (OldRenderMode != RenderMode) 
+			SetRenderMode((RenderMode)RenderMode, true);
+
+		bool animTimeChanged = AnimTime != OldAnimTime;
+		bool originChanged = OldOrigin != GetLocalOrigin();
+		bool anglesChanged = OldRotation != GetLocalAngles();
+		bool simTimeChanged = SimulationTime != OldSimulationTime;
+
+		// Detect simulation changes 
+		bool simulationChanged = originChanged || anglesChanged || simTimeChanged;
+
+		bool predictable = GetPredictable();
+
+		// todo: interpolation and prediction stuff
+
+		// HierarchySetParent(NetworkMoveParent);
+
 		MarkMessageReceived();
+
+		// ValidateModelIndex();
+
+		if (updateType == DataUpdateType.Created) {
+			ProxyRandomValue = Random.Shared.NextSingle();
+			// ResetLatched();
+			CreationTick = gpGlobals.TickCount;
+		}
+
+		// CheckInitPredictable("PostDataUpdate");
+		// TODO: Some stuff involving localplayer and ownage
+		// TODO: Partition/leaf stuff
+		// TODO: Nointerp list
+		// TODO: Parent changes
+		// TODO: ShouldDraw changes
+	}
+	float ProxyRandomValue;
+
+	public virtual void SetRenderMode(RenderMode renderMode, bool forceUpdate) {
+		RenderMode = (byte)renderMode;
 	}
 
 	protected readonly IEngineClient engine = Singleton<IEngineClient>();
@@ -409,9 +489,7 @@ public partial class C_BaseEntity : IClientEntity
 		throw new NotImplementedException();
 	}
 
-	public virtual void Spawn() {
-
-	}
+	public virtual void Spawn() { }
 
 	//PredictableId PredictionId;
 	//PredictionContext? PredictionContext;
@@ -441,6 +519,21 @@ public partial class C_BaseEntity : IClientEntity
 	public ref Vector3 GetNetworkOrigin() => ref NetworkOrigin;
 	public ref QAngle GetNetworkAngles() => ref NetworkAngles;
 
+	public void SetLocalOrigin(in Vector3 origin) {
+		// This has a lot more logic thats needed later TODO FIXME
+		Origin = origin;
+	}
+
+	public void SetLocalAngles(in QAngle angles) {
+		// This has a lot more logic thats needed later TODO FIXME
+		Rotation = angles;
+	}
+
+	public void SetNetworkAngles(in QAngle angles) {
+		NetworkAngles = angles;
+	}
+
+
 	static bool s_AbsRecomputionEnabled = true;
 
 	EFL eflags = EFL.DirtyAbsTransform; // << TODO: FIGURE OUT WHAT ACTUALLY INITIALIZES THIS.
@@ -455,7 +548,7 @@ public partial class C_BaseEntity : IClientEntity
 
 		// TODO: MAKE THIS WORK
 		//if ((eflags & EFL.DirtyAbsTransform) == 0)
-			//return;
+		//return;
 
 		RemoveEFlags(EFL.DirtyAbsTransform);
 
@@ -477,32 +570,6 @@ public partial class C_BaseEntity : IClientEntity
 
 	public void MoveToAimEnt() {
 		throw new NotImplementedException();
-	}
-
-	public void PreDataUpdate(DataUpdateType updateType) {
-		if (AddDataChangeEvent(this, updateType, ref DataChangeEventRef))
-			OnPreDataChanged(updateType);
-
-		bool newentity = (updateType == DataUpdateType.Created);
-
-		// if (!newentity) 
-		// Interp_RestoreToLastNetworked(GetVarMapping());
-
-		if (newentity && !IsClientCreated()) {
-			SpawnTime = engine.GetLastTimeStamp();
-			Spawn();
-		}
-
-		OldOrigin = GetNetworkOrigin();
-		OldRotation = GetNetworkAngles();
-
-		OldAnimTime = AnimTime;
-		OldSimulationTime = SimulationTime;
-
-		OldRenderMode = RenderMode;
-
-		OldInterpolationFrame = InterpolationFrame;
-		OldShouldDraw = ShouldDraw();
 	}
 
 	private bool AddDataChangeEvent(C_BaseEntity c_BaseEntity, DataUpdateType updateType, ref int storedEvent) {

@@ -412,6 +412,8 @@ namespace Source.Common
 	{
 		public readonly List<MemberInfo> Members = [];
 
+		internal string FirstName { get; set; } // testing function
+
 		Type? buildingTargetType;
 		/// <summary>
 		/// The object target.
@@ -492,6 +494,7 @@ namespace Source.Common
 				IndexInfo i => i.ElementType,
 				_ => throw new Exception()
 			};
+			FirstName = Members[0].Name;
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public T GetValue<T>(object instance) => ILAccess<T>.Get(this)(instance);
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

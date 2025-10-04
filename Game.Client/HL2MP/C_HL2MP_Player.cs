@@ -47,7 +47,6 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 	public override void PostDataUpdate(DataUpdateType updateType) {
 		base.PostDataUpdate(updateType);
 	}
-
 	public override void CalcView(ref Vector3 eyeOrigin, ref QAngle eyeAngles, ref float zNear, ref float zFar, ref float fov) {
 		if((LifeState)LifeState != Source.LifeState.Alive) {
 			
