@@ -86,7 +86,12 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (clearStencil)
 			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
 
-		Gl46.glClear(flags);
+		if (clearDepth)
+			glDepthMask(true);
+		if (clearStencil)
+			glStencilMask(0xFF);
+
+		glClear(flags);
 	}
 
 	public void ClearColor3ub(byte r, byte g, byte b) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
@@ -257,7 +262,13 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void FlushBufferedPrimitives() => FlushBufferedPrimitivesInternal();
 	private void FlushBufferedPrimitivesInternal() {
 		Assert(RenderMesh == null);
+#if DEBUG
+		//glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0, GL_DEBUG_SEVERITY_LOW, "FlushBufferedPrimitivesInternal: executing...");
+#endif
 		MeshMgr.Flush();
+#if DEBUG
+		//glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0, GL_DEBUG_SEVERITY_LOW, "FlushBufferedPrimitivesInternal: complete");
+#endif
 	}
 
 	public void PopMatrix() {
@@ -424,6 +435,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			return false;
 
 		Driver = deviceInfo.Driver;
+		Device!.MakeCurrent();
 		unsafe {
 			if (0 != (deviceInfo.Driver & GraphicsDriver.OpenGL))
 				GL_LoadExtensions(graphics.GL_LoadExtensionsPtr());
@@ -740,7 +752,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	ulong lastBoardUploadHash;
-	internal void SetBoardState(in GraphicsBoardState state) {
+	internal bool SetBoardState(in GraphicsBoardState state) {
 		ulong currHash = state.Hash();
 		if (currHash != lastBoardUploadHash) {
 			glToggle(GL_BLEND, state.Blending);
@@ -748,13 +760,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			glBlendFunc(state.SourceBlend.GLEnum(), state.DestinationBlend.GLEnum());
 			glBlendEquation(state.BlendOperation.GLEnum());
 			glToggle(GL_DEPTH_TEST, state.DepthTest);
-			glDepthMask(state.DepthWrite);
+			glDepthMask(state.DepthWrite); // state.DepthWrite
 			glDepthFunc(state.DepthFunc.GLEnum());
 			// TEMPORARY
 			glCullFace(GL_FRONT_AND_BACK);
-
+#if DEBUG
+			glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0, GL_DEBUG_SEVERITY_LOW, "A board state write occured.");
+#endif
 			lastBoardUploadHash = currHash;
+			return true;
 		}
+		return false;
 	}
 
 	public bool DoRenderTargetsNeedSeparateDepthBuffer() {
