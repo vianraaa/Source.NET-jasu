@@ -40,7 +40,7 @@ public class BaseHudChatLine : RichText
 		base.ApplySchemeSettings(scheme);
 
 		Font = scheme.GetFont("Default");
-		SetBgColor(new(0, 0, 0, 100));
+		SetBgColor(new(0, 0, 0, 0));
 		FontMarlett = scheme.GetFont("Marlett");
 		TextColor = scheme.GetColor("FgColor", GetFgColor());
 		SetFont(Font);
