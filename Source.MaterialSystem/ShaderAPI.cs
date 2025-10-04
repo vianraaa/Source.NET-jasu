@@ -606,7 +606,10 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			throw new NotImplementedException("Cubemap textures not supported yet");
 		}
 		else {
-			LoadTextureFromVTF(in info, vtf, vtfFrame);
+			for (int i = 0; i < vtf.MipCount(); i++) {
+				info.Level = i;
+				LoadTextureFromVTF(in info, vtf, vtfFrame);
+			}
 		}
 	}
 

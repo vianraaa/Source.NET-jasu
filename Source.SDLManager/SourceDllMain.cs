@@ -317,8 +317,10 @@ goto platformCannotAssert; // cannot do anything
 		return;
 
 #pragma warning disable CS0164 // This label has not been referenced (it has, it just can't see it because of the ifdefs...)
+#pragma warning disable CS0162 // Unreachable code detected
 	platformCannotAssert:
 		Warning($"ASSERT '{result.AssertInfo.Expression}': {result.AssertInfo.FileName} at line {result.AssertInfo.Line}\n");
+#pragma warning restore CS0162 // Unreachable code detected
 #pragma warning restore CS0164
 		Warning(" - Cannot create assert window on this unsupported platform, ignoring.\n");
 		result.UserInfo.Type = AssertDialog.AssertDialogResultType.Ignore;
