@@ -296,7 +296,7 @@ public class Render(
 		if (aspectRatio == 0.0f)
 			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Height / (float)viewSetup.Width) : 1.0f;
 
-		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles + new QAngle(0, 0, -65));
+		ComputeViewMatrix(ref worldToView, new(-852, 907, -12152), new QAngle(17.68f, -53.19f, 0));
 
 		float fovX = MathLib.DEG2RAD(viewSetup.FOV);
 
@@ -320,18 +320,7 @@ public class Render(
 	private static Matrix4x4 baseRotation;
 	private static bool didInit = false;
 	private void ComputeViewMatrix(ref Matrix4x4 worldToView, in Vector3 origin, in QAngle angles) {
-		if (!didInit) {
-			baseRotation = Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, MathLib.DEG2RAD(-90));
-
-			didInit = true;
-		}
-
-		worldToView = baseRotation;
-
-		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, MathLib.DEG2RAD(-angles.Z)); // -angles[2]
-		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitY, MathLib.DEG2RAD(-angles.X)); // -angles[0]
-		worldToView *= Matrix4x4.CreateFromAxisAngle(Vector3.UnitZ, MathLib.DEG2RAD(-angles.Y)); // -angles[1]
-
-		worldToView *= Matrix4x4.CreateTranslation(-origin);
+		angles.Vectors(out Vector3 forward, out _, out Vector3 up);
+		worldToView = Matrix4x4.CreateLookTo(origin, forward, up);
 	}
 }
