@@ -223,23 +223,28 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		public IMesh Mesh;
 		public IMaterial Material;
 		public int VertCount;
+		public int IndexCount;
 		public VertexFormat VertexFormat;
 	}
 	internal readonly List<MeshList> Meshes = [];
 	internal readonly List<IMesh?> WorldStaticMeshes = [];
 	ConVar mat_max_worldmesh_vertices = new((32767 / 3).ToString(), 0);
-	public static int VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group) {
-		int vertexCount = 0;
-
+	public static void VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group, out int vertexCount, out int indexCount) {
+		vertexCount = indexCount = 0;
 		for (short _blockIndex = group.ListHead; _blockIndex != -1; _blockIndex = list.GetSurfaceBlock(_blockIndex).NextBlock) {
 			ref MaterialList matList = ref list.GetSurfaceBlock(_blockIndex);
 			for (int _index = 0; _index < matList.Count; ++_index) {
 				ref BSPMSurface2 surfID = ref matList.Surfaces[_index];
-				vertexCount += ModelLoader.MSurf_VertCount(ref surfID);
+				int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
+				vertexCount += vertCount;
+
+				if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
+					int numPolygons = vertCount - 2;
+					for (int i = 0; i < numPolygons; ++i)
+						indexCount += 3;
+				}
 			}
 		}
-
-		return vertexCount;
 	}
 	public const uint TEXINFO_USING_BASETEXTURE2 = 0x0001;
 	public void WorldStaticMeshCreate() {
@@ -270,11 +275,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		for (int i = 0; i < WorldStaticMeshes.Count; i++) {
 			ref readonly SurfaceSortGroup group = ref matSortArray.GetGroupForSortID(0, i);
-			int vertexCount = VertexCountForSurfaceList(matSortArray, group);
+			VertexCountForSurfaceList(matSortArray, group, out int vertexCount, out int indexCount);
 
 			ref BSPMSurface2 surfID = ref matSortArray.GetSurfaceAtHead(in group);
 			WorldStaticMeshes[i] = null;
-			sortIndex[i] = !Unsafe.IsNullRef(ref surfID) ? FindOrAddMesh(ModelLoader.MSurf_TexInfo(ref surfID).Material, vertexCount) : -1;
+			sortIndex[i] = !Unsafe.IsNullRef(ref surfID) ? FindOrAddMesh(ModelLoader.MSurf_TexInfo(ref surfID).Material, vertexCount, indexCount) : -1;
 		}
 
 		using MatRenderContextPtr renderContext = new(materials);
@@ -284,7 +289,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
 			MeshBuilder meshBuilder = new MeshBuilder();
-			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount);
+			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, meshes[i].IndexCount);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {
 				int meshId = sortIndex[j];
 				if (meshId == i) {
@@ -317,17 +322,6 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		public Vector2 Scale;
 	}
 
-	struct TempMapVertex()
-	{
-		public ushort Index;
-		public Vector3 Position;
-		public Vector2 TexCoord0;
-		public Vector2 TexCoord1;
-		public Vector2 TexCoord2;
-		public Vector3 Normal;
-		public Color Color = new(255, 255, 255);
-	}
-
 	private void BuildMSurfaceVertexArrays(WorldBrushData brushData, ref BSPMSurface2 surfID, float overbright, ref MeshBuilder builder) {
 		SurfaceCtx ctx = default;
 		SurfSetupSurfaceContext(ref ctx, ref surfID);
@@ -341,22 +335,20 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		// CheckMSurfaceBaseTexture2(pBrushData, surfID);
 		int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
-		Span<TempMapVertex> vertices = stackalloc TempMapVertex[vertCount];
+		int firstVertex = builder.GetCurrentVertex();
 		for (int i = 0; i < vertCount; i++) {
 			int vertIndex = brushData.VertIndices![ModelLoader.MSurf_FirstVertIndex(ref surfID) + i];
 
-			vertices[i].Index = (ushort)(builder.GetCurrentVertex() + i);
-
 			ref Vector3 vec = ref brushData.Vertexes![vertIndex].Position;
-			vertices[i].Position = vec;
+			builder.Position3fv(vec);
 
 			Vector2 uv = default;
 
 			SurfComputeTextureCoordinate(ref ctx, ref surfID, ref vec, ref uv);
-			vertices[i].TexCoord0 = uv;
+			builder.TexCoord2fv(0, uv);
 
 			SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
-			vertices[i].TexCoord1 = uv;
+			builder.TexCoord2fv(1, uv);
 
 			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.BumpLight) != 0) {
 				if (uv.X + ctx.BumpSTexCoordOffset * 3 > 1.00001f) {
@@ -364,12 +356,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 					SurfComputeLightmapCoordinate(ref ctx, ref surfID, ref vec, ref uv);
 				}
-				vertices[i].TexCoord2 = uv;
+				builder.TexCoord2fv(2, uv);
 			}
 
 			ref Vector3 normal = ref brushData.VertNormals![brushData.VertNormalIndices![ModelLoader.MSurf_FirstVertNormal(ref surfID) + i]];
-			vertices[i].Normal = normal;
-
+			builder.Normal3fv(normal);
 			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) {
 				// TangentSpaceComputeBasis(out Vector3 tangentS, out Vector3 tangentT, normal, out vect, negate);
 				// builder.TangentS3fv(tangentS);
@@ -384,34 +375,25 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 					Warning($"Warning: WorldTwoTextureBlend found on a non-displacement surface (material: {materialName}). This wastes perf for no benefit.\n");
 				}
 
-				vertices[i].Color = new(255, 255, 255, 255);
+				builder.Color4ub(255, 255, 255, 255);
 			}
 			else {
-				vertices[i].Color = flatColor;
+				builder.Color4ubv(flatColor);
+			}
+
+			builder.AdvanceVertex();
+		}
+		
+		if(!ModelLoader.SurfaceHasPrims(ref surfID)) {
+			int numPolygons = vertCount - 2;
+			for (int i = 0; i < numPolygons; ++i) {
+				builder.FastIndex((ushort)firstVertex);
+				builder.FastIndex((ushort)(firstVertex + i + 1));
+				builder.FastIndex((ushort)(firstVertex + i + 2));
 			}
 		}
-
-		for (int i = 0; i < vertCount; i++)
-			PushVertex(ref builder, in vertices[i]);
-		for (int i = 1; i < vertCount - 1; i++)
-			EmitTriangle(ref builder, in vertices[0], in vertices[i], in vertices[i + 1]);
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void EmitTriangle(ref MeshBuilder builder, in TempMapVertex v1, in TempMapVertex v2, in TempMapVertex v3) {
-		builder.FastIndex(v1.Index);
-		builder.FastIndex(v2.Index);
-		builder.FastIndex(v3.Index);
-	}
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	void PushVertex(ref MeshBuilder builder, in TempMapVertex v) {
-		builder.Position3fv(v.Position);
-		builder.TexCoord2fv(0, v.TexCoord0);
-		builder.TexCoord2fv(1, v.TexCoord1);
-		builder.Normal3fv(v.Normal);
-		builder.Color4ub(v.Color.R, v.Color.G, v.Color.B, v.Color.A);
-		builder.AdvanceVertex();
-	}
 
 	MaterialSystem_SortInfo[]? materialSortInfoArray;
 	private int SortInfoToLightmapPage(int sortID) => materialSortInfoArray![sortID].LightmapPageID;
@@ -567,16 +549,18 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 		materials.EndLightmapAllocation();
 	}
-	private int FindOrAddMesh(IMaterial? material, int vertexCount) {
+	private int FindOrAddMesh(IMaterial? material, int vertexCount, int indexCount) {
 		VertexFormat format = material.GetVertexFormat();
 
 		using MatRenderContextPtr renderContext = new(materials);
 
-		int nMaxVertices = renderContext.GetMaxVerticesToRender(material);
+		int maxVertices = renderContext.GetMaxVerticesToRender(material);
+		int maxIndices = renderContext.GetMaxIndicesToRender(material);
+
 		int worldLimit = mat_max_worldmesh_vertices.GetInt();
 		worldLimit = Math.Max(worldLimit, 1024);
-		if (nMaxVertices > worldLimit)
-			nMaxVertices = mat_max_worldmesh_vertices.GetInt();
+		if (maxVertices > worldLimit)
+			maxVertices = mat_max_worldmesh_vertices.GetInt();
 
 		Span<MeshList> meshes = Meshes.AsSpan();
 
@@ -584,15 +568,20 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			if (meshes[i].Material != material)
 				continue;
 
-			if (meshes[i].VertCount + vertexCount > nMaxVertices)
+			if (meshes[i].VertCount + vertexCount > maxVertices)
+				continue;
+
+			if (meshes[i].IndexCount + indexCount > maxIndices)
 				continue;
 
 			meshes[i].VertCount += vertexCount;
+			meshes[i].IndexCount += indexCount;
 			return i;
 		}
 
 		Meshes.Add(new() {
 			VertCount = vertexCount,
+			IndexCount = indexCount,
 			VertexFormat = format,
 			Material = material
 		});
