@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 Game.Assets/hl2/maps/gm_flatgrass.bsp
+Game.Assets/hl2/maps/gm_bigcity.bsp
