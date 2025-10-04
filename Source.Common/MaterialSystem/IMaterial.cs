@@ -214,4 +214,7 @@ public interface IMaterial
 	ReadOnlySpan<char> GetName();
 	int GetEnumerationID();
 	bool GetPropertyFlag(MaterialPropertyTypes needsBumpedLightmaps);
+	// TODO: We need to get these working. The original plan was to use C#'s finalizers, but that's a bad idea in hindsight
+	void IncrementReferenceCount();
+	void DecrementReferenceCount();
 }
