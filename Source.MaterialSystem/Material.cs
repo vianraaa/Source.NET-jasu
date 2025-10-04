@@ -957,4 +957,12 @@ public class Material : IMaterialInternal
 		else
 			flags &= ~MaterialFlags.NeedsWhiteLightmap;
 	}
+
+	public void IncrementReferenceCount() {
+		// VERY IMPORTANT TODO
+	}
+
+	public void DecrementReferenceCount() {
+		// VERY IMPORTANT TODO
+	}
 }
