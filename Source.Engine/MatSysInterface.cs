@@ -384,7 +384,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 					Warning($"Warning: WorldTwoTextureBlend found on a non-displacement surface (material: {materialName}). This wastes perf for no benefit.\n");
 				}
 
-				vertices[i].Color = new(255, 255, 255, 0);
+				vertices[i].Color = new(255, 255, 255, 255);
 			}
 			else {
 				vertices[i].Color = flatColor;

@@ -342,7 +342,7 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void SetDefaultState() {
-		DepthFunc(ShaderDepthFunc.Nearer);
+		DepthFunc(ShaderDepthFunc.NearerOrEqual);
 		EnableDepthWrites(true);
 		EnableDepthTest(true);
 		EnableBlending(false);
