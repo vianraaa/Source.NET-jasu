@@ -563,4 +563,11 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		// todo
 		returnFlags = 0;
 	}
+
+	internal static int MSurf_FirstPrimID(ref BSPMSurface2 surfID, WorldBrushData bsp) {
+		if (SurfaceHasDispInfo(ref surfID))
+			return 0;
+		int surfaceIndex = MSurf_Index(ref surfID, bsp);
+		return bsp.Surfaces1![surfaceIndex].FirstPrimID;
+	}
 }

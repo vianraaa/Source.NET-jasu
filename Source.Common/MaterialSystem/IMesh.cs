@@ -414,7 +414,17 @@ public struct IndexBuilder
 	}
 
 	private unsafe static void GeneratePolygonIndexBuffer(ushort* indices, int indexCount, int indexOffset) {
-		throw new NotImplementedException();
+		if (indices == null)
+			return;
+
+		int i;
+		int numPolygons = indexCount / 3;
+		for (i = 0; i < numPolygons; ++i) {
+			indices[0] = (ushort)(indexOffset);
+			indices[1] = (ushort)(indexOffset + i + 1);
+			indices[2] = (ushort)(indexOffset + i + 2);
+			indices += 3;
+		}
 	}
 
 	private unsafe static void GenerateQuadIndexBuffer(ushort* indices, int indexCount, int firstVertex) {
