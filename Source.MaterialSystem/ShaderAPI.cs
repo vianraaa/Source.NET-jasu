@@ -749,7 +749,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			glBlendEquation(state.BlendOperation.GLEnum());
 			glToggle(GL_DEPTH_TEST, state.DepthTest);
 			glDepthMask(state.DepthWrite);
-			// glDepthFunc(state.DepthFunc.GLEnum());
+			glDepthFunc(state.DepthFunc.GLEnum());
 			// TEMPORARY
 			glCullFace(GL_FRONT_AND_BACK);
 
