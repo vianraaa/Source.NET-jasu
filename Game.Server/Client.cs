@@ -25,3 +25,10 @@ public static class HostExts {
 
 	}
 }
+
+public static class ServerClient {
+	[ConCommand(helpText: "Noclip. Player becomes non-solid and flies.")]
+	static void noclip() {
+
+	}
+}

@@ -28,8 +28,8 @@ public partial class
 		return base.EyePosition();
 	}
 
-	public override QAngle EyeAngles() {
-		return base.EyeAngles();
+	public override ref readonly QAngle EyeAngles() {
+		return ref base.EyeAngles();
 	}
 
 	private void CalcPlayerView(ref Vector3 eyeOrigin, ref QAngle eyeAngles, ref float fov) {

@@ -95,7 +95,7 @@ public partial class
 	public InlineArrayMaxPath<char> ScriptName;
 
 	public virtual Vector3 EyePosition() => GetAbsOrigin() + GetViewOffset();
-	public virtual QAngle EyeAngles() => GetAbsAngles();
+	public virtual ref readonly QAngle EyeAngles() => ref GetAbsAngles();
 	public void InvalidatePhysicsRecursive(InvalidatePhysicsBits changeFlags) {
 		EFL dirtyFlags = 0;
 

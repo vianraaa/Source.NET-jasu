@@ -124,7 +124,7 @@ public class ViewRender : IViewRender
 		float farZ;
 
 		if (r_farz.GetFloat() < 1) {
-			farZ = 16000; // todo
+			farZ = 32000; // todo
 		}
 		else
 			farZ = r_farz.GetFloat();

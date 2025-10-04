@@ -8,6 +8,8 @@ using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 using System.Numerics;
 using Game.Shared;
 using Source.Common.Mathematics;
+using Source.Common.Commands;
+using Source.Engine;
 
 namespace Game.Client;
 
@@ -16,6 +18,8 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	public static readonly RecvTable DT_PlayerState = new([
 		RecvPropInt(FIELD.OF(nameof(DeadFlag)))
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
+
+	public bool IsLocalPlayer() => GetLocalPlayer() == this;
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
 		RecvPropDataTable(nameof(Local), FIELD.OF(nameof(Local)), PlayerLocalData.DT_Local, 0, DataTableRecvProxy_PointerDataTable),
@@ -100,6 +104,8 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		}
 	}
 
+	float OldPlayerZ;
+
 	public override void PostDataUpdate(DataUpdateType updateType) {
 		if(updateType == DataUpdateType.Created) {
 			int localPlayerIndex = engine.GetLocalPlayer();
@@ -109,7 +115,20 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 			}
 		}
 
+		if (IsLocalPlayer()) {
+			engine.GetViewAngles(out QAngle angles);
+			if (updateType == DataUpdateType.Created) {
+				SetLocalViewAngles(in angles);
+				OldPlayerZ = GetLocalOrigin().Z;
+			}
+			SetLocalAngles(angles);
+		}
+
 		base.PostDataUpdate(updateType);
+	}
+
+	private void SetLocalViewAngles(in QAngle angles) {
+		pl.ViewingAngle = angles;
 	}
 
 	bool DeadFlag;

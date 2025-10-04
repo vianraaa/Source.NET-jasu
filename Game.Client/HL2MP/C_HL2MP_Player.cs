@@ -13,17 +13,17 @@ using FIELD = FIELD<C_HL2MP_Player>;
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
 	public static readonly RecvTable DT_HL2MPLocalPlayerExclusive = new([
-		RecvPropVector(FIELD.OF(nameof(Origin))),
+		RecvPropVector(FIELD.OF_NAMED(nameof(NetworkOrigin), nameof(Origin))),
 
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0)),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(AngEyeAngles), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(AngEyeAngles), 1)),
 	]); public static readonly ClientClass CC_HL2MPLocalPlayerExclusive = new ClientClass("HL2MPLocalPlayerExclusive", null, null, DT_HL2MPLocalPlayerExclusive);
 
 	public static readonly RecvTable DT_HL2MPNonLocalPlayerExclusive = new([
-		RecvPropVector(FIELD.OF(nameof(Origin))),
+		RecvPropVector(FIELD.OF_NAMED(nameof(NetworkOrigin), nameof(Origin))),
 
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 0)),
-		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(EyeAngles), 1)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(AngEyeAngles), 0)),
+		RecvPropFloat(FIELD.OF_VECTORELEM(nameof(AngEyeAngles), 1)),
 	]); public static readonly ClientClass CC_HL2MPNonLocalPlayerExclusive = new ClientClass("HL2MPNonLocalPlayerExclusive", null, null, DT_HL2MPNonLocalPlayerExclusive);
 
 
@@ -38,7 +38,7 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 	public static readonly new ClientClass ClientClass = new ClientClass("HL2MP_Player", null, null, DT_HL2MP_Player)
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
-	public QAngle EyeAngles;
+	public QAngle AngEyeAngles;
 	public EHANDLE Ragdoll = new();
 	public int SpawnInterpCounter;
 	public int PlayerSoundType;
@@ -47,8 +47,20 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 	public override void PostDataUpdate(DataUpdateType updateType) {
 		base.PostDataUpdate(updateType);
 	}
+
+
+	public override ref readonly QAngle EyeAngles() {
+		return ref base.EyeAngles();
+	}
+
 	public override void CalcView(ref Vector3 eyeOrigin, ref QAngle eyeAngles, ref float zNear, ref float zFar, ref float fov) {
-		if((LifeState)LifeState != Source.LifeState.Alive) {
+		// This is extremely temporary, we just need to figure out how angles get placed in the player.
+		// TODO FIXME
+		QAngle tempAngles = AngEyeAngles;
+		if (tempAngles[YAW] < 0.0f)
+			tempAngles[YAW] += 360f;
+		SetLocalAngles(tempAngles);
+		if ((LifeState)LifeState != Source.LifeState.Alive) {
 			
 		}
 		base.CalcView(ref eyeOrigin, ref eyeAngles, ref zNear, ref zFar, ref fov);
