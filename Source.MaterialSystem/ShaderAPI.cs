@@ -138,6 +138,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (fullReset) {
 			InitVertexAndPixelShaders();
 		}
+
+		int width = 0, height = 0;
+		Singleton<ILauncherManager>().DisplayedSize(out width, out height);
+		ShaderViewport viewport = new ShaderViewport(0, 0, width, height, 0, 1);
+		SetViewports(new(ref viewport));
 	}
 
 	private void InitVertexAndPixelShaders() {
@@ -346,7 +351,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		}
 		// TODO: this has a lot more logic...
 		glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
-		glDepthRangef((viewport.MinZ * 2) - 1, viewport.MaxZ);
+		glDepthRangef(viewport.MinZ, viewport.MaxZ);
 	}
 
 	public void GetViewports(Span<ShaderViewport> viewports) {
