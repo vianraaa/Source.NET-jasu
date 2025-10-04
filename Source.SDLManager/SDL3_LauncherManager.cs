@@ -194,6 +194,10 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 				Error("GL Context: Bad stencil request...");
 			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_DOUBLEBUFFER, 1))
 				Error("GL Context: Can't double buffer?");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_MULTISAMPLEBUFFERS, 1))
+				Error("GL Context: Can't double buffer?");
+			if (!SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_MULTISAMPLESAMPLES, 4))
+				Error("GL Context: Can't double buffer?");
 
 			return true;
 		}
