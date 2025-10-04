@@ -264,7 +264,6 @@ public class ShaderSystem : IShaderSystemInternal
 
 	private void InitState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState renderState) {
 		PrepForShaderDraw(shader, shaderParams, renderState);
-		renderState.SetDefaultState();
 		shader.DrawElements(shaderParams, renderState, null, VertexCompressionType.None);
 		DoneWithShaderDraw();
 	}

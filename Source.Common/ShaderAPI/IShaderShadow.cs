@@ -266,4 +266,5 @@ public interface IShaderShadow
 	void BlendOp(ShaderBlendOp blendOp);
 	void BlendOpSeparateAlpha(ShaderBlendOp blendOp);
 	GraphicsDriver GetDriver();
+	void SetDefaultState();
 }

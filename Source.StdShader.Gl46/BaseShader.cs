@@ -108,14 +108,29 @@ public abstract class BaseShader : IShader
 		ShaderShadow = shadow;
 		ShaderAPI = shaderAPI;
 
-		// if(IsSnapshotting())
-			
+		if (IsSnapshotting())
+			SetInitialShadowState();
+
 		OnDrawElements(vars, shaderAPI, vertexCompression);
 
 		Params = null;
 		ShaderShadow = null;
 		ShaderAPI = null;
 		// MeshBuilder = null
+	}
+
+	private void SetInitialShadowState() {
+		ShaderShadow!.SetDefaultState();
+		MaterialVarFlags flags = (MaterialVarFlags)Params![(int)ShaderMaterialVars.Flags].GetIntValue();
+
+		if ((flags & MaterialVarFlags.IgnoreZ) != 0) {
+			ShaderShadow.EnableDepthTest(false);
+			ShaderShadow.EnableDepthWrites(false);
+		}
+
+		if ((flags & MaterialVarFlags.ZNearer) != 0) {
+			ShaderShadow.DepthFunc(ShaderDepthFunc.Nearer);
+		}
 	}
 
 	[MemberNotNullWhen(true, nameof(ShaderShadow))]

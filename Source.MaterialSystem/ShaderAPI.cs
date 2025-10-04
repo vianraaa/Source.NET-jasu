@@ -141,7 +141,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		int width = 0, height = 0;
 		Singleton<ILauncherManager>().DisplayedSize(out width, out height);
-		ShaderViewport viewport = new ShaderViewport(0, 0, width, height, 0, 1);
+		ShaderViewport viewport = new ShaderViewport(0, 0, width, height);
 		SetViewports(new(ref viewport));
 	}
 
@@ -350,9 +350,16 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			GetBackBufferDimensions(out maxWidth, out maxHeight);
 		}
 		// TODO: this has a lot more logic...
-		glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
-		glDepthRangef(viewport.MinZ, viewport.MaxZ);
+		FlushBufferedPrimitives();
+		// HACK BECAUSE SOMETHING IS REALLY WRONG: We report the right viewport width/height to OpenGL, but regardless the first couple of frames it decides that we didn't. So this hack 
+		// skips the first couple of loading screen frames. 
+		if (frame >= 2) {
+			glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
+			glDepthRangef(viewport.MinZ, viewport.MaxZ);
+		}
+		frame++;
 	}
+	int frame;
 
 	public void GetViewports(Span<ShaderViewport> viewports) {
 		throw new NotImplementedException();
@@ -742,7 +749,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 			glBlendEquation(state.BlendOperation.GLEnum());
 			glToggle(GL_DEPTH_TEST, state.DepthTest);
 			glDepthMask(state.DepthWrite);
-			glDepthFunc(state.DepthFunc.GLEnum());
+			// glDepthFunc(state.DepthFunc.GLEnum());
 
 			lastBoardUploadHash = currHash;
 		}
