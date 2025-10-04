@@ -298,7 +298,8 @@ public class Render(
 			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Height / (float)viewSetup.Width) : 1.0f;
 
 		// (-12152) + (MathF.Sin((float)gpGlobals.CurTime * 1) * 64))
-		ComputeViewMatrix(ref worldToView, new(-852, 907, (-12152) + (MathF.Sin((float)gpGlobals.CurTime * 1) * 64)), new QAngle(17.68f, -53.19f, 0));
+		// ComputeViewMatrix(ref worldToView, new(-852, 907, (-12152) + (MathF.Sin((float)gpGlobals.CurTime * 1) * 64)), new QAngle(17.68f, -53.19f, 0));
+		ComputeViewMatrix(ref worldToView, viewSetup.Origin, viewSetup.Angles);
 
 		float fovX = MathLib.DEG2RAD(viewSetup.FOV);
 

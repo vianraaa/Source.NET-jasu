@@ -438,12 +438,12 @@ public partial class C_BaseEntity : IClientEntity
 		return CoordinateFrame;
 	}
 
-	public Vector3 GetNetworkOrigin() => Origin;
-	public QAngle GetNetworkAngles() => NetworkAngles;
+	public ref Vector3 GetNetworkOrigin() => ref NetworkOrigin;
+	public ref QAngle GetNetworkAngles() => ref NetworkAngles;
 
 	static bool s_AbsRecomputionEnabled = true;
 
-	EFL eflags;
+	EFL eflags = EFL.DirtyAbsTransform; // << TODO: FIGURE OUT WHAT ACTUALLY INITIALIZES THIS.
 	public Matrix4x4 CoordinateFrame;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void AddEFlags(EFL flags) => eflags |= flags;
@@ -453,8 +453,9 @@ public partial class C_BaseEntity : IClientEntity
 		if (!s_AbsRecomputionEnabled)
 			return;
 
-		if ((eflags & EFL.DirtyAbsTransform) == 0)
-			return;
+		// TODO: MAKE THIS WORK
+		//if ((eflags & EFL.DirtyAbsTransform) == 0)
+			//return;
 
 		RemoveEFlags(EFL.DirtyAbsTransform);
 

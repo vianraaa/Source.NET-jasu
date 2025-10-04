@@ -196,6 +196,8 @@ public class ViewRender : IViewRender
 		using MatRenderContextPtr renderContext = new(materials);
 		ref ViewRect vr = ref rect[0];
 
+		C_BasePlayer? player = C_BasePlayer.GetLocalPlayer();
+
 		render.SetMainView(in View.Origin, in View.Angles);
 
 		for (StereoEye eye = GetFirstEye(); eye <= GetLastEye(); eye = eye + 1) {
