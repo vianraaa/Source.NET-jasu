@@ -74,7 +74,8 @@ public class ShaderSystem : IShaderSystemInternal
 
 	// Temporary shader aliases so I can get by without making lightmappedgeneric
 	public static readonly FrozenDictionary<ulong, string> AliasedShaders = new Dictionary<ulong, string>() {
-		{ "LightmappedGeneric".Hash(), "UnlitGeneric" }
+		{ "LightmappedGeneric".Hash(), "UnlitGeneric" },
+		{ "WorldVertexTransition".Hash(), "UnlitGeneric" },
 	}.ToFrozenDictionary();
 
 	public IShader? FindShader(ReadOnlySpan<char> shaderName) {
