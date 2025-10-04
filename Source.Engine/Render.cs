@@ -26,7 +26,8 @@ public class Render(
 	CommonHostState host_state,
 	IMaterialSystem materials,
 	Host Host,
-	MatSysInterface MaterialSystem
+	MatSysInterface MaterialSystem,
+	ClientGlobalVariables gpGlobals
 	)
 {
 	int framecount = 1;
@@ -296,7 +297,8 @@ public class Render(
 		if (aspectRatio == 0.0f)
 			aspectRatio = (viewSetup.Height != 0) ? ((float)viewSetup.Height / (float)viewSetup.Width) : 1.0f;
 
-		ComputeViewMatrix(ref worldToView, new(-852, 907, -12152), new QAngle(17.68f, -53.19f, 0));
+		// (-12152) + (MathF.Sin((float)gpGlobals.CurTime * 1) * 64))
+		ComputeViewMatrix(ref worldToView, new(-852, 907, (-12152) + (MathF.Sin((float)gpGlobals.CurTime * 1) * 64)), new QAngle(17.68f, -53.19f, 0));
 
 		float fovX = MathLib.DEG2RAD(viewSetup.FOV);
 
