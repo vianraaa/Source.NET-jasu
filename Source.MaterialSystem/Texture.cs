@@ -68,7 +68,6 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 	}
 
 	public int GetActualDepth() => DimsActual.Depth;
-
 	public int GetActualHeight() => DimsActual.Height;
 	public int GetActualWidth() => DimsActual.Width;
 
@@ -83,11 +82,11 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 		throw new NotImplementedException();
 	}
 
-	public int GetMappingDepth() => DimsMapping.Height;
+	public int GetMappingDepth() => DimsMapping.Depth;
 
 	public int GetMappingHeight() => DimsMapping.Height;
 
-	public int GetMappingWidth() => DimsMapping.Height;
+	public int GetMappingWidth() => DimsMapping.Width;
 
 	public ReadOnlySpan<char> GetName() => Name;
 	public ReadOnlySpan<char> GetTextureGroupName() => TextureGroupName;
