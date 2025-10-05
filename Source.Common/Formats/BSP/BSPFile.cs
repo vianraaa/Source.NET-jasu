@@ -429,10 +429,11 @@ public struct BSPNode
 /// <summary>
 /// Analog of texinfo_s
 /// </summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct BSPTexInfo
 {
-	public InlineArray2<InlineArray4<float>> TextureVecsTexelsPerWorldUnits;
-	public InlineArray2<InlineArray4<float>> LightmapVecsLuxelsPerWorldUnits;
+	public InlineArray2<Vector4> TextureVecsTexelsPerWorldUnits;
+	public InlineArray2<Vector4> LightmapVecsLuxelsPerWorldUnits;
 	public int Flags;
 	public int TexData;
 }
