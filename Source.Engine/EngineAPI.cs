@@ -115,6 +115,9 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 		foreach (var assembly in assemblies) {
 			cvar.SetAssemblyIdentifier(assembly);
 			foreach (var type in assembly.GetTypes()) {
+				if (type.IsAssignableTo(typeof(ConVar)) || type == typeof(ConVarRef))
+					continue;
+
 				var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 				var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 				var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -139,7 +142,7 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 						if (cv.GetName() == null) cv.SetName(prop.Name);
 						cvar.RegisterConCommand(cv);
 					}
-					else if (!type.IsAssignableTo(typeof(ConVar))) {
+					else {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
 						if (cv.GetName() == null) cv.SetName(prop.Name);
@@ -157,7 +160,7 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 						if (cv.GetName() == null) cv.SetName(field.Name);
 						cvar.RegisterConCommand(cv);
 					}
-					else if (!type.IsAssignableTo(typeof(ConVar))) {
+					else {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)field.GetValue(instance)!;
 						if (cv.GetName() == null) cv.SetName(field.Name);
