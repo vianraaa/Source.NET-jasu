@@ -80,7 +80,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	public static void ProcessTeleportList() {
 		LinkedListNode<C_BaseEntity>? entNode = TeleportList.First;
-		while(entNode != null) {
+		while (entNode != null) {
 			C_BaseEntity entity = entNode.Value;
 
 			bool teleport = entity.Teleported();
@@ -129,9 +129,9 @@ public partial class C_BaseEntity : IClientEntity
 	static readonly List<C_BaseEntity> AimEntsList = [];
 
 	internal static void CalcAimEntPositions() {
-		foreach(var ent in AimEntsList) { 
+		foreach (var ent in AimEntsList) {
 			Assert(ent.GetMoveParent() != null);
-			if (ent.IsEffectActive(EntityEffects.BoneMerge)) 
+			if (ent.IsEffectActive(EntityEffects.BoneMerge))
 				ent.CalcAbsolutePosition();
 		}
 	}
@@ -146,8 +146,17 @@ public partial class C_BaseEntity : IClientEntity
 	private bool Teleported() => OldMoveParent != NetworkMoveParent || OldParentAttachment != ParentAttachment;
 
 	public static void ProcessInterpolatedList() {
-		foreach (C_BaseEntity entity in InterpolationList)
+		LinkedListNode<C_BaseEntity>? curr = InterpolationList.First;
+		LinkedListNode<C_BaseEntity>? next = curr?.Next;
+		while (curr != null) {
+			C_BaseEntity entity = curr.Value;
 			entity.ReadyToDraw = entity.Interpolate(gpGlobals.CurTime);
+			if (curr.List == null) // We got removed!!
+				curr = next;
+
+			curr = curr?.Next;
+			next = curr?.Next;
+		}
 	}
 
 	static ConVar cl_extrapolate = new("1", FCvar.Cheat, "Enable/disable extrapolation if interpolation history runs out.");
@@ -602,14 +611,14 @@ public partial class C_BaseEntity : IClientEntity
 		bool predictable = GetPredictable();
 
 		if (!predictable && !IsClientCreated()) {
-			if (animTimeChanged) 
+			if (animTimeChanged)
 				OnLatchInterpolatedVariables(LatchFlags.LatchAnimationVar);
-			
-			if (simulationChanged) 
+
+			if (simulationChanged)
 				OnLatchInterpolatedVariables(LatchFlags.LatchSimulationVar);
-			
+
 		}
-		else if (predictable) 
+		else if (predictable)
 			OnStoreLastNetworkedValue();
 
 		// HierarchySetParent(NetworkMoveParent);
@@ -775,7 +784,7 @@ public partial class C_BaseEntity : IClientEntity
 	public void OnDataChanged(DataUpdateType updateType) {
 		CreateShadow();
 
-		if (updateType == DataUpdateType.Created) 
+		if (updateType == DataUpdateType.Created)
 			UpdateVisibility();
 	}
 
@@ -801,24 +810,24 @@ public partial class C_BaseEntity : IClientEntity
 				e.NeedsToInterpolate = true;
 		}
 
-		if (ShouldInterpolate()) 
+		if (ShouldInterpolate())
 			AddToInterpolationList();
 	}
 
 	private TimeUnit_t GetLastChangeTime(LatchFlags flags) {
-		if (GetPredictable() || IsClientCreated()) 
+		if (GetPredictable() || IsClientCreated())
 			return gpGlobals.CurTime;
 
 		Assert(!((flags & LatchFlags.LatchAnimationVar) != 0 && (flags & LatchFlags.LatchSimulationVar) != 0));
 
-		if ((flags & LatchFlags.LatchAnimationVar) != 0) 
+		if ((flags & LatchFlags.LatchAnimationVar) != 0)
 			return GetAnimTime();
 
 		if ((flags & LatchFlags.LatchSimulationVar) != 0) {
 			TimeUnit_t st = GetSimulationTime();
-			if (st == 0.0) 
+			if (st == 0.0)
 				return gpGlobals.CurTime;
-			
+
 			return st;
 		}
 
