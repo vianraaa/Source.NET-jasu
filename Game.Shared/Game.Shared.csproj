@@ -22,4 +22,7 @@
 	<ItemGroup>
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="HL2MP\" />
+	</ItemGroup>
 </Project>
