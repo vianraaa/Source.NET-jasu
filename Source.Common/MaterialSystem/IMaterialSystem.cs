@@ -285,7 +285,7 @@ public readonly struct MatRenderContextPtr : IDisposable, IMatRenderContext
 	public IMaterial? GetCurrentMaterial() => ctx.GetCurrentMaterial();
 	public void PopMatrix() => ctx.PopMatrix();
 	public IShaderAPI GetShaderAPI() => ctx.GetShaderAPI();
-	public IMesh GetDynamicMesh(bool buffered, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) =>
+	public IMesh GetDynamicMesh(bool buffered = true, IMesh? vertexOverride = null, IMesh? indexOverride = null, IMaterial? autoBind = null) =>
 		ctx.GetDynamicMesh(buffered, vertexOverride, indexOverride, autoBind);
 	public bool InFlashlightMode() => ctx.InFlashlightMode();
 	public void GetRenderTargetDimensions(out int screenWidth, out int screenHeight) =>
