@@ -526,7 +526,7 @@ namespace Source.Common
 		}
 
 		public virtual void CopyFrom<T>(object instanceFrom, Span<T> target) {
-			SetValue<T>(instanceFrom, in target[0]);
+			SetValue<T>(instanceFrom, target.Length == 0 ? default : target[0]);
 		}
 		public virtual void CopyTo<T>(object instanceFrom, Span<T> target) {
 			target[0] = GetValue<T>(instanceFrom);
