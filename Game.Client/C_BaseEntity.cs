@@ -41,7 +41,7 @@ public partial class C_BaseEntity : IClientEntity
 	static bool g_bWasThreaded;
 	static bool s_bAbsQueriesValid = true;
 	static bool s_bAbsRecomputationEnabled = true;
-	static ConVar cl_interpolate = new("cl_interpolate", "1.0f", FCvar.UserInfo | FCvar.DevelopmentOnly);
+	static ConVar cl_interpolate = new("cl_interpolate", "1", FCvar.UserInfo | FCvar.DevelopmentOnly);
 
 	public static void InterpolateServerEntities() {
 		s_bInterpolate = cl_interpolate.GetBool();
@@ -531,7 +531,7 @@ public partial class C_BaseEntity : IClientEntity
 		return Model != null && !IsEffectActive(EntityEffects.NoDraw) && Index != 0;
 	}
 
-	private bool IsEffectActive(EntityEffects fx) {
+	public bool IsEffectActive(EntityEffects fx) {
 		return ((EntityEffects)Effects & fx) != 0;
 	}
 
@@ -885,7 +885,6 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 
-	static bool s_AbsRecomputionEnabled = true;
 
 	EFL eflags = EFL.DirtyAbsTransform; // << TODO: FIGURE OUT WHAT ACTUALLY INITIALIZES THIS.
 	public Matrix4x4 CoordinateFrame;
@@ -893,34 +892,92 @@ public partial class C_BaseEntity : IClientEntity
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void AddEFlags(EFL flags) => eflags |= flags;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public void RemoveEFlags(EFL flags) => eflags &= ~flags;
 
+	readonly object CalcAbsolutePositionMutex = new();
+
 	private void CalcAbsolutePosition() {
-		if (!s_AbsRecomputionEnabled)
+		if (!s_bAbsRecomputationEnabled)
 			return;
 
-		// TODO: MAKE THIS WORK
-		//if ((eflags & EFL.DirtyAbsTransform) == 0)
-		//return;
+		eflags |= EFL.DirtyAbsTransform;
 
+		if ((eflags & EFL.DirtyAbsTransform) == 0) 
+			return;
+		
+		lock (CalcAbsolutePositionMutex) {
+			if ((eflags & EFL.DirtyAbsTransform) == 0)
+				return;
+
+			RemoveEFlags(EFL.DirtyAbsTransform);
+
+			if (!MoveParent.IsValid()) {
+				MathLib.AngleMatrix(GetLocalAngles(), GetLocalOrigin(), ref CoordinateFrame);
+				AbsOrigin = GetLocalOrigin();
+				AbsRotation = GetLocalAngles();
+				MathLib.NormalizeAngles(ref AbsRotation);
+				return;
+			}
+
+			if (IsEffectActive(EntityEffects.BoneMerge)) {
+				MoveToAimEnt();
+				return;
+			}
+
+			// todo
+		}
+	}
+
+	public virtual void GetAimEntOrigin(C_BaseEntity attachedTo, out Vector3 origin, out QAngle angles) {
+		origin = attachedTo.GetAbsOrigin();
+		angles = attachedTo.GetAbsAngles();
+	}
+
+	public void SetAbsOrigin(in Vector3 absOrigin) {
+		CalcAbsolutePosition();
+
+		if (AbsOrigin == absOrigin)
+			return;
+
+		InvalidatePhysicsRecursive(InvalidatePhysicsBits.PositionChanged);
 		RemoveEFlags(EFL.DirtyAbsTransform);
 
-		if (!MoveParent.IsValid()) {
-			MathLib.AngleMatrix(GetLocalAngles(), GetLocalOrigin(), ref CoordinateFrame);
-			AbsOrigin = GetLocalOrigin();
-			AbsRotation = GetLocalAngles();
-			MathLib.NormalizeAngles(ref AbsRotation);
+		AbsOrigin = absOrigin;
+		// TODO: Coordinate frame...
+		C_BaseEntity? moveParent = GetMoveParent();
+
+		if (moveParent == null) {
+			Origin = absOrigin;
 			return;
 		}
 
-		if (IsEffectActive(EntityEffects.BoneMerge)) {
-			MoveToAimEnt();
+		// TODO: Handle move parents...
+	}
+
+	public void SetAbsAngles(in QAngle absAngles) {
+		CalcAbsolutePosition();
+
+		if (AbsRotation == absAngles)
+			return;
+
+		InvalidatePhysicsRecursive(InvalidatePhysicsBits.AnglesChanged);
+		RemoveEFlags(EFL.DirtyAbsTransform);
+
+		AbsRotation = absAngles;
+		// TODO: Set coordinate frame
+
+		C_BaseEntity? moveParent = GetMoveParent();
+
+		if (moveParent == null) {
+			Rotation = absAngles;
 			return;
 		}
 
-		// todo
+		// TODO: Handle move parents...
 	}
 
 	public void MoveToAimEnt() {
-		throw new NotImplementedException();
+		GetAimEntOrigin(GetMoveParent(), out Vector3 aimEntOrigin, out QAngle aimEntAngles);
+		SetAbsOrigin(aimEntOrigin);
+		SetAbsAngles(aimEntAngles);
 	}
 
 	private bool AddDataChangeEvent(C_BaseEntity c_BaseEntity, DataUpdateType updateType, ref int storedEvent) {
@@ -935,7 +992,7 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool IsDormant() => IsServerEntity() ? Dormant : false;
+	public bool IsDormant() => IsServerEntity() && Dormant;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool IsServerEntity() => Index != -1;
@@ -1189,7 +1246,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	public MoveType GetMoveType() => (MoveType)MoveType;
 
-	private bool IsInterpolationEnabled() => s_bInterpolate;
+	private static bool IsInterpolationEnabled() => s_bInterpolate;
 	public C_BaseEntity? GetMoveParent() => MoveParent.Get();
 	public C_BaseEntity? FirstMoveChild() => MoveChild.Get();
 	public C_BaseEntity? NextMovePeer() => MovePeer.Get();

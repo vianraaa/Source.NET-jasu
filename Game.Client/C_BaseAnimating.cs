@@ -3,6 +3,7 @@
 using Source;
 using Source.Common;
 using Source.Common.Engine;
+using Source.Common.Mathematics;
 
 using System.Numerics;
 using System.Reflection;
@@ -72,6 +73,18 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 
 	internal static void UpdateClientSideAnimations() {
 
+	}
+
+	public override void GetAimEntOrigin(C_BaseEntity attachedTo, out Vector3 origin, out QAngle angles) {
+		C_BaseEntity? moveParent = null;
+		if(IsEffectActive(EntityEffects.BoneMerge) && IsEffectActive(EntityEffects.BoneMergeFastCull) && (moveParent = GetMoveParent()) != null) {
+			origin = moveParent.GetAbsOrigin(); //TODO:  moveParent.WorldSpaceCenter();
+			angles = moveParent.GetRenderAngles();
+		}
+		else {
+			// TODO: Bone merge cache
+			base.GetAimEntOrigin(attachedTo, out origin, out angles);
+		}
 	}
 
 	public int Sequence;
