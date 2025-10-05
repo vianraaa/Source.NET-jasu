@@ -791,4 +791,57 @@ public class ClientState : BaseClientState
 		throw new NotImplementedException();
 	}
 
+	public override bool ProcessServerInfo(svc_ServerInfo msg)
+	{
+		// Reset client state
+		Clear();
+
+		if (!base.ProcessServerInfo(msg))
+		{
+			Disconnect("CBaseClientState::ProcessServerInfo failed", true);
+			return false;
+		}
+
+		// is server a HLTV proxy ?
+		IsHLTV = msg.IsHLTV;
+
+		// The MD5 of the server map must match the MD5 of the client map. or else
+		//  the client is probably cheating.
+		ServerMD5 = msg.MapMD5;
+
+		if (MaxClients > 1)
+		{
+			/*if (mp_decals.GetInt() < r_decals.GetInt())
+			{
+				r_decals.SetValue(mp_decals.GetInt());
+			}*/
+		}
+
+		// RaphaelIT7
+		// ToDo: Set g_ClientGlobalVariables.maxClients = m_nMaxClients same for .network_protocol = msg.Protocol
+		// ToDo - How do I use this keyed service stuff, still have barelly an idea :sob:
+		// [FromKeyedServices(Realm.Client)] NetworkStringTableContainer networkStringTableContainerClient;
+		// StringTableContainer = networkStringTableContainerClient;
+
+		// CL_ReallocateDynamicData(MaxClients);
+
+		if (sv.IsPaused())
+		{
+			if (msg.TickInterval != host_state.IntervalPerTick)
+			{
+				Host.Error($"Expecting interval_per_tick {host_state.IntervalPerTick}, got {msg.TickInterval}\n");
+				return false;
+			}
+		} else {
+			host_state.IntervalPerTick = msg.TickInterval;
+		}
+
+        // Gmod Specific - a global bool. Should we put this into the host state?
+        // g_bIsDedicated = msg->m_bIsDedicated;
+
+        // gHostSpawnCount = m_nServerCount;
+
+        // videomode->MarkClientViewRectDirty();
+		return true;
+    }
 }

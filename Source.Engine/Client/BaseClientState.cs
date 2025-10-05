@@ -475,7 +475,7 @@ public abstract class BaseClientState(
 		return true;
 	}
 
-	private bool ProcessServerInfo(svc_ServerInfo msg) {
+	public virtual bool ProcessServerInfo(svc_ServerInfo msg) {
 #if !SWDS
 		EngineVGui?.UpdateProgressBar(LevelLoadingProgress.ProcessServerInfo);
 #endif
