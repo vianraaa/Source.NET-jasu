@@ -1088,15 +1088,30 @@ public struct SafeFieldPointer<TOwner, TType>
 	TOwner? owner;
 	GetRefFn? refFn;
 
+	public readonly Type OwnerType => typeof(TOwner);
+	public readonly Type TargetType => typeof(TType);
+
+	public nint Offset;
+
 	[MemberNotNullWhen(false, nameof(owner), nameof(refFn))] public readonly bool IsNull => owner == null || refFn == null;
 
 	public SafeFieldPointer() { }
-	public SafeFieldPointer(GetRefFn refFn) {
-		this.refFn = refFn;
-	}
 	public SafeFieldPointer(TOwner owner, GetRefFn refFn) {
 		this.owner = owner;
 		this.refFn = refFn;
+		InitOffset();
+	}
+
+	private unsafe void InitOffset() {
+		if (owner == null)
+			return;
+		GCHandle handle = GCHandle.Alloc(owner, GCHandleType.Pinned);
+		byte* basePtr = (byte*)handle.AddrOfPinnedObject();
+
+		ref TType fieldRef = ref refFn!(owner!);
+		byte* fieldPtr = (byte*)Unsafe.AsPointer(ref fieldRef);
+
+		Offset = (nint)(fieldPtr - basePtr);
 	}
 
 	public TOwner? Owner { readonly get => owner; set => owner = value; }
