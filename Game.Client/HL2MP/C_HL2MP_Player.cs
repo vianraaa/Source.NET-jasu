@@ -39,27 +39,25 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 															.WithManualClassID(StaticClassIndices.CHL2MP_Player);
 
 	public QAngle AngEyeAngles;
+	readonly InterpolatedVar<QAngle> IV_AngEyeAngles = new(nameof(AngEyeAngles));
 	public EHANDLE Ragdoll = new();
 	public int SpawnInterpCounter;
 	public int PlayerSoundType;
 	public bool IsWalking;
 
+	public C_HL2MP_Player() {
+		AddVar(FIELD.OF(nameof(AngEyeAngles)), IV_AngEyeAngles, LatchFlags.LatchSimulationVar);
+	}
+
 	public override void PostDataUpdate(DataUpdateType updateType) {
 		base.PostDataUpdate(updateType);
 	}
 
-
 	public override ref readonly QAngle EyeAngles() {
-		return ref base.EyeAngles();
+		return ref AngEyeAngles;
 	}
 
 	public override void CalcView(ref Vector3 eyeOrigin, ref QAngle eyeAngles, ref float zNear, ref float zFar, ref float fov) {
-		// This is extremely temporary, we just need to figure out how angles get placed in the player.
-		// TODO FIXME
-		QAngle tempAngles = AngEyeAngles;
-		if (tempAngles[YAW] < 0.0f)
-			tempAngles[YAW] += 360f;
-		SetLocalAngles(tempAngles);
 		if ((LifeState)LifeState != Source.LifeState.Alive) {
 			
 		}
