@@ -36,6 +36,9 @@ public class Render(
 	Matrix4x4 MatrixProjection;
 	Matrix4x4 MatrixWorldToScreen;
 
+	IViewRender? viewRender;
+	IViewRender engineRenderer => viewRender ??= Singleton<IViewRender>();
+
 	float FOV;
 	float Framerate;
 	float ZNear;
@@ -239,7 +242,7 @@ public class Render(
 			}
 		}
 
-		if (!success) 
+		if (!success)
 			ConDMsg($"Unable to load sky {requestedsky}\n");
 	}
 	private void InitStudio() { }
@@ -267,11 +270,146 @@ public class Render(
 	internal void DrawWorld(DrawWorldListFlags flags, float waterZAdjust) {
 		using MatRenderContextPtr renderContext = new(materials);
 		Span<MatSysInterface.MeshList> meshLists = MaterialSystem.Meshes.AsSpan();
-		for (int i = 0; i < meshLists.Length; i++) {
+
+		if ((flags & DrawWorldListFlags.Skybox) != 0) {
+			DrawSkybox(engineRenderer.GetZFar());
+		}
+
+		// TODO: A better way than assuming the last mesh is a skybox, cause that sucks and probably is not consistent at all
+		for (int i = meshLists.Length - 2; i >= 0; i--) {
 			ref MatSysInterface.MeshList meshList = ref meshLists[i];
 			renderContext.Bind(meshList.Material);
 			meshList.Mesh.Draw();
 		}
+	}
+	static ConVar r_drawskybox = new("1", FCvar.Cheat);
+
+	static readonly int[] SkyTexOrder = [0, 2, 1, 3, 4, 5];
+	static readonly int[] FakePlaneType = [1, -1, 2, -2, 3, -3];
+	private void DrawSkybox(float zFar, int drawFlags = 0x3F) {
+		if (!r_drawskybox.GetBool())
+			return;
+		Vector3 normal;
+		MatRenderContextPtr renderContext = new(materials);
+		for (int i = 0; i < 6; i++, drawFlags >>= 1) {
+			// Don't draw this panel of the skybox if the flag isn't set:
+			if ((drawFlags & 1) == 0)
+				continue;
+
+			normal = vec3_origin;
+			switch (FakePlaneType[i]) {
+				case 1:
+					normal[0] = 1;
+					break;
+
+				case -1:
+					normal[0] = -1;
+					break;
+
+				case 2:
+					normal[1] = 1;
+					break;
+
+				case -2:
+					normal[1] = -1;
+					break;
+
+				case 3:
+					normal[2] = 1;
+					break;
+
+				case -3:
+					normal[2] = -1;
+					break;
+			}
+
+			if (Vector3.Dot(CurrentViewForward, normal) < -0.29289f)
+				continue;
+
+			Span<Vector3> positionArray = stackalloc Vector3[4];
+			Span<Vector2> texCoordArray = stackalloc Vector2[4];
+			if (skyboxMaterials[SkyTexOrder[i]] != null) {
+				renderContext.Bind(skyboxMaterials[SkyTexOrder[i]]!);
+
+				MakeSkyVec(-1.0f, -1.0f, i, zFar, out positionArray[0], out texCoordArray[0]);
+				MakeSkyVec(-1.0f, 1.0f, i, zFar, out positionArray[1], out texCoordArray[1]);
+				MakeSkyVec(1.0f, 1.0f, i, zFar, out positionArray[2], out texCoordArray[2]);
+				MakeSkyVec(1.0f, -1.0f, i, zFar, out positionArray[3], out texCoordArray[3]);
+
+				IMesh mesh = renderContext.GetDynamicMesh();
+
+				MeshBuilder meshBuilder = new();
+				meshBuilder.Begin(mesh, MaterialPrimitiveType.Triangles, 4, 6);
+
+				for (int j = 0; j < 4; ++j) {
+					meshBuilder.Position3fv(positionArray[j]);
+					meshBuilder.TexCoord2fv(0, texCoordArray[j]);
+					meshBuilder.AdvanceVertex();
+				}
+				ref IndexBuilder indexBuilder = ref meshBuilder.IndexBuilder;
+				indexBuilder.FastQuad(0);
+
+				meshBuilder.End();
+				mesh.Draw();
+
+				meshBuilder.Dispose();
+			}
+		}
+	}
+
+	public const float SQRT3INV = 0.57735f;
+	readonly static int[,] st_to_vec = {
+		{ 3, -1, 2 },
+		{ -3, 1, 2 },
+
+		{ 1, 3, 2 },
+		{ -1, -3, 2 },
+
+		{ -2, -1, 3 },
+		{ 2, -1, -3 }
+	};
+	private void MakeSkyVec(float s, float t, int axis, float zFar, out Vector3 position, out Vector2 texCoord) {
+		Vector3 v = default, b = default;
+		int j = default, k = default;
+		float width = zFar * SQRT3INV;
+
+		if (s < -1)
+			s = -1;
+		else if (s > 1)
+			s = 1;
+		if (t < -1)
+			t = -1;
+		else if (t > 1)
+			t = 1;
+
+		b[0] = s * width;
+		b[1] = t * width;
+		b[2] = width;
+
+		for (j = 0; j < 3; j++) {
+			k = st_to_vec[axis, j];
+			if (k < 0)
+				v[j] = -b[-k - 1];
+			else
+				v[j] = b[k - 1];
+			v[j] += CurrentViewOrigin[j];
+		}
+
+		s = (s + 1) * 0.5F;
+		t = (t + 1) * 0.5F;
+
+		if (s < 1.0F / 512)
+			s = 1.0F / 512;
+		else if (s > 511.0F / 512)
+			s = 511.0F / 512;
+		if (t < 1.0F / 512)
+			t = 1.0F / 512;
+		else if (t > 511.0 / 512)
+			t = 511.0F / 512;
+
+		t = 1.0F - t;
+		position = v;
+		texCoord = new(s, t);
 	}
 
 	float Near;
