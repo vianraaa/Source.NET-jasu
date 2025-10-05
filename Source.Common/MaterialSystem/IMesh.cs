@@ -486,6 +486,17 @@ public struct IndexBuilder
 		Desc.Indices[CurrentIndex + 2] = (ushort)(startVert + 2);
 		AdvanceIndices(3);
 	}
+
+	public unsafe void FastQuad(int startVert) {
+		startVert += IndexOffset;
+		Desc.Indices[CurrentIndex + 0] = (ushort)startVert;
+		Desc.Indices[CurrentIndex + 1] = (ushort)(startVert + 1);
+		Desc.Indices[CurrentIndex + 2] = (ushort)(startVert + 2);
+		Desc.Indices[CurrentIndex + 3] = (ushort)startVert;
+		Desc.Indices[CurrentIndex + 4] = (ushort)(startVert + 2);
+		Desc.Indices[CurrentIndex + 5] = (ushort)(startVert + 3);
+		AdvanceIndices(6);
+	}
 }
 
 public unsafe struct MeshBuilder : IDisposable
@@ -811,6 +822,6 @@ public unsafe struct MeshBuilder : IDisposable
 	// Generate indices?
 	bool GenerateIndices;
 
-	IndexBuilder IndexBuilder;
-	VertexBuilder VertexBuilder;
+	public IndexBuilder IndexBuilder;
+	public VertexBuilder VertexBuilder;
 }
