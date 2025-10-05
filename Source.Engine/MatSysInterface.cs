@@ -223,6 +223,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		public int VertCount;
 		public int IndexCount;
 		public VertexFormat VertexFormat;
+		// TODO: Is there a better way to handle this? I can't figure out how Source does...
+		public bool IsToolTexture;
 	}
 	internal readonly List<MeshList> Meshes = [];
 	internal readonly List<IMesh?> WorldStaticMeshes = [];
@@ -286,6 +288,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			VertexFormat format = meshes[i].Material.GetVertexFormat();
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
+			meshes[i].IsToolTexture = meshes[i].Material.GetName().StartsWith("tools/", StringComparison.InvariantCultureIgnoreCase);
 			MeshBuilder meshBuilder = new MeshBuilder();
 			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, meshes[i].IndexCount);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {

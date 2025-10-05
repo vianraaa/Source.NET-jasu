@@ -275,9 +275,11 @@ public class Render(
 			DrawSkybox(engineRenderer.GetZFar());
 		}
 
-		// TODO: A better way than assuming the last mesh is a skybox, cause that sucks and probably is not consistent at all
-		for (int i = meshLists.Length - 2; i >= 0; i--) {
+		for (int i = meshLists.Length - 1; i >= 0; i--) {
 			ref MatSysInterface.MeshList meshList = ref meshLists[i];
+			if (meshList.IsToolTexture)
+				continue;
+
 			renderContext.Bind(meshList.Material);
 			meshList.Mesh.Draw();
 		}
