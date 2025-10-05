@@ -25,5 +25,6 @@ public class BaseHandle {
 			_ => false
 		};
 	}
+	public override int GetHashCode() => (int)Index;
 	public bool IsValid() => Index != Constants.INVALID_EHANDLE_INDEX;
 }
