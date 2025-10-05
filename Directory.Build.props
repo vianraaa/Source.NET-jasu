@@ -1,5 +1,23 @@
 <Project>
 	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);GMOD_DLL</DefineConstants>
+		
+		<!-- You can define whichever game dll constants you want here. For now, we only support Garry's Mod compatibility. Anything with Garry's Mod-specific
+		functionality/properties/constants/etc should try to use this define (but it was introduced after a lot of progress was made, so there are still some 
+		areas in the codebase that don't use it yet. Some references for the various constants I could find: -->
+		
+		<!--<DefineConstants>$(DefineConstants);HL2_DLL</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);HL2_EPISODIC</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);HL2MP</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);PORTAL</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);CSTRIKE_DLL</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);CSTRIKE15</DefineConstants>-->
+		<!--<DefineConstants>$(DefineConstants);TF_CLIENT_DLL</DefineConstants>-->
+		
+		<!-- Something that would be fun one day would be to have Portal compatibility too, if possible... -->
+	</PropertyGroup>
+
+	<PropertyGroup>
 		<IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
 		<IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
 		<IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
