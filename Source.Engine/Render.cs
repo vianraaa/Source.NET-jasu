@@ -213,7 +213,35 @@ public class Render(
 
 	private void ResetLightStyles() { }
 	private void DecalInit() { }
-	private void LoadSkys() { }
+	private void LoadSkys() {
+		bool success = true;
+		Span<char> requestedsky = stackalloc char[128];
+		ConVarRef skyname = this.skyname.Value;
+		if (skyname.IsValid()) {
+			ReadOnlySpan<char> skynameValue = skyname.GetString();
+			skynameValue.CopyTo(requestedsky);
+			requestedsky = requestedsky[..skynameValue.Length];
+		}
+		else {
+			ConDMsg("Unable to find skyname ConVar!!!\n");
+			return;
+		}
+
+		if (!LoadNamedSkys(requestedsky)) {
+			success = false;
+
+			if (((ReadOnlySpan<char>)requestedsky).Equals("sky_urb01", StringComparison.OrdinalIgnoreCase)) {
+				skyname.SetValue("sky_urb01");
+				if (LoadNamedSkys(skyname.GetString())) {
+					ConDMsg($"Unable to load sky {requestedsky}, but successfully loaded {skyname.GetString()}\n");
+					success = true;
+				}
+			}
+		}
+
+		if (!success) 
+			ConDMsg($"Unable to load sky {requestedsky}\n");
+	}
 	private void InitStudio() { }
 	private void LoadWorldGeometry() {
 		MaterialSystem.DestroySortInfo();
@@ -325,5 +353,44 @@ public class Render(
 	private void ComputeViewMatrix(ref Matrix4x4 worldToView, in Vector3 origin, in QAngle angles) {
 		angles.Vectors(out Vector3 forward, out _, out Vector3 up);
 		worldToView = Matrix4x4.CreateLookTo(origin, forward, up);
+	}
+	readonly IMaterial?[] skyboxMaterials = new IMaterial?[6];
+	readonly static string[] skyboxsuffix = ["rt", "bk", "lf", "ft", "up", "dn"];
+	Lazy<ConVarRef> skyname = new(() => new("sv_skyname"));
+
+	public bool LoadNamedSkys(ReadOnlySpan<char> skyname) {
+		Span<char> name = stackalloc char[MAX_PATH];
+		IMaterial?[] skies = new IMaterial?[6];
+		bool success = true;
+		const string SKYBOX_ = "skybox/";
+		SKYBOX_.CopyTo(name);
+		skyname.CopyTo(name[SKYBOX_.Length..]);
+		int writePos = SKYBOX_.Length + skyname.Length;
+		for (int i = 0; i < 6; i++) {
+			skyboxsuffix[i].CopyTo(name[writePos..]);
+			skies[i] = materials.FindMaterial(name[..(writePos + 2)], MaterialDefines.TEXTURE_GROUP_SKYBOX);
+
+			if (!skies[i].IsErrorMaterial())
+				continue;
+
+			success = false;
+			break;
+		}
+
+		if (!success)
+			return false;
+
+		for (int i = 0; i < 6; i++) {
+			if (skyboxMaterials[i] != null) {
+				skyboxMaterials[i]!.DecrementReferenceCount();
+				skyboxMaterials[i] = null;
+			}
+
+			Assert(skies[i] != null);
+			skyboxMaterials[i] = skies[i];
+			skyboxMaterials[i]!.IncrementReferenceCount();
+		}
+
+		return true;
 	}
 }
