@@ -139,7 +139,7 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 						if (cv.GetName() == null) cv.SetName(prop.Name);
 						cvar.RegisterConCommand(cv);
 					}
-					else if (type != typeof(ConVar)) {
+					else if (!type.IsAssignableTo(typeof(ConVar))) {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)getMethod.Invoke(instance, null)!;
 						if (cv.GetName() == null) cv.SetName(prop.Name);
@@ -157,7 +157,7 @@ public class EngineAPI(IGame game, IServiceProvider provider, Common COM, IFileS
 						if (cv.GetName() == null) cv.SetName(field.Name);
 						cvar.RegisterConCommand(cv);
 					}
-					else if (type != typeof(ConVar)) {
+					else if (!type.IsAssignableTo(typeof(ConVar))) {
 						object? instance = DetermineInstance(type);
 						ConVar cv = (ConVar)field.GetValue(instance)!;
 						if (cv.GetName() == null) cv.SetName(field.Name);

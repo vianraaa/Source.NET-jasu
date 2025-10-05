@@ -16,7 +16,7 @@ public class EmptyConVar() : ConVar("", "0", 0) {
 
 public struct ConVarRef
 {
-	static readonly EmptyConVar EmptyConVar = new EmptyConVar();
+	static readonly EmptyConVar EmptyConVar = new();
 	static ICvar? cvar;
 	static ICvar CVar => cvar ??= Singleton<ICvar>();
 	
