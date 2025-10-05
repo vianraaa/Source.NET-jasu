@@ -3,6 +3,7 @@
 using SharpCompress.Common;
 
 using Source.Common;
+using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
@@ -815,9 +816,22 @@ public class Material : IMaterialInternal
 		return 0;
 	}
 
-	private bool ShouldSkipVar(KeyValues var, out bool isConditionalVar) {
-		isConditionalVar = false; // TODO
-		return false;
+	private bool ShouldSkipVar(KeyValues var, out bool isConditional) {
+		ReadOnlySpan<char> varName = var.Name;
+		int qPos = varName.IndexOf('?');
+		ReadOnlySpan<char> question = qPos == -1 ? null : varName[(qPos + 1)..];
+		if (question.IsEmpty || (question == varName)) {
+			isConditional = false;                           // unconditional var
+			return false;
+		}
+		else {
+			bool shouldSkip = true;
+			isConditional = true;
+			
+			// There's more logic here, can implement it later
+
+			return shouldSkip;
+		}
 	}
 
 	public static ReadOnlySpan<char> GetVarName(KeyValues value) {
