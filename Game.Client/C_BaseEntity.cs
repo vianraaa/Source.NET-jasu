@@ -15,15 +15,18 @@ using CommunityToolkit.HighPerformance;
 using Source.Common.Commands;
 using Source.Engine;
 using System;
+using Source.Common.Networking;
 
 namespace Game.Client;
 
-public enum InterpolateResult {
+public enum InterpolateResult
+{
 	Stop = 0,
 	Continue = 1
 }
 
-public enum EntClientFlags {
+public enum EntClientFlags
+{
 	GettingShadowRenderBounds = 0x0001,
 	DontUseIK = 0x0002,
 	AlwaysInterpolate = 0x0004,
@@ -33,10 +36,83 @@ public partial class C_BaseEntity : IClientEntity
 {
 	static readonly LinkedList<C_BaseEntity> InterpolationList = [];
 	static readonly LinkedList<C_BaseEntity> TeleportList = [];
+	static bool s_Interpolate;
+	static bool g_bWasSkipping;
+	static bool g_bWasThreaded;
+	static ConVar cl_interpolate = new("cl_interpolate", "1.0f", FCvar.UserInfo | FCvar.DevelopmentOnly);
 
-	static ConVar cl_extrapolate = new(  "1", FCvar.Cheat, "Enable/disable extrapolation if interpolation history runs out." );
-	static ConVar cl_interp_npcs = new( "0.0", FCvar.UserInfo, "Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)" );
-	static ConVar cl_interp_all = new(  "0", 0, "Disable interpolation list optimizations.", 0, 0, cc_cl_interp_all_changed);
+	public static void InterpolateServerEntities() {
+		s_Interpolate = cl_interpolate.GetBool();
+
+		// Don't interpolate during timedemo playback
+		if (engine.IsPlayingTimeDemo() || engine.IsPaused())
+			s_Interpolate = false;
+
+
+		if (!engine.IsPlayingDemo()) {
+			INetChannelInfo? nci = engine.GetNetChannelInfo();
+			if (nci != null && nci.GetTimeSinceLastReceived() > 0.5)
+				s_Interpolate = false;
+		}
+
+		if (IsSimulatingOnAlternateTicks() != g_bWasSkipping || IsEngineThreaded() != g_bWasThreaded) {
+			g_bWasSkipping = IsSimulatingOnAlternateTicks();
+			g_bWasThreaded = IsEngineThreaded();
+
+			C_BaseEntityIterator iterator = new();
+			C_BaseEntity? ent;
+			while ((ent = iterator.Next()) != null) {
+				ent.Interp_UpdateInterpolationAmounts(ref ent.GetVarMapping());
+			}
+		}
+
+		// Enable extrapolation?
+		InterpolationContext.SetLastTimeStamp(engine.GetLastTimeStamp());
+		if (cl_extrapolate.GetBool() && !engine.IsPaused())
+			InterpolationContext.EnableExtrapolation(true);
+
+		// Smoothly interpolate position for server entities.
+		ProcessTeleportList();
+		ProcessInterpolatedList();
+	}
+
+	public static void ProcessTeleportList() {
+		foreach (C_BaseEntity entity in TeleportList) {
+			bool teleport = entity.Teleported();
+			bool ef_nointerp = entity.IsNoInterpolationFrame();
+
+			if (teleport || ef_nointerp) {
+				entity.OldMoveParent.Set(entity.NetworkMoveParent);
+				entity.OldParentAttachment = entity.ParentAttachment;
+				entity.MoveToLastReceivedPosition(true);
+				entity.ResetLatched();
+			}
+			else 
+				entity.RemoveFromTeleportList();
+		}
+	}
+
+	private void ResetLatched() {
+		if (IsClientCreated())
+			return;
+
+		Interp_Reset(ref GetVarMapping());
+	}
+
+	private bool IsNoInterpolationFrame() {
+		throw new NotImplementedException();
+	}
+
+	private bool Teleported() => OldMoveParent != NetworkMoveParent || OldParentAttachment != ParentAttachment;
+
+	public static void ProcessInterpolatedList() {
+		foreach (C_BaseEntity entity in InterpolationList)
+			entity.ReadyToDraw = entity.Interpolate(gpGlobals.CurTime);
+	}
+
+	static ConVar cl_extrapolate = new("1", FCvar.Cheat, "Enable/disable extrapolation if interpolation history runs out.");
+	static ConVar cl_interp_npcs = new("0.0", FCvar.UserInfo, "Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)");
+	static ConVar cl_interp_all = new("0", 0, "Disable interpolation list optimizations.", 0, 0, cc_cl_interp_all_changed);
 
 	private static void cc_cl_interp_all_changed(IConVar ivar, in ConVarChangeContext ctx) {
 		ConVarRef var = new(ivar);
@@ -215,6 +291,7 @@ public partial class C_BaseEntity : IClientEntity
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
 	public short ModelIndex;
+	public byte OldParentAttachment;
 	public byte ParentAttachment;
 
 	public byte MoveType;
@@ -273,6 +350,8 @@ public partial class C_BaseEntity : IClientEntity
 	public readonly EHANDLE OwnerEntity = new();
 	public readonly EHANDLE EffectEntity = new();
 	public readonly EHANDLE GroundEntity = new();
+	public readonly EHANDLE NetworkMoveParent = new();
+	public readonly EHANDLE OldMoveParent = new();
 	public int LifeState;
 	public Vector3 BaseVelocity;
 	public int NextThinkTick;
@@ -351,8 +430,8 @@ public partial class C_BaseEntity : IClientEntity
 
 	public Model? GetModel() => Model;
 
-	public virtual ref readonly Vector3 GetRenderOrigin() => ref GetAbsOrigin(); 
-	public virtual ref readonly QAngle GetRenderAngles() => ref GetAbsAngles(); 
+	public virtual ref readonly Vector3 GetRenderOrigin() => ref GetAbsOrigin();
+	public virtual ref readonly QAngle GetRenderAngles() => ref GetAbsAngles();
 	public void GetRenderBounds(out Vector3 mins, out Vector3 maxs) {
 		throw new NotImplementedException();
 	}
@@ -437,7 +516,7 @@ public partial class C_BaseEntity : IClientEntity
 
 		bool newentity = updateType == DataUpdateType.Created;
 
-		if (!newentity) 
+		if (!newentity)
 			Interp_RestoreToLastNetworked(ref GetVarMapping());
 
 		if (newentity && !IsClientCreated()) {
@@ -492,15 +571,20 @@ public partial class C_BaseEntity : IClientEntity
 
 		if (updateType == DataUpdateType.Created) {
 			ProxyRandomValue = Random.Shared.NextSingle();
-			// ResetLatched();
+			ResetLatched();
 			CreationTick = gpGlobals.TickCount;
 		}
 
 		// CheckInitPredictable("PostDataUpdate");
 		// TODO: Some stuff involving localplayer and ownage
 		// TODO: Partition/leaf stuff
-		// TODO: Nointerp list
-		// TODO: Parent changes
+
+		if (!IsClientCreated())
+			if (Teleported() || IsNoInterpolationFrame())
+				AddToTeleportList();
+
+		if (OldMoveParent != NetworkMoveParent)
+			UpdateVisibility();
 		// TODO: ShouldDraw changes
 	}
 	float ProxyRandomValue;
@@ -508,8 +592,6 @@ public partial class C_BaseEntity : IClientEntity
 	public virtual void SetRenderMode(RenderMode renderMode, bool forceUpdate) {
 		RenderMode = (byte)renderMode;
 	}
-
-	protected readonly IEngineClient engine = Singleton<IEngineClient>();
 
 	protected void MarkMessageReceived() {
 		LastMessageTime = engine.GetLastTimeStamp();
@@ -522,9 +604,9 @@ public partial class C_BaseEntity : IClientEntity
 
 	private void UpdateVisibility() {
 		// todo: tools
-		if (ShouldDraw() && !IsDormant()) 
+		if (ShouldDraw() && !IsDormant())
 			AddToLeafSystem();
-		else 
+		else
 			RemoveFromLeafSystem();
 	}
 
@@ -558,7 +640,7 @@ public partial class C_BaseEntity : IClientEntity
 							// otherEntity.PredictableId.SetAcknowledged(true);
 
 							// if (OnPredictedEntityRemove(false, otherEntity)) 
-								// otherEntity.Release();
+							// otherEntity.Release();
 						}
 					}
 				}
@@ -909,6 +991,26 @@ public partial class C_BaseEntity : IClientEntity
 		BaseInterpolatePart2(oldOrigin, oldAngles, oldVel, 0);
 	}
 
+	public bool Interpolate(TimeUnit_t currentTime) {
+		Vector3 oldOrigin = default;
+		QAngle oldAngles = default;
+		Vector3 oldVel = default;
+
+		int noMoreChanges = 0;
+		InterpolateResult retVal = BaseInterpolatePart1(ref currentTime, ref oldOrigin, ref oldAngles, ref oldVel, ref noMoreChanges);
+
+		if (noMoreChanges != 0)
+			RemoveFromInterpolationList();
+
+		if (retVal == InterpolateResult.Stop)
+			return true;
+
+		InvalidatePhysicsBits changeFlags = 0;
+		BaseInterpolatePart2(oldOrigin, oldAngles, oldVel, changeFlags);
+
+		return true;
+	}
+
 	private InterpolateResult BaseInterpolatePart1(ref TimeUnit_t currentTime, ref Vector3 oldOrigin, ref QAngle oldAngles, ref Vector3 oldVel, ref int noMoreChanges) {
 		noMoreChanges = 1;
 
@@ -932,7 +1034,7 @@ public partial class C_BaseEntity : IClientEntity
 		oldVel = Velocity;
 
 		noMoreChanges = Interp_Interpolate(ref GetVarMapping(), currentTime);
-		if (cl_interp_all.GetInt() != 0|| (EntClientFlags & EntClientFlags.AlwaysInterpolate) != 0)
+		if (cl_interp_all.GetInt() != 0 || (EntClientFlags & EntClientFlags.AlwaysInterpolate) != 0)
 			noMoreChanges = 0;
 
 		return InterpolateResult.Continue;
@@ -973,15 +1075,24 @@ public partial class C_BaseEntity : IClientEntity
 		return false;
 	}
 
+	public void Interp_Reset(ref VarMapping map) {
+		int c = map.Entries.Count;
+		for (int i = 0; i < c; i++) {
+			VarMapEntry e = map.Entries[i];
+			IInterpolatedVar watcher = e.Watcher;
+			watcher.Reset();
+		}
+	}
+
 	private void BaseInterpolatePart2(Vector3 oldOrigin, QAngle oldAngles, Vector3 oldVel, InvalidatePhysicsBits changeFlags) {
-		if (Origin != oldOrigin) 
+		if (Origin != oldOrigin)
 			changeFlags |= InvalidatePhysicsBits.PositionChanged;
 		if (Rotation != oldAngles)
 			changeFlags |= InvalidatePhysicsBits.AnglesChanged;
-		if (Velocity != oldVel) 
+		if (Velocity != oldVel)
 			changeFlags |= InvalidatePhysicsBits.VelocityChanged;
-		
-		if (changeFlags != 0) 
+
+		if (changeFlags != 0)
 			InvalidatePhysicsRecursive(changeFlags);
 	}
 
