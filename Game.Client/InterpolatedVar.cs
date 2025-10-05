@@ -41,7 +41,7 @@ public interface IInterpolatedVar
 	void NoteLastNetworkedValue();
 	void NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue);
 	void Reset();
-	int Interpolate(TimeUnit_t seconds, TimeUnit_t amount);
+	int Interpolate(TimeUnit_t seconds);
 	LatchFlags GetVarType();
 	void RestoreToLastNetworked();
 	void Copy(IInterpolatedVar src);
@@ -251,8 +251,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 		public int Newer;
 		public double Fraction;
 	}
-
-
+	public int Interpolate(TimeUnit_t currentTime) => Interpolate(currentTime, InterpolationAmount);
 	public int Interpolate(TimeUnit_t currentTime, TimeUnit_t interpolationAmount) {
 		int noMoreChanges = 0;
 		if (GetInterpolationInfo(out InterpolationInfo info, currentTime, interpolationAmount, out noMoreChanges))
