@@ -118,6 +118,8 @@ public partial class
 		AddEFlags(dirtyFlags);
 		// todo: children
 	}
+
+	public static bool IsSimulatingOnAlternateTicks() => false; // TODO
 }
 
 #endif
