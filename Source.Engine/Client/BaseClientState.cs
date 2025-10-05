@@ -206,8 +206,9 @@ public abstract class BaseClientState(
 						return false;
 					}
 
-					string? why = msg.ReadString(Protocol.MAX_ROUTABLE_PAYLOAD);
-					Disconnect(why ?? "<null>", true);
+					string why = msg.ReadString(Protocol.MAX_ROUTABLE_PAYLOAD) ?? "<null>";
+					ConWarning($"Disconnect: {why}\n"); // RaphaelIT7: Source Engine calls COM_ExplainDisconnection instead here.
+					Disconnect(why, true);
 				}
 				break;
 			case S2C.Challenge:
@@ -654,7 +655,6 @@ public abstract class BaseClientState(
 			NetChannel.Shutdown(reason ?? "Disconnect by user.");
 			NetChannel = null;
 		}
-
 	}
 	public virtual void SendConnectPacket(int challengeNr, int authProtocol, ulong gameServerSteamID, bool gameServerSecure) {
 		string serverName;
