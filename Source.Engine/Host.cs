@@ -35,8 +35,8 @@ public class Host(
 	IServiceProvider services, ICommandLine CommandLine, IFileSystem fileSystem
 	)
 {
-	public int TimeToTicks(float dt) => (int)(0.5f + (float)dt / (float)host_state.IntervalPerTick);
-	public float TicksToTime(int dt) => (float)host_state.IntervalPerTick * (float)dt;
+	public int TimeToTicks(TimeUnit_t dt) => (int)(0.5 + dt / host_state.IntervalPerTick);
+	public TimeUnit_t TicksToTime(int dt) => host_state.IntervalPerTick * dt;
 
 	public string GetCurrentMod() => host_parms.Mod;
 	public string GetCurrentGame() => host_parms.Game;
