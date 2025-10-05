@@ -844,7 +844,7 @@ public class Material : IMaterialInternal
 	}
 
 	private string MissingShaderName() {
-		return "Wireframe_GL46";
+		return "UnlitGeneric";
 	}
 
 	MaterialFlags flags;
