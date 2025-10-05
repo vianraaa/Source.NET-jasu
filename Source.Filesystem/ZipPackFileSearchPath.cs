@@ -6,9 +6,31 @@ using Source.FileSystem;
 
 namespace Source.Filesystem;
 
-public class ZipArchiveEntryHandle(IFileSystem filesystem, FileNameHandle_t fileName, ZipArchiveEntry? entry) : IFileHandle
+public class ZipArchiveEntryHandle : IFileHandle
 {
-	Stream? stream = entry?.OpenEntryStream();
+	// TODO: Memory optimization here. We have to read the full uncompressed stream into a new memory stream -
+	// can we read the uncompressed stream into a scratch buffer which is pulled from a stack in case of multiple
+	// active ziparchiveentryhandles at a time?
+	readonly Stream? stream;
+
+	IFileSystem filesystem;
+	FileNameHandle_t fileName;
+	ZipArchiveEntry? entry;
+
+	public ZipArchiveEntryHandle(IFileSystem filesystem, FileNameHandle_t fileName, ZipArchiveEntry? entry) {
+		this.filesystem = filesystem;
+		this.fileName = fileName;
+		this.entry = entry;
+		Stream? incoming = entry?.OpenEntryStream();
+		if (incoming == null)
+			return;
+
+
+		stream = new MemoryStream();
+		incoming.CopyTo(stream);
+		stream.Position = 0; // << Prepares it for reading
+	}
+
 	public Stream Stream => stream!;
 	public FileNameHandle_t FileNameHandle => fileName;
 	public ReadOnlySpan<char> GetPath() => filesystem.String(fileName);
