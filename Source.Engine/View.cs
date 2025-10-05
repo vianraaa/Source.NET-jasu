@@ -50,7 +50,7 @@ public class View(Host Host, IEngineVGuiInternal EngineVGui, IMaterialSystem mat
 }
 
 
-public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderView
+public class RenderView(EngineVGui EngineVGui, Render engineRenderer, ClientState cl) : IRenderView
 {
 	public virtual void Push2DView(ViewSetup view, ClearFlags flags, ITexture? renderTarget, Frustum frustumPlanes) {
 		engineRenderer.Push2DView(in view, flags, renderTarget, frustumPlanes);
@@ -85,4 +85,6 @@ public class RenderView(EngineVGui EngineVGui, Render engineRenderer) : IRenderV
 	public void DrawWorld(DrawWorldListFlags flags, float waterZAdjust) => engineRenderer.DrawWorld(flags, waterZAdjust);
 
 	public void Push3DView(in ViewSetup viewRender, ClearFlags clearFlags, ITexture? rtColor, Frustum frustum, ITexture? rtDepth) => engineRenderer.Push3DView(in viewRender, clearFlags, rtColor, frustum, rtDepth);
+
+	public int GetViewEntity() => cl.ViewEntity;
 }
