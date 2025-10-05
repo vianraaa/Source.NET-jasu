@@ -155,9 +155,9 @@ public struct QAngle
 		}
 
 		return new QAngle(
+			roll * RAD2DEG,
 			yaw * RAD2DEG,
-			pitch * RAD2DEG,
-			roll * RAD2DEG
+			pitch * RAD2DEG
 		);
 	}
 	public static QAngle Lerp(in QAngle q1, in QAngle q2, float percent) {
