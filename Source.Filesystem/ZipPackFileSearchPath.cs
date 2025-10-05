@@ -12,7 +12,7 @@ public class ZipArchiveEntryHandle(ZipArchiveEntry? entry) : IFileHandle
 	public Stream Stream => stream!;
 
 	public void Dispose() {
-		throw new NotImplementedException();
+		stream?.Dispose();
 	}
 
 	public bool IsOK() => entry != null && stream != null;
