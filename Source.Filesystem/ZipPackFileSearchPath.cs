@@ -6,10 +6,12 @@ using Source.FileSystem;
 
 namespace Source.Filesystem;
 
-public class ZipArchiveEntryHandle(ZipArchiveEntry? entry) : IFileHandle
+public class ZipArchiveEntryHandle(IFileSystem filesystem, FileNameHandle_t fileName, ZipArchiveEntry? entry) : IFileHandle
 {
 	Stream? stream = entry?.OpenEntryStream();
 	public Stream Stream => stream!;
+	public FileNameHandle_t FileNameHandle => fileName;
+	public ReadOnlySpan<char> GetPath() => filesystem.String(fileName);
 
 	public void Dispose() {
 		stream?.Dispose();
@@ -57,7 +59,7 @@ public class ZipPackFileSearchPath : SearchPath
 		if (entry == null)
 			return null;
 
-		return new ZipArchiveEntryHandle(entry);
+		return new ZipArchiveEntryHandle(filesystem, filesystem.FindOrAddFileName(path), entry);
 	}
 
 	public override bool RemoveFile(ReadOnlySpan<char> path) => false;

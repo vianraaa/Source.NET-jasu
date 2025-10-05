@@ -5,11 +5,14 @@ using Source.Common.Filesystem;
 
 namespace Source.FileSystem;
 
-public class DiskFileHandle(IBaseFileSystem filesystem, FileStream data) : IFileHandle, IDisposable
+public class DiskFileHandle(IFileSystem filesystem, FileStream data, FileNameHandle_t fileName) : IFileHandle, IDisposable
 {
 	private bool disposedValue;
 
 	public Stream Stream => data;
+	public FileNameHandle_t FileNameHandle => fileName;
+	public ReadOnlySpan<char> GetPath() => filesystem.String(fileName);
+
 
 	protected virtual void Dispose(bool disposing) {
 		if (!disposedValue && disposing)

@@ -610,7 +610,9 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 										  out TexDimensions dimsMapping, out TexDimensions dimsActual, out TexDimensions dimsAllocated,
 										  out uint stripFlags) {
 		// TODO; finish the complexities of texture loading
-		vtfTexture!.Unserialize(fileHandle.Stream, false);
+		if(!vtfTexture!.Unserialize(fileHandle.Stream, false)) {
+			Warning($"VTF texture '{fileHandle.GetPath()}' failed to load!\n");
+		}
 
 		dimsMapping = new() {
 			Width = (ushort)vtfTexture.Width(),

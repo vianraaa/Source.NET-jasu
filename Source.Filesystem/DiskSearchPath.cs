@@ -8,8 +8,8 @@ namespace Source.FileSystem;
 
 public class DiskSearchPath : SearchPath
 {
-	private IBaseFileSystem parent;
-	public DiskSearchPath(IBaseFileSystem filesystem, string absPath) {
+	private IFileSystem parent;
+	public DiskSearchPath(IFileSystem filesystem, string absPath) {
 		parent = filesystem;
 
 		if (!Path.IsPathFullyQualified(absPath))
@@ -56,7 +56,7 @@ public class DiskSearchPath : SearchPath
 		};
 
 		try {
-			return new DiskFileHandle(parent, info.Open(mode, access));
+			return new DiskFileHandle(parent, info.Open(mode, access), parent.FindOrAddFileName(path));
 		}
 		catch {
 			return null;

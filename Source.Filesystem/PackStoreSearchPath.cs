@@ -5,11 +5,13 @@ using Source.Formats.VPK;
 
 namespace Source.Filesystem;
 
-public class VpkFileHandle(IBaseFileSystem filesystem, MemoryStream data) : IFileHandle, IDisposable
+public class VpkFileHandle(IFileSystem filesystem, FileNameHandle_t fileName, MemoryStream data) : IFileHandle, IDisposable
 {
 	private bool disposedValue;
 
 	public Stream Stream => data;
+	public FileNameHandle_t FileNameHandle => fileName;
+	public ReadOnlySpan<char> GetPath() => filesystem.String(fileName);
 
 	protected virtual void Dispose(bool disposing) {
 		if (!disposedValue && disposing)
@@ -26,13 +28,13 @@ public class VpkFileHandle(IBaseFileSystem filesystem, MemoryStream data) : IFil
 
 public class PackStoreSearchPath : SearchPath
 {
-	private readonly IBaseFileSystem parent;
+	private readonly IFileSystem parent;
 	private readonly VpkArchive vpk;
 
 	private Dictionary<UtlSymId_t, VpkEntry> vpkEntryLookups = [];
 	private Dictionary<UtlSymId_t, VpkDirectory> vpkDirectoryLookups = [];
 
-	public PackStoreSearchPath(IBaseFileSystem filesystem, string absPath) {
+	public PackStoreSearchPath(IFileSystem filesystem, string absPath) {
 		absPath = absPath.EndsWith(".vpk") ? absPath.Substring(0, absPath.Length - ".vpk".Length) : absPath;
 		absPath = absPath.EndsWith("_dir") ? absPath.Substring(0, absPath.Length - "_dir".Length) : absPath;
 		absPath = absPath.Replace('\\', '/');
@@ -85,7 +87,7 @@ public class PackStoreSearchPath : SearchPath
 
 	public override IFileHandle? Open(ReadOnlySpan<char> path, FileOpenOptions options) {
 		if (vpkEntryLookups.TryGetValue(path.Hash(), out VpkEntry? entry))
-			return new VpkFileHandle(parent, new MemoryStream(entry.Data));
+			return new VpkFileHandle(parent, parent.FindOrAddFileName(path), new MemoryStream(entry.Data));
 
 		return null;
 	}
