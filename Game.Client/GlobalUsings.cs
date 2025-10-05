@@ -34,7 +34,7 @@ public static class ClientGlobals
 	public static IRenderView render { get; private set; }
 	public static IEngineClient engine { get; private set; }
 	public static ClientEntityList cl_entitylist { get; private set; }
-	public static double TICK_INTERVAL => gpGlobals.IntervalPerTick;
+	public static TimeUnit_t TICK_INTERVAL => gpGlobals.IntervalPerTick;
 
 	public static TimeUnit_t TICKS_TO_TIME(int t) => TICK_INTERVAL * t;
 	public static int TIME_TO_TICKS(TimeUnit_t dt) => (int)(0.5f + dt / TICK_INTERVAL);
