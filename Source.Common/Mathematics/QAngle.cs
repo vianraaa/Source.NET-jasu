@@ -47,6 +47,17 @@ public struct QAngle
 	public static QAngle operator -(QAngle a, QAngle b) => new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 	public static QAngle operator *(QAngle a, QAngle b) => new(a.X * b.X, a.Y * b.Y, a.Z * b.Z);
 	public static QAngle operator /(QAngle a, QAngle b) => new(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
+
+	public static QAngle operator +(float a, QAngle b) => new(a + b.X, a + b.Y, a + b.Z);
+	public static QAngle operator -(float a, QAngle b) => new(a - b.X, a - b.Y, a - b.Z);
+	public static QAngle operator *(float a, QAngle b) => new(a * b.X, a * b.Y, a * b.Z);
+	public static QAngle operator /(float a, QAngle b) => new(a / b.X, a / b.Y, a / b.Z);
+
+	public static QAngle operator +(QAngle a, float b) => new(a.X + b, a.Y + b, a.Z + b);
+	public static QAngle operator -(QAngle a, float b) => new(a.X - b, a.Y - b, a.Z - b);
+	public static QAngle operator *(QAngle a, float b) => new(a.X * b, a.Y * b, a.Z * b);
+	public static QAngle operator /(QAngle a, float b) => new(a.X / b, a.Y / b, a.Z / b);
+
 	public static bool operator ==(QAngle a, QAngle b) => a.X == b.X && a.Y == b.Y && a.Z == b.Z;
 	public static bool operator !=(QAngle a, QAngle b) => a.X != b.X || a.Y != b.Y || a.Z != b.Z;
 	public void Init() {

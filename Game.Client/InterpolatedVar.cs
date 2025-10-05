@@ -1,15 +1,19 @@
-﻿using Source;
+﻿using SharpCompress.Common;
+
+using Source;
 using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Hashing;
 using Source.Common.Mathematics;
 
+using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Game.Client;
 
-public enum LatchFlags {
+public enum LatchFlags
+{
 	LatchAnimationVar = 1 << 0,
 	LatchSimulationVar = 1 << 1,
 	ExcludeAutoLatch = 1 << 2,
@@ -28,7 +32,8 @@ public class InterpolationContext
 	internal static TimeUnit_t GetLastTimeStamp() => LastTimeStamp;
 }
 
-public interface IInterpolatedVar {
+public interface IInterpolatedVar
+{
 	public const double EXTRA_INTERPOLATION_HISTORY_STORED = 0.05;
 
 	void Setup(object instance, DynamicAccessor accessor, LatchFlags type);
@@ -69,7 +74,7 @@ public class SimpleRingBuffer<T> where T : new()
 
 	public bool IsValidIndex(int i) => IsIdxValid(i);
 
-	public static int InvalidIndex() => -1;
+	public int InvalidIndex() => -1;
 
 	public ref T this[int i] {
 		get {
@@ -156,14 +161,14 @@ public struct InterpolatedVarEntryBase<T>
 
 	public T[]? GetValue() => Value;
 	public void Init(int maxCount) {
-		if(maxCount == 0) {
+		if (maxCount == 0) {
 			DeleteEntry();
 		}
 		else {
 			if (maxCount != Value?.Length)
 				DeleteEntry();
 
-			if(Value == null) {
+			if (Value == null) {
 				Value = new T[maxCount];
 			}
 		}
@@ -177,27 +182,66 @@ public struct InterpolatedVarEntryBase<T>
 		return Value;
 	}
 
+
+	public Span<T> NewEntry(object instance, Span<T> data, TimeUnit_t time) {
+		ChangeTime = time;
+		Init(data.Length);
+		if (Value != null && data.Length != 0)
+			data.CopyTo(Value.AsSpan());
+		return Value;
+	}
+
+
 	public void DeleteEntry() {
 		Value = null;
 	}
 
-	internal void FastTransferFrom<T>(InterpolatedVarEntryBase<T> interpolatedVarEntryBase) {
-		throw new NotImplementedException();
+	internal void FastTransferFrom(ref InterpolatedVarEntryBase<T> src) {
+		Value = src.Value;
+		ChangeTime = src.ChangeTime;
+		src.Value = null;
 	}
 }
 
 public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 {
 	SimpleRingBuffer<InterpolatedVarEntryBase<T>> VarHistory = new();
-	public void Copy(IInterpolatedVar src) {
-		throw new NotImplementedException();
+	public void Copy(IInterpolatedVar inSrc) {
+		InterpolatedVarArrayBase<T>? src = (InterpolatedVarArrayBase<T>?)inSrc;
+
+		if (src == null || src.MaxCount != MaxCount) {
+			if (src != null) 
+				AssertMsg(false, $"src.MaxCount ({src.MaxCount}) != MaxCount ({MaxCount}) for {GetDebugName()}.");
+			else 
+				AssertMsg(false, "src was null in InterpolatedVarArrayBase<T>.Copy.");
+			
+			return;
+		}
+
+		Assert((Type & ~LatchFlags.ExcludeAutoInterpolate) == (src.Type & ~LatchFlags.ExcludeAutoInterpolate));
+		for (int i = 0; i < MaxCount; i++) {
+			LastNetworkedValue![i] = src.LastNetworkedValue![i];
+			Looping![i] = src.Looping![i];
+		}
+
+		LastNetworkedTime = src.LastNetworkedTime;
+
+		VarHistory.RemoveAll();
+
+		for (nint i = 0; i < src.VarHistory.Count(); i++) {
+			nint newslot = VarHistory.AddToTail();
+
+			ref InterpolatedVarEntryBase<T> outDest = ref VarHistory[(int)newslot];
+			ref InterpolatedVarEntryBase<T> refSrc = ref src.VarHistory[(int)i];
+			outDest.NewEntry(Instance, refSrc.GetValue().AsSpan()[..MaxCount], refSrc.ChangeTime);
+		}
 	}
 
 	public virtual ReadOnlySpan<char> GetDebugName() {
-		throw new NotImplementedException();
+		return "NO NAME";
 	}
 
-	public LatchFlags GetVarType() => mType;
+	public LatchFlags GetVarType() => Type;
 
 	public struct InterpolationInfo
 	{
@@ -220,9 +264,9 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 			_Interpolate_Hermite(Instance, Accessor, info.Fraction, ref history[info.Oldest], ref history[info.Older], ref history[info.Newer]);
 		else if (info.Newer == info.Older) {
 			int realOlder = info.Newer + 1;
-			if (InterpolationContext.IsExtrapolationAllowed() && IsValidIndex(realOlder) && history[realOlder].ChangeTime != 0.0 && interpolationAmount > 0.000001 && InterpolationContext.GetLastTimeStamp() <= LastNetworkedTime) 
+			if (InterpolationContext.IsExtrapolationAllowed() && IsValidIndex(realOlder) && history[realOlder].ChangeTime != 0.0 && interpolationAmount > 0.000001 && InterpolationContext.GetLastTimeStamp() <= LastNetworkedTime)
 				_Extrapolate(Instance, Accessor, ref history[realOlder], ref history[info.Newer], currentTime - interpolationAmount, Interpolation.cl_extrapolate_amount.GetFloat());
-			else 
+			else
 				_Interpolate(Instance, Accessor, info.Fraction, ref history[info.Older], ref history[info.Newer]);
 		}
 		else {
@@ -240,23 +284,199 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 		}
 
 		Assert(fraction >= 0.0 && fraction <= 1.0);
-		// todo
-		throw new NotImplementedException();
-
+		for (int i = 0; i < MaxCount; i++) {
+			if (Looping![i])
+				accessor.AtIndex(i)!.SetValue(instance, LerpFunctions.Lerp_Clamp(LerpFunctions.LoopingLerp(fraction, start.GetValue()![i], end.GetValue()![i])));
+			else
+				accessor.AtIndex(i)!.SetValue(instance, LerpFunctions.Lerp_Clamp(LerpFunctions.Lerp(fraction, start.GetValue()![i], end.GetValue()![i])));
+		}
 	}
 
-	private void _Extrapolate(object instance, DynamicAccessor accessor, ref InterpolatedVarEntryBase<T> interpolatedVarEntryBase1, ref InterpolatedVarEntryBase<T> interpolatedVarEntryBase2, double v1, float v2) {
-		throw new NotImplementedException();
+
+
+	private void _Extrapolate(object instance, DynamicAccessor accessor, ref InterpolatedVarEntryBase<T> oldEntry, ref InterpolatedVarEntryBase<T> newEntry, double destinationTime, float maxExtrapolationAmount) {
+		if (Math.Abs(oldEntry.ChangeTime - newEntry.ChangeTime) < 0.001 || destinationTime <= newEntry.ChangeTime) {
+			for (int i = 0; i < MaxCount; i++)
+				accessor.CopyFrom(instance, newEntry.GetValue()!.AsSpan()[..MaxCount]);
+		}
+		else {
+			double extrapolationAmount = Math.Min(destinationTime - newEntry.ChangeTime, maxExtrapolationAmount);
+
+			double divisor = 1.0 / (newEntry.ChangeTime - oldEntry.ChangeTime);
+			for (int i = 0; i < MaxCount; i++) {
+				accessor.AtIndex(i)!.SetValue(instance, ExtrapolateInterpolatedVarType(oldEntry.GetValue()![i], newEntry.GetValue()![i], divisor, extrapolationAmount));
+			}
+		}
 	}
 
-	private void _Interpolate_Hermite(object instance, DynamicAccessor accessor, double fraction, ref InterpolatedVarEntryBase<T> interpolatedVarEntryBase1, ref InterpolatedVarEntryBase<T> interpolatedVarEntryBase2, ref InterpolatedVarEntryBase<T> interpolatedVarEntryBase3) {
-		throw new NotImplementedException();
+	private T ExtrapolateInterpolatedVarType(in T oldVal, in T newVal, double divisor, double extrapolationAmount) {
+		// Refer to LerpFunctions comment - this all gets collapsed/boxing no-op'd by the JIT it seems
+		if (typeof(T) == typeof(float)) {
+			float from = (float)(object)oldVal;
+			float to = (float)(object)newVal;
+			return (T)(object)LerpFunctions.Lerp(1.0f + extrapolationAmount * divisor, in from, in to);
+		}
+		else if (typeof(T) == typeof(double)) {
+			double from = (double)(object)oldVal;
+			double to = (double)(object)newVal;
+			return (T)(object)LerpFunctions.Lerp(1.0f + extrapolationAmount * divisor, in from, in to);
+		}
+		else if (typeof(T) == typeof(Vector3)) {
+			Vector3 from = (Vector3)(object)oldVal;
+			Vector3 to = (Vector3)(object)newVal;
+			return (T)(object)LerpFunctions.Lerp(1.0f + extrapolationAmount * divisor, in from, in to);
+		}
+		else if (typeof(T) == typeof(QAngle)) {
+			QAngle from = (QAngle)(object)oldVal;
+			QAngle to = (QAngle)(object)newVal;
+			return (T)(object)LerpFunctions.Lerp(1.0f + extrapolationAmount * divisor, in from, in to);
+		}
+		else
+			return newVal;
 	}
 
-	private bool IsValidIndex(int i) => VarHistory.IsValidIndex(i); 
+	private void _Interpolate_Hermite(object instance, DynamicAccessor accessor, double fraction, ref InterpolatedVarEntryBase<T> prev, ref InterpolatedVarEntryBase<T> start, ref InterpolatedVarEntryBase<T> end) {
+		InterpolatedVarEntryBase<T> fixup = default;
+		fixup.Init(MaxCount);
+
+		TimeFixup_Hermite(ref fixup, ref prev, ref start, ref end);
+		for (int i = 0; i < MaxCount; i++) {
+			// Note that QAngle has a specialization that will do quaternion interpolation here...
+			if (Looping![i]) {
+				accessor.AtIndex(i)!.SetValue(instance, LerpFunctions.Lerp_Clamp(LerpFunctions.LoopingLerp_Hermite(fraction, prev.GetValue()![i], start.GetValue()![i], end.GetValue()![i])));
+			}
+			else {
+				accessor.AtIndex(i)!.SetValue(instance, LerpFunctions.Lerp_Clamp(LerpFunctions.Lerp_Hermite(fraction, prev.GetValue()![i], start.GetValue()![i], end.GetValue()![i])));
+			}
+		}
+	}
+
+	private void TimeFixup_Hermite(ref InterpolatedVarEntryBase<T> fixup, ref InterpolatedVarEntryBase<T> prev, ref InterpolatedVarEntryBase<T> start, ref InterpolatedVarEntryBase<T> end)
+		=> TimeFixup_Hermite2(ref fixup, ref prev, ref start, end.ChangeTime - start.ChangeTime);
+
+	private void TimeFixup_Hermite2(ref InterpolatedVarEntryBase<T> fixup, ref InterpolatedVarEntryBase<T> prev, ref InterpolatedVarEntryBase<T> start, double dt1) {
+		double dt2 = start.ChangeTime - prev.ChangeTime;
+
+		if (Math.Abs(dt1 - dt2) > 0.0001 &&
+			dt2 > 0.0001f) {
+			double frac = dt1 / dt2;
+
+			fixup.ChangeTime = start.ChangeTime - dt1;
+
+			for (int i = 0; i < MaxCount; i++) {
+				if (Looping![i])
+					fixup.GetValue()![i] = LerpFunctions.LoopingLerp(1 - frac, prev.GetValue()![i], start.GetValue()![i]);
+				else
+					fixup.GetValue()![i] = LerpFunctions.Lerp(1 - frac, prev.GetValue()![i], start.GetValue()![i]);
+			}
+
+			prev = ref fixup;
+		}
+	}
+
+	private bool IsValidIndex(int i) => VarHistory.IsValidIndex(i);
+
+	public static bool COMPARE_HISTORY(T[]? _a, T[]? _b) {
+		if (typeof(T) == typeof(float)) {
+			float[]? a = (float[]?)(object?)_a;
+			float[]? b = (float[]?)(object?)_b;
+			for (int i = 0; i < a?.Length && i < b?.Length; i++)
+				if (a[i] != b[i])
+					return true;
+			return false;
+		}
+		else if (typeof(T) == typeof(double)) {
+			double[]? a = (double[]?)(object?)_a;
+			double[]? b = (double[]?)(object?)_b;
+			for (int i = 0; i < a?.Length && i < b?.Length; i++)
+				if (a[i] != b[i])
+					return true;
+			return false;
+		}
+		else if (typeof(T) == typeof(Vector3)) {
+			Vector3[]? a = (Vector3[]?)(object?)_a;
+			Vector3[]? b = (Vector3[]?)(object?)_b;
+			for (int i = 0; i < a?.Length && i < b?.Length; i++)
+				if (a[i] != b[i])
+					return true;
+			return false;
+		}
+		else if (typeof(T) == typeof(QAngle)) {
+			QAngle[]? a = (QAngle[]?)(object?)_a;
+			QAngle[]? b = (QAngle[]?)(object?)_b;
+			for (int i = 0; i < a?.Length && i < b?.Length; i++)
+				if (a[i] != b[i])
+					return true;
+			return false;
+		}
+
+		throw new NotImplementedException();
+	}
 
 	private bool GetInterpolationInfo(out InterpolationInfo info, double currentTime, double interpolationAmount, out int noMoreChanges) {
-		throw new NotImplementedException();
+		var varHistory = VarHistory;
+
+		double targetTime = currentTime - interpolationAmount;
+		info = default;
+		noMoreChanges = default;
+
+		info.Hermite = false;
+		info.Fraction = 0;
+		info.Oldest = info.Older = info.Newer = varHistory.InvalidIndex();
+		for (int i = 0; i < varHistory.Count(); i++) {
+			info.Older = i;
+
+			double olderChangeTime = VarHistory[i].ChangeTime;
+			if (olderChangeTime == 0.0f)
+				break;
+
+			if (targetTime < olderChangeTime) {
+				info.Newer = info.Older;
+				continue;
+			}
+
+			if (info.Newer == varHistory.InvalidIndex()) {
+				info.Newer = info.Older;
+
+				noMoreChanges = 1;
+				return true;
+			}
+
+			double newerChangeTime = varHistory[info.Newer].ChangeTime;
+			double dt = newerChangeTime - olderChangeTime;
+			if (dt > 0.0001f) {
+				info.Fraction = (targetTime - olderChangeTime) / (newerChangeTime - olderChangeTime);
+				info.Fraction = Math.Min(info.Fraction, 2.0f);
+
+				int oldestindex = i + 1;
+
+				if ((Type & LatchFlags.InterpolateLinearOnly) == 0 && varHistory.IsIdxValid(oldestindex)) {
+					info.Oldest = oldestindex;
+					double oldestChangeTime = varHistory[oldestindex].ChangeTime;
+					double dt2 = olderChangeTime - oldestChangeTime;
+					if (dt2 > 0.0001f)
+						info.Hermite = true;
+				}
+
+				if (info.Newer == VarHistory.Head()) {
+					if (COMPARE_HISTORY(VarHistory[info.Newer].GetValue(), VarHistory[info.Oldest].GetValue())) {
+						if (!info.Hermite || COMPARE_HISTORY(VarHistory[info.Newer].GetValue(), VarHistory[info.Oldest].GetValue()))
+							noMoreChanges = 1;
+					}
+				}
+			}
+
+			return true;
+		}
+
+		if (info.Newer != varHistory.InvalidIndex()) {
+			info.Older = info.Newer;
+			return true;
+		}
+
+
+		info.Newer = info.Older;
+		return (info.Older != varHistory.InvalidIndex());
 	}
 
 	public void NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue) {
@@ -270,8 +490,13 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 		RemoveEntriesPreviousTo(gpGlobals.CurTime - interpolationAmount - IInterpolatedVar.EXTRA_INTERPOLATION_HISTORY_STORED);
 	}
 
-	private void RemoveEntriesPreviousTo(double v) {
-		throw new NotImplementedException();
+	private void RemoveEntriesPreviousTo(double time) {
+		for (int i = 0; i < VarHistory.Count(); i++) {
+			if (VarHistory[i].ChangeTime < time) {
+				VarHistory.Truncate(i + 3);
+				break;
+			}
+		}
 	}
 
 	private void AddToHead(double changeTime, DynamicAccessor values, bool flushNewer) {
@@ -279,9 +504,9 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 
 		if (flushNewer) {
 			while (VarHistory.Count() != 0) {
-				if ((VarHistory[0].ChangeTime + 0.0001) > changeTime) 
+				if ((VarHistory[0].ChangeTime + 0.0001) > changeTime)
 					VarHistory.RemoveAtHead();
-				else 
+				else
 					break;
 			}
 
@@ -292,7 +517,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 			for (int i = 1; i < VarHistory.Count(); i++) {
 				if (VarHistory[i].ChangeTime <= changeTime)
 					break;
-				VarHistory[newslot].FastTransferFrom(VarHistory[i]);
+				VarHistory[newslot].FastTransferFrom(ref VarHistory[i]);
 				newslot = i;
 			}
 		}
@@ -331,18 +556,18 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	}
 
 	private void ClearHistory() {
-		for (int i = 0; i < VarHistory.Count(); i++) 
+		for (int i = 0; i < VarHistory.Count(); i++)
 			VarHistory[i].DeleteEntry();
-		
+
 		VarHistory.RemoveAll();
 	}
 
 	public void RestoreToLastNetworked() {
-		throw new NotImplementedException();
+		Accessor.CopyFrom(Instance, LastNetworkedValue.AsSpan());
 	}
 
 	public void SetDebugName(ReadOnlySpan<char> name) {
-		throw new NotImplementedException();
+
 	}
 
 	public void SetInterpolationAmount(TimeUnit_t seconds) {
@@ -352,15 +577,14 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	public void Setup(object instance, DynamicAccessor accessor, LatchFlags type) {
 		this.Instance = instance;
 		this.Accessor = accessor;
-		this.mType = type;
+		this.Type = type;
 	}
 	object Instance;
 	DynamicAccessor Accessor;
-	LatchFlags mType;
+	LatchFlags Type;
 	TimeUnit_t InterpolationAmount;
 	TimeUnit_t LastNetworkedTime;
 	T[]? LastNetworkedValue;
-	int Type;
 	int MaxCount => LastNetworkedValue?.Length ?? 0;
 	bool[]? Looping;
 }
