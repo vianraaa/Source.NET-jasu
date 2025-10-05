@@ -167,6 +167,12 @@ public partial class Input(IServiceProvider provider, ISurface Surface, IViewRen
 		key.State &= KeyButtonStateFlags.Down;
 		return val;
 	}
+#if GMOD_DLL
+	[ConCommand]
+	void noclip() {
+		in_impulse = 154;
+	}
+#endif
 	[ConCommand] void impulse(in TokenizedCommand args) => in_impulse = int.TryParse(args[1], out in_impulse) ? in_impulse : 0;
 	[ConCommand(name: "+moveup")] void IN_UpDown(in TokenizedCommand args) => KeyDown(ref in_up, args[1]);
 	[ConCommand(name: "+movedown")] void IN_DownDown(in TokenizedCommand args) => KeyDown(ref in_down, args[1]);
