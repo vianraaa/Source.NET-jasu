@@ -296,14 +296,21 @@ namespace Source.Common
 		public readonly DynamicArrayIndexAccessor?[] ArrayIndexers;
 		public readonly DynamicArrayInfo Info;
 
-		public int Length => Info.MaxLength;
-
+		public override int Length => Info.MaxLength;
+		public override void CopyFrom<T>(object instanceFrom, Span<T> target) {
+			for (int i = 0; i < Length; i++)
+				SetValue(instanceFrom, in target[i]);
+		}
+		public override void CopyTo<T>(object instanceFrom, Span<T> target) {
+			for (int i = 0; i < Length; i++)
+				target[i] = AtIndex(i)!.GetValue<T>(instanceFrom);
+		}
 		public DynamicArrayAccessor(Type targetType, ReadOnlySpan<char> expression, int isList = -1) : base(targetType, expression) {
 			var arrayAttr = StoringType.GetCustomAttribute<InlineArrayAttribute>();
 			if (arrayAttr != null) {
 				Info = new(StoringType.GetGenericArguments()[0], () => arrayAttr.Length);
 			}
-			else if(isList > 0) {
+			else if (isList > 0) {
 				Info = new(StoringType.GetGenericArguments()[0], () => isList, true);
 			}
 			else {
@@ -314,7 +321,7 @@ namespace Source.Common
 			ArrayIndexers = new DynamicArrayIndexAccessor?[Info.MaxLength];
 		}
 
-		public DynamicArrayIndexAccessor? AtIndex(int index) {
+		public override DynamicAccessor? AtIndex(int index) {
 			if (index < 0)
 				return null;
 
@@ -413,6 +420,17 @@ namespace Source.Common
 	{
 		public readonly List<MemberInfo> Members = [];
 
+		/// <summary>
+		/// How many items
+		/// </summary>
+		public virtual int Length => 1;
+		/// <summary>
+		/// Get a dynamic accessor at an index (on default accessors this is a no-op)
+		/// </summary>
+		/// <param name="index"></param>
+		/// <returns></returns>
+		public virtual DynamicAccessor? AtIndex(int index) => this;
+
 		internal string FirstName { get; set; } // testing function
 
 		Type? buildingTargetType;
@@ -505,6 +523,13 @@ namespace Source.Common
 				return false;
 			fn(instance, in value);
 			return true;
+		}
+
+		public virtual void CopyFrom<T>(object instanceFrom, Span<T> target) {
+			SetValue<T>(instanceFrom, in target[0]);
+		}
+		public virtual void CopyTo<T>(object instanceFrom, Span<T> target) {
+			target[0] = GetValue<T>(instanceFrom);
 		}
 	}
 

@@ -5,6 +5,29 @@ using Source.Common.Client;
 
 namespace Game.Client;
 
+public ref struct C_BaseEntityIterator {
+	public C_BaseEntityIterator() {
+		Restart();
+	}
+	public void Restart() {
+		CurBaseEntity = cl_entitylist.BaseEntities.First;
+	}
+
+	public C_BaseEntity? Next() {
+		while (CurBaseEntity != null) {
+			C_BaseEntity pRet = CurBaseEntity.Value;
+			CurBaseEntity = CurBaseEntity.Next;
+
+			if (!pRet.IsDormant())
+				return pRet;
+		}
+
+		return null;
+	}
+
+	private LinkedListNode<C_BaseEntity>? CurBaseEntity;
+}
+
 public static class ClientGlobals
 {
 	public static ClientGlobalVariables gpGlobals { get; private set; }

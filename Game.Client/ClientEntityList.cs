@@ -163,7 +163,7 @@ public class ClientEntityList : BaseEntityList, IClientEntityList
 	}
 
 	InlineArrayNumEntEntries<EntityCacheInfo_t> EntityCacheInfo;
-	readonly LinkedList<C_BaseEntity> BaseEntities = [];
+	public readonly LinkedList<C_BaseEntity> BaseEntities = [];
 }
 
 public interface IClientEntityListener

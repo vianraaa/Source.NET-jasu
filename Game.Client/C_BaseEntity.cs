@@ -261,9 +261,9 @@ public partial class C_BaseEntity : IClientEntity
 	public QAngle NetworkAngles;
 
 	public Vector3 Origin;
-	public readonly InterpolatedVar<Vector3> IV_Origin = new();
+	public readonly InterpolatedVar<Vector3> IV_Origin = new("Origin");
 	public QAngle Rotation;
-	public readonly InterpolatedVar<QAngle> IV_Rotation= new();
+	public readonly InterpolatedVar<QAngle> IV_Rotation= new("Rotation");
 
 
 	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
@@ -707,7 +707,7 @@ public partial class C_BaseEntity : IClientEntity
 		}
 
 		if (setup) {
-			watcher.Setup(accessor, type);
+			watcher.Setup(this, accessor, type);
 			watcher.SetInterpolationAmount(GetInterpolationAmount(watcher.GetVarType()));
 		}
 	}
@@ -716,6 +716,38 @@ public partial class C_BaseEntity : IClientEntity
 	}
 	public ref VarMapping GetVarMapping() => ref VarMap;
 	public VarMapping VarMap = new();
+		static double LastValue_Interp = -1;
+		static double LastValue_InterpNPCs = -1;
+	void CheckCLInterpChanged() {
+		double curValue_Interp = CdllBoundedCVars.GetClientInterpAmount();
+		if (LastValue_Interp == -1) LastValue_Interp = curValue_Interp;
+
+		// float curValue_InterpNPCs = cl_interp_npcs.GetFloat();
+		double curValue_InterpNPCs = 0;
+		if (LastValue_InterpNPCs == -1) LastValue_InterpNPCs = curValue_InterpNPCs;
+
+		if (LastValue_Interp != curValue_Interp || LastValue_InterpNPCs != curValue_InterpNPCs) {
+			LastValue_Interp = curValue_Interp;
+			LastValue_InterpNPCs = curValue_InterpNPCs;
+
+			C_BaseEntityIterator iterator = new();
+			C_BaseEntity? ent;
+			while ((ent = iterator.Next()) != null)
+				ent.Interp_UpdateInterpolationAmounts(ref ent.GetVarMapping());
+		}
+	}
+
+	private void Interp_UpdateInterpolationAmounts(ref VarMapping map) {
+		if (Unsafe.IsNullRef(ref map))
+			return;
+
+		int c  = map.Entries.Count;
+		for (int i = 0; i < c; i++) {
+			VarMapEntry e = map.Entries[i];
+			IInterpolatedVar watcher = e.Watcher;
+			watcher.SetInterpolationAmount(GetInterpolationAmount(watcher.GetVarType()));
+		}
+	}
 }
 
 public class VarMapEntry
