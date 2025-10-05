@@ -149,13 +149,23 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 	}
 
 	private void OnRenderStart() {
+		// TODO: the rest of this, as features get implemented
+
+		C_BaseEntity.InterpolateServerEntities();
+		C_BaseEntity.SetAbsQueriesValid(true);
+		C_BaseEntity.EnableAbsRecomputations(true);
+
 		input.CAM_Think();
 		view.OnRenderStart();
+
+		C_BaseAnimating.UpdateClientSideAnimations();
 
 		SimulateEntities();
 		PhysicsSimulate();
 
-		// TODO: the rest of this
+		engine.FireEvents();
+
+		C_BaseEntity.CalcAimEntPositions();
 	}
 
 	private void PhysicsSimulate() {

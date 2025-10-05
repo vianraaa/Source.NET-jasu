@@ -36,9 +36,11 @@ public partial class C_BaseEntity : IClientEntity
 {
 	static readonly LinkedList<C_BaseEntity> InterpolationList = [];
 	static readonly LinkedList<C_BaseEntity> TeleportList = [];
-	static bool s_bInterpolate;
+	static bool s_bInterpolate = true;
 	static bool g_bWasSkipping;
 	static bool g_bWasThreaded;
+	static bool s_bAbsQueriesValid = true;
+	static bool s_bAbsRecomputationEnabled = true;
 	static ConVar cl_interpolate = new("cl_interpolate", "1.0f", FCvar.UserInfo | FCvar.DevelopmentOnly);
 
 	public static void InterpolateServerEntities() {
@@ -87,7 +89,7 @@ public partial class C_BaseEntity : IClientEntity
 				entity.MoveToLastReceivedPosition(true);
 				entity.ResetLatched();
 			}
-			else 
+			else
 				entity.RemoveFromTeleportList();
 		}
 	}
@@ -97,6 +99,37 @@ public partial class C_BaseEntity : IClientEntity
 			return;
 
 		Interp_Reset(ref GetVarMapping());
+	}
+
+	public static bool IsAbsQueriesValid() => !ThreadInMainThread() || s_bAbsQueriesValid;
+	public static void SetAbsQueriesValid(bool valid) {
+		if (!ThreadInMainThread())
+			return;
+
+		s_bAbsQueriesValid = !valid;
+	}
+
+	public static bool IsAbsRecomputationsEnabled() => !ThreadInMainThread() || s_bAbsRecomputationEnabled;
+	public static void EnableAbsRecomputations(bool enable) {
+		if (!ThreadInMainThread())
+			return;
+
+		s_bAbsRecomputationEnabled = enable;
+	}
+
+	static readonly List<C_BaseEntity> AimEntsList = [];
+
+	internal static void CalcAimEntPositions() {
+		foreach(var ent in AimEntsList) { 
+			Assert(ent.GetMoveParent() != null);
+			if (ent.IsEffectActive(EntityEffects.BoneMerge)) 
+				ent.CalcAbsolutePosition();
+		}
+	}
+
+	internal static void AddVisibleEntities() {
+		// TODO
+		// Requires leaf system
 	}
 
 	private bool IsNoInterpolationFrame() => OldInterpolationFrame != InterpolationFrame;
