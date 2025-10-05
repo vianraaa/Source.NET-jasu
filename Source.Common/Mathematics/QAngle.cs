@@ -1,6 +1,9 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
+
+using static System.Runtime.Intrinsics.X86.Avx10v1;
 
 namespace Source.Common.Mathematics;
 
@@ -73,6 +76,28 @@ public struct QAngle
 			angle += 360;
 		}
 		return angle;
+	}
+
+	public static QAngle Lerp(in QAngle q1, in QAngle q2, float percent) {
+		Quaternion src = Quaternion.CreateFromYawPitchRoll(q1.Y, q1.X, q1.Z);
+		Quaternion dst = Quaternion.CreateFromYawPitchRoll(q2.Y, q2.X, q2.Z);
+
+		Quaternion result = Quaternion.Slerp(src, dst, percent);;
+		return FromQuaternion(in result);
+	}
+
+	public static QAngle FromQuaternion(in Quaternion result) {
+		Matrix4x4 matrix = Matrix4x4.CreateFromQuaternion(result);
+		QAngle ret;
+		ExtractYawPitchRoll(in matrix, out ret.Y, out ret.X, out ret.Z);
+		return ret;
+	}
+
+	// untested
+	private static void ExtractYawPitchRoll(in Matrix4x4 matrix, out float yaw, out float pitch, out float roll) {
+		yaw = (float)Math.Atan2(matrix.M12, matrix.M33);
+		pitch = (float)Math.Asin(-matrix.M23);
+		roll = (float)Math.Atan2(matrix.M21, matrix.M22);
 	}
 
 	public static QAngle Normalize(in QAngle angle) => new(Normalize(angle.X), Normalize(angle.Y), Normalize(angle.Z));
