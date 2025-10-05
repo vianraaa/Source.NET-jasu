@@ -22,12 +22,23 @@ public unsafe class IndexBuffer : IDisposable
 	internal bool LateCreateShouldDiscard;
 
 	int ibo = -1;
-	byte* mem;
+	int lastBufferSize = -1;
 	public unsafe void RecomputeIBO() {
-		Dispose();
-		ibo = (int)glCreateBuffer();
-		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
-		glNamedBufferData((uint)ibo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+		// Create the IBO if it doesn't exist
+		if (ibo == -1)
+			ibo = (int)glCreateBuffer();
+
+		// Deallocate if Sysmembuffer != null and we cant fit in what we already allocated.
+		if (BufferSize > lastBufferSize) {
+			if (SysmemBuffer != null) {
+				NativeMemory.Free(SysmemBuffer);
+				SysmemBuffer = null;
+			}
+			lastBufferSize = BufferSize;
+			SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
+			glNamedBufferData((uint)ibo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+
+		}
 
 		if (SysmemBuffer == null) {
 			Warning("WARNING: RecomputeIBO failure (OpenGL's not happy...)\n");

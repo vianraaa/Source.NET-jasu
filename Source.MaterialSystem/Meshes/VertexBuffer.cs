@@ -107,24 +107,35 @@ public unsafe class VertexBuffer : IDisposable
 		RecomputeVBO();
 	}
 
-	public unsafe void RecomputeVBO() {
-		Dispose();
+	int lastBufferSize = -1;
 
-		vbo = (int)glCreateBuffer();
-		SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
-		glNamedBufferData((uint)vbo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+	public unsafe void RecomputeVBO() {
+		// Create the VBO if it doesn't exist
+		if (vbo == -1)
+			vbo = (int)glCreateBuffer();
+		// Deallocate if Sysmembuffer != null and we cant fit in what we already allocated.
+		if (BufferSize > lastBufferSize) {
+			if (SysmemBuffer != null) {
+				NativeMemory.Free(SysmemBuffer);
+				SysmemBuffer = null;
+			}
+			lastBufferSize = BufferSize;
+			SysmemBuffer = NativeMemory.AllocZeroed((nuint)BufferSize);
+			glNamedBufferData((uint)vbo, BufferSize, null, Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+		}
+
 		RecomputeVAO();
 	}
 
 	public byte* Lock(int numVerts, out int baseVertexIndex) {
 		Assert(!Locked);
 
-		if(numVerts > VertexCount) {
+		if (numVerts > VertexCount) {
 			baseVertexIndex = 0;
 			return null;
 		}
 		if (Dynamic) {
-			if(Flush || !HasEnoughRoom(numVerts)) {
+			if (Flush || !HasEnoughRoom(numVerts)) {
 				if (SysmemBuffer != null)
 					LateCreateShouldDiscard = true;
 
