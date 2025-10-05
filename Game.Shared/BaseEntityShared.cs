@@ -119,6 +119,14 @@ public partial class
 		// todo: children
 	}
 
+
+	public TimeUnit_t GetAnimTime() => AnimTime;
+	public TimeUnit_t GetSimulationTime() => SimulationTime;
+
+	public void SetAnimTime(TimeUnit_t time) => AnimTime = time;
+	public void SetSimulationTime(TimeUnit_t time) => SimulationTime = time;
+
+
 	public static bool IsSimulatingOnAlternateTicks() => false; // TODO
 }
 

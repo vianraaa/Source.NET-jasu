@@ -39,7 +39,7 @@ public interface IInterpolatedVar
 	void Setup(object instance, DynamicAccessor accessor, LatchFlags type);
 	void SetInterpolationAmount(TimeUnit_t seconds);
 	void NoteLastNetworkedValue();
-	void NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue);
+	bool NoteChanged(TimeUnit_t changeTime, bool updateLastNetworkedValue);
 	void Reset();
 	int Interpolate(TimeUnit_t seconds);
 	LatchFlags GetVarType();
@@ -478,8 +478,13 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 		return (info.Older != varHistory.InvalidIndex());
 	}
 
-	public void NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue) {
+	public bool NoteChanged(TimeUnit_t changeTime, bool updateLastNetworkedValue) => NoteChanged(changeTime, InterpolationAmount, updateLastNetworkedValue);
+	public bool NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue) {
 		bool ret = true;
+		
+		if (VarHistory.Count() != 0) {
+			// todo: optimize interpolation if no new value
+		}
 
 		AddToHead(changeTime, Accessor, true);
 
@@ -487,6 +492,8 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 			NoteLastNetworkedValue();
 		}
 		RemoveEntriesPreviousTo(gpGlobals.CurTime - interpolationAmount - IInterpolatedVar.EXTRA_INTERPOLATION_HISTORY_STORED);
+
+		return ret;
 	}
 
 	private void RemoveEntriesPreviousTo(double time) {

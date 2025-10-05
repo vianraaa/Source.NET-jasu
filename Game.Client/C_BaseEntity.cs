@@ -320,13 +320,13 @@ public partial class C_BaseEntity : IClientEntity
 
 	private Model? Model;
 
-	public double AnimTime;
-	public double OldAnimTime;
+	public TimeUnit_t AnimTime;
+	public TimeUnit_t OldAnimTime;
 
-	public double SimulationTime;
-	public double OldSimulationTime;
+	public TimeUnit_t SimulationTime;
+	public TimeUnit_t OldSimulationTime;
 
-	public double CreateTime;
+	public TimeUnit_t CreateTime;
 
 	public byte InterpolationFrame;
 	public byte OldInterpolationFrame;
@@ -601,7 +601,16 @@ public partial class C_BaseEntity : IClientEntity
 
 		bool predictable = GetPredictable();
 
-		// todo: interpolation and prediction stuff
+		if (!predictable && !IsClientCreated()) {
+			if (animTimeChanged) 
+				OnLatchInterpolatedVariables(LatchFlags.LatchAnimationVar);
+			
+			if (simulationChanged) 
+				OnLatchInterpolatedVariables(LatchFlags.LatchSimulationVar);
+			
+		}
+		else if (predictable) 
+			OnStoreLastNetworkedValue();
 
 		// HierarchySetParent(NetworkMoveParent);
 
@@ -627,6 +636,39 @@ public partial class C_BaseEntity : IClientEntity
 			UpdateVisibility();
 		// TODO: ShouldDraw changes
 	}
+
+	private void OnStoreLastNetworkedValue() {
+		bool bRestore = false;
+		Vector3 savePos = default;
+		QAngle saveAng = default;
+
+		if (RenderFX == (byte)RenderFx.Ragdoll && GetPredictable()) {
+			bRestore = true;
+			savePos = GetLocalOrigin();
+			saveAng = GetLocalAngles();
+
+			MoveToLastReceivedPosition(true);
+		}
+
+		int c = VarMap.Entries.Count;
+		for (int i = 0; i < c; i++) {
+			VarMapEntry e = VarMap.Entries[i];
+			IInterpolatedVar watcher = e.Watcher;
+
+			LatchFlags type = watcher.GetVarType();
+
+			if ((type & LatchFlags.ExcludeAutoLatch) != 0)
+				continue;
+
+			watcher.NoteLastNetworkedValue();
+		}
+
+		if (bRestore) {
+			SetLocalOrigin(savePos);
+			SetLocalAngles(saveAng);
+		}
+	}
+
 	float ProxyRandomValue;
 
 	public virtual void SetRenderMode(RenderMode renderMode, bool forceUpdate) {
@@ -726,11 +768,67 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public void OnPreDataChanged(DataUpdateType updateType) {
-		throw new NotImplementedException();
+		OldMoveParent.Set(NetworkMoveParent);
+		OldParentAttachment = ParentAttachment;
 	}
 
 	public void OnDataChanged(DataUpdateType updateType) {
-		throw new NotImplementedException();
+		CreateShadow();
+
+		if (updateType == DataUpdateType.Created) 
+			UpdateVisibility();
+	}
+
+	private void OnLatchInterpolatedVariables(LatchFlags flags) {
+		TimeUnit_t changetime = GetLastChangeTime(flags);
+
+		bool updateLastNetworkedValue = (flags & LatchFlags.InteroplateOmitUpdateLastNetworked) == 0;
+
+		int c = VarMap.Entries.Count;
+		for (int i = 0; i < c; i++) {
+			VarMapEntry e = VarMap.Entries[i];
+			IInterpolatedVar watcher = e.Watcher;
+
+			LatchFlags type = watcher.GetVarType();
+
+			if ((type & flags) == 0)
+				continue;
+
+			if ((type & LatchFlags.ExcludeAutoLatch) != 0)
+				continue;
+
+			if (watcher.NoteChanged(changetime, updateLastNetworkedValue))
+				e.NeedsToInterpolate = true;
+		}
+
+		if (ShouldInterpolate()) 
+			AddToInterpolationList();
+	}
+
+	private TimeUnit_t GetLastChangeTime(LatchFlags flags) {
+		if (GetPredictable() || IsClientCreated()) 
+			return gpGlobals.CurTime;
+
+		Assert(!((flags & LatchFlags.LatchAnimationVar) != 0 && (flags & LatchFlags.LatchSimulationVar) != 0));
+
+		if ((flags & LatchFlags.LatchAnimationVar) != 0) 
+			return GetAnimTime();
+
+		if ((flags & LatchFlags.LatchSimulationVar) != 0) {
+			TimeUnit_t st = GetSimulationTime();
+			if (st == 0.0) 
+				return gpGlobals.CurTime;
+			
+			return st;
+		}
+
+		Assert(0);
+
+		return gpGlobals.CurTime;
+	}
+
+	private void CreateShadow() {
+
 	}
 
 	public virtual void Spawn() { }
