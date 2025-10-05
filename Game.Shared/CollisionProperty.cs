@@ -132,7 +132,6 @@ public class CollisionProperty
 	]);
 
 
-	public static readonly ServerClass CC_CollisionProperty = new ServerClass("CollisionProperty", DT_CollisionProperty)
-																		.WithManualClassID(StaticClassIndices.CBaseEntity);
+	public static readonly ServerClass CC_CollisionProperty = new ServerClass("CollisionProperty", DT_CollisionProperty);
 #endif
 }
