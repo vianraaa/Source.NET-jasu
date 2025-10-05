@@ -76,6 +76,7 @@ public class ShaderSystem : IShaderSystemInternal
 	public static readonly FrozenDictionary<ulong, string> AliasedShaders = new Dictionary<ulong, string>() {
 		{ "LightmappedGeneric".Hash(), "UnlitGeneric" },
 		{ "WorldVertexTransition".Hash(), "UnlitGeneric" },
+		{ "Sky".Hash(), "UnlitGeneric" },
 	}.ToFrozenDictionary();
 
 	public IShader? FindShader(ReadOnlySpan<char> shaderName) {
