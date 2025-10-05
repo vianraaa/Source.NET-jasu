@@ -20,7 +20,7 @@ public class CommonHostState
 {
 	public Model? WorldModel;
 	public WorldBrushData? WorldBrush;
-	public double IntervalPerTick;
+	public TimeUnit_t IntervalPerTick;
 	public void SetWorldModel(Model? model) {
 		WorldModel = model;
 		if (model != null)
@@ -71,13 +71,13 @@ public class Host(
 	public IServerGameDLL? serverDLL;
 
 	public bool Initialized;
-	public double FrameTime;
-	public double FrameTimeUnbounded;
-	public double FrameTimeStandardDeviation;
-	public double RealTime;
-	public double IdealTime;
-	public double NextTick;
-	public double[] JitterHistory = new double[128];
+	public TimeUnit_t FrameTime;
+	public TimeUnit_t FrameTimeUnbounded;
+	public TimeUnit_t FrameTimeStandardDeviation;
+	public TimeUnit_t RealTime;
+	public TimeUnit_t IdealTime;
+	public TimeUnit_t NextTick;
+	public TimeUnit_t[] JitterHistory = new TimeUnit_t[128];
 	public int JitterHistoryPos;
 	public long FrameCount;
 	public int HunkLevel;
@@ -86,9 +86,9 @@ public class Host(
 	public int CurrentFrameTick;
 
 	public int NumTicksLastFrame;
-	public double RemainderLastFrame;
-	public double PrevRemainderLastFrame;
-	public double LastFrameTime;
+	public TimeUnit_t RemainderLastFrame;
+	public TimeUnit_t PrevRemainderLastFrame;
+	public TimeUnit_t LastFrameTime;
 
 	public bool IsSinglePlayerGame() {
 		if (sv.IsActive())
@@ -97,11 +97,11 @@ public class Host(
 			return cl.MaxClients == 1;
 	}
 
-	void AccumulateTime(double dt) {
+	void AccumulateTime(TimeUnit_t dt) {
 		RealTime += dt;
 		FrameTime = dt;
 		FrameTimeUnbounded = FrameTime;
-		double fullscale = 1; // TODO: host_timescale
+		TimeUnit_t fullscale = 1; // TODO: host_timescale
 		FrameTime *= fullscale;
 		FrameTimeUnbounded = FrameTime;
 	}
@@ -131,11 +131,11 @@ public class Host(
 #endif
 	}
 
-	double Remainder;
-	public double FramesPerSecond;
+	TimeUnit_t Remainder;
+	public TimeUnit_t FramesPerSecond;
 
-	void _RunFrame(double time) {
-		double prevRemainder;
+	void _RunFrame(TimeUnit_t time) {
+		TimeUnit_t prevRemainder;
 		bool shouldRender;
 		int numTicks;
 
@@ -191,8 +191,8 @@ public class Host(
 			serverGlobalVariables.SimTicksThisFrame = 1;
 			cl.SetFrameTime(FrameTime);
 			for (int tick = 0; tick < numTicks; tick++) {
-				double now = Sys.Time;
-				double jitter = now - IdealTime;
+				TimeUnit_t now = Sys.Time;
+				TimeUnit_t jitter = now - IdealTime;
 				JitterHistory[JitterHistoryPos] = jitter;
 				JitterHistoryPos = (JitterHistoryPos + 1) % JitterHistory.Length;
 
@@ -440,11 +440,11 @@ public class Host(
 		}
 	}
 
-	const double FPS_AVG_FRAC = 0.9;
+	const TimeUnit_t FPS_AVG_FRAC = 0.9;
 
-	private void PostFrameRate(double frameTime) {
+	private void PostFrameRate(TimeUnit_t frameTime) {
 		frameTime = Math.Clamp(frameTime, 0.0001, 1.0);
-		double fps = 1.0 / frameTime;
+		TimeUnit_t fps = 1.0 / frameTime;
 		FramesPerSecond = fps * FPS_AVG_FRAC + (1.0 - FPS_AVG_FRAC) * fps;
 	}
 
@@ -490,7 +490,7 @@ public class Host(
 
 	public bool LowViolence { get; set; } = false;
 
-	private void _RunFrame_Input(double accumulatedExtraSamples, bool finalTick) {
+	private void _RunFrame_Input(TimeUnit_t accumulatedExtraSamples, bool finalTick) {
 		if (input_firstFrame) {
 			input_firstFrame = false;
 			// test script?
@@ -503,7 +503,7 @@ public class Host(
 #endif
 	}
 
-	public void RunFrame(double frameTime) {
+	public void RunFrame(TimeUnit_t frameTime) {
 		_RunFrame(frameTime);
 	}
 

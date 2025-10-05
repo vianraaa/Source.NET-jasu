@@ -272,7 +272,6 @@ public class CL(IServiceProvider services, Net Net,
 
 		if (entmsg.IsDelta) {
 			int deltaTicks = cl.GetServerTickCount() - entmsg.DeltaFrom;
-			double deltaSeconds = Host.TicksToTime(deltaTicks);
 
 			if (cl.GetServerTickCount() == entmsg.DeltaFrom) {
 				Host.Error("Update self-referencing, connection dropped.\n");
