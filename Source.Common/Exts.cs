@@ -1108,3 +1108,34 @@ public struct SafeFieldPointer<TOwner, TType>
 		return ref refFn(owner);
 	}
 }
+
+
+public struct AnonymousSafeFieldPointer<TType>
+{
+	public delegate ref TType GetRefFn(object owner);
+
+	public static readonly SafeFieldPointer<object, TType> Null = new();
+
+	object? owner;
+	GetRefFn? refFn;
+
+	[MemberNotNullWhen(false, nameof(owner), nameof(refFn))] public readonly bool IsNull => owner == null || refFn == null;
+
+	public AnonymousSafeFieldPointer() { }
+	public AnonymousSafeFieldPointer(GetRefFn refFn) {
+		this.refFn = refFn;
+	}
+	public AnonymousSafeFieldPointer(object owner, GetRefFn refFn) {
+		this.owner = owner;
+		this.refFn = refFn;
+	}
+
+	public object? Owner { readonly get => owner; set => owner = value; }
+	public GetRefFn? RefFn { readonly get => refFn; set => refFn = value; }
+
+	public readonly ref TType Get() {
+		if (IsNull)
+			throw new NullReferenceException("Owner and/or GetRefFn are null.");
+		return ref refFn(owner);
+	}
+}
