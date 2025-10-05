@@ -178,8 +178,8 @@ public partial class BaseEntity : IServerEntity
 	public static readonly ServerClass ServerClass = new ServerClass("BaseEntity", DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
-	public float AnimTime;
-	public float SimulationTime;
+	public TimeUnit_t AnimTime;
+	public TimeUnit_t SimulationTime;
 	public Vector3 ViewOffset;
 	public Vector3 NetworkAngles;
 	public byte InterpolationFrame;
