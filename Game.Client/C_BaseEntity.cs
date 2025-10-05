@@ -36,23 +36,23 @@ public partial class C_BaseEntity : IClientEntity
 {
 	static readonly LinkedList<C_BaseEntity> InterpolationList = [];
 	static readonly LinkedList<C_BaseEntity> TeleportList = [];
-	static bool s_Interpolate;
+	static bool s_bInterpolate;
 	static bool g_bWasSkipping;
 	static bool g_bWasThreaded;
 	static ConVar cl_interpolate = new("cl_interpolate", "1.0f", FCvar.UserInfo | FCvar.DevelopmentOnly);
 
 	public static void InterpolateServerEntities() {
-		s_Interpolate = cl_interpolate.GetBool();
+		s_bInterpolate = cl_interpolate.GetBool();
 
 		// Don't interpolate during timedemo playback
 		if (engine.IsPlayingTimeDemo() || engine.IsPaused())
-			s_Interpolate = false;
+			s_bInterpolate = false;
 
 
 		if (!engine.IsPlayingDemo()) {
 			INetChannelInfo? nci = engine.GetNetChannelInfo();
 			if (nci != null && nci.GetTimeSinceLastReceived() > 0.5)
-				s_Interpolate = false;
+				s_bInterpolate = false;
 		}
 
 		if (IsSimulatingOnAlternateTicks() != g_bWasSkipping || IsEngineThreaded() != g_bWasThreaded) {
@@ -99,9 +99,7 @@ public partial class C_BaseEntity : IClientEntity
 		Interp_Reset(ref GetVarMapping());
 	}
 
-	private bool IsNoInterpolationFrame() {
-		throw new NotImplementedException();
-	}
+	private bool IsNoInterpolationFrame() => OldInterpolationFrame != InterpolationFrame;
 
 	private bool Teleported() => OldMoveParent != NetworkMoveParent || OldParentAttachment != ParentAttachment;
 
@@ -1042,10 +1040,7 @@ public partial class C_BaseEntity : IClientEntity
 
 	public MoveType GetMoveType() => (MoveType)MoveType;
 
-	private bool IsInterpolationEnabled() {
-		throw new NotImplementedException();
-	}
-
+	private bool IsInterpolationEnabled() => s_bInterpolate;
 	public C_BaseEntity? GetMoveParent() => MoveParent.Get();
 	public C_BaseEntity? FirstMoveChild() => MoveChild.Get();
 	public C_BaseEntity? NextMovePeer() => MovePeer.Get();
