@@ -1,4 +1,5 @@
 ﻿using Source.Common.Mathematics;
+using Source.Common.Networking;
 
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -97,4 +98,7 @@ public interface IEngineClient
 	uint GetProtocolVersion();
 	SkyboxVisibility IsSkyboxVisibleFromPoint(in Vector3 origin);
 	float GetScreenAspectRatio();
+	bool IsPlayingDemo();
+	bool IsPlayingTimeDemo();
+	INetChannelInfo? GetNetChannelInfo();
 }

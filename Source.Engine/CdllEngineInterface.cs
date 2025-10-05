@@ -122,4 +122,8 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	public float GetScreenAspectRatio() {
 		return MatSys.GetScreenAspect();
 	}
+
+	public bool IsPlayingDemo() => false; // Demos arent implemented yet
+	public bool IsPlayingTimeDemo() => false; // Demos arent implemented yet
+	public INetChannelInfo? GetNetChannelInfo() => cl.NetChannel; 
 }
