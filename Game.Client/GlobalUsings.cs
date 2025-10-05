@@ -49,4 +49,6 @@ public static class ClientGlobals
 		cl_entitylist = Singleton<ClientEntityList>();
 		render = Singleton<IRenderView>();
 	}
+
+	public static bool IsEngineThreaded() => false; 
 }
