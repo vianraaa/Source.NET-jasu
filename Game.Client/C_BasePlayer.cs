@@ -19,6 +19,7 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 		RecvPropInt(FIELD.OF(nameof(DeadFlag)))
 	]); public static readonly ClientClass CC_PlayerState = new("PlayerState", null, null, DT_PlayerState);
 
+	public TimeUnit_t GetFinalPredictedTime() => gpGlobals.TickCount * TICK_INTERVAL; // TEMPORARY //  FinalPredictedTick * TICK_INTERVAL;
 	public bool IsLocalPlayer() => GetLocalPlayer() == this;
 
 	public static readonly RecvTable DT_LocalPlayerExclusive = new([
@@ -161,5 +162,6 @@ public partial class C_BasePlayer : C_BaseCombatCharacter, IGameEventListener2
 	public bool OnTarget;
 	public double DeathTime;
 	public double LaggedMovementValue;
+	public int FinalPredictedTick;
 	readonly EHANDLE LastWeapon = new();
 }
