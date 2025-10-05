@@ -101,4 +101,5 @@ public interface IEngineClient
 	bool IsPlayingDemo();
 	bool IsPlayingTimeDemo();
 	INetChannelInfo? GetNetChannelInfo();
+	void FireEvents();
 }

@@ -70,6 +70,10 @@ public partial class C_BaseAnimating : C_BaseEntity, IModelLoadCallback
 		base.PostDataUpdate(updateType);
 	}
 
+	internal static void UpdateClientSideAnimations() {
+
+	}
+
 	public int Sequence;
 	public int ForceBone;
 	public Vector3 Force;
