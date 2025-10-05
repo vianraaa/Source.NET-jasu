@@ -52,6 +52,7 @@ public struct ConVarRef
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(float value) => ConVar.SetValue(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(double value) => ConVar.SetValue(value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly void SetValue(bool value) => ConVar.SetValue(value ? 1 : 0);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly ReadOnlySpan<char> GetDefault() => ConVar.GetDefault();
 }
 
 public class ConVar : ConCommandBase, IConVar
