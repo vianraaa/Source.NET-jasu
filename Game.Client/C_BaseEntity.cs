@@ -79,7 +79,10 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	public static void ProcessTeleportList() {
-		foreach (C_BaseEntity entity in TeleportList) {
+		LinkedListNode<C_BaseEntity>? entNode = TeleportList.First;
+		while(entNode != null) {
+			C_BaseEntity entity = entNode.Value;
+
 			bool teleport = entity.Teleported();
 			bool ef_nointerp = entity.IsNoInterpolationFrame();
 
@@ -88,9 +91,15 @@ public partial class C_BaseEntity : IClientEntity
 				entity.OldParentAttachment = entity.ParentAttachment;
 				entity.MoveToLastReceivedPosition(true);
 				entity.ResetLatched();
+
+				entNode = entNode.Next;
 			}
-			else
+			else {
+				// Note: removing from the teleport list modifies the collection, so grab the next node now before removing
+				var nextNode = entNode.Next;
 				entity.RemoveFromTeleportList();
+				entNode = nextNode;
+			}
 		}
 	}
 
