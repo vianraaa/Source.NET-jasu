@@ -26,6 +26,10 @@ public struct ConVarRef
 		Init(name, false);
 	}
 
+	public ConVarRef(IConVar cvar) {
+		ConVar = (ConVar)cvar;
+	}
+
 	public ConVarRef(ReadOnlySpan<char> name, bool ignoreMissing) {
 		Init(name, ignoreMissing);
 	}
