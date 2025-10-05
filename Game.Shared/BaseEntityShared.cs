@@ -94,6 +94,9 @@ public partial class
 	public static readonly Class CC_ScriptedEntity = new("ScriptedEntity", DT_ScriptedEntity);
 	public InlineArrayMaxPath<char> ScriptName;
 
+	public bool IsAnimatedEveryTick() => AnimatedEveryTick;
+	public bool IsSimulatedEveryTick() => SimulatedEveryTick;
+
 	public virtual Vector3 EyePosition() => GetAbsOrigin() + GetViewOffset();
 	public virtual ref readonly QAngle EyeAngles() => ref GetAbsAngles();
 	public void InvalidatePhysicsRecursive(InvalidatePhysicsBits changeFlags) {

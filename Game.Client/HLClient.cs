@@ -14,7 +14,7 @@ using Source.Engine;
 
 namespace Game.Client;
 
-public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals, ISurface surface, ViewRender view, IInput input, Hud HUD, UserMessages usermessages) : IBaseClientDLL
+public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals, ISurface surface, ViewRender view, IInput input, Hud HUD, UserMessages usermessages, Interpolation Interpolation) : IBaseClientDLL
 {
 	public static IClientMode? ClientMode { get; private set; }
 
@@ -135,6 +135,12 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 
 			case ClientFrameStage.RenderStart:
 				OnRenderStart();
+				break;
+			case ClientFrameStage.NetUpdateStart:
+				// TODO: AbsRecomputations/AbsQueriesValid stuff in C_BaseEntity
+				Interpolation.SetLastPacketTimeStamp(engine.GetLastTimeStamp());
+				break;
+			case ClientFrameStage.NetUpdateEnd:
 				break;
 			case ClientFrameStage.RenderEnd:
 				OnRenderEnd();

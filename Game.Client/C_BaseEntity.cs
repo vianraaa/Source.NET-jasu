@@ -20,6 +20,8 @@ using FIELD = Source.FIELD<Game.Client.C_BaseEntity>;
 using static System.Net.Mime.MediaTypeNames;
 using Source.Engine;
 using SharpCompress.Compressors.Xz;
+using System.Runtime.InteropServices.ObjectiveC;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Game.Client;
 public partial class C_BaseEntity : IClientEntity
@@ -160,6 +162,14 @@ public partial class C_BaseEntity : IClientEntity
 	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)
 																		.WithManualClassID(StaticClassIndices.CBaseEntity);
 
+	static readonly DynamicAccessor DA_Origin = FIELD.OF(nameof(Origin));
+	static readonly DynamicAccessor DA_Rotation = FIELD.OF(nameof(Rotation));
+
+	public C_BaseEntity() {
+		AddVar(DA_Origin, IV_Origin, LatchFlags.LatchSimulationVar);
+		AddVar(DA_Rotation, IV_Rotation, LatchFlags.LatchSimulationVar);
+	}
+
 	public int Index;
 
 	private Model? Model;
@@ -247,10 +257,14 @@ public partial class C_BaseEntity : IClientEntity
 	public Vector3 ViewOffset;
 	public Vector3 OldOrigin;
 	public QAngle OldRotation;
-	public Vector3 Origin;
-	public QAngle Rotation;
 	public Vector3 NetworkOrigin;
 	public QAngle NetworkAngles;
+
+	public Vector3 Origin;
+	public readonly InterpolatedVar<Vector3> IV_Origin = new();
+	public QAngle Rotation;
+	public readonly InterpolatedVar<QAngle> IV_Rotation= new();
+
 
 	public readonly Handle<C_BasePlayer> PlayerSimulationOwner = new();
 	public int DataChangeEventRef;
@@ -623,4 +637,100 @@ public partial class C_BaseEntity : IClientEntity
 	}
 
 	BaseHandle? RefEHandle;
+
+	static double AdjustInterpolationAmount(C_BaseEntity entity, double baseInterpolation) {
+		// We don't have cl_interp_npcs yet so this isn't needed
+		return baseInterpolation;
+	}
+
+	public double GetInterpolationAmount(LatchFlags flags) {
+		int serverTickMultiple = 1;
+		// TODO: IsSimulatingOnAlternateTicks
+
+		if (GetPredictable() || IsClientCreated()) {
+			return TICK_INTERVAL * serverTickMultiple;
+		}
+
+		bool playingDemo = false; // engine.IsPlayingDemo();
+		bool playingMultiplayer = !playingDemo && (gpGlobals.MaxClients > 1);
+		bool playingNonLocallyRecordedDemo = playingDemo; // && !engine.IsPlayingDemoALocallyRecordedDemo();
+		if (playingMultiplayer || playingNonLocallyRecordedDemo) {
+			return AdjustInterpolationAmount(this, TICKS_TO_TIME(TIME_TO_TICKS(CdllBoundedCVars.GetClientInterpAmount()) + serverTickMultiple));
+		}
+
+		// TODO: Re-evaluate this later
+		//expandedServerTickMultiple += g_nThreadModeTicks;
+		int expandedServerTickMultiple = 1;
+
+		if (IsAnimatedEveryTick() && IsSimulatedEveryTick()) {
+			return TICK_INTERVAL * expandedServerTickMultiple;
+		}
+
+		if ((flags & LatchFlags.LatchAnimationVar) != 0 && IsAnimatedEveryTick()) {
+			return TICK_INTERVAL * expandedServerTickMultiple;
+		}
+		if ((flags & LatchFlags.LatchSimulationVar) != 0 && IsSimulatedEveryTick()) {
+			return TICK_INTERVAL * expandedServerTickMultiple;
+		}
+
+		return AdjustInterpolationAmount(this, TICKS_TO_TIME(TIME_TO_TICKS(CdllBoundedCVars.GetClientInterpAmount()) + serverTickMultiple));
+	}
+
+
+	public void AddVar(DynamicAccessor accessor, IInterpolatedVar watcher, LatchFlags type, bool setup = false) {
+		bool addIt = true;
+		for (int i = 0; i < VarMap.Entries.Count; i++) {
+			if (VarMap.Entries[i].Watcher == watcher) {
+				if ((type & LatchFlags.ExcludeAutoInterpolate) != (watcher.GetVarType() & LatchFlags.ExcludeAutoInterpolate)) 
+					RemoveVar(VarMap.Entries[i].Accessor, true);
+				else 
+					addIt = false;
+
+				break;
+			}
+		}
+
+		if (addIt) {
+			VarMapEntry map = new() {
+				Accessor = accessor,
+				Watcher = watcher,
+				Type = type,
+				NeedsToInterpolate = true
+			};
+			if ((type & LatchFlags.ExcludeAutoInterpolate) != 0) {
+				VarMap.Entries.Add(map);
+			}
+			else {
+				VarMap.Entries.Insert(0, map);
+				++VarMap.InterpolatedEntries;
+			}
+		}
+
+		if (setup) {
+			watcher.Setup(accessor, type);
+			watcher.SetInterpolationAmount(GetInterpolationAmount(watcher.GetVarType()));
+		}
+	}
+	public void RemoveVar(DynamicAccessor accessor, bool assert = true) {
+		throw new NotImplementedException();
+	}
+	public ref VarMapping GetVarMapping() => ref VarMap;
+	public VarMapping VarMap = new();
+}
+
+public class VarMapEntry
+{
+	public required LatchFlags Type;
+	public required bool NeedsToInterpolate;
+	public required DynamicAccessor Accessor;
+	public required IInterpolatedVar Watcher;
+}
+
+public struct VarMapping {
+	public int InterpolatedEntries;
+	public TimeUnit_t LastInterpolationTime;
+	public List<VarMapEntry> Entries = [];
+	public VarMapping() {
+		InterpolatedEntries = 0;
+	}
 }
