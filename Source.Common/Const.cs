@@ -111,7 +111,7 @@ public enum EntityEffects
 	NoShadow = 0x010,
 	NoDraw = 0x020,
 	NoReceiveShadow = 0x040,
-	BonemergeFastCull = 0x080,
+	BoneMergeFastCull = 0x080,
 	ItemBlink = 0x100,
 	ParentAnimates = 0x200,
 

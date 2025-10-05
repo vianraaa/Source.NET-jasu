@@ -144,7 +144,7 @@ public class SimpleRingBuffer<T> where T : new()
 	}
 
 	private int WrapRange(int i) {
-		return (i >= maxElement) ? (i - maxElement) : i;
+		return MathLib.Modulo(i, maxElement); // TODO: Why does -1 get passed here sometimes. We shouldn't have to change this to accomodate.
 	}
 }
 
@@ -254,7 +254,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	public int Interpolate(TimeUnit_t currentTime) => Interpolate(currentTime, InterpolationAmount);
 	public int Interpolate(TimeUnit_t currentTime, TimeUnit_t interpolationAmount) {
 		int noMoreChanges = 0;
-		if (GetInterpolationInfo(out InterpolationInfo info, currentTime, interpolationAmount, out noMoreChanges))
+		if (!GetInterpolationInfo(out InterpolationInfo info, currentTime, interpolationAmount, out noMoreChanges))
 			return noMoreChanges;
 
 		var history = VarHistory;
@@ -356,8 +356,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	private void TimeFixup_Hermite2(ref InterpolatedVarEntryBase<T> fixup, ref InterpolatedVarEntryBase<T> prev, ref InterpolatedVarEntryBase<T> start, double dt1) {
 		double dt2 = start.ChangeTime - prev.ChangeTime;
 
-		if (Math.Abs(dt1 - dt2) > 0.0001 &&
-			dt2 > 0.0001f) {
+		if (Math.Abs(dt1 - dt2) > 0.0001 && dt2 > 0.0001) {
 			double frac = dt1 / dt2;
 
 			fixup.ChangeTime = start.ChangeTime - dt1;
@@ -381,32 +380,32 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 			float[]? b = (float[]?)(object?)_b;
 			for (int i = 0; i < a?.Length && i < b?.Length; i++)
 				if (a[i] != b[i])
-					return true;
-			return false;
+					return false;
+			return true;
 		}
 		else if (typeof(T) == typeof(double)) {
 			double[]? a = (double[]?)(object?)_a;
 			double[]? b = (double[]?)(object?)_b;
 			for (int i = 0; i < a?.Length && i < b?.Length; i++)
 				if (a[i] != b[i])
-					return true;
-			return false;
+					return false;
+			return true;
 		}
 		else if (typeof(T) == typeof(Vector3)) {
 			Vector3[]? a = (Vector3[]?)(object?)_a;
 			Vector3[]? b = (Vector3[]?)(object?)_b;
 			for (int i = 0; i < a?.Length && i < b?.Length; i++)
 				if (a[i] != b[i])
-					return true;
-			return false;
+					return false;
+			return true;
 		}
 		else if (typeof(T) == typeof(QAngle)) {
 			QAngle[]? a = (QAngle[]?)(object?)_a;
 			QAngle[]? b = (QAngle[]?)(object?)_b;
 			for (int i = 0; i < a?.Length && i < b?.Length; i++)
 				if (a[i] != b[i])
-					return true;
-			return false;
+					return false;
+			return true;
 		}
 
 		throw new NotImplementedException();
@@ -443,7 +442,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 
 			double newerChangeTime = varHistory[info.Newer].ChangeTime;
 			double dt = newerChangeTime - olderChangeTime;
-			if (dt > 0.0001f) {
+			if (dt > 0.0001) {
 				info.Fraction = (targetTime - olderChangeTime) / (newerChangeTime - olderChangeTime);
 				info.Fraction = Math.Min(info.Fraction, 2.0f);
 
@@ -629,15 +628,4 @@ public class Interpolation
 	internal void SetLastPacketTimeStamp(TimeUnit_t timestamp) {
 		LastPacketTimestamp = timestamp;
 	}
-
-
-
-	public static Vector3 ExtrapolateInterpolatedVarType(in Vector3 oldVal, in Vector3 newVal, double divisor, double extrapolationAmount)
-		=> Vector3.Lerp(oldVal, newVal, (float)(1.0 + extrapolationAmount * divisor));
-	public static QAngle ExtrapolateInterpolatedVarType(in QAngle oldVal, in QAngle newVal, double divisor, double extrapolationAmount)
-		=> QAngle.Lerp(oldVal, newVal, (float)(1.0 + extrapolationAmount * divisor));
-	public static float ExtrapolateInterpolatedVarType(float oldVal, float newVal, double divisor, double extrapolationAmount)
-		=> float.Lerp(oldVal, newVal, (float)(1.0 + extrapolationAmount * divisor));
-	public static double ExtrapolateInterpolatedVarType(double oldVal, double newVal, double divisor, double extrapolationAmount)
-		=> double.Lerp(oldVal, newVal, 1.0 + extrapolationAmount * divisor);
 }

@@ -88,28 +88,85 @@ public struct QAngle
 		}
 		return angle;
 	}
+	private const float DEG2RAD = MathF.PI / 180f;
+	private const float RAD2DEG = 180f / MathF.PI;
 
+	public Quaternion Quaternion() {
+		// Source's convention: pitch=X, yaw=Y, roll=Z
+		// Rotation order: Yaw -> Pitch -> Roll (YXZ intrinsic)
+
+		float halfPitch = X * DEG2RAD * 0.5f;
+		float halfYaw = Y * DEG2RAD * 0.5f;
+		float halfRoll = Z * DEG2RAD * 0.5f;
+
+		float sp = MathF.Sin(halfPitch);
+		float cp = MathF.Cos(halfPitch);
+		float sy = MathF.Sin(halfYaw);
+		float cy = MathF.Cos(halfYaw);
+		float sr = MathF.Sin(halfRoll);
+		float cr = MathF.Cos(halfRoll);
+
+		// YXZ intrinsic rotation order
+		Quaternion q = new() {
+			W = cr * cp * cy + sr * sp * sy,
+			X = cr * sp * cy + sr * cp * sy,
+			Y = cr * cp * sy - sr * sp * cy,
+			Z = cr * cp * cy * sr - sp * sy * cr + sr * cp * cy // Fixed
+		};
+
+		return System.Numerics.Quaternion.Normalize(q);
+	}
+	public static QAngle FromQuaternion(in Quaternion iq) {
+		Quaternion q = System.Numerics.Quaternion.Normalize(iq);
+
+		float xx = q.X * q.X;
+		float yy = q.Y * q.Y;
+		float zz = q.Z * q.Z;
+		float xy = q.X * q.Y;
+		float xz = q.X * q.Z;
+		float yz = q.Y * q.Z;
+		float wx = q.W * q.X;
+		float wy = q.W * q.Y;
+		float wz = q.W * q.Z;
+
+		float m00 = 1f - 2f * (yy + zz);
+		float m01 = 2f * (xy - wz);
+		float m02 = 2f * (xz + wy);
+		float m10 = 2f * (xy + wz);
+		float m11 = 1f - 2f * (xx + zz);
+		float m12 = 2f * (yz - wx);
+		float m20 = 2f * (xz - wy);
+		float m21 = 2f * (yz + wx);
+		float m22 = 1f - 2f * (xx + yy);
+
+		// Extract YXZ Euler angles
+		float pitch, yaw, roll;
+
+		float sinPitch = m10;
+		if (MathF.Abs(sinPitch) >= 0.9999f) {
+			pitch = MathF.CopySign(MathF.PI / 2f, sinPitch);
+			roll = MathF.Atan2(-m02, m22);
+			yaw = 0f;
+		}
+		else {
+			pitch = MathF.Asin(sinPitch);
+			roll = MathF.Atan2(-m12, m11);
+			yaw = MathF.Atan2(-m20, m00);
+		}
+
+		return new QAngle(
+			yaw * RAD2DEG,
+			pitch * RAD2DEG,
+			roll * RAD2DEG
+		);
+	}
 	public static QAngle Lerp(in QAngle q1, in QAngle q2, float percent) {
-		Quaternion src = Quaternion.CreateFromYawPitchRoll(q1.Y, q1.X, q1.Z);
-		Quaternion dst = Quaternion.CreateFromYawPitchRoll(q2.Y, q2.X, q2.Z);
-
-		Quaternion result = Quaternion.Slerp(src, dst, percent);;
-		return FromQuaternion(in result);
+		Quaternion qa = q1.Quaternion();
+		Quaternion qb = q2.Quaternion();
+		Quaternion qm = System.Numerics.Quaternion.Slerp(qa, qb, percent);
+		return FromQuaternion(qm);
 	}
 
-	public static QAngle FromQuaternion(in Quaternion result) {
-		Matrix4x4 matrix = Matrix4x4.CreateFromQuaternion(result);
-		QAngle ret;
-		ExtractYawPitchRoll(in matrix, out ret.Y, out ret.X, out ret.Z);
-		return ret;
-	}
-
-	// untested
-	private static void ExtractYawPitchRoll(in Matrix4x4 matrix, out float yaw, out float pitch, out float roll) {
-		yaw = (float)Math.Atan2(matrix.M12, matrix.M33);
-		pitch = (float)Math.Asin(-matrix.M23);
-		roll = (float)Math.Atan2(matrix.M21, matrix.M22);
-	}
 
 	public static QAngle Normalize(in QAngle angle) => new(Normalize(angle.X), Normalize(angle.Y), Normalize(angle.Z));
 
