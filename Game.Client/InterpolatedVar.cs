@@ -210,11 +210,11 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 		InterpolatedVarArrayBase<T>? src = (InterpolatedVarArrayBase<T>?)inSrc;
 
 		if (src == null || src.MaxCount != MaxCount) {
-			if (src != null) 
+			if (src != null)
 				AssertMsg(false, $"src.MaxCount ({src.MaxCount}) != MaxCount ({MaxCount}) for {GetDebugName()}.");
-			else 
+			else
 				AssertMsg(false, "src was null in InterpolatedVarArrayBase<T>.Copy.");
-			
+
 			return;
 		}
 
@@ -481,7 +481,7 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	public bool NoteChanged(TimeUnit_t changeTime, bool updateLastNetworkedValue) => NoteChanged(changeTime, InterpolationAmount, updateLastNetworkedValue);
 	public bool NoteChanged(TimeUnit_t changeTime, TimeUnit_t interpolationAmount, bool updateLastNetworkedValue) {
 		bool ret = true;
-		
+
 		if (VarHistory.Count() != 0) {
 			// todo: optimize interpolation if no new value
 		}
@@ -595,8 +595,25 @@ public class InterpolatedVarArrayBase<T>(bool isArray) : IInterpolatedVar
 	bool[]? Looping;
 }
 
-public class InterpolatedVar<T>(string name) : InterpolatedVarArrayBase<T>(false)
+public class InterpolatedVar<T> : InterpolatedVarArrayBase<T>
 {
+	string name;
+	public InterpolatedVar(string name = "no debug name") : base(false) {
+		this.name = name;
+		SetMaxCount(1);
+	}
+
+	public override ReadOnlySpan<char> GetDebugName() {
+		return name;
+	}
+}
+public class InterpolatedVarArray<T> : InterpolatedVarArrayBase<T>
+{
+	string name;
+	public InterpolatedVarArray(int count, string name = "no debug name") : base(true) {
+		this.name = name;
+		SetMaxCount(count);
+	}
 	public override ReadOnlySpan<char> GetDebugName() {
 		return name;
 	}
