@@ -27,8 +27,10 @@ public static class HostExts {
 }
 
 public static class ServerClient {
+#if !GMOD_DLL
 	[ConCommand(helpText: "Noclip. Player becomes non-solid and flies.")]
 	static void noclip() {
 
 	}
+#endif
 }
