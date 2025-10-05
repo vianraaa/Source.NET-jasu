@@ -147,7 +147,7 @@ public class PredictableId
 	public void SetRaw(int v) => PredictableID.Raw = (uint)v;
 	private void SetCommandNumber(int commandNumber) => PredictableID.Command = (uint)commandNumber;
 	private void SetPlayer(int playerIndex) => PredictableID.Player = (uint)playerIndex;
-	private void SetInstanceNumber(int counter) => PredictableID.Instance = counter;
+	private void SetInstanceNumber(int counter) => PredictableID.Instance = (uint)counter;
 
 
 	public static bool operator ==(PredictableId self, PredictableId other) => self.GetRaw() == other.GetRaw();
