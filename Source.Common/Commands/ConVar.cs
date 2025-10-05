@@ -40,7 +40,7 @@ public struct ConVarRef
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)] private readonly bool IsValid() => ConVar != EmptyConVar;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly bool IsValid() => ConVar != EmptyConVar;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly int GetInt() => ConVar.GetInt();
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly float GetFloat() => ConVar.GetFloat();
 	[MethodImpl(MethodImplOptions.AggressiveInlining)] public readonly double GetDouble() => ConVar.GetDouble();
