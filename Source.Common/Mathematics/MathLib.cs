@@ -10,6 +10,9 @@ public static class MathLibConsts
 	public const int PITCH = 0;
 	public const int YAW = 1;
 	public const int ROLL = 2;
+
+	public static readonly Vector3 vec3_origin = new(0, 0, 0);
+	public static readonly QAngle vec3_angle = new(0, 0, 0);
 }
 
 public enum PlaneType : byte
