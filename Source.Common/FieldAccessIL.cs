@@ -3,6 +3,7 @@
 using Source.Common;
 using Source.Common.Mathematics;
 
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Reflection;
@@ -81,8 +82,8 @@ namespace Source.Common
 	{
 		public delegate T GetFn(object instance);
 		public delegate void SetFn(object instance, in T value);
-		static readonly Dictionary<object, GetFn> getFns = [];
-		static readonly Dictionary<object, SetFn> setFns = [];
+		static readonly ConditionalWeakTable<DynamicAccessor, GetFn> getFns = [];
+		static readonly ConditionalWeakTable<DynamicAccessor, SetFn> setFns = [];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static GetFn Get(DynamicAccessor accessor) {
@@ -284,10 +285,10 @@ namespace Source.Common
 
 	public static class DynamicArrayHelp
 	{
-		public static readonly Dictionary<Type, DynamicArrayInfo> AcceptableTypes = new() {
+		public static readonly FrozenDictionary<Type, DynamicArrayInfo> AcceptableTypes = new Dictionary<Type, DynamicArrayInfo>() {
 			{ typeof(Vector3), new(typeof(float), () => 3) },
 			{ typeof(QAngle), new(typeof(float), () => 3) },
-		};
+		}.ToFrozenDictionary();
 	}
 
 	public class DynamicArrayAccessor : DynamicAccessor
