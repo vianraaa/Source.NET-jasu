@@ -244,6 +244,7 @@ public class EngineRecvTable(DtCommonEng DtCommonEng)
 		"DT_SENT_Point".Hash(),
 		"DT_SENT_Anim".Hash(),
 		"DT_WeaponPhysGun".Hash(),
+		"DT_BaseEntity".Hash(),
 		"DT_PhysBeam".Hash(),
 	];
 #endif
