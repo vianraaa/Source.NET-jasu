@@ -215,6 +215,10 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 	private ReadOnlySpan<char> GetForeignFallbackFontName() {
 #if WIN32
 		return "Tahoma";
+#elif OSX
+		return "Helvetica";
+#elif LINUX
+		return "WenQuanYi Zen Hei";
 #else
 #error Please define GetForeignFallbackFontName for this platform.
 #endif
@@ -239,6 +243,22 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		new("Trebuchet MS", "Arial"),
 		new("Tahoma", null),
 		new(null, "Tahoma")
+	];
+#elif OSX
+	static readonly string?[] ValidAsianFonts = ["Apple Symbols", null];
+	static readonly FallbackFont[] FallbackFonts = [
+		new("Marlett", "Apple Symbols"),
+		new("Lucida Console", "Lucida Grande"),
+		new("Tahoma", "Helvetica"),
+		new("Helvetica", "Monaco"),
+		new("Monaco", null),
+		new("null", "Monaco"),
+	];
+#elif LINUX
+	static readonly string?[] ValidAsianFonts = ["Marlett", "WenQuanYi Zen Hei", "unifont", null];
+	static readonly FallbackFont[] FallbackFonts = [
+		new("DejaVu Sans", null),
+		new(null, "DejaVu Sans")
 	];
 #else
 #error Please define fallback fonts for this platform
