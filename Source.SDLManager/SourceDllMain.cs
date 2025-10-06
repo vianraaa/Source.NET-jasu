@@ -314,20 +314,14 @@ public static class SourceDllMain
 		result.UserInfo = outgoing;
 		return;
 #else
-goto platformCannotAssert; // cannot do anything
-#endif
-
-#pragma warning disable CS0164 // This label has not been referenced (it has, it just can't see it because of the ifdefs...)
-#pragma warning disable CS0162 // Unreachable code detected
-	platformCannotAssert:
 		Warning($"ASSERT '{result.AssertInfo.Expression}': {result.AssertInfo.FileName} at line {result.AssertInfo.Line}\n");
-#pragma warning restore CS0162 // Unreachable code detected
-#pragma warning restore CS0164
 		Warning(" - Cannot create assert window on this unsupported platform, ignoring.\n");
 		result.UserInfo.Type = AssertDialog.AssertDialogResultType.Ignore;
 		return;
+#endif
 	}
 
+#if WIN32
 	private static unsafe void CenterWindow(int w, int h, nint hwnd) {
 		int screenWidth = GetSystemMetrics(SystemMetric.SM_CXSCREEN);
 		int screenHeight = GetSystemMetrics(SystemMetric.SM_CYSCREEN);
@@ -337,6 +331,7 @@ goto platformCannotAssert; // cannot do anything
 
 		SetWindowPos(hwnd, IntPtr.Zero, posX, posY, 0, 0, SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOSIZE);
 	}
+#endif
 
 	private static unsafe void AssertDialog_OnSepThreadAssert(ref AssertDialog.AssertDialogResult result) {
 		throw new NotImplementedException();
