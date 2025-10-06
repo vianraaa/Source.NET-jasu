@@ -1,15 +1,15 @@
 ﻿namespace Source.Common.Engine;
+
+using Source.Common.Physics;
+
 using System.Collections.Generic;
 using System.Numerics;
-
-public class IPhysicsEnvironment { }
-public class IVPhysicsKeyHandler { }
 
 public interface IStaticPropMgr
 {
 	void CreateVPhysicsRepresentations(IPhysicsEnvironment physenv, IVPhysicsKeyHandler defaults, object gameData);
 
-	void TraceRayAgainstStaticProp(Ray ray, int staticPropIndex, GameTrace tr);
+	void TraceRayAgainstStaticProp(Ray ray, int staticPropIndex, Trace tr);
 
 	bool IsStaticProp(IHandleEntity handleEntity);
 	bool IsStaticProp(BaseHandle handle);
