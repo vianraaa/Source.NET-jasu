@@ -109,7 +109,7 @@ public unsafe class FreeTypeFont : BaseFont
 	private void LoadChar(char ch, bool render = false) {
 		uint glyph_index = FT_Get_Char_Index(face, ch);
 
-		if (glyph_index == 0 && IsSymbol) 
+		if (glyph_index == 0 && IsSymbol)
 			glyph_index = FT_Get_Char_Index(face, (uint)((int)ch | 0xF000));
 
 		if (glyph_index != 0) {
@@ -208,15 +208,7 @@ public unsafe class FreeTypeFont : BaseFont
 				if (dstX < 0 || dstY < 0 || dstX >= rgbaWide || dstY >= rgbaTall)
 					continue;
 
-				byte coverage;
-				if (AntiAliased) {
-					int byteIndex = x >> 3;
-					int bitIndex = 7 - (x & 7); 
-					coverage = (byte)((row[byteIndex] >> bitIndex) & 1);
-					coverage = (byte)(coverage * 255); 
-				}
-				else 
-					coverage = row[x];
+				byte coverage = row[x];
 
 				int dstIndex = (dstY * rgbaWide + dstX) * 4;
 				rgba[dstIndex + 0] = 255;

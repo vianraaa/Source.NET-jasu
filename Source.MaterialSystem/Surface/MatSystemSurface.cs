@@ -1404,6 +1404,7 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public bool SupportsFeature(SurfaceFeature feature) {
 		switch (feature) {
+			case SurfaceFeature.AntialiasedFonts:
 			case SurfaceFeature.OutlineFonts:
 				return true;
 			default:
