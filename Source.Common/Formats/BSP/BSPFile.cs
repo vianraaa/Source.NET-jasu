@@ -266,7 +266,7 @@ public struct BSPLump
 			if (header.ID == LZMAHeader.LZMA_ID) {
 				T[] uncompressed = new T[UncompressedSize / Unsafe.SizeOf<T>()];
 				fixed (T* ptr = uncompressed) {
-					using UnmanagedMemoryStream msOut = new((byte*)ptr, UncompressedSize);
+					using UnmanagedMemoryStream msOut = new((byte*)ptr, 0, UncompressedSize, FileAccess.ReadWrite);
 					LZMA.Decompress(stream, msOut, header.LZMASize, UncompressedSize);
 					return uncompressed;
 				}
