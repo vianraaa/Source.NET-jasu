@@ -265,7 +265,7 @@ public static class Constants
 	public const float HIGH_DEFAULT = -121121.121121f;
 
 	public const double MIN_FPS = 0.1;
-	public const double MAX_FPS = 1000;
+	public const double MAX_FPS = 100000;
 
 	public const double DEFAULT_TICK_INTERVAL = 0.015;
 	public const double MINIMUM_TICK_INTERVAL = 0.001;
