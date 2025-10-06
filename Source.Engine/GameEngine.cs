@@ -24,7 +24,7 @@ public class GameEngine : IEngine
 		}
 
 		MinFrameTime = 0;
-		double fps = 60; // todo: implement convar
+		double fps = fps_max.GetDouble(); 
 		if (fps > 0) {
 			fps = Math.Clamp(fps, MIN_FPS, MAX_FPS);
 			double minFrametime = 1 / fps;
