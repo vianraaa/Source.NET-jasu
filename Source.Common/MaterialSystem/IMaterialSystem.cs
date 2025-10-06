@@ -1,16 +1,9 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Source.Common.Bitmap;
+﻿using Source.Common.Bitmap;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.Launcher;
 using Source.Common.ShaderAPI;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.Common.MaterialSystem;
 

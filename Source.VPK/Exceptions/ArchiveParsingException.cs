@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.VPK.Exceptions
+﻿namespace Source.VPK.Exceptions
 {
-    public class ArchiveParsingException : Exception
+	public class ArchiveParsingException : Exception
     {
         public ArchiveParsingException()
         {

@@ -1,5 +1,4 @@
 ﻿using Source.Common.Client;
-using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
@@ -9,7 +8,6 @@ using Source.Engine.Client;
 using Source.Engine.Server;
 
 using System.Numerics;
-using System.Security.Cryptography;
 
 namespace Source.Engine;
 

@@ -6,9 +6,6 @@ using Source.Common.GUI;
 using Source.Engine;
 using Source.GUI.Controls;
 
-using System.Numerics;
-using System.Xml.Linq;
-
 namespace Game.Client;
 
 public interface IViewPortPanel

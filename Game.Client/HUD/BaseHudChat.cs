@@ -11,10 +11,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Engine;
-using Source.GUI;
 using Source.GUI.Controls;
-
-using System;
 
 namespace Game.Client.HUD;
 

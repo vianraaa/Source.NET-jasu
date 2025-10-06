@@ -9,9 +9,6 @@ namespace Game.Server;
 #endif
 
 using Source.Common;
-using Source;
-
-using FIELD = Source.FIELD<GameRulesProxy>;
 using Game.Shared;
 
 public class

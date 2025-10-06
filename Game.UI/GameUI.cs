@@ -7,10 +7,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GameUI;
 using Source.Common.GUI;
 using Source.Engine;
-using Source.GUI;
 using Source.GUI.Controls;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Game.UI;
 

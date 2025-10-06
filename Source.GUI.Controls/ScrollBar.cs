@@ -2,8 +2,6 @@
 using Source.Common.GUI;
 using Source.Common.Input;
 
-using System;
-
 namespace Source.GUI.Controls;
 public class ScrollBarButton : Button
 {

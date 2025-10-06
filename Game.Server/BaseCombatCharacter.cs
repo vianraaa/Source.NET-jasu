@@ -4,8 +4,6 @@ using Source;
 using Source.Common;
 using Source.Common.Engine;
 
-using System.Reflection;
-
 namespace Game.Server;
 using FIELD = Source.FIELD<BaseCombatCharacter>;
 

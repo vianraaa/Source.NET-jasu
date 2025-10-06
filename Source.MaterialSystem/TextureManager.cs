@@ -3,13 +3,6 @@ using Source.Common.Bitmap;
 using Source.Common.MaterialSystem;
 using Source.Common.MaterialSystem.TextureRegenerators;
 using Source.Common.Utilities;
-
-using Steamworks;
-
-using System;
-using System.Drawing;
-
-using static Source.UnmanagedUtils;
 namespace Source.MaterialSystem;
 
 public class TextureManager : ITextureManager

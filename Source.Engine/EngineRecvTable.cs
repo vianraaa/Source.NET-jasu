@@ -1,18 +1,10 @@
 ﻿#define DUMP_DECODE_DEBUGGING_INFO
 
 using Source.Common;
-using Source.Common.Audio;
 using Source.Common.Bitbuffers;
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.Engine;
 

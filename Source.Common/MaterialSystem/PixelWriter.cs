@@ -1,9 +1,6 @@
 ﻿using Source.Common.Bitmap;
 
-using System.Drawing;
-using System;
 using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.Common.MaterialSystem;
 [Flags]

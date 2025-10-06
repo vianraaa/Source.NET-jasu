@@ -4,11 +4,6 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
-using System;
-using System.Reflection;
-
-using static System.Net.Mime.MediaTypeNames;
-
 namespace Source.GUI.Controls;
 
 public class TextEntry : Panel

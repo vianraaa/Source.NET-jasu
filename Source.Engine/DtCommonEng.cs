@@ -5,8 +5,6 @@ using Source.Common.Commands;
 using Source.Common.Server;
 using Source.Engine.Client;
 
-using System.Runtime.CompilerServices;
-
 namespace Source.Engine;
 
 public class DtCommonEng(Host Host, Sys Sys, IServerGameDLL serverGameDLL, IBaseClientDLL clientDLL, ICommandLine CommandLine)

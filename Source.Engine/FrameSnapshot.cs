@@ -1,8 +1,6 @@
 ﻿
 using Source.Common;
 
-using System.Drawing;
-
 namespace Source.Engine;
 
 public class FrameSnapshotEntry

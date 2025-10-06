@@ -7,9 +7,6 @@ namespace Game.Server;
 #endif
 
 using Source.Common;
-using Source;
-
-using FIELD = Source.FIELD<PredictedViewModel>;
 using Game.Shared;
 
 public class

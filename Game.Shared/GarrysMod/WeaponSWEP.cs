@@ -13,14 +13,14 @@ using FIELD = Source.FIELD<WeaponSWEP>;
 
 using Table =
 #if CLIENT_DLL
-    RecvTable;
+	RecvTable;
 #else
 	SendTable;
 #endif
 
 using Class =
 #if CLIENT_DLL
-    ClientClass;
+	ClientClass;
 #else
 	ServerClass;
 #endif

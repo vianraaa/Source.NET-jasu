@@ -3,7 +3,6 @@
 using Source;
 using Source.Common;
 using Source.Common.Bitbuffers;
-using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Mathematics;
 
@@ -13,8 +12,6 @@ using System.Runtime.CompilerServices;
 using FIELD = Source.FIELD<Game.Client.C_BaseEntity>;
 using CommunityToolkit.HighPerformance;
 using Source.Common.Commands;
-using Source.Engine;
-using System;
 using Source.Common.Networking;
 
 namespace Game.Client;

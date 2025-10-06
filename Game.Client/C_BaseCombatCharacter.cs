@@ -1,5 +1,4 @@
-﻿using Game.Client.GarrysMod;
-using Game.Shared;
+﻿using Game.Shared;
 
 using Source;
 using Source.Common;

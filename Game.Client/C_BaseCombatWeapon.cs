@@ -1,9 +1,4 @@
-﻿using Game.Shared;
-
-using Source.Common;
-using FIELD = Source.FIELD<Game.Client.C_BaseAnimating>;
-
-namespace Game.Client;
+﻿namespace Game.Client;
 
 public partial class C_BaseCombatWeapon : C_BaseAnimating
 {

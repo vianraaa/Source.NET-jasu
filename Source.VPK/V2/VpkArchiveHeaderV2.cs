@@ -1,6 +1,6 @@
 ﻿namespace Source.VPK.V2
 {
-    public struct VpkArchiveHeaderV2 : IVpkArchiveHeader
+	public struct VpkArchiveHeaderV2 : IVpkArchiveHeader
     {
         private const int StaticSignature = 0x55aa1234;
 

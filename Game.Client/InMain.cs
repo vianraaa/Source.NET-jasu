@@ -10,17 +10,9 @@ using Source.Common.Commands;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Mathematics;
-using Source.Engine;
 using Source.Engine.Client;
-using Source.GUI.Controls;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Game.Client;
 

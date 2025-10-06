@@ -2,10 +2,6 @@
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
-using System.Security.Cryptography;
-
-using static Source.StdShader.Gl46.UnlitGeneric;
-
 namespace Source.StdShader.Gl46;
 
 public abstract class BaseVSShader : BaseShader

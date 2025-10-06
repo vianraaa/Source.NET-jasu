@@ -14,15 +14,10 @@ using Source.Common.Launcher;
 using Source.SDLManager;
 using Source.Common.Input;
 using Nucleus.SDL3Window;
-using System.Runtime.Loader;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using Source.Common.MaterialSystem;
-using Source;
 using Game.UI;
 using Source.StdShader.Gl46;
 using Microsoft.Extensions.DependencyInjection;
-using Source.GUI;
 using Source.GUI.Controls;
 
 namespace Source.Launcher;

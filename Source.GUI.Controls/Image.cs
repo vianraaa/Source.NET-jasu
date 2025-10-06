@@ -1,12 +1,6 @@
-﻿using Source.Common.Engine;
-using Source.Common.GUI;
+﻿using Source.Common.GUI;
 
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.GUI.Controls;
 

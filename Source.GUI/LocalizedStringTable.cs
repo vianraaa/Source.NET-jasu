@@ -5,10 +5,6 @@ using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.Launcher;
 
-using System;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Source.GUI;
 
 public struct LocalizationFileInfo

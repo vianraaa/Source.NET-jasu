@@ -1,11 +1,7 @@
 ﻿using Source.Common.Commands;
-using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.Utilities;
-
-using System.Linq;
-using System.Reflection.Metadata;
 
 namespace Source.GUI.Controls;
 

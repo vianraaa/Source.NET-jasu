@@ -2,12 +2,6 @@
 using Source.Common.Bitbuffers;
 using Source.Common.Networking;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Source.Engine;
 public class EntityInfo {
 	public bool AsDelta;

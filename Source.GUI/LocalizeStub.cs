@@ -1,3 +1,1 @@
-﻿using Source.Common;
-
-namespace Source.GUI;
+﻿namespace Source.GUI;

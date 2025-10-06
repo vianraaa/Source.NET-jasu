@@ -1,12 +1,9 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Source.VPK
 {
-    internal abstract class VpkReaderBase
+	internal abstract class VpkReaderBase
     {
         public BinaryReader Reader;
         private readonly StringBuilder _strBuilder;

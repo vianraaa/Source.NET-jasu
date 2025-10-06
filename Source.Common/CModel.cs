@@ -1,7 +1,5 @@
-﻿using Source.Common.Mathematics;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Source.Common;
 

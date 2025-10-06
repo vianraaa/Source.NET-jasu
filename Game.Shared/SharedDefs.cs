@@ -5,9 +5,9 @@ global using EHANDLE = Source.Common.BaseHandle; // < Intellisense compatibility
 global using static Game.Shared.SharedDefs;
 
 using System.Runtime.CompilerServices;
+
 using Source;
 using Source.Common;
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Game.Shared;
 using System;

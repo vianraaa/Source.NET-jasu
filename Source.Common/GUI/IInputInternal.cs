@@ -1,6 +1,4 @@
 ﻿using Source.Common.Input;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
-using System;
 
 using HInputContext = int;
 namespace Source.Common.GUI;

@@ -8,11 +8,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
-
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Common;
 

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.VPK
+﻿namespace Source.VPK
 {
-    internal class ArchivePart
+	internal class ArchivePart
     {
         public uint Size { get; set; }
         public int Index { get; set; }

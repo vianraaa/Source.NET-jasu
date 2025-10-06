@@ -1,8 +1,4 @@
-﻿using Game.Shared;
-
-using Source.Common.Bitbuffers;
-
-namespace Game.Client.HUD;
+﻿namespace Game.Client.HUD;
 
 /// <summary>
 /// Declares that this class is to be a HUD element.

@@ -1,11 +1,7 @@
 ﻿using Source.Common.Commands;
-using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
-
-using System;
-using System.Diagnostics;
 
 namespace Source.GUI.Controls;
 

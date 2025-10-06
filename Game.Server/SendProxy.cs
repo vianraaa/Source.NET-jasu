@@ -4,8 +4,6 @@ using Game.Shared;
 
 using Source;
 using Source.Common;
-
-using System.Reflection;
 namespace Game.Server;
 
 public static class SendProxy

@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Source.Common;
 using Source.Common.Bitmap;
 using Source.Common.Commands;
-using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -16,16 +15,8 @@ using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 using Source.GUI.Controls;
 
-using System;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Numerics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-
-using static Source.Dbg;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 namespace Source.MaterialSystem.Surface;
 
 public struct ScreenOverride

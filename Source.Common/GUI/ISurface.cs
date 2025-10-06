@@ -4,8 +4,6 @@ using Source.Common.Launcher;
 using System.Drawing;
 using System.Numerics;
 
-using static System.Net.Mime.MediaTypeNames;
-
 namespace Source.Common.GUI;
 
 public struct SurfaceVertex

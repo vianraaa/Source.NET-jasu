@@ -1,7 +1,4 @@
 ﻿namespace Source.Common.Hashing;
-
-using System;
-
 public static class CRC32
 {
 	public const CRC32_t CRC32_INIT_VALUE = 0xFFFFFFFF;

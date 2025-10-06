@@ -1,19 +1,9 @@
-﻿global using static Game.Server.GameInterface;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source;
 using Source.Common;
-using Source.Common.Client;
 using Source.Common.Filesystem;
 using Source.Common.Server;
-using Source.Engine;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Game.Server;
 

@@ -1,7 +1,6 @@
 ﻿using Game.Client.HUD;
 
 using Source.Common;
-using Source.Common.Client;
 using Source.Common.GUI;
 using Source.Engine;
 

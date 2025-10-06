@@ -1,9 +1,5 @@
 ﻿using CommunityToolkit.HighPerformance;
 
-using SharpCompress.Common;
-
-using Source.Common;
-using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
@@ -11,20 +7,9 @@ using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 using Source.Common.Utilities;
 
-using Steamworks;
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.MaterialSystem;
 

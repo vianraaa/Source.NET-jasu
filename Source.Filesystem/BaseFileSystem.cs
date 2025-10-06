@@ -3,18 +3,13 @@
 
 using CommunityToolkit.HighPerformance;
 
-using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.BSP;
 using Source.Common.Utilities;
 using Source.Filesystem;
 
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace Source.FileSystem;
 

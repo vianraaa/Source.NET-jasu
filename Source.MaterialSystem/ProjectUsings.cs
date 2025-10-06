@@ -1,2 +1,1 @@
-﻿global using static Source.MaterialSystem.Cvars;
-global using static OpenGL.Gl46;
+﻿global using static OpenGL.Gl46;

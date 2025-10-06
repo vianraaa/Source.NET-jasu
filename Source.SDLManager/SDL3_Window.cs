@@ -1,13 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-using SDL;
+﻿using SDL;
 
 using Source.Common.Input;
 using Source.Common.Launcher;
 
 using System.Collections.Concurrent;
 using System.Numerics;
-using System.Reflection;
 
 namespace Source.SDLManager;
 

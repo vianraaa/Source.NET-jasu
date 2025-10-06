@@ -1,15 +1,9 @@
-﻿using Game.Client.HL2MP;
-using Game.Shared;
+﻿using Game.Shared;
 
 using Source;
 using Source.Common;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 using FIELD = Source.FIELD<Game.Client.C_World>;
 

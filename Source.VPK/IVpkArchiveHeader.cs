@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.VPK
+﻿namespace Source.VPK
 {
-    interface IVpkArchiveHeader
+	interface IVpkArchiveHeader
     {
         uint Signature { get; set; }
         uint Version { get; set; }

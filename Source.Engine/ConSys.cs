@@ -2,12 +2,6 @@
 using Source.Common.Commands;
 using Source.Common.GUI;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Source.Engine;
 
 public class Con(ICvar cvar, IEngineVGuiInternal EngineVGui, IVGuiInput Input, IBaseClientDLL ClientDLL)

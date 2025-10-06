@@ -1,13 +1,4 @@
-﻿using Source.Engine.Client;
-using Source.Engine.Server;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.Engine;
+﻿namespace Source.Engine;
 
 /// <summary>
 /// Shared Util class. Various components of the engine can add their own things here.

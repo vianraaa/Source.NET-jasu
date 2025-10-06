@@ -1,5 +1,4 @@
-﻿using Game.Client.HL2MP;
-using Game.Shared;
+﻿using Game.Shared;
 
 using Source.Common;
 

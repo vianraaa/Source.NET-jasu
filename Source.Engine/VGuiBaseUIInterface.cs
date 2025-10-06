@@ -1,6 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Audio;
@@ -14,17 +12,11 @@ using Source.Common.Input;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.Networking;
-using Source.Engine;
 using Source.Engine.Client;
 using Source.Engine.Server;
-using Source.GUI;
 using Source.GUI.Controls;
 
-using System.Diagnostics.Tracing;
 using System.Numerics;
-using System.Runtime.InteropServices;
-
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 

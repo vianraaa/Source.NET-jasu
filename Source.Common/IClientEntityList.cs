@@ -1,6 +1,4 @@
-﻿using static Source.Common.Engine.IStaticPropMgrEngine;
-
-namespace Source.Common;
+﻿namespace Source.Common;
 
 public interface IClientEntityList {
 	IClientNetworkable? GetClientNetworkable(int entnNum);

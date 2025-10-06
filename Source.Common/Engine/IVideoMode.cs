@@ -1,16 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Source.Common.Engine;
-using Source.Common.Utilities;
-
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.Common.Engine;
+﻿namespace Source.Common.Engine;
 
 
 public struct ViewRect

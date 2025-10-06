@@ -1,7 +1,5 @@
 ﻿namespace Source.Engine;
 
-using Microsoft.Extensions.DependencyInjection;
-
 using Source.Common.Engine;
 using Source.Common.Mathematics;
 

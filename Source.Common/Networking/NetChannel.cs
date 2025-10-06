@@ -3,10 +3,8 @@ using System.Diagnostics;
 using System.Net.Sockets;
 
 using static Source.Common.Networking.Protocol;
-using static Source.Dbg;
 using Source.Common.Bitbuffers;
 using Source.Common.Hashing;
-using Source.Common.Commands;
 
 namespace Source.Common.Networking;
 public class NetChannel : INetChannelInfo, INetChannel

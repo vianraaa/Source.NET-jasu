@@ -10,14 +10,14 @@ namespace Game.Server;
 
 using Table =
 #if CLIENT_DLL
-    RecvTable;
+	RecvTable;
 #else
 	SendTable;
 #endif
 
 using Class =
 #if CLIENT_DLL
-    ClientClass;
+	ClientClass;
 #else
 	ServerClass;
 #endif

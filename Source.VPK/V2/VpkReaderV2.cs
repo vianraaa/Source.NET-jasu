@@ -1,11 +1,8 @@
 ﻿using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Linq;
-using Source.VPK.V1;
 
 namespace Source.VPK.V2
 {
-    internal class VpkReaderV2 : VpkReaderBase
+	internal class VpkReaderV2 : VpkReaderBase
     {
         public VpkReaderV2(string filename) 
             : base(filename)

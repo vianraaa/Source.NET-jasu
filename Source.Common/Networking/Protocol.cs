@@ -1,8 +1,4 @@
-﻿using System.Net.Mail;
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace Source.Common.Networking;
+﻿namespace Source.Common.Networking;
 
 public static class C2S
 {

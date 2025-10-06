@@ -1,14 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using Source.Common;
-using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderLib;
 
-using System.Collections.Frozen;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;

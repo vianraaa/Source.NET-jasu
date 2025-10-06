@@ -1,18 +1,10 @@
 ﻿#define DBGFLAG_HIDE_ASSERTS_FROM_DEBUGGING_STACK
 using Source.Common;
 
-using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-
-using static Source.Dbg;
 
 namespace Source;
 

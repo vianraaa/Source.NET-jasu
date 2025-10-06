@@ -1,8 +1,6 @@
 ﻿using Source.Common.Formats.Keyvalues;
 using Source.Common.Input;
 
-using static System.Runtime.CompilerServices.RuntimeHelpers;
-
 namespace Source.Common.Launcher;
 
 public interface ISystem

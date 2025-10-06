@@ -5,7 +5,6 @@ using Source.Common.Client;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
-using Source.Common.GameUI;
 using Source.Common.Input;
 using Source.Common.Networking;
 using Source.Common.Server;

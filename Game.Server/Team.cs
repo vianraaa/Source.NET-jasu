@@ -1,7 +1,6 @@
 ﻿using Source.Common;
 using Source;
 using Game.Shared;
-using System.Reflection;
 
 namespace Game.Server;
 using FIELD = Source.FIELD<Team>;

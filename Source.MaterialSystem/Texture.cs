@@ -1,8 +1,6 @@
 ﻿// TODO: Remove unused flags that aren't applicable in our use cases.
 // (although this goal applies to the entire project, frankly)
 
-using FreeTypeSharp;
-
 using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
@@ -11,19 +9,9 @@ using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Linq;
 using System.Numerics;
-using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Source.MaterialSystem;
 

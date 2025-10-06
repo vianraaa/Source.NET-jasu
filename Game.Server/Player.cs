@@ -3,14 +3,10 @@
 using Source;
 using Source.Common;
 using Source.Common.Engine;
-using Source.Common.Mathematics;
 
 using System.Numerics;
-using System.Reflection;
 
 namespace Game.Server;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 using FIELD = Source.FIELD<BasePlayer>;
 
 public partial class BasePlayer : BaseCombatCharacter

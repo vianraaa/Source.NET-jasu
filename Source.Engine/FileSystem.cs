@@ -5,8 +5,6 @@ using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
 
-using static Source.Engine.Common;
-
 namespace Source.Engine;
 
 public struct CFSSearchPathsInit

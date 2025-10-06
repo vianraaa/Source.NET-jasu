@@ -1,15 +1,10 @@
 ﻿using Source.Common;
-using Source.Common.Client;
 using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Launcher;
 
-using System;
 using System.Globalization;
-
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Source.GUI;
 

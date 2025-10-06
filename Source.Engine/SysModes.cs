@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
-using Source.Common.Bitmap;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -9,13 +8,7 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.Engine;
 

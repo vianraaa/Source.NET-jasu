@@ -3,24 +3,11 @@
 using CommunityToolkit.HighPerformance;
 
 using Source.Common;
-using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
-using Source.Common.Utilities;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 

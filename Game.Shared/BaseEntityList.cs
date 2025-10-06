@@ -1,8 +1,6 @@
 ﻿using Source;
 using Source.Common;
 
-using static Source.Common.Engine.IStaticPropMgrEngine;
-
 namespace Game.Shared;
 
 public class EntInfo {

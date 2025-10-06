@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace Source.Common;
+﻿namespace Source.Common;
 
 public class RecvPropExtra_UtlVector 
 {

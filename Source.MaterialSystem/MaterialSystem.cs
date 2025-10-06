@@ -1,6 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Bitmap;
@@ -11,11 +9,9 @@ using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
-using Source.MaterialSystem;
 using Source.MaterialSystem.Surface;
 
 using System.Numerics;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 

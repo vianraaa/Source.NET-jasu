@@ -6,10 +6,7 @@ using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine.Client;
 
-using System.Drawing;
 using System.Numerics;
-
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Engine;
 

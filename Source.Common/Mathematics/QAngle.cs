@@ -1,9 +1,5 @@
-﻿using System.Drawing;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
-
-using static System.Runtime.Intrinsics.X86.Avx10v1;
 
 namespace Source.Common.Mathematics;
 

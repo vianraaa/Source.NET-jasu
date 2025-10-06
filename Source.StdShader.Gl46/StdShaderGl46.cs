@@ -1,6 +1,4 @@
-﻿using Source.Common.Engine;
-using Source.Common.MaterialSystem;
-using Source.Common.ShaderLib;
+﻿using Source.Common.MaterialSystem;
 
 namespace Source.StdShader.Gl46;
 

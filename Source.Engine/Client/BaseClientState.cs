@@ -4,24 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Bitbuffers;
-using Source.Common.Client;
 using Source.Common.Commands;
-using Source.Common.Compression;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
 using Source.Common.Networking;
-using Source.Engine.Server;
 
 using Steamworks;
 
-using System.Buffers;
 using System.Diagnostics;
 using System.Net;
-using System.Net.Sockets;
-using System.Reflection.Metadata.Ecma335;
-using System.Xml.Linq;
-
-using static Source.Dbg;
 
 using GameServer = Source.Engine.Server.GameServer;
 

@@ -1,7 +1,4 @@
-﻿using System.IO;
-using System.Linq;
-
-namespace Source.VPK
+﻿namespace Source.VPK
 {
 	public class VpkEntry
 	{

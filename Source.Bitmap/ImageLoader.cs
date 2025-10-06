@@ -3,7 +3,6 @@ using OpenGL;
 
 using Source.Common.Bitmap;
 
-using System;
 using System.Runtime.InteropServices;
 
 namespace Source.Bitmap;

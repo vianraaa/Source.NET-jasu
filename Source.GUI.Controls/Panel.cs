@@ -9,23 +9,14 @@ using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Launcher;
-using Source.Common.MaterialSystem;
 using Source.Common.Utilities;
-using Source.GUI.Controls;
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-
-using static Source.Common.Networking.svc_ClassInfo;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Source.GUI.Controls;
 

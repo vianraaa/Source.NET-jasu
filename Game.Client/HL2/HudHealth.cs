@@ -4,12 +4,6 @@ using Source;
 using Source.Common.GUI;
 using Source.GUI.Controls;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Game.Client.HL2;
 
 [DeclareHudElement(Name = "CHudHealth")]

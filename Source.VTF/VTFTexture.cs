@@ -1,7 +1,6 @@
 ﻿using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
-using Source.Common.Engine;
 
 using System.Buffers;
 using System.Diagnostics;
@@ -9,7 +8,6 @@ using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace Source.VTF;

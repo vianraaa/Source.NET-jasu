@@ -1,12 +1,5 @@
 ﻿using Source.Common.MaterialSystem;
-using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.StdShader.Gl46;
 

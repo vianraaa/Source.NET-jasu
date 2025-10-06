@@ -5,8 +5,6 @@ using Source.Common.Formats.BSP;
 using System.Numerics;
 using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
-using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Source.Common.MaterialSystem;
 namespace Source.Engine;
 

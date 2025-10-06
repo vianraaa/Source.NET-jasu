@@ -1,5 +1,4 @@
-﻿using Source.Common.MaterialSystem;
-using Source.Common.Mathematics;
+﻿using Source.Common.Mathematics;
 
 namespace Source.MaterialSystem;
 

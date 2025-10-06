@@ -4,11 +4,7 @@ using Source.Common.MaterialSystem;
 
 using FreeTypeSharp;
 using static FreeTypeSharp.FT;
-
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
 using Source.Common.Launcher;
 using System.Text;
 using CommunityToolkit.HighPerformance;

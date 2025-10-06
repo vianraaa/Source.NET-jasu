@@ -1,5 +1,4 @@
-﻿using Source.Common.Client;
-using Source.Common.Mathematics;
+﻿using Source.Common.Mathematics;
 
 using System.Numerics;
 

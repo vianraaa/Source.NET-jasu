@@ -1,13 +1,9 @@
-﻿using Source.Common.GUI;
-using System.Numerics;
-using System;
+﻿using System.Numerics;
 using GameLumpId_t = int;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
-using SharpCompress.Common;
-using System.Security.AccessControl;
 
 namespace Source.Common.Formats.BSP;
 

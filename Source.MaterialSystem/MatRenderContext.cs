@@ -3,9 +3,7 @@ using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 using Source.Common.Utilities;
 
-using System.Diagnostics;
 using System.Numerics;
-using System.Xml.Linq;
 
 namespace Source.MaterialSystem;
 

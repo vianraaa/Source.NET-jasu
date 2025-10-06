@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Filesystem;
@@ -11,8 +10,6 @@ using Source.Common.MaterialSystem;
 using System.Reflection;
 
 using System.Runtime.CompilerServices;
-
-using static Source.Dbg;
 
 namespace Source.Engine;
 

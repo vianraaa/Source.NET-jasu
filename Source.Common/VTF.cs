@@ -3,7 +3,6 @@ using Source.Common.Filesystem;
 
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Source.Common;
 

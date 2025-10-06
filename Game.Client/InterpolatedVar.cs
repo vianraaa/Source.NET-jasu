@@ -1,12 +1,8 @@
-﻿using SharpCompress.Common;
-
-using Source;
+﻿using Source;
 using Source.Common;
 using Source.Common.Commands;
-using Source.Common.Hashing;
 using Source.Common.Mathematics;
 
-using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 

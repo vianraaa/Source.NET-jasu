@@ -1,14 +1,8 @@
 ﻿using CommunityToolkit.HighPerformance;
 
 using Source.Common.GUI;
-using Source.GUI.Controls;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.MaterialSystem.Surface;
 

@@ -1,20 +1,8 @@
-﻿using SharpCompress.Common;
-
-using Source;
-using Source.Common;
-using Source.Common.Mathematics;
-
-using System;
-using System.Collections;
-using System.Collections.ObjectModel;
+﻿using System.Collections;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.Common;
 

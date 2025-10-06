@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.Common.GUI;
+﻿namespace Source.Common.GUI;
 public enum CursorCode : byte
 {
 	User,

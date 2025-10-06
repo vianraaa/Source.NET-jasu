@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.Common.Input;
+﻿namespace Source.Common.Input;
 
 /// <summary>
 /// Non-granular key modifier (no side information encoded)

@@ -2,8 +2,6 @@
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 
-using static Source.GUI.Controls.ContinuousProgressBar;
-
 namespace Source.GUI.Controls;
 
 public enum ProgressDir

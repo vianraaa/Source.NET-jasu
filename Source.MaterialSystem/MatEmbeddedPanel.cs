@@ -1,5 +1,4 @@
-﻿using Source.Common.Engine;
-using Source.Common.MaterialSystem;
+﻿using Source.Common.MaterialSystem;
 using Source.GUI.Controls;
 namespace Source.MaterialSystem;
 

@@ -1,15 +1,10 @@
 ﻿using Source;
 using Source.Common;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System;
-
 using FIELD = Source.FIELD<Game.Client.C_BasePlayer>;
 using System.Numerics;
 using Game.Shared;
 using Source.Common.Mathematics;
-using Source.Common.Commands;
-using Source.Engine;
 
 namespace Game.Client;
 

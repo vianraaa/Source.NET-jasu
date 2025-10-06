@@ -1,13 +1,4 @@
-﻿using Source;
-using Source.Common.Commands;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Game.Client;
+﻿namespace Game.Client;
 
 internal static class CdllBoundedCVars
 {

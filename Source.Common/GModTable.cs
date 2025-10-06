@@ -1,6 +1,4 @@
-﻿using SharpCompress.Common;
-
-using Source.Common.Bitbuffers;
+﻿using Source.Common.Bitbuffers;
 using Source.Common.Mathematics;
 
 using System.Numerics;

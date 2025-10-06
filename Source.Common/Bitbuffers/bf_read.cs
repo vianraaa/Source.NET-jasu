@@ -1,6 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Source.Common.Mathematics;
+﻿using Source.Common.Mathematics;
 
 using System.Diagnostics;
 using System.Numerics;

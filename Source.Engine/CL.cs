@@ -1,12 +1,6 @@
 ﻿using Source.Common;
 using Source.Engine.Client;
-
-using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using static Source.Constants;
 using static Source.Common.Networking.Protocol;
@@ -15,11 +9,9 @@ using Source.Common.Client;
 using Source.Common.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Source.Common.Engine;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Source.Common.Bitbuffers;
-using SharpCompress.Compressors.Xz;
 
 namespace Source.Engine;
 

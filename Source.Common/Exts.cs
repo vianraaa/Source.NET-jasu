@@ -1,36 +1,22 @@
 ﻿using CommunityToolkit.HighPerformance;
-using CommunityToolkit.HighPerformance.Enumerables;
 
 using K4os.Hash.xxHash;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using SharpCompress.Compressors.Xz;
-
-using Source.Common;
-using Source.Common.Commands;
 using Source.Common.Engine;
-using Source.Common.Networking;
 using Source.Common.Utilities;
 
-using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Linq;
-using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Security.AccessControl;
-using System.Text;
 
 namespace Source;
 

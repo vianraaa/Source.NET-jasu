@@ -6,15 +6,11 @@ using Source.Common;
 using Source.Common.Commands;
 using Source.Common.Engine;
 using Source.Common.Formats.BSP;
-using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 
-using System.Collections.Generic;
-using System.Net;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 
 namespace Source.Engine;
 

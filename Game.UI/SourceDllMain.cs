@@ -2,7 +2,6 @@
 
 using Source;
 using Source.Common.GameUI;
-using Source.Common.GUI;
 
 namespace Game.UI;
 

@@ -1,5 +1,3 @@
-﻿using Source.Common;
-
-namespace Game.Shared;
+﻿namespace Game.Shared;
 
 // todo.

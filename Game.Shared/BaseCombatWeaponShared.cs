@@ -4,11 +4,8 @@ global using BaseCombatWeapon = Game.Client.C_BaseCombatWeapon;
 global using BaseCombatWeapon = Game.Server.BaseCombatWeapon;
 #endif
 
-using Source.Common.Mathematics;
 using Source.Common;
-using System.Numerics;
 using Game.Shared;
-using Microsoft.VisualBasic;
 using Source.Common.Engine;
 
 
@@ -20,14 +17,14 @@ namespace Game.Server;
 
 using Table =
 #if CLIENT_DLL
-    RecvTable;
+	RecvTable;
 #else
 	SendTable;
 #endif
 
 using Class =
 #if CLIENT_DLL
-    ClientClass;
+	ClientClass;
 #else
 	ServerClass;
 #endif

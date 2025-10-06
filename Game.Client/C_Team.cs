@@ -3,8 +3,6 @@
 using Source;
 using Source.Common;
 
-using System.Reflection;
-
 using FIELD = Source.FIELD<Game.Client.C_Team>;
 
 namespace Game.Client;

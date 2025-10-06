@@ -7,15 +7,12 @@ using OpenGL;
 using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
-using Source.Common.Engine;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
-using Source.Common.Mathematics;
 using Source.Common.ShaderAPI;
 using Source.MaterialSystem.Meshes;
 
 using System.Numerics;
-using System.Reflection.Metadata;
 using System.Text;
 
 namespace Source.MaterialSystem;

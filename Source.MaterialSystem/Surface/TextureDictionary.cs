@@ -1,15 +1,12 @@
 ﻿using Source.Bitmap;
 using Source.Common;
 using Source.Common.Bitmap;
-using Source.Common.Engine;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem.Surface;
 

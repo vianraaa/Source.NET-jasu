@@ -13,10 +13,8 @@ using Source;
 #endif
 
 using Source.Common;
-using Source.Common.Hashing;
 
 using System.Numerics;
-using System.Reflection;
 
 using FIELD = Source.FIELD<Game.Shared.CollisionProperty>;
 

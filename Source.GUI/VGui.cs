@@ -9,7 +9,6 @@ using Source.Common.GUI;
 using Source.Common.Input;
 using Source.Common.Launcher;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Source.GUI;

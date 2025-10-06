@@ -1,11 +1,7 @@
 ﻿using Source;
 using Source.Common.Commands;
 using Source.Common.GUI;
-using Source.Common.MaterialSystem;
-using Source.Common.Mathematics;
 using Source.GUI.Controls;
-
-using System.Numerics;
 
 namespace Game.Client;
 

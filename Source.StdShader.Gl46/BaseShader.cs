@@ -1,11 +1,8 @@
-﻿using Source.Common.Engine;
-using Source.Common.MaterialSystem;
+﻿using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
-using System.Security.Cryptography;
 
 namespace Source.StdShader.Gl46;
 

@@ -3,7 +3,6 @@ using Source.Common.Engine;
 using Source.Engine.Server;
 
 using static Source.Constants;
-using static Source.Dbg;
 
 namespace Source.Engine;
 

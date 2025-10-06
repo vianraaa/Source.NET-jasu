@@ -1,7 +1,4 @@
-﻿
-using SharpCompress.Common;
-
-namespace Source.Common;
+﻿namespace Source.Common;
 
 public class BaseHandle {
 	public uint Index;

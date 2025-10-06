@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Source.VPK
+﻿namespace Source.VPK
 {
-    public class VpkDirectory
+	public class VpkDirectory
     {
         public List<VpkEntry> Entries { get; set; }
         public string Path { get; set; }

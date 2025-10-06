@@ -1,6 +1,5 @@
 ﻿
 using Source.Common.GUI;
-using Source.GUI.Controls;
 
 namespace Game.Client;
 

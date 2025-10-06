@@ -3,7 +3,6 @@
 using FreeTypeSharp;
 using static FreeTypeSharp.FT;
 using Source.Common.Launcher;
-using static Source.Common.Networking.svc_ClassInfo;
 
 namespace Source.MaterialSystem.Surface;
 

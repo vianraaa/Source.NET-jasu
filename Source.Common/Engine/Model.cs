@@ -1,19 +1,9 @@
-﻿using CommunityToolkit.HighPerformance;
-
-using Source.Common.Formats.BSP;
+﻿using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Common.Utilities;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Source.Common.Engine;
 

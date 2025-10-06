@@ -3,8 +3,6 @@ using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Networking;
 
-using System.Drawing;
-
 namespace Source.Engine;
 
 public class PackedEntity
