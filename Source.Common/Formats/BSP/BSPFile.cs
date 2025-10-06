@@ -257,7 +257,7 @@ public struct BSPLump
 			if ((UncompressedSize % sizeofone) != 0)
 				return null; // Funny size
 
-			using BinaryReader br = new(stream);
+			using BinaryReader br = new(stream, System.Text.Encoding.UTF8, true); // Leave open the file stream
 			LZMAHeader header = default;
 			header.ID = br.ReadUInt32();
 			header.ActualSize = br.ReadUInt32();
