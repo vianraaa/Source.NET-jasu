@@ -36,6 +36,17 @@ public class EntityInfo {
 		if (NewEntity < 0)
 			NewEntity = int.MaxValue;
 	}
+
+	public virtual void Reset() {
+		AsDelta = false;
+		From = null;
+		To = null;
+		UpdateType = 0;
+		OldEntity = -1;
+		NewEntity = -1;
+		HeaderBase = -1;
+		HeaderCount = 0;
+	}
 }
 
 public struct PostDataUpdateCall {
@@ -43,7 +54,23 @@ public struct PostDataUpdateCall {
 	public DataUpdateType UpdateType;
 }
 
-public class EntityReadInfo : EntityInfo {
+public class EntityReadInfo : EntityInfo, IPoolableObject {
+	static readonly ObjectPool<EntityReadInfo> Pool = new();
+
+	public EntityReadInfo() {
+		Reset();
+	}
+
+	/// <summary>
+	/// Finds or allocates a new EntityReadInfo. Must be followed up with a <see cref="Free(EntityReadInfo)"/> later
+	/// </summary>
+	public static EntityReadInfo Alloc() => Pool.Alloc();
+	/// <summary>
+	/// Resets the EntityReadInfo in question and marks it as ready for use.
+	/// </summary>
+	/// <param name="info"></param>
+	public static void Free(EntityReadInfo info) => Pool.Free(info);
+
 	public bf_read? Buf;
 	public DeltaEncodingFlags UpdateFlags;
 	public bool IsEntity;
@@ -53,4 +80,18 @@ public class EntityReadInfo : EntityInfo {
 	public int OtherPlayerBits;
 	public InlineArrayMaxEdicts<PostDataUpdateCall> PostDataUpdateCalls;
 	public int NumPostDataUpdateCalls;
+
+	public void Init() => Reset();
+	public override void Reset() {
+		base.Reset();
+
+		Buf = null;
+		UpdateFlags = 0;
+		IsEntity = false;
+		Baseline = 0;
+		UpdateBaselines = false;
+		OtherPlayerBits = 0;
+		memreset((Span<PostDataUpdateCall>)PostDataUpdateCalls);
+		NumPostDataUpdateCalls = 0;
+	}
 }

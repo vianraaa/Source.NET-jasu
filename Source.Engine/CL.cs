@@ -305,12 +305,7 @@ public class CL(IServiceProvider services, Net Net,
 			cl.NetChannel!.SendNetMsg(msg, true);
 		}
 
-		// TODO: A better strategy here, rather than using a class instance made each time.
-		// Either ref struct or class pool... we probably should design a variant of ClassMemoryPool<T>
-		// designed to work with a specific interface type designed specifically to be resettable, like an
-		// IReusable or something
-
-		EntityReadInfo readInfo = new();
+		EntityReadInfo readInfo = EntityReadInfo.Alloc();
 		readInfo.Buf = entmsg.DataIn;
 		readInfo.From = oldFrame;
 		readInfo.To = newFrame;
@@ -339,6 +334,8 @@ public class CL(IServiceProvider services, Net Net,
 			DevMsg(1, "CL.ProcessPacketEntities: frame window too big (>%i)\n", ClientFrame.MAX_CLIENT_FRAMES);
 
 		ClientDLL.FrameStageNotify(ClientFrameStage.NetUpdateEnd);
+
+		EntityReadInfo.Free(readInfo);
 
 		return true;
 	}
