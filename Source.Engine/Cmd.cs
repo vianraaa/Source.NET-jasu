@@ -299,7 +299,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			}
 
 			if (true) {
-				if (fileSystem.FileExists(file)) {
+				if (fileSystem.FileExists(file, "MOD")) {
 					long size = fileSystem.Size(file);
 					if (size > 1 * 1024 * 1024) {
 						Dbg.ConMsg($"exec {file}: file size larger than 1 MiB!\n");
