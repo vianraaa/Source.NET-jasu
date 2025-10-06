@@ -1404,6 +1404,8 @@ public class MatSystemSurface : IMatSystemSurface
 
 	public bool SupportsFeature(SurfaceFeature feature) {
 		switch (feature) {
+			case SurfaceFeature.OutlineFonts:
+				return true;
 			default:
 				return false; // Most things arent implemented yet...
 		}
