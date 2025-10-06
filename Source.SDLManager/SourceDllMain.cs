@@ -300,9 +300,7 @@ public static class SourceDllMain
 		CenterWindow(w, h, hwnd);
 
 		ShowWindow(hwnd, WindowShowStyle.SW_SHOW);
-#else
-goto platformCannotAssert; // cannot do anything
-#endif
+
 		// Main event loop
 		MSG msg;
 		while (!handled) {
@@ -315,6 +313,9 @@ goto platformCannotAssert; // cannot do anything
 		// copy back to the ref
 		result.UserInfo = outgoing;
 		return;
+#else
+goto platformCannotAssert; // cannot do anything
+#endif
 
 #pragma warning disable CS0164 // This label has not been referenced (it has, it just can't see it because of the ifdefs...)
 #pragma warning disable CS0162 // Unreachable code detected
