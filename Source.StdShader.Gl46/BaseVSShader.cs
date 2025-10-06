@@ -89,7 +89,8 @@ public abstract class BaseVSShader : BaseShader
 												  int nOutlineColorVar,
 												  int nOutlineStartVar,
 												  int nOutlineEndVar,
-												  int nSeparateDetailUVsVar) {
+												  int nSeparateDetailUVsVar,
+												  ReadOnlySpan<char> shaderName) {
 		IMaterialVar[] shaderParams = Params!;
 
 		bool bBaseTexture = (baseTextureVar >= 0) && shaderParams[baseTextureVar].IsTexture();
@@ -105,8 +106,8 @@ public abstract class BaseVSShader : BaseShader
 			if (bBaseTexture)
 				SetDefaultBlendingShadowState(baseTextureVar, true);
 
-			ShaderShadow.SetVertexShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Vertex)}");
-			ShaderShadow.SetPixelShader($"unlitgeneric_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
+			ShaderShadow.SetVertexShader($"{shaderName}_{ShaderShadow!.GetDriver().Extension(ShaderType.Vertex)}");
+			ShaderShadow.SetPixelShader($"{shaderName}_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
 
 			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | (bVertexColor ? VertexFormat.Color : 0), 1, null, 0);
 			SetStandardShaderUniforms();

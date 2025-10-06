@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace Source.StdShader.Gl46;
 
-public class UnlitGeneric : BaseVSShader
+public class LightmappedGeneric : BaseVSShader
 {
 
-	public static string HelpString = "Help for UnlitGeneric";
+	public static string HelpString = "Help for LightmappedGeneric";
 	public static int Flags = 0;
 	public static List<ShaderParam> ShaderParams = [];
 	public static ShaderParam[] ShaderParamOverrides = new ShaderParam[(int)ShaderMaterialVars.Count];
@@ -120,6 +120,6 @@ public class UnlitGeneric : BaseVSShader
 		VertexShaderUnlitGenericPass((int)ShaderMaterialVars.BaseTexture, (int)ShaderMaterialVars.Frame, (int)ShaderMaterialVars.BaseTextureTransform,
 			DETAIL, DETAILSCALE, true, ENVMAP, ENVMAPFRAME, ENVMAPMASK,
 			ENVMAPMASKFRAME, ENVMAPMASKSCALE, ENVMAPTINT, ALPHATESTREFERENCE,
-			DETAILBLENDMODE, OUTLINE, OUTLINECOLOR, OUTLINESTART0, OUTLINEEND1, SEPARATEDETAILUVS, "unlitgeneric");
+			DETAILBLENDMODE, OUTLINE, OUTLINECOLOR, OUTLINESTART0, OUTLINEEND1, SEPARATEDETAILUVS, "lightmappedgeneric");
 	}
 }
