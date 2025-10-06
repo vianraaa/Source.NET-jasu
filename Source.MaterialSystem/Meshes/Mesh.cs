@@ -54,7 +54,8 @@ public unsafe class Mesh : IMesh
 		IsDrawing = false;
 	}
 
-	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat = VertexFormat.Invalid) {
+	protected bool SetRenderState(int vertexOffsetInBytes, int firstIndex) => SetRenderState(vertexOffsetInBytes, firstIndex, VertexFormat.Invalid);
+	protected virtual bool SetRenderState(int vertexOffsetInBytes, int firstIndex, VertexFormat vertexFormat) {
 		if (ShaderDevice.IsDeactivated()) {
 			ResetMeshRenderState();
 			return false;
