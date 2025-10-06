@@ -154,6 +154,43 @@ public unsafe class FreeTypeFont : BaseFont
 		FT_GlyphSlotRec_* slot = face->glyph;
 		FT_Render_Glyph(slot, AntiAliased ? FT_Render_Mode_.FT_RENDER_MODE_MONO : FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
 		DrawBitmap(slot, rgbaWide, rgbaTall, rgba);
+		ApplyOutlineToTexture(rgbaWide, rgbaTall, rgba, OutlineSize);
+	}
+
+	private void ApplyOutlineToTexture(int rgbaWide, int rgbaTall, Span<byte> rgba, uint outlineSize) {
+		if (outlineSize == 0)
+			return;
+
+		int x, y;
+		for (y = 0; y < rgbaTall; y++) {
+			for (x = 0; x < rgbaWide; x++) {
+				Span<byte> src = rgba[((x + (y * rgbaWide)) * 4)..];
+				if (src[3] == 0) {
+					int shadowX, shadowY;
+					for (shadowX = -(int)outlineSize; shadowX <= (int)outlineSize; shadowX++) {
+						for (shadowY = -(int)outlineSize; shadowY <= (int)outlineSize; shadowY++) {
+							if (shadowX == 0 && shadowY == 0) {
+								continue;
+							}
+							int testX, testY;
+							testX = shadowX + x;
+							testY = shadowY + y;
+							if (testX < 0 || testX >= rgbaWide ||
+								testY < 0 || testY >= rgbaTall) {
+								continue;
+							}
+							Span<byte> test = rgba[((testX + (testY * rgbaWide)) * 4)..];
+							if (test[0] != 0 && test[1] != 0 && test[2] != 0 && test[3] != 0) {
+								src[0] = 0;
+								src[1] = 0;
+								src[2] = 0;
+								src[3] = 255;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private unsafe void DrawBitmap(FT_GlyphSlotRec_* rec, int rgbaWide, int rgbaTall, Span<byte> rgba) {
