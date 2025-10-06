@@ -77,7 +77,10 @@ public unsafe class SDL3_OpenGL46_Context(nint window, nint ctx) : IGraphicsCont
 	}
 
 	public void SetSwapInterval(float swapInterval) {
-		SDL3.SDL_GL_SetSwapInterval((int)swapInterval);
+		SDL3.SDL_GL_MakeCurrent((SDL_Window*)window, (SDL_GLContextState*)ctx);
+		if (!SDL3.SDL_GL_SetSwapInterval((int)swapInterval)) {
+			throw new Exception($"Could not set vsync: {SDL3.SDL_GetError()}");
+		}
 	}
 
 	public void SwapBuffers() {
@@ -211,6 +214,7 @@ public unsafe class SDL3_LauncherManager : ILauncherManager, IGraphicsProvider
 		if (0 != (deviceInfo.Driver & GraphicsDriver.OpenGL)) {
 			nint handle = (nint)((SDL3_Window)window).HardwareHandle;
 			nint ctx = (nint)SDL3.SDL_GL_CreateContext((SDL_Window*)handle);
+			SDL3.SDL_GL_SetSwapInterval(0);
 			gfx = new SDL3_OpenGL46_Context(handle, ctx);
 			return gfx;
 		}
