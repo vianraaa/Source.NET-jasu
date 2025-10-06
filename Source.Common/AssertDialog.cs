@@ -177,7 +177,11 @@ public static class AssertDialog
 	}
 
 #else
-
+	public static bool AreAssertsDisabled() => true;
+	public static bool ShouldUseNewAssertDialog() => false;
+	public static bool AreAssertsEnabledInFileLine(ReadOnlySpan<char> fileName, int line) => false;
+	public static bool DoNewAssertDialog(ReadOnlySpan<char> file, int line, ReadOnlySpan<char> msg) => false;
+#endif
 	public enum AssertDialogResultType
 	{
 		Ignore = 247,
@@ -214,9 +218,4 @@ public static class AssertDialog
 			UserInfo = new();
 		}
 	}
-	public static bool AreAssertsDisabled() => true;
-	public static bool ShouldUseNewAssertDialog() => false;
-	public static bool AreAssertsEnabledInFileLine(ReadOnlySpan<char> fileName, int line) => false;
-	public static bool DoNewAssertDialog(ReadOnlySpan<char> file, int line, ReadOnlySpan<char> msg) => false;
-#endif
 }
