@@ -104,7 +104,7 @@ public class FPSPanel : Panel
 	}
 	// todo: ScreenSizeChanged
 	public virtual bool ShouldDraw() {
-		if((cl_showfps.GetInt() != 0 || (gpGlobals.AbsoluteFrameTime <= 0)) && (cl_showpos.GetInt() == 0)) { 
+		if((cl_showfps.GetInt() == 0 || (gpGlobals.AbsoluteFrameTime <= 0)) && (cl_showpos.GetInt() == 0)) { 
 			LastDraw = false;
 			return false;
 		}

@@ -473,6 +473,8 @@ public class EngineVGui(
 		// - CL_CreateTextureListPanel
 		// - CreateVProfPanels
 
+		staticEngineToolsPanel.LoadControlSettings("scripts/EngineVGuiLayout.res");
+
 		// cacheusedmaterials
 
 		localize.AddFile($"Resource/valve_%language%.txt");
@@ -623,7 +625,6 @@ public class EngineVGui(
 		using (MatRenderContextPtr renderContext = new(materials)) {
 			renderContext.GetViewport(out int x, out int y, out int w, out int h);
 			panel.SetBounds(0, 0, w, h);
-
 		}
 		panel.Repaint();
 

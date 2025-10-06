@@ -1672,7 +1672,8 @@ public class MatSystemSurface : IMatSystemSurface
 		DrawSetTextPos(x, y);
 		DrawSetTextColor(r, g, b, a);
 		DrawSetTextFont(font);
-		DrawPrintText(localize.Find(text));
+		ReadOnlySpan<char> input = localize.Find(text);
+		DrawPrintText(input.IsEmpty ? text : input);
 
 		int totalLength = DrawTextLen(font, text);
 
