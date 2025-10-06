@@ -322,7 +322,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal void SetSkinningMatrices() {
-		throw new NotImplementedException();
+		// TODO
 	}
 
 	internal void ShadeMode(ShadeMode shadeMode) {
