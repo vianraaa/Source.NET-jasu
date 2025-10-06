@@ -1,4 +1,4 @@
-﻿namespace Source.Formats.VPK.V2
+﻿namespace Source.VPK.V2
 {
     public struct VpkArchiveHeaderV2 : IVpkArchiveHeader
     {

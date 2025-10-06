@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Source.Formats.VPK
+namespace Source.VPK
 {
     interface IVpkArchiveHeader
     {

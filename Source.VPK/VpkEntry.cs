@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 
-namespace Source.Formats.VPK
+namespace Source.VPK
 {
 	public class VpkEntry
 	{

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Source.Formats.VPK.V1
+namespace Source.VPK.V1
 {
     internal class VpkReaderV1 : VpkReaderBase
     {

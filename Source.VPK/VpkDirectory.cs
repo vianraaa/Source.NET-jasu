@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Source.Formats.VPK
+namespace Source.VPK
 {
     public class VpkDirectory
     {

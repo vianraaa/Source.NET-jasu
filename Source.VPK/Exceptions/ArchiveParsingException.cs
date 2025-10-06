@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Source.Formats.VPK.Exceptions
+namespace Source.VPK.Exceptions
 {
     public class ArchiveParsingException : Exception
     {

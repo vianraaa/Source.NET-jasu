@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Source.Formats.VPK
+namespace Source.VPK
 {
     internal abstract class VpkReaderBase
     {

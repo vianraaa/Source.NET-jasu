@@ -10,8 +10,8 @@
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
 	</ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dependencies\Source.Formats.VPK\Source.Formats.VPK.csproj" />
     <ProjectReference Include="..\Source.Common\Source.Common.csproj" />
+    <ProjectReference Include="..\Source.VPK\Source.VPK.csproj" />
   </ItemGroup>
 
 </Project>

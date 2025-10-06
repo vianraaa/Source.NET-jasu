@@ -5,10 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Source.Formats.VPK.Exceptions;
-using Source.Formats.VPK.V1;
+using Source.VPK.Exceptions;
+using Source.VPK.V1;
 
-namespace Source.Formats.VPK
+namespace Source.VPK
 {
 	public class VpkArchive
 	{

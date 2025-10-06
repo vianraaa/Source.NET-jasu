@@ -1,6 +1,6 @@
 ﻿using Source.Common.Filesystem;
 using Source.FileSystem;
-using Source.Formats.VPK;
+using Source.VPK;
 
 
 namespace Source.Filesystem;
