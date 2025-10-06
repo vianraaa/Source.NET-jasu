@@ -187,6 +187,10 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		}
 		return null;
 	}
+#pragma warning restore CA1416 // Validate platform compatibility
+#else
+#error Please implement System.GetSystemFontPath for this platform
+#endif
 
 	string language = "english";
 	public void GetUILanguage(Span<char> destination) {
@@ -195,10 +199,4 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 	public void SetUILanguage(ReadOnlySpan<char> incoming) {
 		language = new(incoming);
 	}
-
-
-#pragma warning restore CA1416 // Validate platform compatibility
-#else
-#error Please implement System.GetSystemFontPath for this platform
-#endif
 }
