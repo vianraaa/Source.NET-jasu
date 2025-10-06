@@ -91,24 +91,6 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		throw new NotImplementedException();
 	}
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "WIN32 constant handle thsi")]
-#if WIN32
-	public bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value) {
-		string path = new(key);
-		string fullPath = Path.GetDirectoryName(path)!;
-		string valueName = Path.GetFileName(path);
-		string? regValue = Registry.GetValue(fullPath, valueName, null) as string;
-		if (regValue == null) {
-			return false;
-		}
-
-		regValue.CopyTo(value);
-		return true;
-	}
-#else
-#error Please implement System.GetRegistryString for this platform
-#endif
-
 	public bool GetShortcutTarget(ReadOnlySpan<char> linkFileName, Span<char> targetPath, Span<char> arguments) {
 		throw new NotImplementedException();
 	}
@@ -165,10 +147,6 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		throw new NotImplementedException();
 	}
 
-	public bool SetRegistryString(ReadOnlySpan<char> key, ReadOnlySpan<char> value) {
-		throw new NotImplementedException();
-	}
-
 	public void SetUserConfigFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathName) {
 		throw new NotImplementedException();
 	}
@@ -209,6 +187,16 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		}
 		return null;
 	}
+
+	string language = "english";
+	public void GetUILanguage(Span<char> destination) {
+		language.AsSpan().ClampedCopyTo(destination);
+	}
+	public void SetUILanguage(ReadOnlySpan<char> incoming) {
+		language = new(incoming);
+	}
+
+
 #pragma warning restore CA1416 // Validate platform compatibility
 #else
 #error Please implement System.GetSystemFontPath for this platform

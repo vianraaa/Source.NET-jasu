@@ -10,13 +10,11 @@ public interface ISystem
 	double GetFrameTime();
 	double GetCurrentTime();
 	long GetTimeMillis();
+	void GetUILanguage(Span<char> destination);
+	void SetUILanguage(ReadOnlySpan<char> incoming);
 	nuint GetClipboardTextCount();
 	void SetClipboardText(ReadOnlySpan<char> text);
 	nuint GetClipboardText(nint offset, Span<char> buf);
-	bool SetRegistryString(ReadOnlySpan<char> key, ReadOnlySpan<char> value);
-	bool GetRegistryString(ReadOnlySpan<char> key, Span<char> value);
-	bool SetRegistryInteger(ReadOnlySpan<char> key, int value);
-	bool GetRegistryInteger(ReadOnlySpan<char> key, out int value);
 	KeyValues? GetUserConfigFileData(ReadOnlySpan<char> dialogName, int dialogID);
 	void SetUserConfigFile(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathName);
 	void SaveUserConfigFile();

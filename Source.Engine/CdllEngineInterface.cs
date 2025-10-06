@@ -16,10 +16,6 @@ public class EngineClient(ClientState cl, GameServer sv, Cbuf Cbuf, Scr Scr, Con
 	public ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding) {
 		return "";
 	}
-	public void GetUILanguage(Span<char> destination) {
-		"english".CopyTo(destination);
-	}
-
 	public void GetMainMenuBackgroundName(Span<char> dest) {
 		"kagami".CopyTo(dest);
 	}

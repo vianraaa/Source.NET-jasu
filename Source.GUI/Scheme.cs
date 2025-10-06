@@ -172,8 +172,8 @@ public class Scheme : IScheme
 
 	private void LoadFonts() {
 		Span<char> language = stackalloc char[64];
-		bool valid = System.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
-		if (!valid)
+		System.GetUILanguage(language);
+		if (language[0] == '\0')
 			"english".CopyTo(language);
 
 		for (var kv = Data.FindKey("CustomFontFiles", true)!.GetFirstSubKey(); kv != null; kv = kv.GetNextKey()) {
@@ -420,20 +420,18 @@ public class Scheme : IScheme
 
 	private int GetMinimumFontHeightForCurrentLanguage() {
 		Span<char> language = stackalloc char[64];
-		bool valid = System.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
+		System.GetUILanguage(language);
 		ReadOnlySpan<char> lang = language.SliceNullTerminatedString();
 
-		if (valid) {
-			if (lang.Equals("korean", StringComparison.OrdinalIgnoreCase)
-				|| lang.Equals("tchinese", StringComparison.OrdinalIgnoreCase)
-				|| lang.Equals("schinese", StringComparison.OrdinalIgnoreCase)
-				|| lang.Equals("japanese", StringComparison.OrdinalIgnoreCase)
-			)
-				return 13;
+		if (lang.Equals("korean", StringComparison.OrdinalIgnoreCase)
+			|| lang.Equals("tchinese", StringComparison.OrdinalIgnoreCase)
+			|| lang.Equals("schinese", StringComparison.OrdinalIgnoreCase)
+			|| lang.Equals("japanese", StringComparison.OrdinalIgnoreCase)
+		)
+			return 13;
 
-			if (lang.Equals("thai", StringComparison.OrdinalIgnoreCase))
-				return 18;
-		}
+		if (lang.Equals("thai", StringComparison.OrdinalIgnoreCase))
+			return 18;
 
 		return 0;
 	}

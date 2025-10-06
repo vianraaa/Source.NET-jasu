@@ -154,6 +154,7 @@ public class EngineVGui(
 	IEngineClient engineClient;
 	ILocalize localize;
 	IVGui vgui;
+	ISystem system;
 	ISchemeManager vguiScheme;
 	StaticPanel staticPanel;
 	EnginePanel staticClientDLLPanel;
@@ -352,6 +353,7 @@ public class EngineVGui(
 		staticGameUIFuncs = engineAPI.GetRequiredService<IGameUI>();
 		engineClient = engineAPI.GetRequiredService<IEngineClient>();
 		vgui = engineAPI.GetRequiredService<IVGui>();
+		system = engineAPI.GetRequiredService<ISystem>();
 		clientDLL = engineAPI.GetRequiredService<IBaseClientDLL>();
 		vguiScheme = engineAPI.GetRequiredService<ISchemeManager>();
 		localize = engineAPI.GetRequiredService<ILocalize>();
@@ -360,7 +362,7 @@ public class EngineVGui(
 		// IGameConsole, but later.
 
 		Span<char> lang = stackalloc char[64];
-		engineClient.GetUILanguage(lang);
+		system.GetUILanguage(lang);
 
 		matSystemSurface.InstallPlaySoundFunc(VGui_PlaySound);
 

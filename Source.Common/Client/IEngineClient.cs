@@ -76,7 +76,6 @@ public enum ClientFrameStage
 public interface IEngineClient
 {
 	ReadOnlySpan<char> Key_LookupBinding(ReadOnlySpan<char> binding);
-	void GetUILanguage(Span<char> dest);
 	void GetMainMenuBackgroundName(Span<char> dest);
 	int GetMaxClients();
 	ReadOnlySpan<char> GetLevelName();

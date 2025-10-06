@@ -44,14 +44,13 @@ public class LocalizedStringTable(ISystem system, IFileSystem fileSystem) : ILoc
 			string fileName2 = new string(file).Replace(LANGUAGE_STRING, ENGLISH_STRING);
 			success = AddFile(fileName2, pathID, includeFallbackSearchPaths);
 
-			bool valid = system.GetRegistryString("HKEY_CURRENT_USER\\Software\\Valve\\Source\\Language", language);
+			system.GetUILanguage(language);
 
-			if (valid) {
-				if (language.IndexOfAnyExcept('\0') != -1 && ((ReadOnlySpan<char>)language).Equals(ENGLISH_STRING, StringComparison.OrdinalIgnoreCase)) {
-					string fileName3 = new string(file).Replace(LANGUAGE_STRING, new(language));
-					success &= AddFile(fileName3, pathID, includeFallbackSearchPaths);
-				}
+			if (language.IndexOfAnyExcept('\0') != -1 && ((ReadOnlySpan<char>)language).Equals(ENGLISH_STRING, StringComparison.OrdinalIgnoreCase)) {
+				string fileName3 = new string(file).Replace(LANGUAGE_STRING, new(language));
+				success &= AddFile(fileName3, pathID, includeFallbackSearchPaths);
 			}
+
 			return success;
 		}
 
@@ -75,9 +74,9 @@ public class LocalizedStringTable(ISystem system, IFileSystem fileSystem) : ILoc
 		KeyValues kvs = new();
 		kvs.UsesConditionals(true);
 		kvs.UsesEscapeSequences(true);
-		if(kvs.LoadFromFile(fileSystem, file, pathID)) {
+		if (kvs.LoadFromFile(fileSystem, file, pathID)) {
 			var tokens = kvs.FindKey("Tokens", true)!;
-			foreach(var token in tokens) {
+			foreach (var token in tokens) {
 				if (token == null)
 					continue;
 
@@ -85,7 +84,7 @@ public class LocalizedStringTable(ISystem system, IFileSystem fileSystem) : ILoc
 				ReadOnlySpan<char> incomingName = token.Name;
 				ulong nameHash = incomingName.Hash();
 				// Check if we've produced a hash for this before.
-				if(!HashToSymbol.TryGetValue(nameHash, out ulong symbol)) {
+				if (!HashToSymbol.TryGetValue(nameHash, out ulong symbol)) {
 					// and if not, produce a new symbol
 					symbol = HashToSymbol[nameHash] = ++curSymbol;
 				}
@@ -99,7 +98,7 @@ public class LocalizedStringTable(ISystem system, IFileSystem fileSystem) : ILoc
 			AssertMsg(false, "Bad localization file?");
 			return false;
 		}
-		
+
 	}
 
 	private bool AddAllLanguageFiles(ReadOnlySpan<char> fileBase) {
