@@ -16,7 +16,7 @@ using static Source.Common.AssertDialog;
 
 namespace Source.SDLManager;
 
-
+#if WIN32
 public unsafe struct WNDCLASS
 {
 	public ClassStyles style;
@@ -40,7 +40,7 @@ public unsafe struct WNDCLASS
 
 	public char* lpszClassName;
 }
-
+#endif
 [EngineComponent]
 public static class SourceDllMain
 {
