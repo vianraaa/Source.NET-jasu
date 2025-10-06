@@ -73,6 +73,7 @@ public class HLClient(IServiceProvider services, ClientGlobalVariables gpGlobals
 		ClientMode.Enable();
 		view.Init();
 		input.Init();
+		ClientVGui.CreateGlobalPanels();
 		return true;
 	}
 

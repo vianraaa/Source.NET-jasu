@@ -2,6 +2,7 @@
 global using static Game.Client.ClientGlobals;
 using Source.Common;
 using Source.Common.Client;
+using Source.Engine;
 
 namespace Game.Client;
 
@@ -33,6 +34,7 @@ public static class ClientGlobals
 	public static ClientGlobalVariables gpGlobals { get; private set; }
 	public static IRenderView render { get; private set; }
 	public static IEngineClient engine { get; private set; }
+	public static IEngineVGui enginevgui { get; private set; }
 	public static ClientEntityList cl_entitylist { get; private set; }
 	public static TimeUnit_t TICK_INTERVAL => gpGlobals.IntervalPerTick;
 
@@ -46,6 +48,7 @@ public static class ClientGlobals
 	public static void InitClientGlobals() {
 		gpGlobals = Singleton<ClientGlobalVariables>();
 		engine = Singleton<IEngineClient>();
+		enginevgui = Singleton<IEngineVGui>();
 		cl_entitylist = Singleton<ClientEntityList>();
 		render = Singleton<IRenderView>();
 	}

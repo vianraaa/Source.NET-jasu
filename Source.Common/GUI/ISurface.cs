@@ -213,6 +213,7 @@ public interface ISurface
 	bool IsScreenSizeOverrideActive();
 	void ForceScreenPosOffset(bool active, int x, int y);
 	void ForceScreenSizeOverride(bool active, int w, int h);
+	void DrawColoredText(IFont? font, int x, int y, byte r, byte g, byte b, byte a, ReadOnlySpan<char> v6);
 }
 
 public interface IMatSystemSurface : ISurface {
