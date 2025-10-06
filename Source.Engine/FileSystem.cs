@@ -66,7 +66,7 @@ public class FileSystem(IFileSystem fileSystem, IServiceProvider services) {
 				continue;
 			}
 
-			string absSearchPath;
+			ReadOnlySpan<char> absSearchPath;
 			if (Path.IsPathFullyQualified(location))
 				absSearchPath = location;
 			else
