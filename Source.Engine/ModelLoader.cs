@@ -404,7 +404,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		light.LightmapMins[0] = (short)_in.LightmapTextureMinsInLuxels[0];
 		light.LightmapMins[1] = (short)_in.LightmapTextureMinsInLuxels[1];
 
-		int i = _in.LightOffset;
+		int i = _in.LightOffset / 4;
 
 		if (i == -1 || lightData == null) {
 			light.Samples = null;
