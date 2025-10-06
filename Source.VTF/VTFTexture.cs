@@ -233,6 +233,10 @@ public sealed class VTFTexture : IVTFTexture
 	private Span<byte> GetResourceData(ResourceEntryType type) {
 		ref ResourceEntryInfo info = ref FindResourceEntryInfo(type);
 		if (!Unsafe.IsNullRef(ref info)) {
+			// Slight sanity check. Although this data shouldnt even be coming in when a texture is invalid,
+			// it seems that it is after loading 2fort. TODO: Investigate why this happens!!!
+			if (info.Offset >= ImageData?.Length)
+				return null;
 			return ImageData!.AsSpan()[(int)info.Offset..];
 		}
 
