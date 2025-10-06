@@ -67,8 +67,8 @@ public class FileSystem(IFileSystem fileSystem, IServiceProvider services) {
 			}
 
 			string absSearchPath;
-			if (Path.IsPathFullyQualified(lBaseDir))
-				absSearchPath = lBaseDir;
+			if (Path.IsPathFullyQualified(location))
+				absSearchPath = location;
 			else
 				absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, new string(location)));
 			// TODO; theres a lot of weird logic here I don't fully understand yet.
