@@ -19,12 +19,12 @@
 This is an open source clone of the Source Engine, based on [RaphaelIT7's Source Engine branch](https://github.com/RaphaelIT7/obsolete-source-engine), written in C#. It aims to be as compatible as possible with Source Engine's formats and protocols, more specifically targetting [Garry's Mod](https://store.steampowered.com/app/4000/Garrys_Mod/) compatibility. 
 
 <img width="1600" height="900" alt="Source Launcher_h58b4odIBv" src="https://github.com/user-attachments/assets/fbd1a007-7fb6-4710-ab94-67656067eef5" />
-<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/ecab5d53-0da3-4d89-9039-e8de116fd65d" />
+<img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/2c49feb5-ce02-4065-a20d-ebf723c6ef06" />
 
 It can currently connect to real Garry's Mod servers. Development is currently done by connecting to a local Garry's Mod SRCDS instance - if you wish to contribute, you can set one up relatively easily with [these instructions](https://wiki.facepunch.com/gmod/Downloading_a_Dedicated_Server).
 
 ## Goals
-This project mostly serves to learn more about the Source Engine. It is open sourced in the case that it helps others and could be further worked on by people smarter than I (especially in the graphics department). 
+I originally started this project mostly to learn more about the Source Engine, but due to public interest I've made it open-sourced in the case that it helps others and could be further worked on by people smarter than I (especially in the graphics department). 
 
 In an ideal world, it could serve as a playable Garry's Mod client - but that is a herculean task (and even that feels like an understatement) - and would require a lot more hands than just me to even be remotely feasible.
 
@@ -34,8 +34,16 @@ In an ideal world, it could serve as a playable Garry's Mod client - but that is
 - [maddnias](https://github.com/maddnias) for his work on SharpVPK, and [antim0118](https://github.com/antim0118) for his changes which fixed some incompatibilities
 - [Leystryku](https://github.com/Leystryku) for his work on [leysourceengineclient](https://github.com/Leystryku/leysourceengineclient) - which has served as a very good baseline for networking implementations when I was struggling
 
+## Building
+You need the following:
+- A C#-compatible IDE obviously (Visual Studio 2022 is what I use for now, although I'm sure it would work fine on Rider or VS Code)
+- The .NET 9.0 SDK
+- A license for Garry's Mod on Steam
+
+You will also need to symlink the Half Life 2/Garry's Mod vpk files or copy them directly. A Powershell file is provided in Game.Assets to automatically symlink the necessary VPK's and map files - if someone wants to write an equivalent Linux script for doing this, that would be very appreciated. 
+
 ## Structure
-The engine is very similar to Source, with various deviations where I saw fit, to better match .NET/C# implementation details. Each "stage" described here builds on each other incrementally - ie. stage 3 can include stage 2 and stage 1 libraries, stage 2 can include stage 1 libraries, but stage 1 cannot include stage 2 libraries, etc. Libraries can include other libraries within their own stage if needed - but is done only in a few cases (VTF including Common and Bitmap, for example.)
+The engine is very similar to Source, with various deviations where I saw fit, to better match .NET/C# implementation details. Things like UtlVector/UtlMap/UtlLinkedList are replaced with their C# equivalents. Each "stage" described here builds on each other incrementally - ie. stage 3 can include stage 2 and stage 1 libraries, stage 2 can include stage 1 libraries, but stage 1 cannot include stage 2 libraries, etc. Libraries can include other libraries within their own stage if needed - but is done only in a few cases (VTF including Common and Bitmap, for example.)
 
 There are currently seven stages. The Solution is organized via Solution Folders as well in this order.
 
