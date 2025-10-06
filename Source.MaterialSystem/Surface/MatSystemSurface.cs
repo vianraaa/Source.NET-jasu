@@ -1651,4 +1651,31 @@ public class MatSystemSurface : IMatSystemSurface
 		ScreenSizeOverride.X = w;
 		ScreenSizeOverride.Y = h;
 	}
+
+	readonly ILocalize localize = Singleton<ILocalize>();
+
+	public int DrawTextLen(IFont font, ReadOnlySpan<char> text) {
+		int i;
+		int x = 0;
+		int len = text.Length;
+
+		for (i = 0; i < len; i++) {
+			GetCharABCwide(font, text[i], out int a, out int b, out int c);
+
+			x += b;
+			x += c;
+		}
+
+		return x;
+	}
+	public int DrawColoredText(IFont? font, int x, int y, byte r, byte g, byte b, byte a, ReadOnlySpan<char> text) {
+		DrawSetTextPos(x, y);
+		DrawSetTextColor(r, g, b, a);
+		DrawSetTextFont(font);
+		DrawPrintText(localize.Find(text));
+
+		int totalLength = DrawTextLen(font, text);
+
+		return x + totalLength;
+	}
 }
