@@ -1,4 +1,5 @@
 # Source.NET
+### [Join our Discord](https://discord.gg/rFzd5uEDSE)
 ###### Table of Contents
 > <sub>[What is this?](#what-is-this)</sub><br>
 > <sub>[Goals](#goals)</sub><br>
