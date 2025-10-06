@@ -340,11 +340,11 @@ public struct BSPFlagsLump
 /// </summary>
 public struct BSPLumpFileHeader
 {
-	int LumpOffset;
-	int LumpID;
-	int LumpVersion;
-	int LumpLength;
-	int MapRevision;
+	public int LumpOffset;
+	public int LumpID;
+	public int LumpVersion;
+	public int LumpLength;
+	public int MapRevision;
 }
 
 /// <summary>
@@ -487,10 +487,10 @@ public struct BSPSurfaceLighting {
 	public nint SurfNum;
 
 	public unsafe ref ColorRGBExp32 AvgLightColor(int lightStyleIndex) {
-		if (lightStyleIndex < 0 || lightStyleIndex >= (Samples?.Length ?? 0))
+		if (lightStyleIndex < 0 || lightStyleIndex >= (Samples.Length))
 			throw new IndexOutOfRangeException();
 
-		return ref Samples![Samples.Length - 1 - lightStyleIndex];
+		return ref Samples.Span![Samples.Length - 1 - lightStyleIndex];
 	}
 
 	// Lightmap info
@@ -503,7 +503,7 @@ public struct BSPSurfaceLighting {
 	public int DLightFrame;       
 
 	public InlineArrayMaxLightmaps<byte> Styles;  
-	public ColorRGBExp32[]? Samples;
+	public Memory<ColorRGBExp32> Samples;
 }
 public struct BSPMSurfaceNormal
 {
@@ -682,7 +682,7 @@ public struct BSPFace
 	public short TexInfo;
 	public short DispInfo;
 	public short SurfaceFogVolumeID;
-	public InlineArray4<byte> /*MAXLIGHTMAPS == 4*/ Styles;
+	public InlineArrayMaxLightmaps<byte> Styles;
 	public int LightOffset;
 	public float Area;
 	public InlineArray2<int> LightmapTextureMinsInLuxels;
@@ -1237,7 +1237,7 @@ public enum SurfDraw : uint
 	Dynamic = 0x00000080,
 	TangentSpace = 0x00000100,
 	NoCull = 0x00000200,
-	HasLightstyles = 0x00000400,
+	HasLightStyles = 0x00000400,
 	HasDisp = 0x00000800,
 	AlphaTest = 0x00001000,
 	NoShadows = 0x00002000,

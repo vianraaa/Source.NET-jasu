@@ -65,6 +65,7 @@ public class WorldBrushData
 	public BSPMSurface1[]? Surfaces1;
 	public BSPMSurface2[]? Surfaces2;
 	public BSPSurfaceLighting[]? SurfaceLighting;
+	public ColorRGBExp32[]? LightData;
 	public BSPMSurfaceNormal[]? SurfaceNormals;
 }
 

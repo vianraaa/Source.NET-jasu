@@ -7,6 +7,7 @@ using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
 using System.Runtime.CompilerServices;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Source.Common.MaterialSystem;
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
@@ -84,6 +85,11 @@ public ref struct MapLoadHelper
 	public readonly int LumpOffset;
 	public readonly int LumpVersion;
 
+	public static nint GetLumpSize(LumpIndex lumpId) {
+		ref BSPLump lump = ref MapHeader.Lumps[(int)lumpId];
+		int uncompressedSize = lump.UncompressedSize;
+		return uncompressedSize != 0 ? uncompressedSize : lump.FileLength;
+	}
 	public MapLoadHelper(LumpIndex lumpToLoad) {
 		LumpID = lumpToLoad;
 		ref BSPLump lump = ref MapHeader.Lumps[(int)lumpToLoad];
@@ -127,7 +133,7 @@ public ref struct MapLoadHelper
 	}
 }
 
-public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM) : IModelLoader
+public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGuiInternal EngineVGui, MatSysInterface materials, CollisionModelSubsystem CM, IMaterialSystemHardwareConfig materialSystemHardwareConfig) : IModelLoader
 {
 	public int GetCount() {
 		throw new NotImplementedException();
@@ -235,6 +241,15 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		EngineVGui.UpdateProgressBar(LevelLoadingProgress.LoadWorldModel);
 #endif
 
+		if (materialSystemHardwareConfig.GetHDRType() != HDRType.None && MapLoadHelper.GetLumpSize(LumpIndex.LightingHDR) > 0) {
+			MapLoadHelper mlh = new(LumpIndex.LightingHDR);
+			Map_LoadLighting(mlh);
+		}
+		else {
+			MapLoadHelper mlh = new(LumpIndex.Lighting);
+			Map_LoadLighting(mlh);
+		}
+
 		Mod_LoadPrimitives();
 		Mod_LoadPrimVerts();
 		Mod_LoadPrimIndices();
@@ -250,6 +265,18 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		MapLoadHelper.Shutdown();
 		double elapsed = Platform.Time - startTime;
 		Common.TimestampedLog($"Map_LoadModel: Finish - loading took {elapsed:F4} seconds");
+	}
+
+	private void Map_LoadLighting(MapLoadHelper lh) {
+		if (lh.LumpSize == 0) {
+			lh.GetMap().LightData = null;
+			return;
+		}
+
+		Assert((lh.LumpSize % (sizeof(byte) * 4)) == 0);
+		Assert(lh.LumpVersion != 0);
+
+		lh.GetMap().LightData = lh.LoadLumpData<ColorRGBExp32>();
 	}
 
 	private void Mod_LoadPrimitives() { }
@@ -296,7 +323,6 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void Mod_LoadFaces() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Faces);
 		BSPFace[] inFaces = lh.LoadLumpData<BSPFace>();
-
 
 		int count = inFaces.Length;
 		BSPMSurface1[] out1 = new BSPMSurface1[count];
@@ -351,9 +377,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			if (tex.Material == null)
 				tex.Material = materials.MaterialEmpty;
 
-			// TODO
-			// if (Mod_LoadSurfaceLightingV1(pLighting, _in, lh.GetMap().LightData)) 
-			// MSurf_Flags(ref surfID) |= SurfDraw.HasLightStyles;
+			if (Mod_LoadSurfaceLightingV1(ref _light, in _in, lh.GetMap().LightData))
+				MSurf_Flags(ref surfID) |= SurfDraw.HasLightStyles;
 
 			// set the drawing flags flag
 			if ((tex.Flags & Surf.NoLight) != 0)
@@ -373,13 +398,37 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		}
 	}
 
+	private bool Mod_LoadSurfaceLightingV1(ref BSPSurfaceLighting light, in BSPFace _in, ColorRGBExp32[]? lightData) {
+		light.LightmapExtents[0] = (short)_in.LightmapTextureSizeInLuxels[0];
+		light.LightmapExtents[1] = (short)_in.LightmapTextureSizeInLuxels[1];
+		light.LightmapMins[0] = (short)_in.LightmapTextureMinsInLuxels[0];
+		light.LightmapMins[1] = (short)_in.LightmapTextureMinsInLuxels[1];
+
+		int i = _in.LightOffset;
+
+		if (i == -1 || lightData == null) {
+			light.Samples = null;
+
+			for (i = 0; i < BSPFileCommon.MAXLIGHTMAPS; ++i)
+				light.Styles[i] = 255;
+		}
+		else {
+			light.Samples = new(lightData, i, 4);
+
+			for (i = 0; i < BSPFileCommon.MAXLIGHTMAPS; ++i)
+				light.Styles[i] = _in.Styles[i];
+		}
+
+		return ((light.Styles[0] != 0) && (light.Styles[0] != 255)) || (light.Styles[1] != 255);
+	}
+
 	private void Mod_LoadVertNormals() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.VertNormals);
 		Vector3[] inVertNormals = lh.LoadLumpData<Vector3>();
 
 		lh.GetMap().VertNormals = inVertNormals;
 	}
-	private void Mod_LoadVertNormalIndices() { 
+	private void Mod_LoadVertNormalIndices() {
 		MapLoadHelper lh = new MapLoadHelper(LumpIndex.VertNormalIndices);
 		ushort[] inVertNormalIndices = lh.LoadLumpData<ushort>();
 		lh.GetMap().VertNormalIndices = inVertNormalIndices;

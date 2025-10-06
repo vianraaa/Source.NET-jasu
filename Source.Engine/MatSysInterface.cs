@@ -468,8 +468,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		if (enum1 != enum2)
 			return enum1 - enum2;
 
-		bool hasLightstyle1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.HasLightstyles) == 0;
-		bool hasLightstyle2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.HasLightstyles) == 0;
+		bool hasLightstyle1 = (ModelLoader.MSurf_Flags(ref surfID1) & SurfDraw.HasLightStyles) == 0;
+		bool hasLightstyle2 = (ModelLoader.MSurf_Flags(ref surfID2) & SurfDraw.HasLightStyles) == 0;
 
 		if (hasLightstyle1 != hasLightstyle2)
 			return (hasLightstyle2 ? 1 : 0) - (hasLightstyle1 ? 1 : 0);
