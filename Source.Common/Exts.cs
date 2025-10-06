@@ -166,7 +166,7 @@ public class ClassMemoryPool<T> where T : class, new()
 
 public class StructMemoryPool<T> where T : struct
 {
-	readonly RefStack<T> instances = [];
+	readonly RefStack<T> instances = new();
 	readonly ConcurrentDictionary<int, bool> valueStates = [];
 
 	public ref T Alloc() {

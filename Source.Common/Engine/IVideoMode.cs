@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.HighPerformance;
 
+using Source.Common.Engine;
 using Source.Common.Utilities;
 
 using System;
@@ -11,14 +12,10 @@ using System.Threading.Tasks;
 
 namespace Source.Common.Engine;
 
+
 public struct ViewRect
 {
 	public int X, Y, Width, Height;
-}
-
-public class ViewRects : RefStack<ViewRect>
-{
-	public void Add(ViewRect rect) => Push(in rect);
 }
 
 public interface IVideoMode

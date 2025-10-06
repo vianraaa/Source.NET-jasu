@@ -34,7 +34,7 @@ public class VideoMode_Common(Sys Sys, IServiceProvider services, IFileSystem fi
 	int StereoHeight;
 
 	// View rects. Never shrinks
-	readonly ViewRects ClientViewRect = [new()];
+	readonly ViewRects ClientViewRect = new([new()]);
 
 	public ViewRects GetClientViewRect() {
 		RecomputeClientViewRect();

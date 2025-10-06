@@ -31,7 +31,7 @@ public class Render(
 	)
 {
 	int framecount = 1;
-	RefStack<ViewStack> ViewStack = [];
+	RefStack<ViewStack> ViewStack = new();
 	Matrix4x4 MatrixView;
 	Matrix4x4 MatrixProjection;
 	Matrix4x4 MatrixWorldToScreen;
@@ -81,7 +81,7 @@ public class Render(
 			renderContext.PopRenderTargetAndViewport();
 		}
 
-		bool reset = (ViewStack.Count() > 1) ? true : false;
+		bool reset = (ViewStack.Count > 1) ? true : false;
 		ViewStack.Pop();
 
 		if (reset) {

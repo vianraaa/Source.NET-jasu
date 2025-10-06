@@ -15,8 +15,14 @@ namespace Source.Common.Utilities;
 /// It only never shrinks to avoid unnecessary deallocations. (and to allow references)
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class RefStack<T> : IEnumerable<T> where T : struct
+public class RefStack<T> where T : struct
 {
+	public RefStack() { }
+	public RefStack(IEnumerable<T> items) {
+		foreach (var item in items)
+			Push(item);
+	}
+
 	List<T[]> backing = [];
 	int count = 0;
 
@@ -67,18 +73,7 @@ public class RefStack<T> : IEnumerable<T> where T : struct
 		ref T store = ref getBacking(count);
 		return ref store;
 	}
-
-	public IEnumerator<T> GetEnumerator() {
-		for (int i = 0; i < count; i++) {
-			T b = getBacking(i);
-			yield return b;
-		}
-	}
-
-	IEnumerator IEnumerable.GetEnumerator() {
-		return GetEnumerator();
-	}
-
+	
 	public void EnsureCapacity(int v) {
 		while (backing.Count < ((v / FRAGMENT_SIZE) + 1))
 			backing.Add(new T[FRAGMENT_SIZE]);

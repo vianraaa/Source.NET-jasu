@@ -952,7 +952,7 @@ public class MatSystemSurface : IMatSystemSurface
 	public void PopMakeCurrent(IPanel panel) {
 		if (BatchedCharVertCount > 0)
 			DrawFlushText();
-		int top = PaintStateStack.Count() - 1;
+		int top = PaintStateStack.Count - 1;
 		Assert(top >= 0);
 		Assert(PaintStateStack[top].Panel == panel);
 		PaintStateStack.Pop();
