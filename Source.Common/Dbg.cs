@@ -87,8 +87,9 @@ public static class Dbg
 		if (type == SpewType.Assert) {
 			return SpewRetval.Debugger;
 		}
+		else 
 #endif
-		else if (type == SpewType.Error)
+		if (type == SpewType.Error)
 			return SpewRetval.Abort;
 		else return SpewRetval.Continue;
 	}

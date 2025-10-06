@@ -176,6 +176,8 @@ public static class AssertDialog
 		return true;
 	}
 
+#else
+
 	public enum AssertDialogResultType
 	{
 		Ignore = 247,
@@ -186,12 +188,14 @@ public static class AssertDialog
 		Break
 	}
 
-	public struct AssertDialogIncoming {
+	public struct AssertDialogIncoming
+	{
 		public string FileName;
 		public string Expression;
 		public int Line;
 	}
-	public struct AssertDialogOutgoing {
+	public struct AssertDialogOutgoing
+	{
 		public AssertDialogResultType Type;
 		public int LineRange;
 		public int IgnoreNumTimes;
@@ -210,7 +214,6 @@ public static class AssertDialog
 			UserInfo = new();
 		}
 	}
-#else
 	public static bool AreAssertsDisabled() => true;
 	public static bool ShouldUseNewAssertDialog() => false;
 	public static bool AreAssertsEnabledInFileLine(ReadOnlySpan<char> fileName, int line) => false;
