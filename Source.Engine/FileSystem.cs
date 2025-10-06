@@ -66,7 +66,11 @@ public class FileSystem(IFileSystem fileSystem, IServiceProvider services) {
 				continue;
 			}
 
-			string absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, new string(location)));
+			string absSearchPath;
+			if (Path.IsPathFullyQualified(lBaseDir))
+				absSearchPath = lBaseDir;
+			else
+				absSearchPath = Path.GetFullPath(Path.Combine(lBaseDir, new string(location)));
 			// TODO; theres a lot of weird logic here I don't fully understand yet.
 			// So just do what we can here
 			string[] pathIDs = cur.Name.Split('+');
