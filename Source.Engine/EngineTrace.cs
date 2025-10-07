@@ -1,4 +1,4 @@
-﻿using Source.Common;
+using Source.Common;
 using Source.Common.Engine;
 using Source.Common.Formats.BSP;
 using Source.Common.Mathematics;
@@ -47,7 +47,8 @@ public class EngineTrace : IEngineTrace
 	}
 
 	public Contents GetPointContents(in Vector3 absPosition, out IHandleEntity? entity) {
-		throw new NotImplementedException();
+		entity = null;
+		return 0; // todo
 	}
 
 	public Contents GetPointContents_Collideable(ICollideable? collide, in Vector3 absPosition) {

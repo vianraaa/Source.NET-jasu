@@ -177,7 +177,7 @@ public class SkyboxView : Rendering3dView
 	}
 
 	private void DrawInternal(ViewID skyBoxViewID, bool invokePreAndPostRender, ITexture? rtColor, ITexture? rtDepth) {
-		throw new NotImplementedException();
+
 	}
 
 	private SafeFieldPointer<PlayerLocalData, Sky3DParams> PreRender3dSkyboxWorld(ref SkyboxVisibility skyboxVisible) {
