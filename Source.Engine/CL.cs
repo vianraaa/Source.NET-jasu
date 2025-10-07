@@ -1,4 +1,4 @@
-﻿using Source.Common;
+using Source.Common;
 using Source.Engine.Client;
 using System.Buffers;
 
@@ -543,11 +543,10 @@ public class CL(IServiceProvider services, Net Net,
 	private IClientNetworkable? CreateDLLEntity(int iEnt, int iClass, int iSerialNum) {
 		ClientClass? clientClass;
 		if ((clientClass = cl.ServerClasses[iClass]?.ClientClass) != null) {
-			if (!cl.IsActive()) {
+			if (!cl.IsActive())
 				Common.TimestampedLog($"cl:  create '{clientClass.NetworkName}'\n");
 
-				return clientClass.CreateFn(iEnt, iSerialNum);
-			}
+			return clientClass.CreateFn(iEnt, iSerialNum);
 		}
 
 		Assert(false);
