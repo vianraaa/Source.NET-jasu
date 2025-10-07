@@ -212,7 +212,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 	int FrameCount = 0;
-	internal enum ToolTexture {
+	internal enum ToolTexture
+	{
 		/// <summary> Not a tool texture </summary>
 		None = 0,
 		/// <summary> A tool texture by means of starting with tools/, but otherwise an unimportant use case beyond not renderable </summary>
@@ -258,10 +259,15 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 				int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
 				vertexCount += vertCount;
 
+				// int numPolygons = vertCount - 2;
+				// indexCount += 3 * numPolygons;
+
 				if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
 					int numPolygons = vertCount - 2;
-					for (int i = 0; i < numPolygons; ++i)
-						indexCount += 3;
+					indexCount += 3 * numPolygons;
+				}
+				else {
+
 				}
 			}
 		}
@@ -415,8 +421,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 
 			builder.AdvanceVertex();
 		}
-		
-		if(!ModelLoader.SurfaceHasPrims(ref surfID)) {
+
+		if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
 			int numPolygons = vertCount - 2;
 			for (int i = 0; i < numPolygons; ++i) {
 				builder.FastIndex((ushort)firstVertex);
@@ -649,7 +655,75 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		int sortIDs = materials.GetNumSortIDs();
 		materialSortInfoArray = new MaterialSystem_SortInfo[sortIDs];
 		materials.GetSortInfo(materialSortInfoArray);
+		GenerateTexCoordsForPrimVerts();
 		WorldStaticMeshCreate();
+	}
+
+	private void GenerateTexCoordsForPrimVerts() {
+		WorldBrushData bsp = host_state.WorldBrush!;
+
+		Span<int> lightmapSize = stackalloc int[2];
+		Span<int> lightmapPageSize = stackalloc int[2];
+
+		for (int surfaceIndex = 0, count = bsp.NumSurfaces; surfaceIndex < count; surfaceIndex++) {
+			ref BSPMSurface2 surfID = ref ModelLoader.SurfaceHandleFromIndex(surfaceIndex, bsp);
+
+			for (int j = 0; j < ModelLoader.MSurf_NumPrims(ref surfID, bsp); j++) {
+				ref BSPMPrimitive prim = ref Unsafe.NullRef<BSPMPrimitive>();
+				Assert(ModelLoader.MSurf_FirstPrimID(ref surfID, bsp) + j < bsp.NumPrimitives);
+				prim = ref bsp.Primitives![ModelLoader.MSurf_FirstPrimID(ref surfID, bsp) + j];
+				for (int k = 0; k < prim.VertCount; k++) {
+					float sOffset, sScale, tOffset, tScale;
+
+					materials.GetLightmapPageSize(SortInfoToLightmapPage(ModelLoader.MSurf_MaterialSortID(ref surfID)), ref lightmapPageSize[0], ref lightmapPageSize[1]);
+					lightmapSize[0] = (ModelLoader.MSurf_LightmapExtents(ref surfID, bsp)[0]) + 1;
+					lightmapSize[1] = (ModelLoader.MSurf_LightmapExtents(ref surfID, bsp)[1]) + 1;
+
+					sScale = 1.0f / (float)lightmapPageSize[0];
+					sOffset = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[0] * sScale;
+					sScale = ModelLoader.MSurf_LightmapExtents(ref surfID)[0] * sScale;
+
+					tScale = 1.0f / (float)lightmapPageSize[1];
+					tOffset = (float)ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] * tScale;
+					tScale = ModelLoader.MSurf_LightmapExtents(ref surfID)[1] * tScale;
+
+					for (int l = 0; l < prim.VertCount; l++) {
+						Assert(l + prim.FirstVert < bsp.NumPrimVerts);
+						ref BSPMPrimVert vert = ref bsp.PrimVerts![l + prim.FirstVert];
+						ref Vector3 vec = ref vert.Position;
+
+						vert.TexCoord[0] = Vector3.Dot(vec, ModelLoader.MSurf_TexInfo(ref surfID, bsp).TextureVecsTexelsPerWorldUnits[0].AsVector3()) + ModelLoader.MSurf_TexInfo(ref surfID, bsp).TextureVecsTexelsPerWorldUnits[0][3];
+						vert.TexCoord[0] /= ModelLoader.MSurf_TexInfo(ref surfID, bsp).Material!.GetMappingWidth();
+
+						vert.TexCoord[1] = Vector3.Dot(vec, ModelLoader.MSurf_TexInfo(ref surfID).TextureVecsTexelsPerWorldUnits[1].AsVector3()) + ModelLoader.MSurf_TexInfo(ref surfID, bsp).TextureVecsTexelsPerWorldUnits[1][3];
+						vert.TexCoord[1] /= ModelLoader.MSurf_TexInfo(ref surfID, bsp).Material!.GetMappingHeight();
+
+						if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.NoLight) != 0) {
+							vert.LightCoord[0] = 0.5f;
+							vert.LightCoord[1] = 0.5f;
+						}
+						else if (ModelLoader.MSurf_LightmapExtents(ref surfID, bsp)[0] == 0) {
+							vert.LightCoord[0] = sOffset;
+							vert.LightCoord[1] = tOffset;
+						}
+						else {
+							vert.LightCoord[0] = Vector3.Dot(vec, ModelLoader.MSurf_TexInfo(ref surfID, bsp).LightmapVecsLuxelsPerWorldUnits[0].AsVector3()) + ModelLoader.MSurf_TexInfo(ref surfID, bsp).LightmapVecsLuxelsPerWorldUnits[0][3];
+							vert.LightCoord[0] -= ModelLoader.MSurf_LightmapMins(ref surfID, bsp)[0];
+							vert.LightCoord[0] += 0.5f;
+							vert.LightCoord[0] /= (float)ModelLoader.MSurf_LightmapExtents(ref surfID, bsp)[0];
+
+							vert.LightCoord[1] = Vector3.Dot(vec, ModelLoader.MSurf_TexInfo(ref surfID, bsp).LightmapVecsLuxelsPerWorldUnits[1].AsVector3()) + ModelLoader.MSurf_TexInfo(ref surfID, bsp).LightmapVecsLuxelsPerWorldUnits[1][3];
+							vert.LightCoord[1] -= ModelLoader.MSurf_LightmapMins(ref surfID, bsp)[1];
+							vert.LightCoord[1] += 0.5f;
+							vert.LightCoord[1] /= (float)ModelLoader.MSurf_LightmapExtents(ref surfID, bsp)[1];
+
+							vert.LightCoord[0] = sOffset + vert.LightCoord[0] * sScale;
+							vert.LightCoord[1] = tOffset + vert.LightCoord[1] * tScale;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	internal float GetScreenAspect() {

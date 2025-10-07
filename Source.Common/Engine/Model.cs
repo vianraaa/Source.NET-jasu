@@ -1,4 +1,4 @@
-﻿using Source.Common.Formats.BSP;
+using Source.Common.Formats.BSP;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Common.Utilities;
@@ -44,9 +44,12 @@ public class WorldBrushData
 	public ushort[]? VertIndices;
 	// TODO: Displacement info
 	public BSPWorldLight[]? WorldLights;
-	public BSPPrimitive[]? Primitives;
-	public BSPPrimVert[]? PrimVerts;
+	public BSPMPrimitive[]? Primitives;
+	public int NumPrimitives => Primitives?.Length ?? 0;
+	public BSPMPrimVert[]? PrimVerts;
+	public int NumPrimVerts => PrimVerts?.Length ?? 0;
 	public ushort[]? PrimIndices;
+	public int NumPrimIndices => PrimIndices?.Length ?? 0;
 	public BSPArea[]? Areas;
 	public BSPAreaPortal[]? AreaPortals;
 	public Vector3[]? ClipPortalVerts;

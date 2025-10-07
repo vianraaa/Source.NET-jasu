@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using GameLumpId_t = int;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -662,7 +662,32 @@ public struct BSPPrimitive
 /// </summary>
 public struct BSPPrimVert
 {
-	public Vector3 Pos;
+	public Vector3 Position;
+}
+
+
+public enum BSPPrimType {
+	TriList,
+	TriStrip
+}
+/// <summary>
+/// Analog of mprimitive_t
+/// </summary>
+public struct BSPMPrimitive {
+	public BSPPrimType Type;
+	public int FirstIndex;
+	public int IndexCount;
+	public int FirstVert;
+	public int VertCount;
+}
+
+/// <summary>
+/// Analog of mprimvert_t
+/// </summary>
+public struct BSPMPrimVert {
+	public Vector3 Position;
+	public Vector2 TexCoord;
+	public Vector2 LightCoord;
 }
 
 /// <summary>

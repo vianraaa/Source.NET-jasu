@@ -279,9 +279,38 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		lh.GetMap().LightData = lh.LoadLumpData<ColorRGBExp32>();
 	}
 
-	private void Mod_LoadPrimitives() { }
-	private void Mod_LoadPrimVerts() { }
-	private void Mod_LoadPrimIndices() { }
+	private void Mod_LoadPrimitives() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.Primitives);
+		BSPPrimitive[] inPrims = lh.LoadLumpData<BSPPrimitive>();
+		BSPMPrimitive[] outPrims = new BSPMPrimitive[inPrims.Length];
+
+		lh.GetMap().Primitives = outPrims;
+		for (int i = 0; i < outPrims.Length; i++) {
+			ref BSPPrimitive inPrim = ref inPrims[i];
+			ref BSPMPrimitive outPrim = ref outPrims[i];
+			outPrim.FirstIndex = inPrim.FirstIndex;
+			outPrim.FirstVert = inPrim.FirstVert;
+			outPrim.IndexCount = inPrim.IndexCount;
+			outPrim.Type = (BSPPrimType)inPrim.Type;
+			outPrim.VertCount = inPrim.VertCount;
+		}
+	}
+	private void Mod_LoadPrimVerts() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.PrimVerts);
+		BSPPrimVert[] inPrims = lh.LoadLumpData<BSPPrimVert>();
+		BSPMPrimVert[] outPrims = new BSPMPrimVert[inPrims.Length];
+
+		lh.GetMap().PrimVerts = outPrims;
+		for (int i = 0; i < outPrims.Length; i++) {
+			ref BSPPrimVert inPrim = ref inPrims[i];
+			ref BSPMPrimVert outPrim = ref outPrims[i];
+			outPrim.Position = inPrim.Position;
+		}
+	}
+	private void Mod_LoadPrimIndices() {
+		MapLoadHelper lh = new MapLoadHelper(LumpIndex.PrimIndices);
+		lh.GetMap().PrimIndices = lh.LoadLumpData<ushort>();
+	}
 	public static ref BSPFace FaceHandleFromIndex(int surfaceIndex, WorldBrushData data) => ref data.Faces![surfaceIndex];
 	public static ref BSPMSurface2 SurfaceHandleFromIndex(int surfaceIndex, WorldBrushData data) => ref data.Surfaces2![surfaceIndex];
 	public static ref CollisionPlane MSurf_Plane(ref BSPMSurface2 surfID) => ref surfID.Plane.GetReference();
@@ -305,6 +334,13 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	public static ref SurfDraw MSurf_Flags(ref BSPMSurface2 surfID) => ref surfID.Flags;
 	public static bool SurfaceHasDispInfo(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasDisp) != 0;
 	public static ref ushort MSurf_VertBufferIndex(ref BSPMSurface2 surfID) => ref surfID.VertBufferIndex;
+	public static ushort MSurf_NumPrims(ref BSPMSurface2 surfID, WorldBrushData data) {
+		if (SurfaceHasDispInfo(ref surfID) || !SurfaceHasPrims(ref surfID))
+			return 0;
+
+		int surfaceIndex = MSurf_Index(ref surfID, data);
+		return data.Surfaces1![surfaceIndex].NumPrims;
+	}
 	public static ref short MSurf_MaterialSortID(ref BSPMSurface2 surfID) => ref surfID.MaterialSortID;
 	public static bool SurfaceHasPrims(ref BSPMSurface2 surfID) => (MSurf_Flags(ref surfID) & SurfDraw.HasPrims) != 0;
 	public static int MSurf_SortGroup(ref BSPMSurface2 surfID) => (int)(surfID.Flags & SurfDraw.SortGroupMask) >> (int)SurfDraw.SortGroupShift;
