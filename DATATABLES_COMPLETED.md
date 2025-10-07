@@ -33,7 +33,7 @@ This is a list of all of the important SendClasses in Garry's Mod, and which one
 - [ ] Class #30: CBreakableProp
 - [ ] Class #31: CBreakableSurface
 - [ ] Class #32: CCitadelEnergyCore
-- [ ] Class #33: CColorCorrection
+- [x] Class #33: CColorCorrection
 - [ ] Class #34: CColorCorrectionVolume
 - [ ] Class #35: CCrossbowBolt
 - [ ] Class #36: CDynamicLight
