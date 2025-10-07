@@ -1,4 +1,4 @@
-﻿using Source.Common.Engine;
+using Source.Common.Engine;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Engine;
@@ -12,6 +12,7 @@ public interface IWorldRenderList
 
 }
 
+[Flags]
 public enum DrawWorldListFlags : ulong
 {
 	StrictlyAboveWater = 0x001,

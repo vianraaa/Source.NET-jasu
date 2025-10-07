@@ -1,8 +1,9 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 
 namespace Source.Common.Client;
 
+[Flags]
 public enum RenderViewInfo
 {
 	Unspecified = 0,
@@ -10,6 +11,7 @@ public enum RenderViewInfo
 	DrawHUD = 1 << 1,
 	SuppressMonitorRendering = 1 << 2
 }
+[Flags]
 public enum DrawFlags
 {
 	RenderRefraction = 0x1,

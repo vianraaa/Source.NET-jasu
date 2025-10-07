@@ -41,9 +41,9 @@ public class SimpleWorldView : BaseWorldView
 
 	private void DrawExecute(float waterHeight, ViewID viewID, float waterZAdjust) {
 		using MatRenderContextPtr renderContext = new(mainView.materials);
-
+		renderContext.ClearBuffers(false, true, false);
 		if((DrawFlags & DrawFlags.DrawEntities) != 0) {
-			//DrawWorld(waterZAdjust);
+			DrawWorld(waterZAdjust);
 		}
 	}
 }
@@ -339,7 +339,12 @@ public class ViewRender : IViewRender
 		SetupCurrentView(in viewRender.Origin, in viewRender.Angles, viewID);
 		IGameSystem.PreRenderAllSystems();
 		SetupVis(in viewRender, out uint visFlags);
-		DrawWorldAndEntities(true, in viewRender, clearFlags);
+
+		bool drawSkybox = ViewRenderConVars.r_skybox.GetBool();
+		if (drew3dSkybox || skyboxVisible == SkyboxVisibility.NotVisible)
+			drawSkybox = false;
+
+		DrawWorldAndEntities(drawSkybox, in viewRender, clearFlags);
 	}
 
 	private void DrawWorldAndEntities(bool drawSkybox, in ViewSetup viewRender, ClearFlags clearFlags) {
