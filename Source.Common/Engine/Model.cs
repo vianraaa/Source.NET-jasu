@@ -60,6 +60,8 @@ public class WorldBrushData
 	public BSPSurfaceLighting[]? SurfaceLighting;
 	public ColorRGBExp32[]? LightData;
 	public BSPMSurfaceNormal[]? SurfaceNormals;
+	public object? DispInfos;
+	public int NumDispInfos;
 }
 
 public struct BrushData

@@ -30,7 +30,8 @@ public class Render(
 	IMaterialSystem materials,
 	Host Host,
 	MatSysInterface MaterialSystem,
-	ClientGlobalVariables gpGlobals
+	ClientGlobalVariables gpGlobals,
+	IModelLoader imodelLoader
 	)
 {
 	int framecount = 1;
@@ -38,6 +39,8 @@ public class Render(
 	Matrix4x4 MatrixView;
 	Matrix4x4 MatrixProjection;
 	Matrix4x4 MatrixWorldToScreen;
+
+	ModelLoader modelLoader = (ModelLoader)imodelLoader;
 
 	IViewRender? viewRender;
 	IViewRender engineRenderer => viewRender ??= Singleton<IViewRender>();
@@ -254,6 +257,8 @@ public class Render(
 		MaterialSystem.DestroySortInfo();
 		MaterialSystem.RegisterLightmapSurfaces();
 		MaterialSystem.CreateSortInfo();
+
+		modelLoader.Map_LoadDisplacements(host_state.WorldModel!);
 	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }

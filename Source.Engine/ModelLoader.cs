@@ -679,4 +679,33 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		int surfaceIndex = MSurf_Index(ref surfID, bsp);
 		return bsp.Surfaces1![surfaceIndex].FirstPrimID;
 	}
+
+	public void Map_LoadDisplacements(Model model) {
+		MapLoadHelper.Init(model, LoadName);
+		DispInfo_LoadDisplacements(model);
+		MapLoadHelper.Shutdown();
+	}
+
+	private void DispInfo_LoadDisplacements(Model model) {
+		nint numDisplacements = MapLoadHelper.GetLumpSize(LumpIndex.DispInfo);
+		nint numLuxels = MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapAlphas);
+		nint numSamplePositionBytes= MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapSamplePositions);
+		model.Brush.Shared!.NumDispInfos = (int)numDisplacements;
+		model.Brush.Shared!.DispInfos = DispInfo_CreateArray(numDisplacements);
+	}
+
+	private object? DispInfo_CreateArray(nint numDisplacements) {
+		DispArray ret = new DispArray(numDisplacements);
+		ret.CurTag = 1;
+		for (nint i = 0; i < numDisplacements; i++) 
+			ret.DispInfos[i].DispArray = ret;
+		
+		return ret;
+	}
+}
+
+public class DispArray(nint elements)
+{
+	public DispInfo[] DispInfos = new DispInfo[elements];
+	public int CurTag;
 }
