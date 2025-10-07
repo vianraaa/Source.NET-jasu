@@ -243,11 +243,11 @@ public class ShadowState : IShaderShadow
 	public GraphicsDriver GetDriver() => ShaderAPI.GetDriver();
 
 	public void SetVertexShader(ReadOnlySpan<char> fileName) {
-		VertexShader = Shaders.LoadVertexShader(fileName);
+		VertexShader = Shaders.LoadVertexShader($"{fileName}_{GetDriver().Extension(ShaderType.Pixel)}");
 	}
 
 	public void SetPixelShader(ReadOnlySpan<char> fileName) {
-		PixelShader = Shaders.LoadPixelShader(fileName);
+		PixelShader = Shaders.LoadPixelShader($"{fileName}_{GetDriver().Extension(ShaderType.Pixel)}");
 	}
 
 	public void EnableVertexBlend(bool enable) {

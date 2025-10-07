@@ -1,4 +1,4 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
@@ -102,8 +102,8 @@ public abstract class BaseVSShader : BaseShader
 			if (bBaseTexture)
 				SetDefaultBlendingShadowState(baseTextureVar, true);
 
-			ShaderShadow.SetVertexShader($"{shaderName}_{ShaderShadow!.GetDriver().Extension(ShaderType.Vertex)}");
-			ShaderShadow.SetPixelShader($"{shaderName}_{ShaderShadow!.GetDriver().Extension(ShaderType.Pixel)}");
+			ShaderShadow.SetVertexShader(shaderName);
+			ShaderShadow.SetPixelShader(shaderName);
 
 			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | (bVertexColor ? VertexFormat.Color : 0), 1, null, 0);
 			SetStandardShaderUniforms();
