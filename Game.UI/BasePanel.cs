@@ -188,7 +188,7 @@ public class MainMenuGameLogo : EditablePanel
 		KeyValues subKey = new KeyValues(background);
 		conditions.AddSubKey(subKey);
 
-		LoadControlSettings("Resource/GameLogo.res", null, null, conditions);
+		LoadControlSettings("resource/GameLogo.res", null, null, conditions);
 	}
 }
 public class BackgroundMenuButton : Button
@@ -511,7 +511,7 @@ public class BasePanel : Panel
 		GameMenuInset = int.TryParse(scheme.GetResourceString("MainMenu.Inset"), out int r) ? r : 0;
 		GameMenuInset *= 2;
 
-		IScheme? clientScheme = SchemeManager.LoadSchemeFromFile("Resource/ClientScheme.res", "ClientScheme");
+		IScheme? clientScheme = SchemeManager.LoadSchemeFromFile("resource/ClientScheme.res", "ClientScheme");
 		List<Color> buttonColor = [];
 		if (clientScheme != null) {
 			GameTitlePos.Clear();
@@ -586,7 +586,7 @@ public class BasePanel : Panel
 	private void CreateGameMenu() {
 		KeyValues datafile = new KeyValues("GameMenu");
 		datafile.UsesEscapeSequences(true);
-		if (datafile.LoadFromFile(FileSystem, "Resource/GameMenu.res"))
+		if (datafile.LoadFromFile(FileSystem, "resource/GameMenu.res"))
 			GameMenu = RecursiveLoadGameMenu(datafile);
 
 		if (GameMenu == null)

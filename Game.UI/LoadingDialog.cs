@@ -108,15 +108,15 @@ public class LoadingDialog : Frame
 		ShowingVACInfo = false;
 
 		if (ModInfo.IsSinglePlayerOnly() && !forceShowProgressText)
-			LoadControlSettings("Resource/LoadingDialogNoBannerSingle.res");
+			LoadControlSettings("resource/LoadingDialogNoBannerSingle.res");
 		else
-			LoadControlSettings("Resource/LoadingDialogNoBanner.res");
+			LoadControlSettings("resource/LoadingDialogNoBanner.res");
 	}
 
 	internal void DisplayGenericError(ReadOnlySpan<char> failureReason, ReadOnlySpan<char> extendedReason) {
 		Activate();
 
-		SetupControlSettingsForErrorDisplay("Resource/LoadingDialogError.res");
+		SetupControlSettingsForErrorDisplay("resource/LoadingDialogError.res");
 
 		if (extendedReason != null && extendedReason.Length > 0) {
 			ReadOnlySpan<char> fail = failureReason[0] == '#' ? Localize.Find(failureReason) : failureReason;

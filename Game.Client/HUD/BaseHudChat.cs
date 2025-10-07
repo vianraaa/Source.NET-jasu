@@ -330,7 +330,7 @@ public class HudChatFilterPanel : EditablePanel
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
-		LoadControlSettings("resource/UI/ChatFilters.res");
+		LoadControlSettings("resource/ui/ChatFilters.res");
 
 		base.ApplySchemeSettings(scheme);
 
@@ -474,7 +474,7 @@ public class BaseHudChat : EditableHudElement
 	}
 
 	public override void ApplySchemeSettings(IScheme scheme) {
-		LoadControlSettings("resource/UI/BaseChat.res");
+		LoadControlSettings("resource/ui/BaseChat.res");
 		base.ApplySchemeSettings(scheme);
 
 		SetPaintBackgroundType(PaintBackgroundType.Box);
