@@ -1,4 +1,4 @@
-﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
 using Source.Common.Input;
 
@@ -534,7 +534,7 @@ public class Frame : EditablePanel
 		MaximizeButton = new FrameButton(this, "frame_maximize", "1");
 		SetMaximizeButtonVisible(false);
 
-		Span<char> str = [(char)0x6F, '\0'];
+		Span<char> str = [(char)0x30, '\0'];
 		MinimizeToSysTrayButton = new FrameButton(this, "frame_mintosystray", str);
 		MinimizeToSysTrayButton.SetCommand("MinimizeToSysTray");
 		// SetMinimizeToSysTrayButtonVisible(false);
