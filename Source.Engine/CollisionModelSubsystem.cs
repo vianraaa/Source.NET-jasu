@@ -1,4 +1,4 @@
-﻿global using static Source.Engine.CollisionBSPDataStatic;
+global using static Source.Engine.CollisionBSPDataStatic;
 
 using CommunityToolkit.HighPerformance;
 
@@ -299,7 +299,11 @@ public class CollisionModelSubsystem()
 			return;
 		}
 
-		MapLoadHelper.Init(null, name);
+		if (!MapLoadHelper.Init(null, name)) {
+			checksum = 0;
+			return;
+		}
+
 		bspData.Load(name);
 		MapLoadHelper.Shutdown();
 

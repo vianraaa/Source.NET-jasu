@@ -1,4 +1,4 @@
-﻿using Source.Common.Engine;
+using Source.Common.Engine;
 using Source.Common;
 using Source.Common.Filesystem;
 using Source.Common.Formats.BSP;
@@ -16,7 +16,7 @@ public ref struct MapLoadHelper
 	internal static Stream? MapFileHandle;
 	internal static BSPHeader MapHeader;
 	static Host? Host;
-	public static void Init(Model? model, ReadOnlySpan<char> loadName) {
+	public static bool Init(Model? model, ReadOnlySpan<char> loadName) {
 		Host = Singleton<Host>();
 		ModelLoader ModelLoader = (ModelLoader)Singleton<IModelLoader>();
 		IFileSystem fileSystem = Singleton<IFileSystem>();
@@ -33,21 +33,21 @@ public ref struct MapLoadHelper
 		MapFileHandle = fileSystem.Open(loadName, FileOpenOptions.Read | FileOpenOptions.Binary)?.Stream;
 		if (MapFileHandle == null) {
 			Host.Error($"MapLoadHelper.Init, unable to open {MapName}");
-			return;
+			return false;
 		}
 
 		if (!MapFileHandle.ReadToStruct(ref MapHeader) || MapHeader.Identifier != BSPFileCommon.IDBSPHEADER) {
 			MapFileHandle.Close();
 			MapFileHandle = null;
 			Host.Error($"MapLoadHelper.Init, map {MapName} has wrong identifier\n");
-			return;
+			return false;
 		}
 
 		if (MapHeader.Version < BSPFileCommon.MINBSPVERSION || MapHeader.Version > BSPFileCommon.BSPVERSION) {
 			MapFileHandle.Close();
 			MapFileHandle = null;
 			Host.Error($"MapLoadHelper.Init, map {MapName} has wrong version ({MapHeader.Version} when expecting {BSPFileCommon.BSPVERSION})\n");
-			return;
+			return false;
 		}
 
 		LoadName = new(loadName);
@@ -58,6 +58,7 @@ public ref struct MapLoadHelper
 		Map = ModelLoader.WorldBrushData;
 
 		Assert(MapFileHandle != null);
+		return true;
 	}
 
 	public static void Shutdown() {
@@ -225,7 +226,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 		mod.Type = ModelType.Brush;
 		mod.LoadFlags |= ModelLoaderFlags.Loaded;
-		MapLoadHelper.Init(mod, ((Span<char>)(ActiveMapName)).SliceNullTerminatedString());
+		if (!MapLoadHelper.Init(mod, ((Span<char>)(ActiveMapName)).SliceNullTerminatedString()))
+			return;
 
 		Mod_LoadVertices();
 		BSPEdge[] edges = Mod_LoadEdges();
