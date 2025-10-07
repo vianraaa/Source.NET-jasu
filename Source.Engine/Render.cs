@@ -318,10 +318,10 @@ public class Render(
 		// visible surfaces at runtime, and we need other sky-rooms to not be visible
 
 		Span<int> skyboxMeshesIndices = MaterialSystem.SkyboxMeshesIndices.AsSpan();
-		Span<MeshList> skyboxMeshes = MaterialSystem.Meshes.AsSpan();
+		Span<MeshList> meshes = MaterialSystem.Meshes.AsSpan();
 		renderContext.Bind(SkyboxOcclude!); // If Init() ran, this isn't null
 		for (int i = 0; i < skyboxMeshesIndices.Length; i++) {
-			ref MeshList meshList = ref skyboxMeshes[skyboxMeshesIndices[i]];
+			ref MeshList meshList = ref meshes[skyboxMeshesIndices[i]];
 			meshList.Mesh.Draw();
 		}
 

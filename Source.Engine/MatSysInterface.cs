@@ -223,6 +223,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		Skybox3D = 3
 	}
 	static ToolTexture TryGetToolTexture(ReadOnlySpan<char> texture) => texture switch {
+		"tools/toolsskybox2d" => ToolTexture.Skybox2D,
+		"tools/toolsskybox" => ToolTexture.Skybox3D,
 		_ => texture.StartsWith("tools/", StringComparison.InvariantCultureIgnoreCase) ? ToolTexture.Unknown : ToolTexture.None
 	};
 	internal struct MeshList
