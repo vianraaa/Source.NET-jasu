@@ -22,5 +22,5 @@ public class HL2MPMachineGun : WeaponHL2MPBase
 #else
 	public static readonly new ServerClass ServerClass = new ServerClass("HL2MPMachineGun", DT_HL2MPMachineGun).WithManualClassID(StaticClassIndices.CHL2MPMachineGun);
 #endif
-#endif
 }
+#endif
