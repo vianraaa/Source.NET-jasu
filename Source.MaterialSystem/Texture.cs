@@ -195,6 +195,7 @@ public class Texture(MaterialSystem materials) : ITextureInternal
 
 		ushort nHeaderSize = IVTFTexture.FileHeaderSize(IVTFTexture.VTF_MAJOR_VERSION);
 		Span<byte> mem = stackalloc byte[nHeaderSize];
+		cacheFileName = cacheFileName.SliceNullTerminatedString();
 		if (!materials.FileSystem.ReadFile(cacheFileName, null, mem, nHeaderSize)) {
 			goto precacheFailed;
 		}
