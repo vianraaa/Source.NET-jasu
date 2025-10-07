@@ -37,10 +37,11 @@ public class CollisionBSPData
 	public int SolidLeaf;
 	public int EmptyLeaf;
 
+	// More of these should just be explicit Count's into their respective lists, honestly
 	public int NumSurfaces;
 	public int NumLeafs;
 	public int NumAreas;
-	public int NumPlanes;
+	public int NumPlanes => MapPlanes.Count;
 	public int NumClusters;
 	public int NumNodes;
 	public int NumTextures;

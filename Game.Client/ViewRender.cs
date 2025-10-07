@@ -1,4 +1,4 @@
-﻿using Source.Common.Mathematics;
+using Source.Common.Mathematics;
 using Source.Common;
 using Source.Common.Client;
 using Game.Shared;
@@ -181,7 +181,7 @@ public class SkyboxView : Rendering3dView
 	}
 
 	private SafeFieldPointer<PlayerLocalData, Sky3DParams> PreRender3dSkyboxWorld(ref SkyboxVisibility skyboxVisible) {
-		if ((skyboxVisible != SkyboxVisibility.Skybox3D) && r_3dsky.GetInt() != 2)
+		if ((skyboxVisible != SkyboxVisibility.Skybox3D) && r_3dsky.GetInt() != 1)
 			return SafeFieldPointer<PlayerLocalData, Sky3DParams>.Null;
 
 		if (r_3dsky.GetInt() == 0)
