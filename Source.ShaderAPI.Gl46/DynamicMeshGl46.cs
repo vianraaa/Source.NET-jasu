@@ -1,8 +1,8 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 
 namespace Source.MaterialSystem.Meshes;
 
-public unsafe class DynamicMesh : Mesh
+public unsafe class DynamicMeshGl46 : MeshGl46
 {
 	bool HasDrawn;
 	bool VertexOverride;
@@ -26,11 +26,11 @@ public unsafe class DynamicMesh : Mesh
 		}
 	}
 
-	internal void OverrideVertexBuffer(VertexBuffer vertexBuffer) {
+	internal void OverrideVertexBuffer(VertexBufferGl46 vertexBuffer) {
 		throw new NotImplementedException();
 	}
 
-	internal void OverrideIndexBuffer(IndexBuffer indexBuffer) {
+	internal void OverrideIndexBuffer(IndexBufferGl46 indexBuffer) {
 		throw new NotImplementedException();
 	}
 	public override bool NeedsVertexFormatReset(VertexFormat fmt) {

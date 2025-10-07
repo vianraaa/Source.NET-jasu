@@ -1,4 +1,4 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.MaterialSystem.Meshes;
 
@@ -9,9 +9,9 @@ public enum DeviceState {
 	NeedsReset
 }
 
-public class MeshMgr
+public class MeshMgr : IMeshMgr
 {
-	internal MaterialSystem MaterialSystem;
+	internal IMaterialSystem MaterialSystem;
 
 	internal void Flush() {
 		if (IsPC()) {
@@ -29,7 +29,7 @@ public class MeshMgr
 		BufferedMode = buffered;
 
 		IMaterialInternal matInternal = (IMaterialInternal)material!;
-		Mesh mesh = DynamicMesh;
+		MeshGl46 mesh = DynamicMesh;
 
 		if (BufferedMode) {
 			Assert(!BufferedMesh.WasNotRendered());
@@ -42,16 +42,16 @@ public class MeshMgr
 			mesh.SetVertexFormat(fmt);
 		}
 		else {
-			Mesh vertexMesh = (Mesh)vertexOverride;
+			MeshGl46 vertexMesh = (MeshGl46)vertexOverride;
 			mesh.SetVertexFormat(vertexMesh.GetVertexFormat());
 		}
 
 		mesh.SetMaterial(matInternal);
 		if (mesh == DynamicMesh) {
-			Mesh? baseVertex = (Mesh?)vertexOverride;
+			MeshGl46? baseVertex = (MeshGl46?)vertexOverride;
 			if (baseVertex != null)
 				DynamicMesh.OverrideVertexBuffer(baseVertex.GetVertexBuffer());
-			Mesh? baseIndex = (Mesh?)vertexOverride;
+			MeshGl46? baseIndex = (MeshGl46?)vertexOverride;
 			if (baseIndex != null)
 				DynamicMesh.OverrideIndexBuffer(baseIndex.GetIndexBuffer());
 		}
@@ -59,7 +59,7 @@ public class MeshMgr
 		return mesh;
 	}
 
-	internal IShaderAPI ShaderAPI;
+	internal ShaderAPIGl46 ShaderAPI;
 
 	bool BufferedMode;
 	bool UsingFatVertices;
@@ -76,25 +76,25 @@ public class MeshMgr
 
 	// We can't rely on imported new () calls here because it makes the dependency injection
 	// system crash and burn
-	private TMesh InitMesh<TMesh>() where TMesh : Mesh, new() {
+	private TMesh InitMesh<TMesh>() where TMesh : MeshGl46, new() {
 		TMesh ret = new TMesh();
-		ret.ShaderAPI = MaterialSystem.ShaderAPI;
-		ret.ShaderUtil = MaterialSystem;
-		ret.MeshMgr = MaterialSystem.MeshMgr;
-		ret.ShaderDevice = MaterialSystem.ShaderDevice;
+		ret.ShaderAPI = MaterialSystem.GetRenderContext().GetShaderAPI();
+		ret.ShaderUtil = MaterialSystem.GetShaderUtil();
+		ret.MeshMgr = ShaderAPI.MeshMgr;
+		ret.ShaderDevice = ret.ShaderAPI.GetShaderDevice();
 		return ret;
 	}
 
 
-	List<VertexBuffer> DynamicVertexBuffers = [];
-	IndexBuffer? DynamicIndexBuffer;
+	List<VertexBufferGl46> DynamicVertexBuffers = [];
+	IndexBufferGl46? DynamicIndexBuffer;
 
-	BufferedMesh BufferedMesh;
-	DynamicMesh DynamicMesh;
+	BufferedMeshGl46 BufferedMesh;
+	DynamicMeshGl46 DynamicMesh;
 
 	internal void Init() {
-		BufferedMesh = InitMesh<BufferedMesh>();
-		DynamicMesh = InitMesh<DynamicMesh>();
+		BufferedMesh = InitMesh<BufferedMeshGl46>();
+		DynamicMesh = InitMesh<DynamicMeshGl46>();
 		DynamicMesh.Init(0);
 		CreateDynamicIndexBuffer();
 		CreateZeroVertexBuffer();
@@ -103,7 +103,7 @@ public class MeshMgr
 
 	private void CreateDynamicIndexBuffer() {
 		DestroyDynamicIndexBuffer();
-		DynamicIndexBuffer = new IndexBuffer(IMesh.INDEX_BUFFER_SIZE, true);
+		DynamicIndexBuffer = new IndexBufferGl46(IMesh.INDEX_BUFFER_SIZE, true);
 	}
 	private void DestroyDynamicIndexBuffer() {
 		DynamicIndexBuffer?.Dispose();
@@ -118,19 +118,19 @@ public class MeshMgr
 	public const int VERTEX_BUFFER_SIZE = 32768;
 	public const int MAX_QUAD_INDICES = 16384;
 
-	internal VertexBuffer FindOrCreateVertexBuffer(int dynamicBufferID, VertexFormat vertexFormat) {
+	internal VertexBufferGl46 FindOrCreateVertexBuffer(int dynamicBufferID, VertexFormat vertexFormat) {
 		int vertexSize = VertexFormatSize(vertexFormat);
 
 		while (DynamicVertexBuffers.Count <= dynamicBufferID) {
 			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
-			VertexBuffer vertexBuffer = new VertexBuffer(true);
+			VertexBufferGl46 vertexBuffer = new VertexBufferGl46(true);
 			vertexBuffer.VertexSize = 0;
 			int initVertexSize = bufferMemory / VERTEX_BUFFER_SIZE, initVertexCount = VERTEX_BUFFER_SIZE;
 			vertexBuffer.BufferSize = initVertexSize * initVertexCount;
 			DynamicVertexBuffers.Add(vertexBuffer);
 		}
 
-		VertexBuffer buffer = DynamicVertexBuffers[dynamicBufferID];
+		VertexBufferGl46 buffer = DynamicVertexBuffers[dynamicBufferID];
 
 		if (buffer.VertexSize != vertexSize) {
 			int bufferMemory = ShaderAPI.GetCurrentDynamicVBSize();
@@ -143,11 +143,11 @@ public class MeshMgr
 
 	internal unsafe int VertexFormatSize(VertexFormat vertexFormat) {
 		MeshDesc desc = new();
-		VertexBuffer.ComputeVertexDescription(null, vertexFormat, ref desc.Vertex);
+		VertexBufferGl46.ComputeVertexDescription(null, vertexFormat, ref desc.Vertex);
 		return desc.Vertex.ActualVertexSize;
 	}
 
-	internal IndexBuffer GetDynamicIndexBuffer() {
+	internal IndexBufferGl46 GetDynamicIndexBuffer() {
 		return DynamicIndexBuffer!;
 	}
 
@@ -156,7 +156,7 @@ public class MeshMgr
 	}
 
 	internal IMesh CreateStaticMesh(VertexFormat format, ReadOnlySpan<char> textureGroup, IMaterial material) {
-		Mesh mesh = InitMesh<Mesh>();
+		MeshGl46 mesh = InitMesh<MeshGl46>();
 		mesh.SetVertexFormat(format);
 		if (material != null)
 			mesh.SetMaterial((IMaterialInternal)material);

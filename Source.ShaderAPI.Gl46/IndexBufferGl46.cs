@@ -1,10 +1,10 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 
 using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem.Meshes;
 
-public unsafe class IndexBuffer : IDisposable
+public unsafe class IndexBufferGl46 : IDisposable
 {
 	internal MaterialIndexFormat IndexFormat;
 	internal int IndexCount;
@@ -100,7 +100,7 @@ public unsafe class IndexBuffer : IDisposable
 		}
 	}
 
-	public IndexBuffer(int count, bool dynamic = false) {
+	public IndexBufferGl46(int count, bool dynamic = false) {
 		Position = 0;
 		Locked = false;
 		Flush = true;

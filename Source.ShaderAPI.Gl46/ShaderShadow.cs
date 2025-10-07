@@ -33,7 +33,7 @@ public unsafe struct SourcePixelSharedShadowState
 /// A shader state. Represents the board (GL state machine) and shader uniforms together.
 /// During shader initialization/recomputes, this state is recalculated based on input variables, etc.
 /// </summary>
-public class ShadowState : IShaderShadow
+public class ShadowStateGl46 : IShaderShadow
 {
 	internal readonly IShaderSystemInternal Shaders;
 	internal readonly IShaderAPI ShaderAPI;
@@ -67,7 +67,7 @@ public class ShadowState : IShaderShadow
 	}
 
 	string? name;
-	public unsafe ShadowState(IShaderAPI shaderAPI, IShaderSystemInternal shaderSystem, ReadOnlySpan<char> name = default) {
+	public unsafe ShadowStateGl46(IShaderAPI shaderAPI, IShaderSystemInternal shaderSystem, ReadOnlySpan<char> name = default) {
 		ShaderAPI = shaderAPI;
 		Shaders = shaderSystem;
 		this.name = name == null ? null : new(name);
@@ -76,6 +76,8 @@ public class ShadowState : IShaderShadow
 			CreateShaderObjects();
 		}
 	}
+
+	public VertexFormat GetVertexFormat() => VertexFormat;
 
 	bool createdShaderObjects = false;
 	private unsafe void CreateShaderObjects() {

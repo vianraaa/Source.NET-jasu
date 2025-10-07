@@ -267,4 +267,6 @@ public interface IShaderShadow
 	void BlendOpSeparateAlpha(ShaderBlendOp blendOp);
 	GraphicsDriver GetDriver();
 	void SetDefaultState();
+	VertexFormat GetVertexFormat();
+	void Activate();
 }

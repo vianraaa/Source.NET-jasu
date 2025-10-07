@@ -1,4 +1,4 @@
-﻿using Source.Common.Bitmap;
+using Source.Common.Bitmap;
 using Source.Common.Formats.Keyvalues;
 using Source.Common.Launcher;
 using Source.Common.ShaderAPI;
@@ -203,6 +203,9 @@ public interface IMaterialSystem
 	void GetSortInfo(Span<MaterialSystem_SortInfo> materialSortInfoArray);
 	void GetLightmapPageSize(int lightmap, ref int width, ref int height);
 	void GetBackBufferDimensions(out int width, out int height);
+	IShaderUtil GetShaderUtil();
+	ITexture FindTexture(ReadOnlySpan<char> textureName, ReadOnlySpan<char> textureGroupName, bool complain, int additionalCreationFlags);
+	ITexture GetErrorTexture();
 }
 
 public interface IMatRenderContext

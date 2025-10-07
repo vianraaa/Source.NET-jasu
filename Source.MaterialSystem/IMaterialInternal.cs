@@ -1,4 +1,4 @@
-﻿using Source.Common.Formats.Keyvalues;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 
 using System.Collections;
@@ -60,22 +60,4 @@ public class MaterialDict(MaterialSystem materials) : IEnumerable<IMaterialInter
 		AddMaterialToMaterialList(material);
 		return material;
 	}
-}
-
-public interface IMaterialInternal : IMaterial
-{
-	void DrawMesh(VertexCompressionType vertexCompressionType);
-	int GetMaxLightmapPageID();
-	int GetMinLightmapPageID();
-	IMaterialInternal GetRealTimeVersion();
-	bool IsManuallyCreated();
-	bool IsPrecached();
-	bool IsUsingVertexID();
-	void Precache();
-	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, List<FileNameHandle_t>? includes = null, MaterialFindContext findContext = 0);
-	void SetEnumerationID(int id);
-	void SetMaxLightmapPageID(int value);
-	void SetMinLightmapPageID(int value);
-	bool GetNeedsWhiteLightmap();
-	void SetNeedsWhiteLightmap(bool value);
 }

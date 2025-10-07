@@ -1,4 +1,4 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
 using System.Runtime.InteropServices;
@@ -11,15 +11,15 @@ public struct PrimList
 	public int NumIndices;
 }
 
-public unsafe class Mesh : IMesh
+public unsafe class MeshGl46 : IMesh
 {
 	public IShaderAPI ShaderAPI;
 	public IShaderUtil ShaderUtil;
 	public MeshMgr MeshMgr;
 	public IShaderDevice ShaderDevice;
 
-	protected VertexBuffer VertexBuffer;
-	protected IndexBuffer IndexBuffer;
+	protected VertexBufferGl46 VertexBuffer;
+	protected IndexBufferGl46 IndexBuffer;
 
 	protected VertexFormat LastVertexFormat;
 	protected VertexFormat VertexFormat;
@@ -36,8 +36,8 @@ public unsafe class Mesh : IMesh
 	protected int Mode = ComputeMode(MaterialPrimitiveType.Triangles);
 	public bool Locked;
 
-	public VertexBuffer GetVertexBuffer() => throw new Exception();
-	public IndexBuffer GetIndexBuffer() => throw new Exception();
+	public VertexBufferGl46 GetVertexBuffer() => throw new Exception();
+	public IndexBufferGl46 GetIndexBuffer() => throw new Exception();
 
 	public virtual void BeginCastBuffer(VertexFormat format) {
 		throw new NotImplementedException();
@@ -173,11 +173,11 @@ public unsafe class Mesh : IMesh
 	public virtual bool Lock(int vertexCount, bool append, ref VertexDesc desc) {
 		if (VertexBuffer == null) {
 			int size = MeshMgr.VertexFormatSize(VertexFormat);
-			VertexBuffer = new VertexBuffer(VertexFormat, size, vertexCount, false);
+			VertexBuffer = new VertexBufferGl46(VertexFormat, size, vertexCount, false);
 		}
 
 		byte* vertexMemory = VertexBuffer.Lock(vertexCount, out desc.FirstVertex);
-		VertexBuffer.ComputeVertexDescription(vertexMemory, VertexFormat, ref desc);
+		VertexBufferGl46.ComputeVertexDescription(vertexMemory, VertexFormat, ref desc);
 
 		return true;
 	}
@@ -189,7 +189,7 @@ public unsafe class Mesh : IMesh
 			return 0;
 		}
 
-		IndexBuffer ??= new IndexBuffer(indexCount, false);
+		IndexBuffer ??= new IndexBufferGl46(indexCount, false);
 
 		desc.Indices = (ushort*)IndexBuffer.Lock(readOnly, indexCount, out int startIndex, firstIndex);
 		if (desc.Indices == null) {
@@ -374,11 +374,11 @@ public unsafe class Mesh : IMesh
 		throw new NotImplementedException();
 	}
 
-	public virtual void UseVertexBuffer(VertexBuffer vertexBuffer) {
+	public virtual void UseVertexBuffer(VertexBufferGl46 vertexBuffer) {
 		VertexBuffer = vertexBuffer;
 	}
 
-	public virtual void UseIndexBuffer(IndexBuffer indexBuffer) {
+	public virtual void UseIndexBuffer(IndexBufferGl46 indexBuffer) {
 		IndexBuffer = indexBuffer;
 	}
 }

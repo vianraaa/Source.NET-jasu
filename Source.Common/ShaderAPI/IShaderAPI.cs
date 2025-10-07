@@ -39,6 +39,10 @@ public struct GraphicsBoardState
 	public ShaderDepthFunc DepthFunc;
 }
 
+public interface IMeshMgr {
+
+}
+
 public interface IShaderAPI : IShaderDynamicAPI
 {
 	void SetViewports(ReadOnlySpan<ShaderViewport> viewports);
@@ -90,4 +94,6 @@ public interface IShaderAPI : IShaderDynamicAPI
 	bool IsTexture(ShaderAPITextureHandle_t handle);
 	public void DeleteTexture(ShaderAPITextureHandle_t handle);
 	ImageFormat GetNearestSupportedFormat(ImageFormat fmt, bool filteringRequired = true);
+	IShaderShadow NewShaderShadow(ReadOnlySpan<char> materialName);
+	IShaderDevice GetShaderDevice();
 }

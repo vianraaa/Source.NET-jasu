@@ -1,10 +1,10 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 
 namespace Source.MaterialSystem.Meshes;
 
-public unsafe class BufferedMesh : Mesh
+public unsafe class BufferedMeshGl46 : MeshGl46
 {
-	Mesh? Mesh;
+	MeshGl46? Mesh;
 	ushort LastIndex;
 	ushort ExtraIndices;
 	bool IsFlushing;
@@ -25,7 +25,7 @@ public unsafe class BufferedMesh : Mesh
 		}
 	}
 
-	public void SetMesh(Mesh? mesh) {
+	public void SetMesh(MeshGl46? mesh) {
 		if (Mesh != mesh) {
 			ShaderAPI.FlushBufferedPrimitives();
 			Mesh = mesh;

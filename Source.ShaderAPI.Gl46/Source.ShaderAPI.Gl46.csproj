@@ -1,12 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DefineConstants>$(DefineConstants);DBGFLAG_ASSERT</DefineConstants>
 	</PropertyGroup>
 	<ItemGroup>
 		<Compile Include="..\Usings\GlobalUsings.cs" Link="Usings/GlobalUsings.cs" />
@@ -14,11 +11,9 @@
 		<Compile Include="..\Usings\ShaderUsings.cs" Link="Usings/ShaderUsings.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="FreeTypeSharp" Version="3.0.1" />
-	</ItemGroup>
-	<ItemGroup>
+		<ProjectReference Include="..\Dependencies\OpenGL\OpenGL46.csproj" />
 		<ProjectReference Include="..\Source.Bitmap\Source.Bitmap.csproj" />
 		<ProjectReference Include="..\Source.Common\Source.Common.csproj" />
-		<ProjectReference Include="..\Source.GUI.Controls\Source.GUI.Controls.csproj" />
+		<ProjectReference Include="..\Source.VTF\Source.VTF.csproj" />
 	</ItemGroup>
 </Project>

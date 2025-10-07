@@ -1,10 +1,10 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 
 using System.Runtime.InteropServices;
 
 namespace Source.MaterialSystem.Meshes;
 
-public unsafe class VertexBuffer : IDisposable
+public unsafe class VertexBufferGl46 : IDisposable
 {
 	VertexFormat VertexBufferFormat;
 	internal int Position;
@@ -28,11 +28,11 @@ public unsafe class VertexBuffer : IDisposable
 	internal uint VAO() => vao > 0 ? (uint)vao : throw new NullReferenceException("Vertex Array Object was null");
 	internal uint VBO() => vbo > 0 ? (uint)vbo : throw new NullReferenceException("Vertex Buffer Object was null");
 
-	public VertexBuffer(bool dynamic) {
+	public VertexBufferGl46(bool dynamic) {
 		Dynamic = dynamic;
 	}
 
-	public VertexBuffer(VertexFormat format, int vertexSize, int vertexCount, bool dynamic) {
+	public VertexBufferGl46(VertexFormat format, int vertexSize, int vertexCount, bool dynamic) {
 		VertexBufferFormat = format;
 		VertexSize = vertexSize;
 		VertexCount = vertexCount;

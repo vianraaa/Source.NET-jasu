@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using Source.Common.Formats.Keyvalues;
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace Source.Common.MaterialSystem;
 
@@ -215,4 +217,24 @@ public interface IMaterial
 	// TODO: We need to get these working. The original plan was to use C#'s finalizers, but that's a bad idea in hindsight
 	void IncrementReferenceCount();
 	void DecrementReferenceCount();
+}
+
+// Intended to only be used by the material system and not other components
+// todo: can we code analyze enforce this
+public interface IMaterialInternal : IMaterial
+{
+	void DrawMesh(VertexCompressionType vertexCompressionType);
+	int GetMaxLightmapPageID();
+	int GetMinLightmapPageID();
+	IMaterialInternal GetRealTimeVersion();
+	bool IsManuallyCreated();
+	bool IsPrecached();
+	bool IsUsingVertexID();
+	void Precache();
+	bool PrecacheVars(KeyValues? inVmtKeyValues = null, KeyValues? inPatchKeyValues = null, List<FileNameHandle_t>? includes = null, MaterialFindContext findContext = 0);
+	void SetEnumerationID(int id);
+	void SetMaxLightmapPageID(int value);
+	void SetMinLightmapPageID(int value);
+	bool GetNeedsWhiteLightmap();
+	void SetNeedsWhiteLightmap(bool value);
 }

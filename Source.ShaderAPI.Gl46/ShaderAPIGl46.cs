@@ -147,6 +147,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		SetViewports(new(ref viewport));
 	}
 
+	public IShaderShadow NewShaderShadow(ReadOnlySpan<char> materialName) => new ShadowStateGl46(this, (IShaderSystemInternal)ShaderManager, materialName);
+
 	private void InitVertexAndPixelShaders() {
 		// TODO; everything before this call
 		ShaderManager.ResetShaderState();
@@ -165,7 +167,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 
-	Mesh? RenderMesh;
+	MeshGl46? RenderMesh;
 	IMaterialInternal? Material;
 	uint CombobulateShadersIfChanged() {
 		uint program;
@@ -280,7 +282,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void DrawMesh(IMesh imesh) {
-		Mesh mesh = (Mesh)imesh!;
+		MeshGl46 mesh = (MeshGl46)imesh!;
 		RenderMesh = mesh;
 		VertexFormat vertexFormat = RenderMesh.GetVertexFormat();
 		SetVertexDecl(vertexFormat, RenderMesh.HasColorMesh(), RenderMesh.HasFlexMesh(), Material!.IsUsingVertexID());
@@ -807,6 +809,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public void EnableLinearColorSpaceFrameBuffer(bool v) {
 		// I'm dealing with this later
 	}
+
+	public IShaderDevice GetShaderDevice() => this;
 
 	public void SetRenderTargetEx(int renderTargetID, ShaderAPITextureHandle_t colorTextureHandle = -1, ShaderAPITextureHandle_t depthTextureHandle = -1) {
 		FlushBufferedPrimitives();

@@ -5,11 +5,9 @@ using Source.Common.Bitmap;
 using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
-using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
-using Source.MaterialSystem.Surface;
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -21,29 +19,17 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 {
 	public readonly MaterialDict MaterialDict;
 	nint graphics;
-	public static void DLLInit(IServiceCollection services) {
-		services.AddSingleton<MatSystemSurface>();
-		services.AddSingleton<IMatSystemSurface>(x => x.GetRequiredService<MatSystemSurface>());
-		services.AddSingleton<ISurface>(x => x.GetRequiredService<MatSystemSurface>());
-		services.AddSingleton<ShaderAPIGl46>();
-		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
-		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
-		services.AddSingleton<IShaderUtil>(x => x.GetRequiredService<MaterialSystem>());
-		services.AddSingleton<ITextureManager, TextureManager>();
-		services.AddSingleton<IShaderSystem, ShaderSystem>();
-		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
-		services.AddSingleton<MaterialSystem_Config>();
-		services.AddSingleton<MeshMgr>();
-	}
+
+	public IShaderUtil GetShaderUtil() => this;
 
 	readonly IServiceProvider services;
 
 	public readonly IFileSystem FileSystem;
 	public readonly TextureManager TextureSystem;
-	public readonly ShaderSystem ShaderSystem;
+	public readonly IShaderSystem ShaderSystem;
 	public IShaderDevice ShaderDevice;
 	public IShaderAPI ShaderAPI;
-	public readonly MeshMgr MeshMgr;
+	public readonly IMeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
 	public readonly MaterialSystem_Config Config;
 
@@ -55,22 +41,15 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderAPI = services.GetRequiredService<IShaderAPI>()!;
 		ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
-		MeshMgr = services.GetRequiredService<MeshMgr>(); // todo: interface
+		MeshMgr = services.GetRequiredService<IMeshMgr>(); // todo: interface
 		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
-		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderSystem)!;
+		ShaderSystem = services.GetRequiredService<IShaderSystem>();
 		Config = services.GetRequiredService<MaterialSystem_Config>()!;
 
 		// Link up
-		MeshMgr.MaterialSystem = this;
-		MeshMgr.ShaderAPI = ShaderAPI;
 		ShaderAPI.PreInit(this, services);
 
 		TextureSystem.MaterialSystem = this;
-
-		ShaderSystem.Config = Config;
-		ShaderSystem.MaterialSystem = this;
-		ShaderSystem.Services = services;
-		ShaderSystem.ShaderAPI = ShaderAPI;
 
 		ShaderSystem.LoadAllShaderDLLs();
 		TextureSystem.Init();
@@ -118,6 +97,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	public uint DebugVarsSignature;
 
+	public ITexture GetErrorTexture() => TextureSystem.ErrorTexture();
 	public unsafe void BeginFrame(double frameTime) {
 		if (!ThreadInMainThread() || IsInFrame())
 			return;
@@ -280,7 +260,8 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 				DevWarning($"Texture '{textureName}' not found.\n");
 			}
 		}
-		return texture;
+
+		return texture ?? TextureSystem.ErrorTexture();
 	}
 
 	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
@@ -388,7 +369,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 
 	public void RestoreShaderObjects(IServiceProvider services, int changeFlags) {
 		if (services != null) {
-			ShaderAPI = (ShaderAPIGl46)services.GetRequiredService<IShaderAPI>();
+			ShaderAPI = services.GetRequiredService<IShaderAPI>();
 			ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		}
 

@@ -11,26 +11,19 @@ using System.Text;
 
 namespace Source.MaterialSystem;
 
-public interface IShaderSystemInternal : IShaderInit, IShaderSystem
-{
-	void LoadAllShaderDLLs();
-	bool LoadShaderDLL<T>(T instance) where T : IShaderDLL;
-	IShader? FindShader(ReadOnlySpan<char> shaderName);
-
-	void InitShaderParameters(IShader shader, IMaterialVar[] vars, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName);
-	bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState shaderRenderState, ReadOnlySpan<char> materialName);
-	// void CleanupRenderState(ref ShaderRenderState renderState);
-	void DrawElements(IShader shader, IMaterialVar[] parms, in ShadowState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp);
-	IEnumerable<IShader> GetShaders();
-}
+public interface IShaderSystemInternal : IShaderInit, IShaderSystem;
 
 public class ShaderSystem : IShaderSystemInternal
 {
 	List<IShaderDLL> ShaderDLLs = [];
-	ShadowState? RenderState;
-	internal MaterialSystem MaterialSystem;
-	internal IShaderAPI ShaderAPI;
-	internal MaterialSystem_Config Config;
+	IShaderShadow? RenderState;
+	private IMaterialSystem? _MaterialSystem;
+	private IShaderAPI? _ShaderAPI;
+	private MaterialSystem_Config? _Config;
+
+	private IMaterialSystem MaterialSystem => _MaterialSystem ??= Singleton<IMaterialSystem>();
+	private IShaderAPI ShaderAPI => _ShaderAPI ??= Singleton<IShaderAPI>();
+	private MaterialSystem_Config Config => _Config ??= Singleton<MaterialSystem_Config>();
 
 	public void BindTexture(Sampler sampler, ITexture texture, int frame) {
 		if (texture == null) return;
@@ -42,7 +35,7 @@ public class ShaderSystem : IShaderSystemInternal
 
 	}
 
-	public void DrawElements(IShader shader, IMaterialVar[] parms, in ShadowState renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
+	public void DrawElements(IShader shader, IMaterialVar[] parms, IShaderShadow renderState, VertexCompressionType vertexCompression, uint materialVarTimeStamp) {
 		ShaderAPI.InvalidateDelayedShaderConstraints();
 
 		int materialVarFlags = parms[(int)ShaderMaterialVars.Flags].GetIntValue();
@@ -135,7 +128,7 @@ public class ShaderSystem : IShaderSystemInternal
 		null
 	];
 
-	internal string ShaderStateString(int i) {
+	public ReadOnlySpan<char> ShaderStateString(int i) {
 		return shaderStateStrings[i];
 	}
 
@@ -208,7 +201,7 @@ public class ShaderSystem : IShaderSystemInternal
 		RenderState = null;
 	}
 
-	private void PrepForShaderDraw(IShader shader, Span<IMaterialVar> vars, ShadowState? renderState) {
+	private void PrepForShaderDraw(IShader shader, Span<IMaterialVar> vars, IShaderShadow renderState) {
 		Assert(RenderState == null);
 		// LATER; plug into spew?
 		RenderState = renderState;
@@ -224,7 +217,7 @@ public class ShaderSystem : IShaderSystemInternal
 	public void LoadTexture(IMaterialVar textureVar, ReadOnlySpan<char> textureGroupName, int additionalCreationFlags = 0) {
 		if (textureVar.GetVarType() != MaterialVarType.String) {
 			if (textureVar.GetVarType() != MaterialVarType.Texture)
-				textureVar.SetTextureValue(MaterialSystem.TextureSystem.ErrorTexture());
+				textureVar.SetTextureValue(MaterialSystem.GetErrorTexture());
 			return;
 		}
 
@@ -232,25 +225,25 @@ public class ShaderSystem : IShaderSystemInternal
 		if (name[0] == Path.PathSeparator || name[1] == Path.PathSeparator)
 			name = name[1..];
 
-		ITextureInternal texture = (ITextureInternal)MaterialSystem.FindTexture(name, textureGroupName, false, additionalCreationFlags);
+		ITexture texture = MaterialSystem.FindTexture(name, textureGroupName, false, additionalCreationFlags);
 
 		if (texture == null) {
-			if (!MaterialSystem.ShaderDevice.IsUsingGraphics())
+			if (!ShaderDevice.IsUsingGraphics())
 				Warning("Shader_t::LoadTexture: texture \"{name}.vtf\" doesn't exist\n");
-			texture = MaterialSystem.TextureSystem.ErrorTexture();
+			texture = MaterialSystem.GetErrorTexture();
 		}
 
 		textureVar.SetTextureValue(texture);
 	}
 
-	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState renderState, ReadOnlySpan<char> materialName) {
+	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, IShaderShadow renderState, ReadOnlySpan<char> materialName) {
 		Assert(RenderState == null);
-		InitRenderStateFlags(ref renderState, shaderParams);
-		InitState(shader, shaderParams, ref renderState);
+		InitRenderStateFlags(renderState, shaderParams);
+		InitState(shader, shaderParams, renderState);
 		return true;
 	}
 
-	private void InitState(IShader shader, IMaterialVar[] shaderParams, ref ShadowState renderState) {
+	private void InitState(IShader shader, IMaterialVar[] shaderParams, IShaderShadow renderState) {
 		PrepForShaderDraw(shader, shaderParams, renderState);
 		shader.DrawElements(shaderParams, renderState, null, VertexCompressionType.None);
 		DoneWithShaderDraw();
@@ -260,7 +253,7 @@ public class ShaderSystem : IShaderSystemInternal
 	public const int SNAPSHOT_COUNT_EDITOR = 32;
 	public int SnapshotTypeCount() => MaterialSystem.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
 
-	private void InitRenderStateFlags(ref ShadowState renderState, IMaterialVar[] shaderParams) {
+	private void InitRenderStateFlags(IShaderShadow renderState, IMaterialVar[] shaderParams) {
 
 	}
 
@@ -289,8 +282,12 @@ public class ShaderSystem : IShaderSystemInternal
 
 	}
 
-	public void Init() {
+	IFileSystem FileSystem;
+	IShaderDevice ShaderDevice;
 
+	public void Init() {
+		FileSystem = Singleton<IFileSystem>();
+		ShaderDevice = Singleton<IShaderDevice>();
 	}
 
 	Dictionary<ulong, VertexShaderHandle> vshs = [];
@@ -349,7 +346,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if (vshs.TryGetValue(symbol, out VertexShaderHandle value))
 			return value;
 
-		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
+		using IFileHandle? handle = FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
 		if (handle == null)
 			return VertexShaderHandle.INVALID;
 
@@ -379,7 +376,7 @@ public class ShaderSystem : IShaderSystemInternal
 		if (pshs.TryGetValue(symbol, out PixelShaderHandle value))
 			return value;
 
-		using IFileHandle? handle = MaterialSystem.FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
+		using IFileHandle? handle = FileSystem.Open($"shaders/{name}", FileOpenOptions.Read, "game");
 		if (handle == null)
 			return PixelShaderHandle.INVALID;
 

@@ -74,7 +74,7 @@ public class Material : IMaterialInternal
 			flags |= MaterialFlags.IsManuallyCreated;
 		}
 
-		ShaderRenderState = new(materials.ShaderAPI, materials.ShaderSystem, materialName);
+		ShaderRenderState = ShaderAPI.NewShaderShadow(materialName);
 	}
 
 	public int MappingWidth;
@@ -123,7 +123,7 @@ public class Material : IMaterialInternal
 				ShaderAPI.FlushBufferedPrimitives();
 			}
 
-			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ref ShaderRenderState, GetName())) {
+			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ShaderRenderState, GetName())) {
 				flags &= ~MaterialFlags.ValidRenderState;
 				return false;
 			}
@@ -778,7 +778,7 @@ public class Material : IMaterialInternal
 		flagName = flagName.Trim();
 
 		for (int i = 0; materials.ShaderSystem.ShaderStateString(i) != null; ++i) {
-			string stateString = materials.ShaderSystem.ShaderStateString(i);
+			ReadOnlySpan<char> stateString = materials.ShaderSystem.ShaderStateString(i);
 			int foundIndex = flagName.IndexOf(stateString, StringComparison.OrdinalIgnoreCase);
 
 			if (foundIndex != 0)
@@ -846,7 +846,7 @@ public class Material : IMaterialInternal
 	public Span<IMaterialVar> Vars => new Span<IMaterialVar>(ShaderParams)[..VarCount];
 
 	// IMaterialProxy
-	ShadowState ShaderRenderState;
+	IShaderShadow ShaderRenderState;
 	static uint DebugVarsSignature = 0;
 
 	public void DrawMesh(VertexCompressionType vertexCompression) {
@@ -859,7 +859,7 @@ public class Material : IMaterialInternal
 
 			if ((GetMaterialVarFlags() & MaterialVarFlags.NoDraw) == 0) {
 				ReadOnlySpan<char> name = Shader.GetName();
-				materials.ShaderSystem.DrawElements(Shader, ShaderParams, in ShaderRenderState, vertexCompression, ChangeID ^ DebugVarsSignature);
+				materials.ShaderSystem.DrawElements(Shader, ShaderParams, ShaderRenderState, vertexCompression, ChangeID ^ DebugVarsSignature);
 			}
 		}
 		else {
@@ -878,7 +878,7 @@ public class Material : IMaterialInternal
 
 	public VertexFormat GetVertexFormat() {
 		Precache();
-		return ShaderRenderState.VertexFormat;
+		return ShaderRenderState.GetVertexFormat();
 	}
 
 	// This is not well understood. It relates to multithreading, and that's all I know right now.
