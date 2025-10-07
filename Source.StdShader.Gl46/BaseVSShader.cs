@@ -161,17 +161,17 @@ public abstract class BaseVSShader : BaseShader
 		}
 	}
 
-	private void EnableAlphaBlending(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
+	protected void EnableAlphaBlending(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
 		ShaderShadow!.EnableBlending(true);
 		ShaderShadow!.BlendFunc(srcFactor, dstFactor);
 		ShaderShadow!.EnableDepthWrites(false);
 	}
 
-	private void DisableAlphaBlending() {
+	protected void DisableAlphaBlending() {
 		ShaderShadow!.EnableBlending(false);
 	}
 
-	private void BindTexture(Sampler sampler, int textureVarIdx, int frameVarIdx) {
+	protected void BindTexture(Sampler sampler, int textureVarIdx, int frameVarIdx) {
 		IMaterialVar textureVar = Params![textureVarIdx];
 		IMaterialVar? frameVar = frameVarIdx != -1 ? Params[frameVarIdx] : null;
 		var tex = textureVar.GetTextureValue()!;
@@ -179,7 +179,7 @@ public abstract class BaseVSShader : BaseShader
 		ShaderAPI!.SetShaderUniform(ShaderAPI!.LocateShaderUniform(textureVar.GetName()), (int)sampler);
 	}
 
-	private void Draw(bool makeActualDrawCall = true) {
+	protected void Draw(bool makeActualDrawCall = true) {
 		if (IsSnapshotting())
 			return;
 		ShaderSystem.Draw(makeActualDrawCall);
