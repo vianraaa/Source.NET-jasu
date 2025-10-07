@@ -41,7 +41,7 @@ public class FontAmalgam : IFont
 	int MaxWidth;
 	int MaxHeight;
 
-		public void SetName(ReadOnlySpan<char> name) {
+	public void SetName(ReadOnlySpan<char> name) {
 		Name = new(name);
 	}
 
@@ -257,8 +257,8 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 #elif LINUX
 	static readonly string?[] ValidAsianFonts = ["Marlett", "WenQuanYi Zen Hei", "unifont", null];
 	static readonly FallbackFont[] FallbackFonts = [
-		new("DejaVu Sans", null),
-		new(null, "DejaVu Sans")
+		new("FreeSans", null),
+		new(null, "FreeSans")
 	];
 #else
 #error Please define fallback fonts for this platform
@@ -319,7 +319,8 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		return foundFont;
 	}
 
-	public struct FT_SfntName {
+	public struct FT_SfntName
+	{
 		public ushort PlatformID;
 		public ushort EncodingID;
 		public ushort LanguageID;
@@ -346,7 +347,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		}
 
 		// We now need to resolve fontName if it wasn't provided.
-		if(fontName == null) {
+		if (fontName == null) {
 			// TODO: This means we load the font twice... not ideal..
 			Span<byte> filePathAlloc = stackalloc byte[Encoding.ASCII.GetByteCount(fontFilepath)];
 			Encoding.ASCII.GetBytes(fontFilepath, filePathAlloc);
@@ -355,7 +356,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 			fixed (byte* filePathAllocPtr = filePathAlloc)
 				err = FT_New_Face(FreeTypeFont.Library, filePathAllocPtr, 0, &face);
 
-			if(err != FT_Error.FT_Err_Ok) {
+			if (err != FT_Error.FT_Err_Ok) {
 				Assert(false);
 				return false;
 			}
@@ -363,7 +364,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 			byte* name = face->family_name;
 			nint len = 0;
 			byte* nameReadForLength = name;
-			while(*nameReadForLength != 0) {
+			while (*nameReadForLength != 0) {
 				len++;
 				nameReadForLength++;
 			}
@@ -399,13 +400,13 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		return baseFont?.GetCharYOffset(ch) ?? 0;
 	}
 	internal void GetCharABCwide(IFont? font, char ch, out int a, out int b, out int c) {
-		if(font is not FontAmalgam amalgam) {
+		if (font is not FontAmalgam amalgam) {
 			a = b = c = 0;
 			return;
 		}
 
 		BaseFont? baseFont = amalgam.GetFontForChar(ch);
-		if(baseFont != null)
+		if (baseFont != null)
 			baseFont.GetCharABCwidths(ch, out a, out b, out c);
 		else {
 			a = c = 0;
@@ -442,9 +443,9 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		char chAfter = '\0';
 		for (int i = 0; ; i++) {
 			char ch = text[i];
-			if (ch == 0) 
+			if (ch == 0)
 				break;
-			
+
 			chAfter = text[i + 1];
 
 			if (ch == '\n') {
@@ -471,7 +472,7 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 
 		Assert(font != null);
 		if (font == null)
-			return ;
+			return;
 
 		if (font is not FontAmalgam fontAmalgam)
 			return;
@@ -490,6 +491,6 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		if (fontAmalgam.GetFontForChar(chAfter) != font)
 			chAfter = '\0';
 
-		baseFont.GetKernedCharWidth( ch, chBefore, chAfter, out flWide, out flabcA, out flabcC );
+		baseFont.GetKernedCharWidth(ch, chBefore, chAfter, out flWide, out flabcA, out flabcC);
 	}
 }

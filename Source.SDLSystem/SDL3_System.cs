@@ -199,8 +199,8 @@ public ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName) {
 			};
 
 			// Use ArgumentList to escape fontName
+			processStartInfo.ArgumentList.Add("--format=%{file}");
 			processStartInfo.ArgumentList.Add(new string(fontName));
-			processStartInfo.ArgumentList.Add("--format=%{{file}}");
 
 			using var process = System.Diagnostics.Process.Start(processStartInfo);
 			if (process != null) {
@@ -211,7 +211,8 @@ public ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName) {
 					return output.Trim();
 				}
 			}
-		} catch {
+		} catch(Exception ex) {
+			Assert($"GetSystemFontPath: {ex.Message}");
 		}
 
 		return null;
