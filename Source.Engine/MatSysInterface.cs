@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -212,6 +212,19 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 	int FrameCount = 0;
+	internal enum ToolTexture {
+		/// <summary> Not a tool texture </summary>
+		None = 0,
+		/// <summary> A tool texture by means of starting with tools/, but otherwise an unimportant use case beyond not renderable </summary>
+		Unknown = 1,
+		/// <summary> The 2D skybox texture. </summary>
+		Skybox2D = 2,
+		/// <summary> The 3D skybox texture. </summary>
+		Skybox3D = 3
+	}
+	static ToolTexture TryGetToolTexture(ReadOnlySpan<char> texture) => texture switch {
+		_ => texture.StartsWith("tools/", StringComparison.InvariantCultureIgnoreCase) ? ToolTexture.Unknown : ToolTexture.None
+	};
 	internal struct MeshList
 	{
 		public IMesh Mesh;
@@ -220,11 +233,19 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		public int IndexCount;
 		public VertexFormat VertexFormat;
 		// TODO: Is there a better way to handle this? I can't figure out how Source does...
-		public bool IsToolTexture;
+		public ToolTexture ToolTexture;
 	}
+
 	internal readonly List<MeshList> Meshes = [];
+
+	// These are pointers into Meshes
+	internal readonly List<int> Skybox2DMeshesIndices = [];
+	internal readonly List<int> Skybox3DMeshesIndices = [];
+
 	internal readonly List<IMesh?> WorldStaticMeshes = [];
+
 	ConVar mat_max_worldmesh_vertices = new((32767 / 3).ToString(), 0);
+
 	public static void VertexCountForSurfaceList(MSurfaceSortList list, in SurfaceSortGroup group, out int vertexCount, out int indexCount) {
 		vertexCount = indexCount = 0;
 		for (short _blockIndex = group.ListHead; _blockIndex != -1; _blockIndex = list.GetSurfaceBlock(_blockIndex).NextBlock) {
@@ -247,6 +268,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		FrameCount = 1;
 		WorldStaticMeshDestroy();
 		Meshes.Clear();
+		Skybox2DMeshesIndices.Clear();
+		Skybox3DMeshesIndices.Clear();
 
 		int sortIDs = materials.GetNumSortIDs();
 
@@ -284,7 +307,15 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			VertexFormat format = meshes[i].Material.GetVertexFormat();
 			meshes[i].Mesh = renderContext.CreateStaticMesh(format, MaterialDefines.TEXTURE_GROUP_STATIC_VERTEX_BUFFER_WORLD, meshes[i].Material);
 			int vertBufferIndex = 0;
-			meshes[i].IsToolTexture = meshes[i].Material.GetName().StartsWith("tools/", StringComparison.InvariantCultureIgnoreCase);
+
+			// We precalculate the tool texture type as an enumeration and then
+			// store indices into Meshes into lists where needed (mostly for skybox rendering).
+			meshes[i].ToolTexture = TryGetToolTexture(meshes[i].Material.GetName());
+			switch (meshes[i].ToolTexture) {
+				case ToolTexture.Skybox2D: Skybox2DMeshesIndices.Add(i); break;
+				case ToolTexture.Skybox3D: Skybox3DMeshesIndices.Add(i); break;
+			}
+
 			MeshBuilder meshBuilder = new MeshBuilder();
 			meshBuilder.Begin(meshes[i].Mesh, MaterialPrimitiveType.Triangles, meshes[i].VertCount, meshes[i].IndexCount);
 			for (int j = 0; j < WorldStaticMeshes.Count; j++) {

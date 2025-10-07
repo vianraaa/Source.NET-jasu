@@ -1,4 +1,4 @@
-﻿
+
 using CommunityToolkit.HighPerformance;
 
 using Source.Common;
@@ -9,7 +9,7 @@ using Source.Common.Mathematics;
 using Source.Common.Utilities;
 
 using System.Numerics;
-
+using System.Runtime.CompilerServices;
 namespace Source.Engine;
 
 public struct ViewStack
@@ -267,6 +267,12 @@ public class Render(
 		ModelLoader.Map_VisSetup(host_state.WorldModel, origins, novis, out returnFlags);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal void RenderOneMesh(MatRenderContextPtr renderContext, in MatSysInterface.MeshList meshList) {
+		renderContext.Bind(meshList.Material);
+		meshList.Mesh.Draw();
+	}
+
 	internal void DrawWorld(DrawWorldListFlags flags, float waterZAdjust) {
 		using MatRenderContextPtr renderContext = new(materials);
 		Span<MatSysInterface.MeshList> meshLists = MaterialSystem.Meshes.AsSpan();
@@ -277,11 +283,15 @@ public class Render(
 
 		for (int i = meshLists.Length - 1; i >= 0; i--) {
 			ref MatSysInterface.MeshList meshList = ref meshLists[i];
-			if (meshList.IsToolTexture)
-				continue;
 
-			renderContext.Bind(meshList.Material);
-			meshList.Mesh.Draw();
+			switch (meshList.ToolTexture) {
+				case MatSysInterface.ToolTexture.None:
+					RenderOneMesh(renderContext, in meshList);
+					break;
+				default:
+					// Don't draw the mesh
+					break;
+			}
 		}
 	}
 	static ConVar r_drawskybox = new("1", FCvar.Cheat);
