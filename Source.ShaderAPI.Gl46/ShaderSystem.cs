@@ -210,7 +210,7 @@ public class ShaderSystem : IShaderSystemInternal
 		renderState?.Activate(); // Activate the render state, this flushes out UBO's etc
 	}
 
-	public void InitShaderInstance(IShader shader, IMaterialVar[] shaderParams, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
+	public void InitShaderInstance(IShader shader, IMaterialVar[]? shaderParams, ReadOnlySpan<char> materialName, ReadOnlySpan<char> textureGroupName) {
 		PrepForShaderDraw(shader, shaderParams, null);
 		shader.InitShaderInstance(shaderParams, ShaderAPI, this, materialName, textureGroupName);
 		DoneWithShaderDraw();
@@ -238,14 +238,14 @@ public class ShaderSystem : IShaderSystemInternal
 		textureVar.SetTextureValue(texture);
 	}
 
-	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, IShaderShadow renderState, ReadOnlySpan<char> materialName) {
+	public bool InitRenderState(IShader shader, IMaterialVar[] shaderParams, ref IShaderShadow renderState, ReadOnlySpan<char> materialName) {
 		Assert(RenderState == null);
-		InitRenderStateFlags(renderState, shaderParams);
-		InitState(shader, shaderParams, renderState);
+		InitRenderStateFlags(ref renderState, shaderParams);
+		InitState(shader, shaderParams, ref renderState);
 		return true;
 	}
 
-	private void InitState(IShader shader, IMaterialVar[] shaderParams, IShaderShadow renderState) {
+	private void InitState(IShader shader, IMaterialVar[] shaderParams, ref IShaderShadow renderState) {
 		PrepForShaderDraw(shader, shaderParams, renderState);
 		shader.DrawElements(shaderParams, renderState, null, VertexCompressionType.None);
 		DoneWithShaderDraw();
@@ -255,7 +255,7 @@ public class ShaderSystem : IShaderSystemInternal
 	public const int SNAPSHOT_COUNT_EDITOR = 32;
 	public int SnapshotTypeCount() => MaterialSystem.CanUseEditorMaterials() ? SNAPSHOT_COUNT_EDITOR : SNAPSHOT_COUNT_NORMAL;
 
-	private void InitRenderStateFlags(IShaderShadow renderState, IMaterialVar[] shaderParams) {
+	private void InitRenderStateFlags(ref IShaderShadow renderState, IMaterialVar[] shaderParams) {
 
 	}
 

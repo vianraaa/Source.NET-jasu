@@ -47,9 +47,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 
 	public static void DLLInit(IServiceCollection services) {
-		services.AddSingleton<ShaderAPIGl46>();
-		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
-		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
+		services.AddSingleton(x => x.GetRequiredService<IShaderAPI>().GetShaderDevice());
 		services.AddSingleton<IMeshMgr, MeshMgr>();
 		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
 		services.AddSingleton<IShaderSystem, ShaderSystem>();
@@ -390,7 +388,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public void PreInit(IShaderUtil shaderUtil, IServiceProvider services) {
-		MeshMgr = services.GetRequiredService<MeshMgr>();
+		MeshMgr = (MeshMgr)services.GetRequiredService<IMeshMgr>()!;
 		ShaderManager = services.GetRequiredService<IShaderSystem>();
 
 		this.services = services;

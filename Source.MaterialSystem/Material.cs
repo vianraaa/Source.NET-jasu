@@ -123,7 +123,7 @@ public class Material : IMaterialInternal
 				ShaderAPI.FlushBufferedPrimitives();
 			}
 
-			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ShaderRenderState, GetName())) {
+			if (Shader != null && !materials.ShaderSystem.InitRenderState(Shader, ShaderParams, ref ShaderRenderState, GetName())) {
 				flags &= ~MaterialFlags.ValidRenderState;
 				return false;
 			}

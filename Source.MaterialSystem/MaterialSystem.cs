@@ -271,7 +271,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 			}
 		}
 
-		return texture ?? TextureSystem.ErrorTexture();
+		return texture;
 	}
 
 	internal ReadOnlySpan<char> GetForcedTextureLoadPathID() {
