@@ -167,13 +167,14 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	Mesh? RenderMesh;
 	IMaterialInternal? Material;
-
 	uint CombobulateShadersIfChanged() {
 		uint program;
 		if (pipelineChanged) {
 			program = ShaderCombobulator();
-			lastShader = program;
-			glUseProgram(program);
+			if (lastShader != program) {
+				lastShader = program;
+				glUseProgram(program);
+			}
 		}
 
 		pipelineChanged = false;
@@ -552,13 +553,22 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		glProgramUniform1fv(GetCurrentProgramInternal(), uniform, flConsts);
 	}
 
+	readonly int[] LastBoundTextures = new int[(int)Sampler.MaxSamplers];
+	int lastActiveTexture = -1;
 	internal void BindTexture(Sampler sampler, int frame, ShaderAPITextureHandle_t textureHandle) {
 		CombobulateShadersIfChanged();
 		if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE)
 			return; // TODO: can we UNSET the sampler???
 
-		glActiveTexture(GL_TEXTURE0 + (int)sampler);
-		glBindTexture(GL_TEXTURE_2D, (uint)textureHandle);
+		if (LastBoundTextures[(int)sampler] != textureHandle) {
+			int tex = GL_TEXTURE0 + (int)sampler;
+			if (tex != lastActiveTexture) {
+				glActiveTexture(tex);
+				lastActiveTexture = tex;
+			}
+			glBindTexture(GL_TEXTURE_2D, (uint)textureHandle);
+			LastBoundTextures[(int)sampler] = textureHandle;
+		}
 	}
 
 	public bool CanDownloadTextures() {
