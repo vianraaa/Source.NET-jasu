@@ -169,7 +169,6 @@ public class MSurfaceSortList
 		return ref List.AsSpan()[group.ListHead].Surfaces[0];
 	}
 }
-
 public class MatSysInterface(IMaterialSystem materials, IServiceProvider services)
 {
 	public readonly TextureReference FullFrameFBTexture0 = new();

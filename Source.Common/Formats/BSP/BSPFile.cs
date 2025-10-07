@@ -507,6 +507,12 @@ public struct BSPMSurfaceNormal
 	public uint FirstVertNormal;
 }
 
+public interface IDispInfo
+{
+
+}
+
+
 public struct BSPMSurface2
 {
 	public nint SurfNum; // We use this instead of pointer subtraction math in MSurf_Index
@@ -519,7 +525,7 @@ public struct BSPMSurface2
 	public short MaterialSortID;
 	public ushort VertBufferIndex;
 	public ushort DynamicShadowsEnabled_TexInfo;
-	// todo:  IDispInfo
+	public IDispInfo? DispInfo;
 	public int VisFrame;
 
 	public bool DynamicShadowsEnabled {

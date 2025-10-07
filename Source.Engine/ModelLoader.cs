@@ -429,8 +429,32 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			if ((tex.Flags & Surf.Sky) != 0)
 				MSurf_Flags(ref surfID) |= SurfDraw.Sky;
 
-			// todo: disp info
-			// todo: primitives
+			di = _in.DispInfo;
+			_out2.DispInfo = null;
+			if (di != -1) {
+				MSurf_Flags(ref surfID) |= SurfDraw.HasDisp;
+			}
+			else {
+				Assert((tex.Flags & Surf.NoDraw) == 0);
+
+				_out1.NumPrims = _in.GetNumPrims();
+				_out1.FirstPrimID = _in.FirstPrimID;
+				if (_in.GetNumPrims() != 0) {
+					MSurf_Flags(ref surfID) |= SurfDraw.HasPrims;
+					ref BSPMPrimitive prim = ref brushData.Primitives![_in.FirstPrimID];
+					if (prim.VertCount > 0) {
+						MSurf_Flags(ref surfID) |= SurfDraw.Dynamic;
+					}
+				}
+			}
+
+			// todo
+			// _out2.ShadowDecals = SHADOW_DECAL_HANDLE_INVALID;
+			// _out2.Decals = WORLD_DECAL_HANDLE_INVALID;
+
+			// out2.FirstOverlayFragment = OVERLAY_FRAGMENT_INVALID;
+
+			// CalcSurfaceExtents(in lh, ref surfID);
 		}
 	}
 
