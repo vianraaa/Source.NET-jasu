@@ -1,8 +1,9 @@
-﻿using Game.Client.HL2;
+using Game.Client.HL2;
 using Game.Shared;
 
 using Source;
 using Source.Common;
+using Source.Common.Commands;
 using Source.Common.Mathematics;
 
 using System.Numerics;
@@ -12,6 +13,10 @@ using FIELD = FIELD<C_HL2MP_Player>;
 
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
+	static ConVar cl_playermodel = new("none", FCvar.UserInfo | FCvar.Archive | FCvar.ServerCanExecute, "Default Player Model");
+	static ConVar cl_defaultweapon = new("weapon_physcannon", FCvar.UserInfo | FCvar.Archive, "Default Spawn Weapon");
+
+
 	public static readonly RecvTable DT_HL2MPLocalPlayerExclusive = new([
 		RecvPropVector(FIELD.OF_NAMED(nameof(NetworkOrigin), nameof(Origin))),
 

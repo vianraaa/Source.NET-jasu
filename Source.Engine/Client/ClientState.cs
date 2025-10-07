@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Client;
@@ -351,17 +351,6 @@ public class ClientState : BaseClientState
 		if (state >= SignOnState.Connected && NetChannel != null) {
 			var msg = new NET_SignonState(state, ServerCount);
 			NetChannel.SendNetMsg(msg);
-
-			// TODO: where to *actually* send this? Next tick?
-			if (SignOnState == SignOnState.PreSpawn) {
-				CLC_ListenEvents msg2 = new CLC_ListenEvents();
-				NetChannel.SendNetMsg(msg2);
-
-				NET_SetConVar cvr = new NET_SetConVar();
-				cvr.AddCVar("cl_playermodel", "combineelite");
-				cvr.AddCVar("cl_playercolor", "1.000000 1.000000 1.000000");
-				NetChannel.SendNetMsg(cvr);
-			}
 		}
 
 		return true;

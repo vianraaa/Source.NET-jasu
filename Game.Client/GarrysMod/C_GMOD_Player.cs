@@ -1,8 +1,9 @@
-﻿using Game.Client.HL2MP;
+using Game.Client.HL2MP;
 using Game.Shared;
 
 using Source;
 using Source.Common;
+using Source.Common.Commands;
 
 using System.Numerics;
 
@@ -12,6 +13,8 @@ using FIELD = FIELD<C_GMOD_Player>;
 [LinkEntityToClass(LocalName = "player")]
 public class C_GMOD_Player : C_HL2MP_Player
 {
+	static ConVar cl_playercolor = new("1.0 0.0 0.0", FCvar.UserInfo | FCvar.Archive | FCvar.ServerCanExecute, "Default Player Model");
+
 	public static readonly RecvTable DT_GMOD_Player = new(DT_HL2MP_Player, [
 		RecvPropInt(FIELD.OF(nameof(GModPlayerFlags))),
 		RecvPropEHandle(FIELD.OF(nameof(HoveredWidget))),
