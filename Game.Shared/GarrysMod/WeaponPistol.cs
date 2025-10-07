@@ -12,9 +12,15 @@ public class WeaponPistol : BaseHL2MPCombatWeapon
 #endif
 		DT_WeaponPistol = new(DT_BaseHL2MPCombatWeapon, [
 #if CLIENT_DLL
-
+			RecvPropFloat(FIELD.OF(nameof(SoonestPrimaryAttack))),
+			RecvPropFloat(FIELD.OF(nameof(LastAttackTime))),
+			RecvPropFloat(FIELD.OF(nameof(AccuracyPenalty))),
+			RecvPropInt(FIELD.OF(nameof(NumShotsFired))),
 #else
-
+			SendPropFloat(FIELD.OF(nameof(SoonestPrimaryAttack)), 0, PropFlags.NoScale),
+			SendPropFloat(FIELD.OF(nameof(LastAttackTime)), 0, PropFlags.NoScale),
+			SendPropFloat(FIELD.OF(nameof(AccuracyPenalty)), 0, PropFlags.NoScale),
+			SendPropInt(FIELD.OF(nameof(NumShotsFired))),
 #endif
 		]);
 #if CLIENT_DLL
@@ -22,5 +28,9 @@ public class WeaponPistol : BaseHL2MPCombatWeapon
 #else
 	public static readonly new ServerClass ServerClass = new ServerClass("WeaponPistol", DT_WeaponPistol).WithManualClassID(StaticClassIndices.CWeaponPistol);
 #endif
+	public TimeUnit_t SoonestPrimaryAttack;
+	public TimeUnit_t LastAttackTime;
+	public TimeUnit_t AccuracyPenalty;
+	public int NumShotsFired;
 }
 #endif

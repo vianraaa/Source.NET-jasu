@@ -1,4 +1,4 @@
-﻿#if CLIENT_DLL || GAME_DLL
+#if CLIENT_DLL || GAME_DLL
 using Source.Common;
 namespace Game.Shared.GarrysMod;
 using FIELD = Source.FIELD<WeaponCrossbow>;
@@ -12,9 +12,11 @@ public class WeaponCrossbow : BaseHL2MPCombatWeapon
 #endif
 		DT_WeaponCrossbow = new(DT_BaseHL2MPCombatWeapon, [
 #if CLIENT_DLL
-
+			RecvPropBool(FIELD.OF(nameof(InZoom))),
+			RecvPropBool(FIELD.OF(nameof(MustReload)))
 #else
-
+			SendPropBool(FIELD.OF(nameof(InZoom))),
+			SendPropBool(FIELD.OF(nameof(MustReload)))
 #endif
 		]);
 #if CLIENT_DLL
@@ -22,5 +24,7 @@ public class WeaponCrossbow : BaseHL2MPCombatWeapon
 #else
 	public static readonly new ServerClass ServerClass = new ServerClass("WeaponCrossbow", DT_WeaponCrossbow).WithManualClassID(StaticClassIndices.CWeaponCrossbow);
 #endif
+	public bool InZoom;
+	public bool MustReload;
 }
 #endif

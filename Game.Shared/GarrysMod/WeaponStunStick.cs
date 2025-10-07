@@ -12,9 +12,9 @@ public class WeaponStunStick : BaseHL2MPBludgeonWeapon
 #endif
 		DT_WeaponStunStick = new(DT_BaseHL2MPBludgeonWeapon, [
 #if CLIENT_DLL
-
+		RecvPropBool(FIELD.OF(nameof(Active)))
 #else
-
+		SendPropBool(FIELD.OF(nameof(Active)))
 #endif
 		]);
 #if CLIENT_DLL
@@ -22,5 +22,6 @@ public class WeaponStunStick : BaseHL2MPBludgeonWeapon
 #else
 	public static readonly new ServerClass ServerClass = new ServerClass("WeaponStunStick", DT_WeaponStunStick).WithManualClassID(StaticClassIndices.CWeaponStunStick);
 #endif
+	public bool Active;
 }
 #endif
