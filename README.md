@@ -22,7 +22,7 @@ This is an open source clone of the Source Engine, based on [RaphaelIT7's Source
 <img width="1600" height="900" alt="Source Launcher_h58b4odIBv" src="https://github.com/user-attachments/assets/fbd1a007-7fb6-4710-ab94-67656067eef5" />
 <img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/2c49feb5-ce02-4065-a20d-ebf723c6ef06" />
 
-It can currently connect to real Garry's Mod servers. Development is currently done by connecting to a local Garry's Mod SRCDS instance - if you wish to contribute, you can set one up relatively easily with [these instructions](https://wiki.facepunch.com/gmod/Downloading_a_Dedicated_Server). Note that most entities aren't implemented yet - your best luck is a vanilla, -noworkshop -noaddons SRCDS server on gm_flatgrass with sbox_weapons set to 0 (until we implement the datatables for HL2 weapons)
+It can currently connect to real Garry's Mod servers. Development is currently done by connecting to a local Garry's Mod SRCDS instance - if you wish to contribute, you can set one up relatively easily with [these instructions](https://wiki.facepunch.com/gmod/Downloading_a_Dedicated_Server). Note that most entities aren't implemented yet - your best luck is a vanilla, -noworkshop -noaddons SRCDS server on gm_flatgrass.
 
 ## Goals
 I originally started this project mostly to learn more about the Source Engine, but due to public interest I've made it open-sourced in the case that it helps others and could be further worked on by people smarter than I (especially in the graphics department). 
