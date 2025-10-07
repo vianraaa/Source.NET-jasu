@@ -1,4 +1,4 @@
-﻿using Source.Common.Filesystem;
+using Source.Common.Filesystem;
 using Source.Common.GUI;
 using Source.Common.MaterialSystem;
 
@@ -349,12 +349,13 @@ public unsafe class FontManager(IMaterialSystem materialSystem, IFileSystem file
 		// We now need to resolve fontName if it wasn't provided.
 		if (fontName == null) {
 			// TODO: This means we load the font twice... not ideal..
-			Span<byte> filePathAlloc = stackalloc byte[Encoding.ASCII.GetByteCount(fontFilepath)];
-			Encoding.ASCII.GetBytes(fontFilepath, filePathAlloc);
+			Span<byte> filePathAlloc = stackalloc byte[Encoding.UTF8.GetByteCount(fontFilepath) + 1];
+			int written = Encoding.UTF8.GetBytes(fontFilepath, filePathAlloc);
+			filePathAlloc[written] = 0;
 			FT_Error err;
 			FT_FaceRec_* face;
-			fixed (byte* filePathAllocPtr = filePathAlloc)
-				err = FT_New_Face(FreeTypeFont.Library, filePathAllocPtr, 0, &face);
+			fixed (byte* pathPtr = filePathAlloc)
+				err = FT_New_Face(FreeTypeFont.Library, pathPtr, 0, &face);
 
 			if (err != FT_Error.FT_Err_Ok) {
 				Assert(false);
