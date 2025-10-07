@@ -4,12 +4,15 @@ using CommunityToolkit.HighPerformance;
 using Source.Common;
 using Source.Common.Client;
 using Source.Common.Commands;
+using Source.Common.Formats.Keyvalues;
 using Source.Common.MaterialSystem;
 using Source.Common.Mathematics;
 using Source.Common.Utilities;
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
+
+using static Source.Engine.MatSysInterface;
 namespace Source.Engine;
 
 public struct ViewStack
@@ -43,6 +46,7 @@ public class Render(
 	float Framerate;
 	float ZNear;
 	float ZFar;
+	IMaterial? SkyboxOcclude;
 
 	public Vector3 CurrentViewOrigin = new(0, 0, 0);
 	public Vector3 CurrentViewForward = new(1, 0, 0);
@@ -255,6 +259,11 @@ public class Render(
 	private void Areaportal_LevelInit() { }
 
 
+	public void Init() {
+		KeyValues kvs = new("Occlude");
+		SkyboxOcclude = materials.CreateMaterial("__skybox_occlude", kvs);
+	}
+
 	internal void DrawSceneBegin() {
 
 	}
@@ -301,8 +310,22 @@ public class Render(
 	private void DrawSkybox(float zFar, int drawFlags = 0x3F) {
 		if (!r_drawskybox.GetBool())
 			return;
-		Vector3 normal;
+
 		MatRenderContextPtr renderContext = new(materials);
+
+		// Before drawing the skybox, draw any meshes in the skybox lists only to the depth texture.
+		// This deviates from Source rendering but is necessary since we aren't using the PVS to calculate
+		// visible surfaces at runtime, and we need other sky-rooms to not be visible
+
+		Span<int> skyboxMeshesIndices = MaterialSystem.SkyboxMeshesIndices.AsSpan();
+		Span<MeshList> skyboxMeshes = MaterialSystem.Meshes.AsSpan();
+		renderContext.Bind(SkyboxOcclude!); // If Init() ran, this isn't null
+		for (int i = 0; i < skyboxMeshesIndices.Length; i++) {
+			ref MeshList meshList = ref skyboxMeshes[skyboxMeshesIndices[i]];
+			meshList.Mesh.Draw();
+		}
+
+		Vector3 normal;
 		for (int i = 0; i < 6; i++, drawFlags >>= 1) {
 			// Don't draw this panel of the skybox if the flag isn't set:
 			if ((drawFlags & 1) == 0)

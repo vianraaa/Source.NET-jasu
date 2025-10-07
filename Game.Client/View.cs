@@ -1,4 +1,4 @@
-﻿using Game.Shared;
+using Game.Shared;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -43,7 +43,7 @@ public class SimpleWorldView : BaseWorldView
 		using MatRenderContextPtr renderContext = new(mainView.materials);
 
 		if((DrawFlags & DrawFlags.DrawEntities) != 0) {
-			DrawWorld(waterZAdjust);
+			//DrawWorld(waterZAdjust);
 		}
 	}
 }

@@ -239,6 +239,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	internal readonly List<MeshList> Meshes = [];
 
 	// These are pointers into Meshes
+	internal readonly List<int> SkyboxMeshesIndices = [];
 	internal readonly List<int> Skybox2DMeshesIndices = [];
 	internal readonly List<int> Skybox3DMeshesIndices = [];
 
@@ -268,6 +269,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		FrameCount = 1;
 		WorldStaticMeshDestroy();
 		Meshes.Clear();
+		SkyboxMeshesIndices.Clear();
 		Skybox2DMeshesIndices.Clear();
 		Skybox3DMeshesIndices.Clear();
 
@@ -312,8 +314,8 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			// store indices into Meshes into lists where needed (mostly for skybox rendering).
 			meshes[i].ToolTexture = TryGetToolTexture(meshes[i].Material.GetName());
 			switch (meshes[i].ToolTexture) {
-				case ToolTexture.Skybox2D: Skybox2DMeshesIndices.Add(i); break;
-				case ToolTexture.Skybox3D: Skybox3DMeshesIndices.Add(i); break;
+				case ToolTexture.Skybox2D: SkyboxMeshesIndices.Add(i); Skybox2DMeshesIndices.Add(i); break;
+				case ToolTexture.Skybox3D: SkyboxMeshesIndices.Add(i); Skybox3DMeshesIndices.Add(i); break;
 			}
 
 			MeshBuilder meshBuilder = new MeshBuilder();

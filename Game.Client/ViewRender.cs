@@ -177,7 +177,28 @@ public class SkyboxView : Rendering3dView
 	}
 
 	private void DrawInternal(ViewID skyBoxViewID, bool invokePreAndPostRender, ITexture? rtColor, ITexture? rtDepth) {
+		ref Sky3DParams sky3dParams = ref Sky3dParams.Get();
 
+		ViewSetup.ZNear = 2;
+		ViewSetup.ZFar = WorldSize.MAX_TRACE_LENGTH;
+		if (sky3dParams.Scale > 0)
+			ViewSetup.Origin *= 1f / sky3dParams.Scale;
+		ViewSetup.Origin += sky3dParams.Origin;
+
+		render.ViewSetupVisEx(false, new(ref sky3dParams.Origin), out _);
+		render.Push3DView(in ViewSetup, ClearFlags, rtColor, GetFrustrum(), rtDepth);
+
+		if (invokePreAndPostRender)
+			IGameSystem.PreRenderAllSystems();
+
+		DrawWorld(0);
+
+		if (invokePreAndPostRender) {
+			IGameSystem.PostRenderAllSystems();
+			// FinishCurrentView();
+		}
+
+		render.PopView(GetFrustrum());
 	}
 
 	private SafeFieldPointer<PlayerLocalData, Sky3DParams> PreRender3dSkyboxWorld(ref SkyboxVisibility skyboxVisible) {
