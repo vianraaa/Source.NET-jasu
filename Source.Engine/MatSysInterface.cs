@@ -255,19 +255,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			ref MaterialList matList = ref list.GetSurfaceBlock(_blockIndex);
 			for (int _index = 0; _index < matList.Count; ++_index) {
 				ref BSPMSurface2 surfID = ref matList.Surfaces[_index];
-				int vertCount = ModelLoader.MSurf_VertCount(ref surfID);
+				int vertCount = ModelLoader.MSurf_VertCount(ref surfID); 
 				vertexCount += vertCount;
 
-				// int numPolygons = vertCount - 2;
-				// indexCount += 3 * numPolygons;
-
-				if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
-					int numPolygons = vertCount - 2;
-					indexCount += 3 * numPolygons;
-				}
-				else {
-
-				}
+				int numPolygons = vertCount - 2;
+				indexCount += 3 * numPolygons;
 			}
 		}
 	}
@@ -337,8 +329,26 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 						for (int _index = 0; _index < matList.Count; ++_index) {
 							ref BSPMSurface2 surfID = ref matList.Surfaces[_index];
 							ModelLoader.MSurf_VertBufferIndex(ref surfID) = (ushort)vertBufferIndex;
-							BuildMSurfaceVertexArrays(host_state.WorldBrush!, ref surfID, IMaterialSystem.OVERBRIGHT, ref meshBuilder);
-							vertBufferIndex += ModelLoader.MSurf_VertCount(ref surfID);
+
+							if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
+								BuildMSurfaceVertexArrays(host_state.WorldBrush!, ref surfID, IMaterialSystem.OVERBRIGHT, ref meshBuilder);
+								vertBufferIndex += ModelLoader.MSurf_VertCount(ref surfID);
+							}
+							else {
+								int firstPrimId = ModelLoader.MSurf_FirstPrimID(ref surfID, host_state.WorldBrush);
+								ref BSPMPrimitive prim = ref host_state.WorldBrush!.Primitives![firstPrimId];
+								if (prim.VertCount != 0) {
+									for (int k = 0; k < ModelLoader.MSurf_NumPrims(ref surfID, host_state.WorldBrush); k++) {
+										prim = ref host_state.WorldBrush!.Primitives![firstPrimId + k];
+										Assert(prim.IndexCount != 0);
+										BuildMSurfacePrimVerts(prim.Type, host_state.WorldBrush!, ref prim, ref meshBuilder, ref surfID);
+										BuildMSurfacePrimIndices(prim.Type, host_state.WorldBrush!, ref prim, ref meshBuilder);
+									}
+								}
+								else {
+									BuildMSurfaceVertexArrays(host_state.WorldBrush!, ref surfID, IMaterialSystem.OVERBRIGHT, ref meshBuilder);
+								}
+							}
 						}
 					}
 				}
@@ -347,6 +357,51 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			meshBuilder.End();
 			Assert(vertBufferIndex == Meshes[i].VertCount);
 			meshBuilder.Dispose();
+		}
+	}
+
+	private void BuildMSurfacePrimVerts(BSPPrimType type, WorldBrushData brushData, ref BSPMPrimitive prim, ref MeshBuilder builder, ref BSPMSurface2 surfID) {
+		bool negate = false;
+		// if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) 
+		// negate = TangentSpaceSurfaceSetup(ref surfID, out _);
+
+		for (int i = 0; i < prim.VertCount; i++) {
+			ref BSPMPrimVert primVert = ref brushData.PrimVerts![prim.FirstVert + i];
+			builder.Position3fv(primVert.Position);
+			builder.Normal3fv(ModelLoader.MSurf_Plane(ref surfID).Normal);
+			builder.TexCoord2fv(0, primVert.TexCoord);
+			builder.TexCoord2fv(1, primVert.LightCoord);
+			if ((ModelLoader.MSurf_Flags(ref surfID) & SurfDraw.TangentSpace) != 0) {
+				// Vector3 tangentS, tangentT;
+				//TangentSpaceComputeBasis(out tangentS, out tangentT, MSurf_Plane(surfID).Normal, out _, false);
+				// builder.TangentS3fv(tangentS);
+				// builder.TangentT3fv(tangentT);
+			}
+			builder.AdvanceVertex();
+		}
+	}
+
+	private void BuildMSurfacePrimIndices(BSPPrimType type, WorldBrushData brushData, ref BSPMPrimitive prim, ref MeshBuilder builder) {
+		int firstVertex = prim.FirstIndex;
+		int vertCount = prim.VertCount;
+		switch (prim.Type) {
+			case BSPPrimType.TriList:
+				for (int i = 0, numPolygons = vertCount; i < numPolygons; ++i) {
+					builder.FastIndex((ushort)(firstVertex + (i * 3)));
+					builder.FastIndex((ushort)(firstVertex + (i * 3) + 1));
+					builder.FastIndex((ushort)(firstVertex + (i * 3) + 2));
+				}
+				break;
+			case BSPPrimType.TriStrip:
+				for (int i = 0, numPolygons = vertCount - 2; i < numPolygons; ++i) {
+					builder.FastIndex((ushort)firstVertex);
+					builder.FastIndex((ushort)(firstVertex + i + 1));
+					builder.FastIndex((ushort)(firstVertex + i + 2));
+				}
+				break;
+			default:
+				Assert(0);
+				return;
 		}
 	}
 
@@ -421,13 +476,11 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 			builder.AdvanceVertex();
 		}
 
-		if (!ModelLoader.SurfaceHasPrims(ref surfID)) {
-			int numPolygons = vertCount - 2;
-			for (int i = 0; i < numPolygons; ++i) {
-				builder.FastIndex((ushort)firstVertex);
-				builder.FastIndex((ushort)(firstVertex + i + 1));
-				builder.FastIndex((ushort)(firstVertex + i + 2));
-			}
+		int numPolygons = vertCount - 2;
+		for (int i = 0; i < numPolygons; ++i) {
+			builder.FastIndex((ushort)firstVertex);
+			builder.FastIndex((ushort)(firstVertex + i + 1));
+			builder.FastIndex((ushort)(firstVertex + i + 2));
 		}
 	}
 
