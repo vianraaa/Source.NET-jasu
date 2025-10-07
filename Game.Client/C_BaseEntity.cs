@@ -1,4 +1,4 @@
-﻿using Game.Shared;
+using Game.Shared;
 
 using Source;
 using Source.Common;
@@ -300,15 +300,15 @@ public partial class C_BaseEntity : IClientEntity
 	]);
 
 	private static void RecvProxy_OverrideMaterial(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning("RecvProxy_OverrideMaterial not implemented yet\n");
+		// Warning("RecvProxy_OverrideMaterial not implemented yet\n");
 	}
 
 	private static void RecvProxy_MoveCollide(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning("RecvProxy_MoveCollide not implemented yet\n");
+		// Warning("RecvProxy_MoveCollide not implemented yet\n");
 	}
 
 	private static void RecvProxy_MoveType(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning("RecvProxy_MoveType not implemented yet\n");
+		// Warning("RecvProxy_MoveType not implemented yet\n");
 	}
 
 	public static readonly ClientClass ClientClass = new ClientClass("BaseEntity", null, null, DT_BaseEntity)

@@ -1,4 +1,4 @@
-﻿#if CLIENT_DLL
+#if CLIENT_DLL
 using Game.Client;
 
 using Source;
@@ -55,15 +55,15 @@ public class CollisionProperty
 	}
 
 	private static void RecvProxy_OBBMinsPreScaled(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning($"RecvProxy_OBBMinsPreScaled not yet implemented\n");
+		//Warning($"RecvProxy_OBBMinsPreScaled not yet implemented\n");
 	}
 
 	private static void RecvProxy_OBBMaxPreScaled(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning($"RecvProxy_OBBMaxPreScaled not yet implemented\n");
+		//Warning($"RecvProxy_OBBMaxPreScaled not yet implemented\n");
 	}
 
 	private static void RecvProxy_IntDirtySurround(ref readonly RecvProxyData data, object instance, IFieldAccessor field) {
-		Warning($"RecvProxy_IntDirtySurround not yet implemented\n");
+		//Warning($"RecvProxy_IntDirtySurround not yet implemented\n");
 	}
 #else
 	private static void SendProxy_SolidFlags(SendProp prop, object instance, IFieldAccessor field, ref DVariant outData, int element, int objectID) {
