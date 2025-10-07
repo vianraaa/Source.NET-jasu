@@ -383,6 +383,9 @@ public class KeyValues : IEnumerable<KeyValues>
 	public bool LoadFromFile(string? filepath) {
 		if (filepath == null) return false;
 
+		if (!Path.IsPathFullyQualified(filepath))
+			filepath = Path.Combine(AppContext.BaseDirectory, filepath);
+
 		FileInfo info = new(filepath);
 		FileStream stream;
 		try { stream = info.OpenRead(); }
