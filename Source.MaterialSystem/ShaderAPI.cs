@@ -563,7 +563,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	readonly int[] LastBoundTextures = new int[(int)Sampler.MaxSamplers];
 	int lastActiveTexture = -1;
-	internal void BindTexture(Sampler sampler, int frame, ShaderAPITextureHandle_t textureHandle) {
+	public void BindTexture(Sampler sampler, int frame, ShaderAPITextureHandle_t textureHandle) {
 		CombobulateShadersIfChanged();
 		if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE)
 			return; // TODO: can we UNSET the sampler???
@@ -646,7 +646,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	public unsafe void CreateTextures(
-		ShaderAPITextureHandle_t[] textureHandles,
+		Span<ShaderAPITextureHandle_t> textureHandles,
 		int count,
 		int width,
 		int height,
@@ -696,11 +696,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return handle;
 	}
 
-	internal bool IsTexture(ShaderAPITextureHandle_t handle) {
+	public bool IsTexture(ShaderAPITextureHandle_t handle) {
 		return true; // TODO
 	}
 
-	internal void DeleteTexture(ShaderAPITextureHandle_t handle) {
+	public void DeleteTexture(ShaderAPITextureHandle_t handle) {
 		// TODO
 	}
 
@@ -770,7 +770,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	ulong lastBoardUploadHash;
-	internal bool SetBoardState(in GraphicsBoardState state) {
+	public bool SetBoardState(in GraphicsBoardState state) {
 		ulong currHash = state.Hash();
 		if (currHash != lastBoardUploadHash) {
 			glToggle(GL_BLEND, state.Blending);
@@ -837,6 +837,6 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return MeshMgr.CreateStaticMesh(format, textureGroup, material);
 	}
 
-	internal int GetMaxVerticesToRender(IMaterial material) => MeshMgr.GetMaxVerticesToRender(material);
-	internal int GetMaxIndicesToRender(IMaterial material) => MeshMgr.GetMaxIndicesToRender(material);
+	public int GetMaxVerticesToRender(IMaterial material) => MeshMgr.GetMaxVerticesToRender(material);
+	public int GetMaxIndicesToRender(IMaterial material) => MeshMgr.GetMaxIndicesToRender(material);
 }

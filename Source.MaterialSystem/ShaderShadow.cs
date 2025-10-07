@@ -4,28 +4,6 @@ using Source.Common.ShaderAPI;
 namespace Source.MaterialSystem;
 
 /// <summary>
-/// A basic representation of the OpenGL state machine
-/// </summary>
-public struct GraphicsBoardState
-{
-	public bool Blending;
-	public ShaderBlendFactor SourceBlend;
-	public ShaderBlendFactor DestinationBlend;
-	public ShaderBlendOp BlendOperation;
-
-	public bool AlphaSeparateBlend;
-	public ShaderBlendFactor AlphaSourceBlend;
-	public ShaderBlendFactor AlphaDestinationBlend;
-	public ShaderBlendOp AlphaBlendOperation;
-
-	public bool DepthTest;
-	public bool ColorWrite;
-	public bool AlphaWrite;
-	public bool DepthWrite;
-	internal ShaderDepthFunc DepthFunc;
-}
-
-/// <summary>
 /// Shared uniforms between both types of shaders.
 /// </summary>
 public struct SourceSharedShadowState
@@ -57,8 +35,8 @@ public unsafe struct SourcePixelSharedShadowState
 /// </summary>
 public class ShadowState : IShaderShadow
 {
-	internal readonly ShaderSystem Shaders;
-	internal readonly ShaderAPIGl46 ShaderAPI;
+	internal readonly IShaderSystemInternal Shaders;
+	internal readonly IShaderAPI ShaderAPI;
 
 	public uint BASE_UBO;
 	public uint VERTEX_UBO;
@@ -89,9 +67,9 @@ public class ShadowState : IShaderShadow
 	}
 
 	string? name;
-	public unsafe ShadowState(ShaderAPIGl46 shaderAPI, ReadOnlySpan<char> name = default) {
+	public unsafe ShadowState(IShaderAPI shaderAPI, IShaderSystemInternal shaderSystem, ReadOnlySpan<char> name = default) {
 		ShaderAPI = shaderAPI;
-		Shaders = (ShaderSystem)shaderAPI.ShaderManager;
+		Shaders = shaderSystem;
 		this.name = name == null ? null : new(name);
 
 		if (shaderAPI.IsActive()) {

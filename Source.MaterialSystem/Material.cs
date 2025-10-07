@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
@@ -74,7 +74,7 @@ public class Material : IMaterialInternal
 			flags |= MaterialFlags.IsManuallyCreated;
 		}
 
-		ShaderRenderState = new(materials.ShaderAPI, materialName);
+		ShaderRenderState = new(materials.ShaderAPI, materials.ShaderSystem, materialName);
 	}
 
 	public int MappingWidth;

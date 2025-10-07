@@ -12,10 +12,33 @@ public enum CreateTextureFlags
 	Dynamic = 0x0010,
 	AutoMipmap = 0x0020,
 	VertexTexture = 0x0040,
-	SysMem = 0x0200, 
+	SysMem = 0x0200,
 	UnfilterableOK = 0x1000,
-	SRGB = 0x4000, 
+	SRGB = 0x4000,
 }
+
+/// <summary>
+/// A basic representation of the graphics state machine
+/// </summary>
+public struct GraphicsBoardState
+{
+	public bool Blending;
+	public ShaderBlendFactor SourceBlend;
+	public ShaderBlendFactor DestinationBlend;
+	public ShaderBlendOp BlendOperation;
+
+	public bool AlphaSeparateBlend;
+	public ShaderBlendFactor AlphaSourceBlend;
+	public ShaderBlendFactor AlphaDestinationBlend;
+	public ShaderBlendOp AlphaBlendOperation;
+
+	public bool DepthTest;
+	public bool ColorWrite;
+	public bool AlphaWrite;
+	public bool DepthWrite;
+	public ShaderDepthFunc DepthFunc;
+}
+
 public interface IShaderAPI : IShaderDynamicAPI
 {
 	void SetViewports(ReadOnlySpan<ShaderViewport> viewports);
@@ -44,4 +67,27 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void ShadeMode(ShadeMode flat);
 	void RenderPass();
 	bool SetMode(IWindow window, in ShaderDeviceInfo info);
+	int GetMaxVerticesToRender(IMaterial material);
+	int GetMaxIndicesToRender(IMaterial material);
+	bool IsActive();
+	bool SetBoardState(in GraphicsBoardState state);
+	bool CanDownloadTextures();
+	void BindTexture(Sampler sampler, int frame, int v);
+	void TexImageFromVTF(IVTFTexture? vtfTexture, int i);
+	void ModifyTexture(int v);
+	void CreateTextures(Span<ShaderAPITextureHandle_t> textureHandles,
+		int count,
+		int width,
+		int height,
+		int depth,
+		ImageFormat imageFormat,
+		ushort mipCount,
+		int copies,
+		CreateTextureFlags creationFlags,
+		ReadOnlySpan<char> debugName,
+		ReadOnlySpan<char> textureGroup);
+	ShaderAPITextureHandle_t CreateDepthTexture(ImageFormat imageFormat, ushort width, ushort height, Span<char> debugName, bool texture);
+	bool IsTexture(ShaderAPITextureHandle_t handle);
+	public void DeleteTexture(ShaderAPITextureHandle_t handle);
+	ImageFormat GetNearestSupportedFormat(ImageFormat fmt, bool filteringRequired = true);
 }
