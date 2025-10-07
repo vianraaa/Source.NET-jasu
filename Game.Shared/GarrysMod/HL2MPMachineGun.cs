@@ -1,7 +1,7 @@
 ﻿#if CLIENT_DLL || GAME_DLL
 using Source.Common;
 namespace Game.Shared.GarrysMod;
-using FIELD = Source.FIELD<BaseHL2MPBludgeonWeapon>;
+using FIELD = Source.FIELD<HL2MPMachineGun>;
 public class HL2MPMachineGun : WeaponHL2MPBase
 {
 	public static readonly
