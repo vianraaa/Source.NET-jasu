@@ -1,7 +1,11 @@
 ﻿#if CLIENT_DLL
 global using BaseCombatWeapon = Game.Client.C_BaseCombatWeapon;
+global using WeaponHL2MPBase = Game.Client.C_WeaponHL2MPBase;
+global using BaseHL2MPCombatWeapon = Game.Client.C_BaseHL2MPCombatWeapon;
 #elif GAME_DLL
 global using BaseCombatWeapon = Game.Server.BaseCombatWeapon;
+global using WeaponHL2MPBase = Game.Server.WeaponHL2MPBase;
+global using BaseHL2MPCombatWeapon = Game.Server.BaseHL2MPCombatWeapon;
 #endif
 
 using Source.Common;
