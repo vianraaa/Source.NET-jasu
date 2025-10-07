@@ -350,7 +350,7 @@ if ($steamInstallPath) {
 					$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 					
 					# steam.inf used for networking compat
-					Link-SDN-Asset -SDN_ABS $sdnAbsPath -GMOD_ABS $gmodAbsPath -SDN_LOCAL "Game.Assets\hl2\steam.inf" -GMOD_LOCAL "garrysmod\steam.inf"
+					Link-SDN-Asset -SDN_ABS $sdnAbsPath -GMOD_ABS $gmodAbsPath -SDN_LOCAL "hl2\steam.inf" -GMOD_LOCAL "garrysmod\steam.inf"
 					
 					# Garry's Mod content
 					Link-SDN-Asset -SDN_ABS $sdnAbsPath -GMOD_ABS $gmodAbsPath -SDN_LOCAL "hl2\garrysmod_dir.vpk" -GMOD_LOCAL "garrysmod\garrysmod_dir.vpk"
