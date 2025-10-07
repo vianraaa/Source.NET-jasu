@@ -73,7 +73,7 @@ This is a list of all of the important SendClasses in Garry's Mod, and which one
 - [ ] Class #70: CFuncTrackTrain
 - [x] Class #71: CGameRulesProxy
 - [x] Class #72: CGMOD_Player
-- [ ] Class #73: CGMODGameRulesProxy
+- [x] Class #73: CGMODGameRulesProxy
 - [x] Class #74: CHL2_Player
 - [x] Class #75: CHL2MP_Player
 - [ ] Class #76: CHL2MPGameRulesProxy
