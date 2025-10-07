@@ -316,7 +316,7 @@ public class Host(
 	public int cursorPosition;
 
 	private void _RunFrame_TextMode() {
-		while (Console.KeyAvailable) {
+		while (!Console.IsInputRedirected && Console.KeyAvailable) {
 			var key = Console.ReadKey(true);
 			switch (key.Key) {
 				case ConsoleKey.UpArrow:
