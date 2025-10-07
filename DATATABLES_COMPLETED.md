@@ -78,7 +78,7 @@ This is a list of all of the important SendClasses in Garry's Mod, and which one
 - [x] Class #75: CHL2MP_Player
 - [ ] Class #76: CHL2MPGameRulesProxy
 - [x] Class #77: CHL2MPMachineGun
-- [ ] Class #78: CHL2MPRagdoll
+- [x] Class #78: CHL2MPRagdoll
 - [ ] Class #79: CHLMachineGun
 - [ ] Class #80: CHLSelectFireMachineGun
 - [ ] Class #81: CInfoLadderDismount

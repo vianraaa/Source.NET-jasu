@@ -10,6 +10,7 @@ using System.Numerics;
 
 namespace Game.Client.HL2MP;
 using FIELD = FIELD<C_HL2MP_Player>;
+using FIELD_RD = FIELD<C_HL2MPRagdoll>;
 
 public partial class C_HL2MP_Player : C_BaseHLPlayer
 {
@@ -68,4 +69,21 @@ public partial class C_HL2MP_Player : C_BaseHLPlayer
 		}
 		base.CalcView(ref eyeOrigin, ref eyeAngles, ref zNear, ref zFar, ref fov);
 	}
+}
+
+public class C_HL2MPRagdoll : C_BaseAnimatingOverlay
+{
+	public static readonly RecvTable DT_HL2MPRagdoll = new([
+		RecvPropVector(FIELD_RD.OF(nameof(RagdollOrigin))),
+		RecvPropEHandle(FIELD_RD.OF(nameof(Player))),
+		RecvPropInt(FIELD_RD.OF(nameof(ModelIndex))),
+		RecvPropInt(FIELD_RD.OF(nameof(ForceBone))),
+		RecvPropVector(FIELD_RD.OF(nameof(Force))),
+		RecvPropVector(FIELD_RD.OF(nameof(RagdollVelocity)))
+	]);
+	public static readonly new ClientClass ClientClass = new ClientClass("HL2MPRagdoll", null, null, DT_HL2MPRagdoll).WithManualClassID(StaticClassIndices.CHL2MPRagdoll);
+
+	public Vector3 RagdollOrigin;
+	public readonly EHANDLE Player = new();
+	public Vector3 RagdollVelocity;
 }

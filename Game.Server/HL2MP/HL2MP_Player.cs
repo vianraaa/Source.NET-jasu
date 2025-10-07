@@ -1,13 +1,16 @@
-﻿using Game.Server.HL2;
+using Game.Server.HL2;
 using Game.Shared;
 
 using Source;
 using Source.Common;
 using Source.Common.Mathematics;
 
+using System.Numerics;
+
 namespace Game.Server.HL2MP;
 
 using FIELD = FIELD<HL2MP_Player>;
+using FIELD_RD = FIELD<HL2MPRagdoll>;
 
 public class HL2MP_Player : HL2_Player
 {
@@ -59,4 +62,20 @@ public class HL2MP_Player : HL2_Player
 	public int SpawnInterpCounter;
 	public int PlayerSoundType;
 	public bool IsWalking;
+}
+
+public class HL2MPRagdoll : BaseAnimatingOverlay {
+	public static readonly SendTable DT_HL2MPRagdoll = new([
+		SendPropVector(FIELD_RD.OF(nameof(RagdollOrigin)), 0, PropFlags.Coord),
+		SendPropEHandle(FIELD_RD.OF(nameof(Player))),
+		SendPropInt(FIELD_RD.OF(nameof(ModelIndex)), 14),
+		SendPropInt(FIELD_RD.OF(nameof(ForceBone)), 8),
+		SendPropVector(FIELD_RD.OF(nameof(Force)), 0, PropFlags.NoScale),
+		SendPropVector(FIELD_RD.OF(nameof(RagdollVelocity)), 0, PropFlags.NoScale)
+	]);
+	public static readonly new ServerClass ServerClass = new ServerClass("HL2MPRagdoll", DT_HL2MPRagdoll).WithManualClassID(StaticClassIndices.CHL2MPRagdoll);
+
+	public Vector3 RagdollOrigin;
+	public readonly EHANDLE Player = new();
+	public Vector3 RagdollVelocity;
 }
