@@ -681,7 +681,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	public void Map_LoadDisplacements(Model model) {
-		MapLoadHelper.Init(model, LoadName);
+		MapLoadHelper.Init(model, ActiveMapName);
 		DispInfo_LoadDisplacements(model);
 		MapLoadHelper.Shutdown();
 	}
@@ -697,9 +697,10 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private object? DispInfo_CreateArray(nint numDisplacements) {
 		DispArray ret = new DispArray(numDisplacements);
 		ret.CurTag = 1;
-		for (nint i = 0; i < numDisplacements; i++) 
+		for (nint i = 0; i < numDisplacements; i++) {
+			ret.DispInfos[i] = new();
 			ret.DispInfos[i].DispArray = ret;
-		
+		}
 		return ret;
 	}
 }

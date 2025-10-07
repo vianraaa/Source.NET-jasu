@@ -30,8 +30,7 @@ public class Render(
 	IMaterialSystem materials,
 	Host Host,
 	MatSysInterface MaterialSystem,
-	ClientGlobalVariables gpGlobals,
-	IModelLoader imodelLoader
+	ClientGlobalVariables gpGlobals
 	)
 {
 	int framecount = 1;
@@ -40,7 +39,8 @@ public class Render(
 	Matrix4x4 MatrixProjection;
 	Matrix4x4 MatrixWorldToScreen;
 
-	ModelLoader modelLoader = (ModelLoader)imodelLoader;
+	ModelLoader? _modelLoader;
+	ModelLoader modelLoader => _modelLoader ??= (ModelLoader)Singleton<IModelLoader>();
 
 	IViewRender? viewRender;
 	IViewRender engineRenderer => viewRender ??= Singleton<IViewRender>();

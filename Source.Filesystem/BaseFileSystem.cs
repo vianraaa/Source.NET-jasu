@@ -1,4 +1,4 @@
-﻿// TODO: Logging calls when things go wrong, ie. try/catches
+// TODO: Logging calls when things go wrong, ie. try/catches
 
 
 using CommunityToolkit.HighPerformance;
@@ -188,6 +188,7 @@ public class BaseFileSystem : IFileSystem
 		T? loseDefault,
 		[NotNullWhen(true)] out SearchPath? winner
 	) {
+		filename = filename.SliceNullTerminatedString();
 		Span<char> filenameNormalizedBuffer = stackalloc char[MAX_PATH];
 		ReadOnlySpan<char> filenameNormalized = Normalize(filename, filenameNormalizedBuffer);
 		ulong hashID = pathID.Hash();
