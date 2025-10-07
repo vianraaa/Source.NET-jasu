@@ -772,10 +772,6 @@ public class ClientState : BaseClientState
 		}
 	}
 
-	internal PackedEntity? GetEntityBaseline(int baseline, int newEntity) {
-		throw new NotImplementedException();
-	}
-
 	public override bool ProcessServerInfo(svc_ServerInfo msg)
 	{
 		// Reset client state

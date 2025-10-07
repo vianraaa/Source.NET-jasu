@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -248,6 +248,10 @@ public abstract class BaseClientState(
 
 		return false;
 	}
+
+
+	internal PackedEntity? GetEntityBaseline(int baseline, int newEntity) => EntityBaselines[baseline][newEntity];
+
 
 	public virtual void ConnectionStart(NetChannel channel) {
 		channel.RegisterMessage<NET_Tick>();
