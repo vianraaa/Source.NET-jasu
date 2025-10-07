@@ -188,6 +188,34 @@ public unsafe class SDL3_System(ICommandLine commandLine) : ISystem
 		return null;
 	}
 #pragma warning restore CA1416 // Validate platform compatibility
+#elif LINUX
+public ReadOnlySpan<char> GetSystemFontPath(ReadOnlySpan<char> fontName) {
+		try {
+			var processStartInfo = new System.Diagnostics.ProcessStartInfo {
+				FileName = "fc-match",
+				RedirectStandardOutput = true,
+				UseShellExecute = false,
+				CreateNoWindow = true
+			};
+
+			// Use ArgumentList to escape fontName
+			processStartInfo.ArgumentList.Add(new string(fontName));
+			processStartInfo.ArgumentList.Add("--format=%{{file}}");
+
+			using var process = System.Diagnostics.Process.Start(processStartInfo);
+			if (process != null) {
+				string output = process.StandardOutput.ReadToEnd();
+				process.WaitForExit();
+
+				if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output)) {
+					return output.Trim();
+				}
+			}
+		} catch {
+		}
+
+		return null;
+	}
 #else
 #error Please implement System.GetSystemFontPath for this platform
 #endif
