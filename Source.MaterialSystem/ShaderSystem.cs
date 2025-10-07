@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
+using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
 
 using System.Diagnostics.CodeAnalysis;
@@ -28,7 +29,7 @@ public class ShaderSystem : IShaderSystemInternal
 	List<IShaderDLL> ShaderDLLs = [];
 	ShadowState? RenderState;
 	internal MaterialSystem MaterialSystem;
-	internal ShaderAPIGl46 ShaderAPI;
+	internal IShaderAPI ShaderAPI;
 	internal MaterialSystem_Config Config;
 
 	public void BindTexture(Sampler sampler, ITexture texture, int frame) {

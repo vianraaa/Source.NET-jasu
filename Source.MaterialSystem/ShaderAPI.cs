@@ -181,7 +181,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return lastShader;
 	}
 
-	internal void RenderPass() {
+	public void RenderPass() {
 		if (IsDeactivated())
 			return;
 
@@ -228,7 +228,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		return DeviceState != DeviceState.OK;
 	}
 
-	internal void InvalidateDelayedShaderConstraints() {
+	public void InvalidateDelayedShaderConstraints() {
 		// TODO FIXME
 	}
 
@@ -319,11 +319,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		}
 	}
 
-	internal void SetSkinningMatrices() {
+	public void SetSkinningMatrices() {
 		// TODO
 	}
 
-	internal void ShadeMode(ShadeMode shadeMode) {
+	public void ShadeMode(ShadeMode shadeMode) {
 		throw new NotImplementedException();
 	}
 
@@ -374,6 +374,14 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		throw new NotImplementedException();
 	}
 
+	public void PreInit(IShaderUtil shaderUtil, IServiceProvider services) {
+		MeshMgr = services.GetRequiredService<MeshMgr>();
+		ShaderManager = services.GetRequiredService<IShaderSystem>();
+
+		this.services = services;
+		ShaderUtil = shaderUtil;
+	}
+
 	public ImageFormat GetBackBufferFormat() {
 		// MaterialSystem is a prison of an architecture and I don't know how to reliably pass this information thru at the moment.
 		// If other formats are used this will need to be changed. For now this will work fine.
@@ -409,7 +417,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 	}
 
-	internal bool SetMode(IWindow window, in ShaderDeviceInfo info) {
+	public bool SetMode(IWindow window, in ShaderDeviceInfo info) {
 		ShaderDeviceInfo actualInfo = info;
 		if (!InitDevice(window, in actualInfo)) {
 			return false;

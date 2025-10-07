@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common;
 using Source.Common.Bitmap;
@@ -42,7 +42,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public readonly TextureManager TextureSystem;
 	public readonly ShaderSystem ShaderSystem;
 	public IShaderDevice ShaderDevice;
-	public ShaderAPIGl46 ShaderAPI;
+	public IShaderAPI ShaderAPI;
 	public readonly MeshMgr MeshMgr;
 	public readonly HardwareConfig HardwareConfig;
 	public readonly MaterialSystem_Config Config;
@@ -52,10 +52,10 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		this.services = services;
 
 		FileSystem = services.GetRequiredService<IFileSystem>();
-		ShaderAPI = (services.GetRequiredService<IShaderAPI>() as ShaderAPIGl46)!;
+		ShaderAPI = services.GetRequiredService<IShaderAPI>()!;
 		ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
-		MeshMgr = (services.GetRequiredService<MeshMgr>() as MeshMgr)!; // todo: interface
+		MeshMgr = services.GetRequiredService<MeshMgr>(); // todo: interface
 		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
 		ShaderSystem = (services.GetRequiredService<IShaderSystem>() as ShaderSystem)!;
 		Config = services.GetRequiredService<MaterialSystem_Config>()!;
@@ -63,15 +63,9 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		// Link up
 		MeshMgr.MaterialSystem = this;
 		MeshMgr.ShaderAPI = ShaderAPI;
-
-		ShaderAPI.MeshMgr = MeshMgr;
-		ShaderAPI.ShaderManager = ShaderSystem;
-
-		ShaderAPI.services = services;
+		ShaderAPI.PreInit(this, services);
 
 		TextureSystem.MaterialSystem = this;
-
-		ShaderAPI.ShaderUtil = this;
 
 		ShaderSystem.Config = Config;
 		ShaderSystem.MaterialSystem = this;

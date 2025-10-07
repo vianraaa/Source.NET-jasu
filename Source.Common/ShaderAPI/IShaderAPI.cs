@@ -1,4 +1,5 @@
-﻿using Source.Common.Bitmap;
+using Source.Common.Bitmap;
+using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 
 namespace Source.Common.ShaderAPI;
@@ -20,6 +21,7 @@ public interface IShaderAPI : IShaderDynamicAPI
 	void SetViewports(ReadOnlySpan<ShaderViewport> viewports);
 	void GetViewports(Span<ShaderViewport> viewports);
 
+	void PreInit(IShaderUtil shaderUtil, IServiceProvider services);
 	void DrawMesh(IMesh mesh);
 	void Bind(IMaterial? material);
 	void FlushBufferedPrimitives();
@@ -37,4 +39,9 @@ public interface IShaderAPI : IShaderDynamicAPI
 	bool DoRenderTargetsNeedSeparateDepthBuffer();
 	void EnableLinearColorSpaceFrameBuffer(bool v);
 	void SetRenderTargetEx(int rt, ShaderAPITextureHandle_t colorTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.Backbuffer, ShaderAPITextureHandle_t depthTextureHandle = (ShaderAPITextureHandle_t)ShaderRenderTarget.Depthbuffer);
+	void InvalidateDelayedShaderConstraints();
+	void SetSkinningMatrices();
+	void ShadeMode(ShadeMode flat);
+	void RenderPass();
+	bool SetMode(IWindow window, in ShaderDeviceInfo info);
 }
