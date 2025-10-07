@@ -7,7 +7,7 @@ This is a list of all of the important SendClasses in Garry's Mod, and which one
 - [x] Class #4: CBaseAnimatingOverlay
 - [x] Class #5: CBaseCombatCharacter
 - [x] Class #6: CBaseCombatWeapon
-- [ ] Class #7: CBaseDoor
+- [x] Class #7: CBaseDoor
 - [x] Class #8: CBaseEntity
 - [x] Class #9: CBaseFlex
 - [ ] Class #10: CBaseGrenade
@@ -23,7 +23,7 @@ This is a list of all of the important SendClasses in Garry's Mod, and which one
 - [x] Class #20: CBasePlayer
 - [ ] Class #21: CBasePropDoor
 - [ ] Class #22: CBaseTempEntity
-- [ ] Class #23: CBaseToggle
+- [x] Class #23: CBaseToggle
 - [ ] Class #24: CBaseTrigger
 - [x] Class #25: CBaseViewModel
 - [ ] Class #26: CBeam
