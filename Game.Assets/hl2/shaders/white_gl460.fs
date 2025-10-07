@@ -1,6 +1,5 @@
 #version 460
 
-in vec2 vs_TexCoord;
 in vec4 vs_Color;
 
 layout(std140, binding = 3) uniform source_pixel_sharedUBO {
