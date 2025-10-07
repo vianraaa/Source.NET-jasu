@@ -1,5 +1,6 @@
 #if CLIENT_DLL || GAME_DLL
 using Source.Common;
+using Source.Common.Mathematics;
 
 using System.Numerics;
 namespace Game.Shared.GarrysMod;
@@ -22,15 +23,17 @@ public class WeaponPhysCannon : BaseHL2MPCombatWeapon
 			RecvPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 2)),
 			RecvPropInt(FIELD.OF(nameof(EffectState))),
 			RecvPropBool(FIELD.OF(nameof(Open))),
+			RecvPropBool(FIELD.OF(nameof(PhyscannonState))),
 #else
 			SendPropBool(FIELD.OF(nameof(Active))),
 			SendPropEHandle(FIELD.OF(nameof(AttachedObject))),
-			SendPropVector(FIELD.OF(nameof(AttachedPositionObjectSpace)), -1, PropFlags.Coord),
-			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 0), 11),
-			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 1), 11),
-			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 2), 11),
+			SendPropVector(FIELD.OF(nameof(AttachedPositionObjectSpace)), 0, PropFlags.Coord),
+			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 0), 11, PropFlags.RoundDown),
+			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 1), 11, PropFlags.RoundDown),
+			SendPropFloat(FIELD.OF_VECTORELEM(nameof(AttachedAnglesPlayerSpace), 2), 11, PropFlags.RoundDown),
 			SendPropInt(FIELD.OF(nameof(EffectState))),
 			SendPropBool(FIELD.OF(nameof(Open))),
+			SendPropBool(FIELD.OF(nameof(PhyscannonState))),
 #endif
 		]);
 #if CLIENT_DLL
@@ -41,7 +44,7 @@ public class WeaponPhysCannon : BaseHL2MPCombatWeapon
 	public bool Active;
 	public readonly EHANDLE AttachedObject = new();
 	public Vector3 AttachedPositionObjectSpace;
-	public Vector3 AttachedAnglesPlayerSpace;
+	public QAngle AttachedAnglesPlayerSpace;
 	public int EffectState;
 	public bool Open;
 	public bool PhyscannonState;
