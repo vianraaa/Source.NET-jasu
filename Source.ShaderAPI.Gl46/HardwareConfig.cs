@@ -1,6 +1,6 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 
-namespace Source.MaterialSystem;
+namespace Source.ShaderAPI.Gl46;
 public class HardwareConfig : IMaterialSystemHardwareConfig
 {
 	public bool ActuallySupportsPixelShaders_2_b() {

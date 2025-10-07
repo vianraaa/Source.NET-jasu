@@ -5,9 +5,11 @@ using Source.Common.Bitmap;
 using Source.Common.Commands;
 using Source.Common.Filesystem;
 using Source.Common.Formats.Keyvalues;
+using Source.Common.GUI;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
+using Source.MaterialSystem.Surface;
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -30,8 +32,16 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 	public IShaderDevice ShaderDevice;
 	public IShaderAPI ShaderAPI;
 	public readonly IMeshMgr MeshMgr;
-	public readonly HardwareConfig HardwareConfig;
+	public readonly IMaterialSystemHardwareConfig HardwareConfig;
 	public readonly MaterialSystem_Config Config;
+
+	public static void DLLInit(IServiceCollection services) {
+		services.AddSingleton<MatSystemSurface>();
+		services.AddSingleton<IMatSystemSurface>(x => x.GetRequiredService<MatSystemSurface>());
+		services.AddSingleton<ISurface>(x => x.GetRequiredService<MatSystemSurface>());
+		services.AddSingleton<ITextureManager, TextureManager>();
+		services.AddSingleton<MaterialSystem_Config>();
+	}
 
 	public MaterialSystem(IServiceProvider services) {
 		MaterialDict = new(this);
@@ -42,7 +52,7 @@ public class MaterialSystem : IMaterialSystem, IShaderUtil
 		ShaderDevice = services.GetRequiredService<IShaderDevice>();
 		TextureSystem = (services.GetRequiredService<ITextureManager>() as TextureManager)!;
 		MeshMgr = services.GetRequiredService<IMeshMgr>(); // todo: interface
-		HardwareConfig = (services.GetRequiredService<IMaterialSystemHardwareConfig>() as HardwareConfig)!; // todo: interface
+		HardwareConfig = services.GetRequiredService<IMaterialSystemHardwareConfig>(); // todo: interface
 		ShaderSystem = services.GetRequiredService<IShaderSystem>();
 		Config = services.GetRequiredService<MaterialSystem_Config>()!;
 

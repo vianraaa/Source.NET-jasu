@@ -10,12 +10,11 @@ using Source.Common.Bitmap;
 using Source.Common.Launcher;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
-using Source.MaterialSystem.Meshes;
 
 using System.Numerics;
 using System.Text;
 
-namespace Source.MaterialSystem;
+namespace Source.ShaderAPI.Gl46;
 
 public enum UniformBufferBindingLocation
 {
@@ -46,6 +45,18 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	public MeshMgr MeshMgr;
 	public IShaderSystem ShaderManager;
 
+
+	public static void DLLInit(IServiceCollection services) {
+		services.AddSingleton<ShaderAPIGl46>();
+		services.AddSingleton<IShaderAPI>(x => x.GetRequiredService<ShaderAPIGl46>());
+		services.AddSingleton<IShaderDevice>(x => x.GetRequiredService<ShaderAPIGl46>());
+		services.AddSingleton<IMeshMgr, MeshMgr>();
+		services.AddSingleton<IMaterialSystemHardwareConfig, HardwareConfig>();
+		services.AddSingleton<IShaderSystem, ShaderSystem>();
+		services.AddSingleton<MaterialSystem_Config>();
+		services.AddSingleton<MeshMgr>();
+	}
+
 	public GraphicsDriver GetDriver() => Driver;
 	private bool ready;
 
@@ -56,6 +67,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 
 		CreateMatrixStacks();
 
+		MeshMgr.MaterialSystem = Singleton<IMaterialSystem>();
+		MeshMgr.ShaderAPI = this;
 		MeshMgr.Init();
 		Device!.SetSwapInterval(0);
 
@@ -77,11 +90,11 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		uint flags = 0;
 
 		if (clearColor)
-			flags |= Gl46.GL_COLOR_BUFFER_BIT;
+			flags |= GL_COLOR_BUFFER_BIT;
 		if (clearDepth)
-			flags |= Gl46.GL_DEPTH_BUFFER_BIT;
+			flags |= GL_DEPTH_BUFFER_BIT;
 		if (clearStencil)
-			flags |= Gl46.GL_STENCIL_BUFFER_BIT;
+			flags |= GL_STENCIL_BUFFER_BIT;
 
 		if (clearDepth)
 			glDepthMask(true);
@@ -91,8 +104,8 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		glClear(flags);
 	}
 
-	public void ClearColor3ub(byte r, byte g, byte b) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, 1);
-	public void ClearColor4ub(byte r, byte g, byte b, byte a) => Gl46.glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
+	public void ClearColor3ub(byte r, byte g, byte b) => glClearColor(r / 255f, g / 255f, b / 255f, 1);
+	public void ClearColor4ub(byte r, byte g, byte b, byte a) => glClearColor(r / 255f, g / 255f, b / 255f, a / 255f);
 
 	VertexShaderHandle activeVertexShader = VertexShaderHandle.INVALID;
 	PixelShaderHandle activePixelShader = PixelShaderHandle.INVALID;
@@ -453,7 +466,7 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 	}
 
 	internal unsafe void GL_LoadExtensions(delegate* unmanaged[Cdecl]<byte*, void*> loadExts) {
-		Gl46.Import((name) => {
+		Import((name) => {
 			byte[] data = Encoding.UTF8.GetBytes(name);
 			fixed (byte* ptr = data)
 				return (nint)loadExts(ptr);

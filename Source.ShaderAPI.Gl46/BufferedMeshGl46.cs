@@ -1,6 +1,6 @@
 using Source.Common.MaterialSystem;
 
-namespace Source.MaterialSystem.Meshes;
+namespace Source.ShaderAPI.Gl46;
 
 public unsafe class BufferedMeshGl46 : MeshGl46
 {

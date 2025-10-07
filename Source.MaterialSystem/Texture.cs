@@ -1,4 +1,4 @@
-﻿// TODO: Remove unused flags that aren't applicable in our use cases.
+// TODO: Remove unused flags that aren't applicable in our use cases.
 // (although this goal applies to the entire project, frankly)
 
 using Source.Bitmap;

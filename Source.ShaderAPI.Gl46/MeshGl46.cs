@@ -3,7 +3,7 @@ using Source.Common.ShaderAPI;
 
 using System.Runtime.InteropServices;
 
-namespace Source.MaterialSystem.Meshes;
+namespace Source.ShaderAPI.Gl46;
 
 public struct PrimList
 {

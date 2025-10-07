@@ -1,7 +1,7 @@
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
-namespace Source.MaterialSystem;
+namespace Source.ShaderAPI.Gl46;
 
 /// <summary>
 /// Shared uniforms between both types of shaders.

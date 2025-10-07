@@ -1,8 +1,7 @@
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
-using Source.MaterialSystem.Meshes;
 
-namespace Source.MaterialSystem;
+namespace Source.ShaderAPI.Gl46;
 
 public enum DeviceState {
 	OK,

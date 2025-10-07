@@ -1,4 +1,4 @@
-﻿using Game.Client;
+using Game.Client;
 using Game.Server;
 
 using Source.FileSystem;
@@ -19,6 +19,8 @@ using Game.UI;
 using Source.StdShader.Gl46;
 using Microsoft.Extensions.DependencyInjection;
 using Source.GUI.Controls;
+using Source.Common.ShaderAPI;
+using Source.ShaderAPI.Gl46;
 
 namespace Source.Launcher;
 
@@ -57,6 +59,7 @@ public class Bootloader : IDisposable
 				.WithComponent<IInputSystem, SDL3_InputSystem>()
 				// Rendering abstraction
 				.WithComponent<IMaterialSystem, MaterialSystem.MaterialSystem>()
+				.WithComponent<IShaderAPI, ShaderAPIGl46>()
 				// Our game DLL's. Server/game impl, client impl, UI impl.
 				.WithGameDLL<ServerGameDLL>()
 				.WithClientDLL<HLClient>()

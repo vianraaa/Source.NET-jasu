@@ -2,7 +2,7 @@ using Source.Common.MaterialSystem;
 
 using System.Runtime.InteropServices;
 
-namespace Source.MaterialSystem.Meshes;
+namespace Source.ShaderAPI.Gl46;
 
 public unsafe class VertexBufferGl46 : IDisposable
 {

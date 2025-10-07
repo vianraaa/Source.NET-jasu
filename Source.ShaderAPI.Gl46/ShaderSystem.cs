@@ -4,12 +4,13 @@ using Source.Common.Filesystem;
 using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 using Source.Common.ShaderLib;
+using Source.MaterialSystem;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;
 
-namespace Source.MaterialSystem;
+namespace Source.ShaderAPI.Gl46;
 
 public interface IShaderSystemInternal : IShaderInit, IShaderSystem;
 
@@ -83,8 +84,9 @@ public class ShaderSystem : IShaderSystemInternal
 		return true;
 	}
 
-	public ShaderSystem() {
-
+	public ShaderSystem(IServiceProvider services, IFileSystem fileSystem) {
+		Services = services;
+		FileSystem = fileSystem;
 	}
 	public IServiceProvider Services;
 	public void LoadAllShaderDLLs() {
@@ -283,11 +285,11 @@ public class ShaderSystem : IShaderSystemInternal
 	}
 
 	IFileSystem FileSystem;
-	IShaderDevice ShaderDevice;
+	IShaderDevice? _ShaderDevice;
+	IShaderDevice? ShaderDevice => _ShaderDevice ??= Singleton<IShaderDevice>();
 
 	public void Init() {
-		FileSystem = Singleton<IFileSystem>();
-		ShaderDevice = Singleton<IShaderDevice>();
+
 	}
 
 	Dictionary<ulong, VertexShaderHandle> vshs = [];
