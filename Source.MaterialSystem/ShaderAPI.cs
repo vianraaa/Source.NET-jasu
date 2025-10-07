@@ -1,4 +1,4 @@
-﻿using K4os.Hash.xxHash;
+using K4os.Hash.xxHash;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -757,8 +757,17 @@ public class ShaderAPIGl46 : IShaderAPI, IShaderDevice
 		if (currHash != lastBoardUploadHash) {
 			glToggle(GL_BLEND, state.Blending);
 
-			glBlendFunc(state.SourceBlend.GLEnum(), state.DestinationBlend.GLEnum());
-			glBlendEquation(state.BlendOperation.GLEnum());
+			if (state.AlphaSeparateBlend) {
+				glBlendFuncSeparate(state.SourceBlend.GLEnum(), state.DestinationBlend.GLEnum(), state.AlphaSourceBlend.GLEnum(), state.AlphaDestinationBlend.GLEnum());
+				glBlendEquationSeparate(state.BlendOperation.GLEnum(), state.AlphaBlendOperation.GLEnum());
+			}
+			else {
+				glBlendFunc(state.SourceBlend.GLEnum(), state.DestinationBlend.GLEnum());
+				glBlendEquation(state.BlendOperation.GLEnum());
+			}
+
+			glColorMask(state.ColorWrite, state.ColorWrite, state.ColorWrite, state.AlphaWrite);
+
 			glToggle(GL_DEPTH_TEST, state.DepthTest);
 			glDepthMask(state.DepthWrite); // state.DepthWrite
 			glDepthFunc(state.DepthFunc.GLEnum());

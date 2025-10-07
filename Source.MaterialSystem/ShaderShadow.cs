@@ -1,4 +1,4 @@
-﻿using Source.Common.MaterialSystem;
+using Source.Common.MaterialSystem;
 using Source.Common.ShaderAPI;
 
 namespace Source.MaterialSystem;
@@ -13,7 +13,14 @@ public struct GraphicsBoardState
 	public ShaderBlendFactor DestinationBlend;
 	public ShaderBlendOp BlendOperation;
 
+	public bool AlphaSeparateBlend;
+	public ShaderBlendFactor AlphaSourceBlend;
+	public ShaderBlendFactor AlphaDestinationBlend;
+	public ShaderBlendOp AlphaBlendOperation;
+
 	public bool DepthTest;
+	public bool ColorWrite;
+	public bool AlphaWrite;
 	public bool DepthWrite;
 	internal ShaderDepthFunc DepthFunc;
 }
@@ -179,11 +186,11 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void EnableColorWrites(bool enable) {
-		throw new NotImplementedException();
+		State.ColorWrite = enable;
 	}
 
 	public void EnableAlphaWrites(bool enable) {
-		throw new NotImplementedException();
+		State.AlphaWrite = enable;
 	}
 
 	public void EnableBlending(bool enable) {
@@ -299,11 +306,12 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void EnableBlendingSeparateAlpha(bool enable) {
-		throw new NotImplementedException();
+		State.AlphaSeparateBlend = enable;
 	}
 
 	public void BlendFuncSeparateAlpha(ShaderBlendFactor srcFactor, ShaderBlendFactor dstFactor) {
-		throw new NotImplementedException();
+		State.AlphaSourceBlend = srcFactor;
+		State.AlphaDestinationBlend = dstFactor;
 	}
 
 	public void FogMode(ShaderFogMode fogMode) {
@@ -327,17 +335,24 @@ public class ShadowState : IShaderShadow
 	}
 
 	public void BlendOp(ShaderBlendOp blendOp) {
-		throw new NotImplementedException();
+		State.BlendOperation = blendOp;
 	}
 
 	public void BlendOpSeparateAlpha(ShaderBlendOp blendOp) {
-		throw new NotImplementedException();
+		State.AlphaBlendOperation = blendOp;
 	}
 
 	public void SetDefaultState() {
 		DepthFunc(ShaderDepthFunc.NearerOrEqual);
+		EnableColorWrites(true);
+		EnableAlphaWrites(true);
 		EnableDepthWrites(true);
 		EnableDepthTest(true);
 		EnableBlending(false);
+		BlendFunc(ShaderBlendFactor.One, ShaderBlendFactor.Zero);
+		BlendOp(ShaderBlendOp.Add);
+		EnableBlendingSeparateAlpha(false);
+		BlendFuncSeparateAlpha(ShaderBlendFactor.One, ShaderBlendFactor.Zero);
+		BlendOpSeparateAlpha(ShaderBlendOp.Add);
 	}
 }
