@@ -2,7 +2,7 @@
 using Source.Common;
 namespace Game.Shared.GarrysMod;
 using FIELD = Source.FIELD<WeaponPistol>;
-public class WeaponPistol : BaseHL2MPCombatWeapon
+public class WeaponPistol : HL2MPMachineGun
 {
 	public static readonly
 #if CLIENT_DLL
@@ -10,7 +10,7 @@ public class WeaponPistol : BaseHL2MPCombatWeapon
 #else
 		SendTable
 #endif
-		DT_WeaponPistol = new(DT_BaseHL2MPCombatWeapon, [
+		DT_WeaponPistol = new(DT_HL2MPMachineGun, [
 #if CLIENT_DLL
 			RecvPropFloat(FIELD.OF(nameof(SoonestPrimaryAttack))),
 			RecvPropFloat(FIELD.OF(nameof(LastAttackTime))),
