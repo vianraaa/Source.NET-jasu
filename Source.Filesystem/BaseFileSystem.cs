@@ -284,17 +284,14 @@ public class BaseFileSystem : IFileSystem
 	}
 
 	public long Size(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
-		string fn = new(fileName);
 		return FirstToThePost(fileName, pathID, (path, filename) => path.Size(filename), (v) => v != -1, -1, out _);
 	}
 
 	public DateTime Time(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
-		string fn = new(fileName);
 		return FirstToThePost(fileName, pathID, (path, filename) => path.Time(filename), (v) => v != DateTime.UnixEpoch, DateTime.UnixEpoch, out _);
 	}
 
 	public bool FileExists(ReadOnlySpan<char> fileName, ReadOnlySpan<char> pathID) {
-		string fn = new(fileName);
 		return FirstToThePost(fileName, pathID, (path, filename) => path.Exists(filename), boolWin, false, out _);
 	}
 

@@ -366,14 +366,14 @@ public class EngineVGui(
 
 		matSystemSurface.InstallPlaySoundFunc(VGui_PlaySound);
 
-		ReadOnlySpan<char> str = "Resource/SourceScheme.res";
+		ReadOnlySpan<char> str = "resource/SourceScheme.res";
 		if (vguiScheme.LoadSchemeFromFile(str, "Tracker") == null) {
 			Sys.Error($"Error loading file {str}\n");
 			return;
 		}
 
 		// Try loading ClientScheme
-		vguiScheme.LoadSchemeFromFile("Resource/ClientScheme.res", "ClientScheme");
+		vguiScheme.LoadSchemeFromFile("resource/ClientScheme.res", "ClientScheme");
 
 		// Ideal hierarchy:
 
@@ -471,8 +471,8 @@ public class EngineVGui(
 
 		// cacheusedmaterials
 
-		localize.AddFile($"Resource/valve_%language%.txt");
-		localize.AddFile($"Resource/{engineAPI.GetRequiredService<EngineParms>().Mod}_%language%.txt");
+		localize.AddFile($"resource/valve_%language%.txt");
+		localize.AddFile($"resource/{engineAPI.GetRequiredService<EngineParms>().Mod}_%language%.txt");
 
 		staticGameUIFuncs.Initialize(engineAPI);
 		staticGameUIFuncs.Start();
