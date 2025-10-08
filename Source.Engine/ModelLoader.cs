@@ -774,6 +774,8 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		model.Brush.Shared!.NumDispInfos = (int)numDisplacements;
 		model.Brush.Shared!.DispInfos = DispInfo_CreateArray(numDisplacements);
 
+		MapLoadHelper dispInfos = new MapLoadHelper(LumpIndex.DispInfo);
+
 		DispLMAlpha.Clear(); DispLMAlpha.SetSize((int)numLuxels);
 		MapLoadHelper dispLMAlphas = new MapLoadHelper(LumpIndex.DispLightmapAlphas);
 		dispLMAlphas.LoadLumpData(DispLMAlpha.AsSpan());

@@ -578,16 +578,16 @@ public struct DispSubNeighbor
 	public byte NeighborSpan;
 }
 
-public class DispNeighbor
+public struct DispNeighbor
 {
-	void SetInvalid() { SubNeighbors[0].SetInvalid(); SubNeighbors[1].SetInvalid(); }
-	bool IsValid() => SubNeighbors[0].IsValid() || SubNeighbors[1].IsValid();
+	public void SetInvalid() { SubNeighbors[0].SetInvalid(); SubNeighbors[1].SetInvalid(); }
+	public bool IsValid() => SubNeighbors[0].IsValid() || SubNeighbors[1].IsValid();
 
 	InlineArray2<DispSubNeighbor> SubNeighbors;
 }
 
 
-public class DispCornerNeighbors
+public struct DispCornerNeighbors
 {
 	public void SetInvalid() { NumNeighbors = 0; }
 	public InlineArray4<short> /*MAX_DISP_CORNER_NEIGHBORS == 4*/ Neighbors;
