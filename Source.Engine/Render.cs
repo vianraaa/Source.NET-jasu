@@ -254,6 +254,9 @@ public class Render(
 	}
 	private void InitStudio() { }
 	private void LoadWorldGeometry() {
+		if (host_state.WorldModel == null)
+			return;
+
 		MaterialSystem.DestroySortInfo();
 		MaterialSystem.RegisterLightmapSurfaces();
 		MaterialSystem.CreateSortInfo();

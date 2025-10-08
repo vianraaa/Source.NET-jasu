@@ -521,6 +521,19 @@ public static class UnmanagedUtils
 		// Then copy 
 		inSpan.ClampedCopyTo(outSpan);
 	}
+
+	public static ReadOnlySpan<char> UnqualifiedFileName(this ReadOnlySpan<char> input) {
+		if (input[0] == '\0') return input;
+		if (input.IsEmpty) return input;
+
+		for (int i = input.Length - 1; i >= 0; i--) {
+			if (input[i] == '\\' || input[i] == '/')
+				return input[(i + 1)..];
+		}
+
+		return input;
+	}
+
 	/// <summary>
 	/// Attempts to parse various elements of a filepath 
 	/// </summary>

@@ -6,6 +6,7 @@ using System.Numerics;
 using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
 using Source.Common.MaterialSystem;
+using System.Runtime.InteropServices;
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
@@ -183,6 +184,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		mod.StrName.String()!.FileBase(LoadName);
 		DevMsg($"Loading: {mod.StrName.String()}\n");
 
+		if (!Map_IsValid(mod.StrName))
+			return null;
+
 		mod.Type = GetTypeFromName(mod.StrName);
 		if (mod.Type == ModelType.Invalid)
 			mod.Type = ModelType.Studio;
@@ -205,6 +209,74 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		}
 		return mod;
 	}
+
+	private bool Map_IsValid(ReadOnlySpan<char> name, bool quiet = false) {
+		if (name.IsEmpty || name[0] == '\0') {
+			if (!quiet)
+				ConMsg("ModelLoader.Map_IsValid: Empty mapname!\n");
+			return false;
+		}
+
+		ReadOnlySpan<char> baseName = name.UnqualifiedFileName();
+
+		bool illegalChar = false;
+		for (int i = 0; i < baseName.Length; i++) {
+			if (baseName[i] <= 31)
+				illegalChar = true;
+
+			switch (baseName[i]) {
+				case '<':
+				case '>':
+				case ':':
+				case '"':
+				case '/':
+				case '\\':
+				case '|':
+				case '?':
+				case '*':
+				case ';':
+				case '\'':
+					illegalChar = true;
+					break;
+			}
+		}
+
+		if (illegalChar) {
+			AssertMsg(false, "Map with illegal characters in filename");
+			Warning("Map with illegal characters in filename\n");
+			return false;
+		}
+
+		IFileHandle? mapFile = fileSystem.Open(name, FileOpenOptions.Read | FileOpenOptions.Binary, "GAME");
+		if (mapFile != null) {
+			BSPHeader header = default;
+			Span<byte> outWrite = MemoryMarshal.Cast<BSPHeader, byte>(new(ref header));
+			int len = mapFile.Stream.Read(outWrite);
+			mapFile.Dispose();
+			if (len != outWrite.Length) {
+				if (!quiet)
+					Warning($"ModelLoader.Map_IsValid: Map '{name}' was not large enough to contain a BSP header\n");
+			}
+			else {
+				if (header.Identifier == BSPFileCommon.IDBSPHEADER) {
+					if(header.Version >= BSPFileCommon.MINBSPVERSION && header.Version <= BSPFileCommon.BSPVERSION) {
+						name.ClampedCopyTo(LastMapFile);
+						return true;
+					}
+					else if (!quiet)
+						Warning($"ModelLoader.Map_IsValid: Map '{name}' bsp version {header.Version}, expecting {BSPFileCommon.MINBSPVERSION} to {BSPFileCommon.BSPVERSION}\n");
+				}
+				else if (!quiet)
+					Warning($"ModelLoader.Map_IsValid: Map '{name}' is not a valid BSP file\n");
+			}
+		}
+		else if (!quiet)
+			Warning($"ModelLoader.Map_IsValid: No such map '{name}'\n");
+
+		return false;
+	}
+
+	InlineArrayMaxPath<char> LastMapFile;
 
 	int MapLoadCount;
 	public readonly WorldBrushData WorldBrushData = new();
@@ -681,7 +753,9 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	}
 
 	public void Map_LoadDisplacements(Model model) {
-		MapLoadHelper.Init(model, ActiveMapName);
+		if (!MapLoadHelper.Init(model, ActiveMapName))
+			return;
+
 		DispInfo_LoadDisplacements(model);
 		MapLoadHelper.Shutdown();
 	}
@@ -689,7 +763,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 	private void DispInfo_LoadDisplacements(Model model) {
 		nint numDisplacements = MapLoadHelper.GetLumpSize(LumpIndex.DispInfo);
 		nint numLuxels = MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapAlphas);
-		nint numSamplePositionBytes= MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapSamplePositions);
+		nint numSamplePositionBytes = MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapSamplePositions);
 		model.Brush.Shared!.NumDispInfos = (int)numDisplacements;
 		model.Brush.Shared!.DispInfos = DispInfo_CreateArray(numDisplacements);
 	}

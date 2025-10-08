@@ -606,6 +606,9 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 		ModelLoader.MSurf_OffsetIntoLightmapPage(ref surfID)[1] = (short)offsetIntoLightmapPage[1];
 	}
 	internal void RegisterLightmapSurfaces() {
+		if (host_state.WorldBrush == null || host_state.WorldModel == null)
+			return;
+
 		ref BSPMSurface2 surfID = ref Unsafe.NullRef<BSPMSurface2>();
 		materials.BeginLightmapAllocation();
 
