@@ -1,4 +1,4 @@
-﻿using Source.Common.Filesystem;
+using Source.Common.Filesystem;
 
 using System.Collections;
 using System.Diagnostics;
@@ -541,14 +541,30 @@ public class KeyValues : IEnumerable<KeyValues>
 		return null;
 	}
 
+	// TODO: We should cache these!!!!
 	public int GetInt() {
-		return Convert.ToInt32(Value);
+		if (Value is string str)
+			return int.TryParse(str, out int i) ? i : float.TryParse(str, out float f) ? (int)f : 0;
+		else if (Value is int i)
+			return i;
+		else
+			return Convert.ToInt32(Value);
 	}
 	public float GetFloat() {
-		return Convert.ToSingle(Value);
+		if (Value is string str)
+			return float.TryParse(str, out float f) ? f : 0;
+		else if (Value is float f)
+			return f;
+		else
+			return Convert.ToSingle(Value);
 	}
 	public double GetDouble() {
-		return Convert.ToDouble(Value);
+		if (Value is string str)
+			return double.TryParse(str, out double d) ? d : 0;
+		else if (Value is double d)
+			return d;
+		else
+			return Convert.ToDouble(Value);
 	}
 
 	public void UsesEscapeSequences(bool value) {
