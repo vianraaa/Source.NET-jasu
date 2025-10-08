@@ -801,7 +801,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 			coreDisps.Add(new());
 		}
 
-		for (disp = 0; disp < numDisplacements; ++disp) {
+		/*for (disp = 0; disp < numDisplacements; ++disp) {
 			ref BSPDispInfo mapDisp = ref tempDisps[disp];
 
 			int numVerts = BSPFileCommon.NUM_DISP_POWER_VERTS(mapDisp.Power);
@@ -816,7 +816,7 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 
 			if (!DispInfo_CreateFromMapDisp(model, disp, ref mapDisp, coreDisps[disp], tempVerts, tempTris, sortInfos))
 				return false;
-		}
+		}*/
 
 		return true;
 
