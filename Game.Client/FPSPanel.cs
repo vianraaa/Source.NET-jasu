@@ -1,4 +1,6 @@
-﻿using Source;
+using System.Numerics;
+
+using Source;
 using Source.Common.Commands;
 using Source.Common.GUI;
 using Source.GUI.Controls;
@@ -90,7 +92,21 @@ public class FPSPanel : Panel
 
 		int fontTall = Surface.GetFontTall(Font);
 
-		// todo: showpos mode
+		if (cl_showpos.GetInt() != 0) {
+			C_BasePlayer? localplayer = C_BasePlayer.GetLocalPlayer();
+			if (localplayer != null) {
+				Vector3 pos = localplayer.EyePosition();
+				Vector3 ang = localplayer.EyeAngles();
+				Vector3 vel = localplayer.Velocity;
+				Surface.DrawColoredText(Font, x, 2 + i * fontTall, 255, 255, 255, 255, $"pos: {pos.X:F2} {pos.Y:F2} {pos.Z:F2}");
+				i++;
+				Surface.DrawColoredText(Font, x, 2 + i * fontTall, 255, 255, 255, 255, $"ang: {ang.X:F2} {ang.Y:F2} {ang.Z:F2}");
+				i++;
+				Surface.DrawColoredText(Font, x, 2 + i * fontTall, 255, 255, 255, 255, $"vel: {vel.X:F2} {vel.Y:F2} {vel.Z:F2}");
+				i++;
+			}
+		}
+
 		// todo: showbattery mode
 	}
 	public override void OnTick() {
@@ -100,7 +116,7 @@ public class FPSPanel : Panel
 	}
 	// todo: ScreenSizeChanged
 	public virtual bool ShouldDraw() {
-		if((cl_showfps.GetInt() == 0 || (gpGlobals.AbsoluteFrameTime <= 0)) && (cl_showpos.GetInt() == 0)) { 
+		if ((cl_showfps.GetInt() == 0 || (gpGlobals.AbsoluteFrameTime <= 0)) && (cl_showpos.GetInt() == 0)) {
 			LastDraw = false;
 			return false;
 		}
@@ -159,7 +175,8 @@ public class FPSPanel : Panel
 	}
 }
 
-public interface IFPSPanel {
+public interface IFPSPanel
+{
 	void Create(IPanel parent);
 	void Destroy();
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
