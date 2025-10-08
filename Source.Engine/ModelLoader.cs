@@ -7,6 +7,8 @@ using Source.Common.Mathematics;
 using CommunityToolkit.HighPerformance;
 using Source.Common.MaterialSystem;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using System.Collections;
 namespace Source.Engine;
 
 public ref struct MapLoadHelper
@@ -98,9 +100,13 @@ public ref struct MapLoadHelper
 		LumpVersion = lump.Version;
 	}
 
-	public byte[] LoadLumpData() {
+	public readonly bool LoadLumpData<T>(Span<T> output) where T : unmanaged {
 		ref BSPLump lump = ref MapHeader.Lumps[(int)LumpID];
-		return lump.ReadBytes(MapFileHandle!);
+		T[]? ret = LoadLumpData<T>();
+		if (ret == null)
+			return false;
+		ret.AsSpan().ClampedCopyTo(output);
+		return true;
 	}
 
 	public readonly T[] LoadLumpData<T>(bool throwIfNoElements = false, int maxElements = 0, bool sysErrorIfOOB = false) where T : unmanaged {
@@ -752,21 +758,74 @@ public class ModelLoader(Sys Sys, IFileSystem fileSystem, Host Host, IEngineVGui
 		return bsp.Surfaces1![surfaceIndex].FirstPrimID;
 	}
 
-	public void Map_LoadDisplacements(Model model) {
+	public void Map_LoadDisplacements(MaterialSystem_SortInfo[] materialSortInfoArray, Model model) {
 		if (!MapLoadHelper.Init(model, ActiveMapName))
 			return;
 
-		DispInfo_LoadDisplacements(model);
+		DispInfo_LoadDisplacements(materialSortInfoArray, model);
 		MapLoadHelper.Shutdown();
 	}
 
-	private void DispInfo_LoadDisplacements(Model model) {
+	private unsafe bool DispInfo_LoadDisplacements(MaterialSystem_SortInfo[] sortInfos, Model model) {
 		nint numDisplacements = MapLoadHelper.GetLumpSize(LumpIndex.DispInfo);
 		nint numLuxels = MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapAlphas);
 		nint numSamplePositionBytes = MapLoadHelper.GetLumpSize(LumpIndex.DispLightmapSamplePositions);
+
 		model.Brush.Shared!.NumDispInfos = (int)numDisplacements;
 		model.Brush.Shared!.DispInfos = DispInfo_CreateArray(numDisplacements);
+
+		DispLMAlpha.Clear(); DispLMAlpha.SetSize((int)numLuxels);
+		MapLoadHelper dispLMAlphas = new MapLoadHelper(LumpIndex.DispLightmapAlphas);
+		dispLMAlphas.LoadLumpData(DispLMAlpha.AsSpan());
+
+		DispLMSamplePositions.Clear(); DispLMSamplePositions.SetSize((int)numLuxels);
+		MapLoadHelper dispLMPositions= new MapLoadHelper(LumpIndex.DispLightmapSamplePositions);
+		dispLMAlphas.LoadLumpData(DispLMSamplePositions.AsSpan());
+
+		Span<BSPDispInfo> tempDisps = new BSPDispInfo[BSPFileCommon.MAX_MAP_DISPINFO];
+
+		Span<DispVert> tempVerts = stackalloc DispVert[BSPFileCommon.MAX_DISPVERTS];
+		Span<DispTri> tempTris = stackalloc DispTri[BSPFileCommon.MAX_DISPTRIS];
+
+		MapLoadHelper dispVerts = new(LumpIndex.DispVerts);
+		MapLoadHelper dispTris = new(LumpIndex.DispTris);
+
+		int curVert = 0;
+		int curTri = 0;
+
+		List<CoreDispInfo> coreDisps = [];
+		int disp = 0;
+		for (disp = 0; disp < numDisplacements; disp++) {
+			coreDisps.Add(new());
+		}
+
+		for (disp = 0; disp < numDisplacements; ++disp) {
+			ref BSPDispInfo mapDisp = ref tempDisps[disp];
+
+			int numVerts = BSPFileCommon.NUM_DISP_POWER_VERTS(mapDisp.Power);
+			ErrorIfNot(numVerts <= BSPFileCommon.MAX_DISPVERTS, $"DispInfo_LoadDisplacements: invalid vertex count ({numVerts})");
+			dispVerts.LoadLumpData(tempVerts);
+			curVert += numVerts;
+
+			int numTris = BSPFileCommon.NUM_DISP_POWER_TRIS(mapDisp.Power);
+			ErrorIfNot(numTris <= BSPFileCommon.MAX_DISPTRIS, $"DispInfo_LoadDisplacements: invalid tri count ({numTris})");
+			dispTris.LoadLumpData(tempTris);
+			curTri += numTris;
+
+			if (!DispInfo_CreateFromMapDisp(model, disp, ref mapDisp, coreDisps[disp], tempVerts, tempTris, sortInfos))
+				return false;
+		}
+
+		return true;
+
 	}
+
+	public bool DispInfo_CreateFromMapDisp(Model world, int disp, ref BSPDispInfo mapDisp, CoreDispInfo coreDisp, Span<DispVert> verts, Span<DispTri> tris, MaterialSystem_SortInfo[] sortInfos) {
+		return true;
+	}
+
+	readonly List<byte> DispLMAlpha = [];
+	readonly List<byte> DispLMSamplePositions = [];
 
 	private object? DispInfo_CreateArray(nint numDisplacements) {
 		DispArray ret = new DispArray(numDisplacements);
@@ -783,4 +842,8 @@ public class DispArray(nint elements)
 {
 	public DispInfo[] DispInfos = new DispInfo[elements];
 	public int CurTag;
+}
+
+public class CoreDispInfo {
+
 }

@@ -485,7 +485,7 @@ public class MatSysInterface(IMaterialSystem materials, IServiceProvider service
 	}
 
 
-	MaterialSystem_SortInfo[]? materialSortInfoArray;
+	internal MaterialSystem_SortInfo[]? materialSortInfoArray;
 	private int SortInfoToLightmapPage(int sortID) => materialSortInfoArray![sortID].LightmapPageID;
 
 	private void SurfSetupSurfaceContext(ref SurfaceCtx ctx, ref BSPMSurface2 surfID) {

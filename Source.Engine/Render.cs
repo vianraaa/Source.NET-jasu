@@ -261,7 +261,7 @@ public class Render(
 		MaterialSystem.RegisterLightmapSurfaces();
 		MaterialSystem.CreateSortInfo();
 
-		modelLoader.Map_LoadDisplacements(host_state.WorldModel!);
+		modelLoader.Map_LoadDisplacements(MaterialSystem.materialSortInfoArray, host_state.WorldModel!);
 	}
 	private void Surface_LevelInit() { }
 	private void Areaportal_LevelInit() { }

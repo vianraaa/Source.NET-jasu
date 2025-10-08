@@ -121,6 +121,9 @@ public static class BSPFileCommon
 
 	public const int MAX_LIGHTMAPPAGE_WIDTH = 256;
 	public const int MAX_LIGHTMAPPAGE_HEIGHT = 128;
+
+	public static int NUM_DISP_POWER_VERTS(int power) => ((1 << power) + 1) * ((1 << power) + 1);
+	public static int NUM_DISP_POWER_TRIS(int power) => (1 << power) * (1 << power) * 2;
 }
 
 public enum NeighborSpan : byte
@@ -592,7 +595,7 @@ public class DispCornerNeighbors
 }
 
 
-public class DispVert
+public struct DispVert
 {
 	public Vector3 Vector;
 	public float Dist;
@@ -609,7 +612,7 @@ public enum DispTriTags
 	TagRemove = 1 << 5
 }
 
-public class DispTri
+public struct DispTri
 {
 	public DispTriTags Tags;
 }
@@ -617,7 +620,7 @@ public class DispTri
 /// <summary>
 /// Analog of ddispinfo_t
 /// </summary>
-public class BSPDispInfo
+public struct BSPDispInfo
 {
 	public int NumVerts() => ((1 << Power) + 1) * ((1 << Power) + 1);
 	public int NumTris() => (1 << Power) * (1 << Power) * 2;
