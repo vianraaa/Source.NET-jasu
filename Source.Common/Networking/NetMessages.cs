@@ -1,4 +1,4 @@
-﻿namespace Source.Common.Networking;
+namespace Source.Common.Networking;
 
 using Source;
 using System.Diagnostics;
@@ -429,6 +429,37 @@ public class svc_VoiceInit : NetMessage
 
 	public override bool WriteToBuffer(bf_write buffer) {
 		throw new Exception();
+	}
+}
+public class svc_Sounds : NetMessage
+{
+	public svc_Sounds() : base(SVC.Sounds) { }
+
+	public bool ReliableSound;
+	public int NumSounds;
+	public int Length;
+	public bf_read DataIn;
+
+	public override bool ReadFromBuffer(bf_read buffer) {
+		ReliableSound = buffer.ReadOneBit() != 0;
+
+		if (ReliableSound) {
+			NumSounds = 1;
+			Length = (int)buffer.ReadUBitLong(8);
+		}
+		else {
+			NumSounds = (int)buffer.ReadUBitLong(8);
+			Length = (int)buffer.ReadUBitLong(16);
+		}
+		DataIn = buffer;
+		return buffer.SeekRelative(Length);
+	}
+
+	public override bool WriteToBuffer(bf_write buffer) {
+		throw new Exception();
+	}
+	public override string ToString() {
+		return $"number {NumSounds},{(ReliableSound ? " reliable" : " ")} bytes {Bits2Bytes(Length)}";
 	}
 }
 public class svc_BSPDecal : NetMessage

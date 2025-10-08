@@ -265,6 +265,7 @@ public abstract class BaseClientState(
 		channel.RegisterMessage<svc_ClassInfo>();
 		channel.RegisterMessage<svc_BSPDecal>();
 		channel.RegisterMessage<svc_VoiceInit>();
+		channel.RegisterMessage<svc_Sounds>();
 		channel.RegisterMessage<svc_GameEventList>();
 		channel.RegisterMessage<svc_FixAngle>();
 		channel.RegisterMessage<svc_SetView>();
@@ -299,6 +300,7 @@ public abstract class BaseClientState(
 			case svc_ClassInfo msg: return ProcessClassInfo(msg);
 			case svc_BSPDecal msg: return ProcessBSPDecal(msg);
 			case svc_VoiceInit msg: return ProcessVoiceInit(msg);
+			case svc_Sounds msg: return ProcessSounds(msg);
 			case svc_GameEventList msg: return ProcessGameEventList(msg);
 			case svc_FixAngle msg: return ProcessFixAngle(msg);
 			case svc_SetView msg: return ProcessSetView(msg);
@@ -308,6 +310,10 @@ public abstract class BaseClientState(
 			case svc_GMod_ServerToClient msg: return ProcessGMod_ServerToClient(msg);
 		}
 		// ignore
+		return true;
+	}
+
+	private bool ProcessSounds(svc_Sounds msg) {
 		return true;
 	}
 
