@@ -107,7 +107,7 @@ public abstract class BaseVSShader : BaseShader
 
 			ShaderShadow.VertexShaderVertexFormat(VertexFormat.Position | VertexFormat.Normal | VertexFormat.TexCoord | (bVertexColor ? VertexFormat.Color : 0), 1, null, 0);
 			SetStandardShaderUniforms();
-			DevMsg("UnlitGeneric snapshotted!\n");
+			// DevMsg("UnlitGeneric snapshotted!\n");
 		}
 		else {
 			if (bBaseTexture) {
