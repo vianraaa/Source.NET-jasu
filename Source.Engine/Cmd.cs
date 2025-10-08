@@ -284,7 +284,7 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 			ReadOnlySpan<char> file = $"cfg/{args[1]}";
 			ReadOnlySpan<char> pathID = "MOD";
 
-			if (!file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
+			if (file.GetFileExtension().IsEmpty)
 				file = $"{file}.cfg";
 
 			if (!Common.IsValidPath(file)) {
