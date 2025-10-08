@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 using Source.Common.Commands;
 using Source.Common.Engine;
@@ -283,6 +283,9 @@ public class Cmd(IEngineAPI provider, IFileSystem fileSystem)
 
 			ReadOnlySpan<char> file = $"cfg/{args[1]}";
 			ReadOnlySpan<char> pathID = "MOD";
+
+			if (!file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
+				file = $"{file}.cfg";
 
 			if (!Common.IsValidPath(file)) {
 				Dbg.ConMsg("exec %s: invalid path.\n");

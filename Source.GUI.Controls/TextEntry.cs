@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance;
 
 using Source.Common.Formats.Keyvalues;
 using Source.Common.GUI;
@@ -517,10 +517,14 @@ public class TextEntry : Panel
 			Input.SetMouseCapture(this);
 			MouseSelection = true;
 
-			if (Select[0] < 0)
-				Select[0] = CursorPos;
+			if (TextStream.Count > 0)
+			{
 
-			Select[1] = CursorPos;
+				if (Select[0] < 0)
+					Select[0] = CursorPos;
+
+				Select[1] = CursorPos;
+			}
 
 			ResetCursorBlink();
 			RequestFocus();

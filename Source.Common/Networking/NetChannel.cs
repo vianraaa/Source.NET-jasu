@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Diagnostics;
 using System.Net.Sockets;
 
@@ -747,9 +747,6 @@ public class NetChannel : INetChannelInfo, INetChannel
 	}
 
 	public bool ProcessMessages(bf_read buf) {
-		string showmsgname = Net.net_showmsg.GetString();
-		string blockmsgname = Net.net_blockmsg.GetString();
-
 		int startbit = buf.BitsRead;
 		while (true) {
 			if (buf.Overflowed) {
@@ -783,11 +780,17 @@ public class NetChannel : INetChannelInfo, INetChannel
 
 				UpdateMessageStats(netMsg.GetGroup(), buf.BitsRead - msgStartBit);
 
+				string showmsgname = Net.net_showmsg.GetString();
+				if (showmsgname != "0")
+				{
+					bool invert = showmsgname.StartsWith('!');
+					if (invert) showmsgname = showmsgname[1..];
+					if (showmsgname == "1" || (showmsgname.Equals(netMsg.GetName(), StringComparison.OrdinalIgnoreCase) ^ invert))
+						Msg($"Msg from {RemoteAddress}: {netMsg.ToString()?.Trim('\n')}\n");
 
-				if (showmsgname != "0" && (showmsgname == "1" || showmsgname.Equals(netMsg.GetName(), StringComparison.OrdinalIgnoreCase))) {
-					Msg($"Msg from {RemoteAddress}: {netMsg.ToString()?.Trim('\n')}\n");
 				}
 
+				string blockmsgname = Net.net_blockmsg.GetString();
 				if (blockmsgname != "0" && (blockmsgname == "1" || blockmsgname.Equals(netMsg.GetName(), StringComparison.OrdinalIgnoreCase))) {
 					Msg($"Blocking message {netMsg.ToString()?.Trim('\n')}\n");
 					continue;
